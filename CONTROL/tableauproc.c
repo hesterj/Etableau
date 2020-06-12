@@ -222,7 +222,7 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
 		}
 		if (resulting_tab)
 		{
-			ClauseTableauPrintDOTGraph(resulting_tab);
+			//ClauseTableauPrintDOTGraph(resulting_tab);
 			fprintf(GlobalOut, "# Begin proof output\n");
 			ClauseTableauPrint(resulting_tab);
 			fprintf(GlobalOut, "# End proof output\n");
@@ -255,7 +255,7 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
    if (resulting_tab) // success
    {
 		printf("# Proof search success!\n");
-		ClauseTableauPrintDOTGraph(resulting_tab);
+		//ClauseTableauPrintDOTGraph(resulting_tab);
 		Clause_p empty = EmptyClauseAlloc();
 		return empty;
 	}
