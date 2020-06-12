@@ -13,6 +13,7 @@
 #include <cco_interpreted.h>
 #include <ccl_satinterface.h>
 #include <cco_proofproc.h>
+#include <apr.h>
 #include <time.h>
 #include <arpa/inet.h>
 #include <clb_plist.h>
