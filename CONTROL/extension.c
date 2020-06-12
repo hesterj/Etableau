@@ -237,7 +237,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	if (parent->open_branches->members == 0)
 	{
 		//printf("# Closed tableau found.\n");
-		ClauseTableauPrintDOTGraph(parent->master);
+		//ClauseTableauPrintDOTGraph(parent->master);
 		tableau_control->closed_tableau = parent->master;
 		ClauseSetFree(new_leaf_clauses_set);
 		return parent;
