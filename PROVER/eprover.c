@@ -38,7 +38,7 @@
 /*                  Data types                                         */
 /*---------------------------------------------------------------------*/
 
-#define NAME         "eprover"
+#define NAME         "etableau"
 
 PERF_CTR_DEFINE(SatTimer);
 
@@ -545,6 +545,7 @@ int main(int argc, char* argv[])
 
 	if (TableauOptions == 1)
 	{
+		TableauControl_p tableaucontrol = TableauControlAlloc();
 		//TB_p tableau_terms = TBAlloc(proofstate->terms->sig);
 		printf("# Number of axioms: %ld Number of unprocessed: %ld\n", proofstate->axioms->members, 
 																						 proofstate->unprocessed->members);
@@ -557,12 +558,32 @@ int main(int argc, char* argv[])
 		printf("# Tableaux proof search.\n");
 		if (TableauBatch == 1)
 		{
-			success = ConnectionTableauBatch(proofstate, proofcontrol, proofstate->terms, new_axioms, TableauDepth, TableauEquality);
+			success = ConnectionTableauBatch(tableaucontrol, 
+														proofstate, 
+														proofcontrol, 
+														proofstate->terms, 
+														new_axioms, 
+														TableauDepth, 
+														TableauEquality);
 		}
 		if (success)
 		{
 			PStackPushP(proofstate->extract_roots, EmptyClauseAlloc());
-			exit(0);
+			if (!tableaucontrol->satisfiable)
+			{
+				if(neg_conjectures)
+				{
+					TSTPOUT(GlobalOut, "Theorem");
+				}
+				else
+				{
+					TSTPOUT(GlobalOut, "Unsatisfiable");
+				}
+			}
+			else
+			{
+				TSTPOUT(GlobalOut, neg_conjectures?"CounterSatisfiable":"Satisfiable");
+			}
 		}
 		ClauseSetFree(new_axioms);
 		//TBFree(tableau_terms);
@@ -570,8 +591,9 @@ int main(int argc, char* argv[])
 		{
 			TSTPOUT(GlobalOut, "ResourceOut");
 			TSTPOUT(GlobalOut, "GaveUp");
-			exit(0);
 		}
+		TableauControlFree(tableaucontrol);
+		exit(0);
 	}
 	
 	// Main E saturation method

@@ -114,7 +114,7 @@ int ECloseBranch(ProofState_p proofstate,
 	ClauseSetFree(branch_clauses);
 	
 	// Now do normal saturation
-	success = Saturate(proofstate, proofcontrol, 500,
+	success = Saturate(proofstate, proofcontrol, 1000,
 							 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
 							 LLONG_MAX, LONG_MAX);
 	if (success)
@@ -205,9 +205,11 @@ int process_saturation_output(TableauControl_p tableau_control,
             if (status == SATISFIABLE)
             {
 					return_status[i] = SATISFIABLE;
-					fprintf(GlobalOut, "# SZS Status Satisfiable");
-					exit(0);
-					break;
+					ClauseTableau_p satisfiable_branch = branches[i];
+					tableau_control->closed_tableau = satisfiable_branch;
+					tableau_control->satisfiable = true;
+					successful_count++;
+					return successful_count;
 				}
             if (status == PROOF_FOUND)
             {

@@ -10,11 +10,14 @@ WFormula_p ProofStateGetConjecture(ProofState_p state);
 bool TFormulasShareVariables(Sig_p sig, TFormula_p a, TFormula_p b);
 long ClauseSetMoveUnits(ClauseSet_p set, ClauseSet_p units);
 
-Clause_p ConnectionTableauBatch(ProofState_p proofstate, ProofControl_p proofcontrol, 
-																			TB_p bank, ClauseSet_p active, 
-																			int max_depth, 
-																			int tableauequality);
-ClauseTableau_p ConnectionTableauProofSearch(ProofState_p proofstate, 
+Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, 
+										  ProofState_p proofstate, 
+										  ProofControl_p proofcontrol, 
+										  TB_p bank, ClauseSet_p active, 
+										  int max_depth, 
+										  int tableauequality);
+ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
+															ProofState_p proofstate, 
 															ProofControl_p proofcontrol, 
 															TableauSet_p distinct_tableaux,
 															ClauseSet_p extension_candidates,

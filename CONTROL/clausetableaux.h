@@ -157,6 +157,7 @@ typedef struct tableaucontrol_cell
 	PStack_p new_tableaux;
 	ClauseTableau_p closed_tableau;
 	TB_p terms;
+	bool satisfiable;
 }TableauControlCell, *TableauControl_p;
 
 #define TableauControlCellAlloc()    (TableauControlCell*)SizeMalloc(sizeof(TableauControlCell))

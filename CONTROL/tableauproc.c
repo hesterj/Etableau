@@ -104,7 +104,7 @@ WFormula_p ProofStateGetConjecture(ProofState_p state)
  *  applications at once.  Does not use any multhreading.
 */
 
-Clause_p ConnectionTableauBatch(ProofState_p proofstate, ProofControl_p proofcontrol, TB_p bank, ClauseSet_p active, int max_depth, int tableauequality)
+Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p proofstate, ProofControl_p proofcontrol, TB_p bank, ClauseSet_p active, int max_depth, int tableauequality)
 {
 	assert(proofstate);
 	assert(proofcontrol);
@@ -211,7 +211,8 @@ Clause_p ConnectionTableauBatch(ProofState_p proofstate, ProofControl_p proofcon
 		{
 			#pragma omp single
 			{
-				resulting_tab = ConnectionTableauProofSearch(proofstate, 
+				resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
+																			proofstate, 
 																			proofcontrol, 
 																			distinct_tableaux,
 																			extension_candidates, 
@@ -261,7 +262,8 @@ Clause_p ConnectionTableauBatch(ProofState_p proofstate, ProofControl_p proofcon
 	return NULL;
 }
 
-ClauseTableau_p ConnectionTableauProofSearch(ProofState_p proofstate, 
+ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
+											  ProofState_p proofstate, 
 											  ProofControl_p proofcontrol, 
 											  TableauSet_p distinct_tableaux,
 										     ClauseSet_p extension_candidates,
@@ -272,7 +274,6 @@ ClauseTableau_p ConnectionTableauProofSearch(ProofState_p proofstate,
 	assert(distinct_tableaux->anchor->master_succ);
 	ClauseTableau_p active_tableau = distinct_tableaux->anchor->master_succ;
 	ClauseTableau_p open_branch = NULL;
-	TableauControl_p control = TableauControlAlloc();
 	
 	// tableau_select method instead of iteration?
 	 
@@ -287,9 +288,9 @@ ClauseTableau_p ConnectionTableauProofSearch(ProofState_p proofstate,
 		ClauseTableauAssertCheck(active_tableau);
 		#endif
 		
-		if (control->closed_tableau)
+		if (tableaucontrol->closed_tableau)
 		{
-			return control->closed_tableau;
+			return tableaucontrol->closed_tableau;
 		}
 		if (active_tableau->open_branches->members == 0)
 		{
@@ -298,7 +299,7 @@ ClauseTableau_p ConnectionTableauProofSearch(ProofState_p proofstate,
 		
 		ClauseTableau_p closed_tableau = ConnectionCalculusExtendOpenBranches(active_tableau, 
 																					   new_tableaux, 
-																					   control,
+																					   tableaucontrol,
 																					   distinct_tableaux,
 																					   extension_candidates,
 																					   max_depth);
@@ -310,7 +311,6 @@ ClauseTableau_p ConnectionTableauProofSearch(ProofState_p proofstate,
 		ClauseTableauFree(active_tableau);
 		active_tableau = distinct_tableaux->anchor->master_succ;
 	}
-	TableauControlFree(control);
 	return NULL;  // Went through all possible tableaux... failure
 }
 

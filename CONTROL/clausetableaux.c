@@ -1197,6 +1197,7 @@ TableauControl_p TableauControlAlloc()
 	handle->terms = NULL; // The termbank for this tableau control..
 	handle->number_of_extensions = 0;  // Total number of extensions done
 	handle->closed_tableau = NULL;
+	handle->satisfiable = false;
 	return handle;
 }
 
