@@ -586,31 +586,31 @@ void ClauseTableauPrintBranch(ClauseTableau_p branch)
 	{
 		assert(depth_check->label);
 		assert(depth_check->id >= 0);
-		printf("# %d,%d,%ld,%d ", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
+		fprintf(GlobalOut, "# %d,%d,%ld,%d ", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
 		if (depth_check->head_lit)
 		{
-			printf(" x");
+			fprintf(GlobalOut, " x");
 		}
 		if (!depth_check->open)
 		{
-			printf(" c");
+			fprintf(GlobalOut, " c");
 		}
 		if (depth_check->saturation_closed)
 		{
-			printf(" s");
+			fprintf(GlobalOut, " s");
 		}
-		printf("\n");
+		fprintf(GlobalOut, "\n");
 		ClausePrint(GlobalOut, depth_check->label, true);
 		
-		printf("\n");
+		fprintf(GlobalOut, "\n");
 		depth_check = depth_check->parent;
 	}
 	assert (depth_check->depth == 0);
 	assert (depth_check->label);
 	
-	printf("# %d,%d,%ld,%d \n", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
+	fprintf(GlobalOut, "# %d,%d,%ld,%d \n", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
 	ClausePrint(GlobalOut, depth_check->label, true);
-	printf("\n");
+	fprintf(GlobalOut, "\n");
 	//printf("\033[0m");
 }
 

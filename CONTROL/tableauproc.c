@@ -118,7 +118,7 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
    ClauseSetSplitConjectures(active, conjectures, non_conjectures);
    if (PListEmpty(conjectures))
    {
-		printf("# No conjectures.\n");
+		fprintf(GlobalOut, "# No conjectures.\n");
 		extension_candidates = ClauseSetCopy(bank, active);
 	}
 	else
@@ -131,7 +131,7 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
 		handle = handle->succ)
 		{
 			Clause_p conj_handle = handle->key.p_val;
-			printf("# Conjecture clause: ");ClausePrint(GlobalOut, conj_handle, true);printf("\n");
+			//printf("# Conjecture clause: ");ClausePrint(GlobalOut, conj_handle, true);printf("\n");
 			ClauseSetExtractEntry(conj_handle);
 			ClauseSetProp(conj_handle, CPTypeConjecture);
 			ClauseSetInsert(extension_candidates, conj_handle);
@@ -170,7 +170,7 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
    {
 		if (ClauseQueryProp(start_label, CPTypeConjecture))
 		{
-			printf("#");
+			fprintf(GlobalOut, "#");
 		}
 		beginning_tableau = ClauseTableauMasterCopy(initial_tab);
 		beginning_tableau->max_var = max_var;
@@ -178,7 +178,7 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
 		beginning_tableau = TableauStartRule(beginning_tableau, start_label);
 		start_label = start_label->succ;
 	}
-	printf("\n");
+	fprintf(GlobalOut, "\n");
 	if (active->members > 0)
 	{
 		while (!ClauseSetEmpty(active))
@@ -198,7 +198,7 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
 	PStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extionsion rules.
 	// New tableaux are added to the collection of distinct tableaux when the depth limit is increased, as new
 	// tableaux are already at the max depth.
-	printf("# Beginning tableaux proof search with %ld extension candidates.\n", extension_candidates->members);  
+	fprintf(GlobalOut, "# Beginning tableaux proof search with %ld extension candidates.\n", extension_candidates->members);  
 	for (int current_depth = 1; current_depth < max_depth; current_depth++)
 	{
 		assert(proofstate);
@@ -253,10 +253,10 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
 			fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
 			break;
 		}
-		printf("# Moving %ld tableaux to active set...\n", PStackGetSP(new_tableaux));
+		fprintf(GlobalOut, "# Moving %ld tableaux to active set...\n", PStackGetSP(new_tableaux));
 		long num_moved = move_new_tableaux_to_distinct(distinct_tableaux, new_tableaux);
 		if (num_moved == 0) printf("# No new tableaux???\n");
-		printf("# Increasing maximum depth to %d\n", current_depth + 1);
+		fprintf(GlobalOut, "# Increasing maximum depth to %d\n", current_depth + 1);
 	}
 	
 	PStackFree(new_tableaux);
