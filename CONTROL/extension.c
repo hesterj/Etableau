@@ -252,6 +252,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	ProofState_p proofstate = parent->master->state;
 	ProofControl_p proofcontrol = parent->master->control;
 	
+	fflush(GlobalOut);
 	if (parent->open_branches->anchor->succ->depth > 0)
 	{
 		BranchSaturation_p branch_saturation = BranchSaturationAlloc(proofstate, proofcontrol, parent->master);

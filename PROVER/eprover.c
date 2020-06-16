@@ -150,7 +150,6 @@ ProofState_p parse_spec(CLState_p state,
    proofstate = ProofStateAlloc(free_symb_prop_local);
    for(i=0; state->argv[i]; i++)
    {
-		printf("i:%d arg:%s\n", i, state->argv[i]);
       in = CreateScanner(StreamTypeFile, state->argv[i], true, NULL, true);
       ScannerSetFormat(in, parse_format_local);
       if(parse_format_local == AutoFormat && in->format == TSTPFormat)
@@ -387,6 +386,8 @@ int main(int argc, char* argv[])
    Derivation_p deriv;
 
    assert(argv[0]);
+   
+   //printf("# Problem name: %s\n", argv[argc-1]);
 
 #ifdef STACK_SIZE
    INCREASE_STACK_SIZE;
@@ -548,7 +549,7 @@ int main(int argc, char* argv[])
 
 	if (TableauOptions == 1)
 	{
-		TableauControl_p tableaucontrol = TableauControlAlloc();
+		TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures, argv[argc-1]);
 		//TB_p tableau_terms = TBAlloc(proofstate->terms->sig);
 		printf("# Number of axioms: %ld Number of unprocessed: %ld\n", proofstate->axioms->members, 
 																						 proofstate->unprocessed->members);
@@ -569,43 +570,13 @@ int main(int argc, char* argv[])
 														TableauDepth, 
 														TableauEquality);
 		}
-		if (success)
-		{
-			PStackPushP(proofstate->extract_roots, EmptyClauseAlloc());
-			if (!tableaucontrol->satisfiable)
-			{
-				if(neg_conjectures)
-				{
-					fprintf(GlobalOut, "# SZS status Theorem\n");
-				}
-				else
-				{
-					fprintf(GlobalOut, "# SZS status Unsatisfiable\n");
-				}
-			}
-			else
-			{
-				if (neg_conjectures)
-				{
-					fprintf(GlobalOut, "# SZS status CounterSatisfiable\n");
-				}
-				else
-				{
-					fprintf(GlobalOut, "# SZS status Satisfiable\n");
-				}
-			}
-		}
+		printf("# Exiting...\n");
 		ClauseSetFree(new_axioms);
 		//TBFree(tableau_terms);
-		if (!success)
-		{
-			TSTPOUT(GlobalOut, "ResourceOut");
-			TSTPOUT(GlobalOut, "GaveUp");
-		}
 		TableauControlFree(tableaucontrol);
 		exit(0);
 	}
-	
+	printf("# Warning: Approaching standard saturation\n");
 	// Main E saturation method
    if(!success  && !TableauOptions)  
    {

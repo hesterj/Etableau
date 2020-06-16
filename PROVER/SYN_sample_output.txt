@@ -1,0 +1,53 @@
+# No SInE strategy applied
+# Auto-Mode selected heuristic G_E___208_C18_F1_SE_CS_SP_PS_S5PRR_RG_S04AN
+# and selection function SelectComplexExceptUniqMaxHorn.
+#
+# Presaturation interreduction done
+# Number of axioms: 6 Number of unprocessed: 0
+# Tableaux proof search.
+# 6 active clauses before start rule.
+# Conjecture clause: cnf(i_0_6, negated_conjecture, (~big_p(X1)|~big_r(X1))).
+# 5 active clauses.  1 extension candidates.
+#
+# Beginning tableaux proof search with 6 extension candidates.
+# Moving 1 tableaux to active set...
+# Increasing maximum depth to 2
+# All 1 remaining open branches were closed with E.
+# Closed tableau found!
+# Success
+# SZS status Theorem for SYN054+1.p
+# SZS output start CNFRefutation for SYN054+1.p
+# 3,0,0,0  c s
+cnf(i_0_26, plain, (big_s(esk2_0))).
+# 2,2,5,0 
+cnf(i_0_11, plain, (big_q(esk2_0))).
+# 1,2,3,0 
+cnf(i_0_7, plain, (~big_p(esk1_0))).
+# 0,2,6,0 
+cnf(i_0_6, watchlist, (~big_p(esk1_0)|~big_r(esk1_0))).
+
+# 3,0,0,1  x c
+cnf(i_0_27, plain, (~big_q(esk2_0))).
+# 2,2,5,0 
+cnf(i_0_11, plain, (big_q(esk2_0))).
+# 1,2,3,0 
+cnf(i_0_7, plain, (~big_p(esk1_0))).
+# 0,2,6,0 
+cnf(i_0_6, watchlist, (~big_p(esk1_0)|~big_r(esk1_0))).
+
+# 2,0,0,1  x c
+cnf(i_0_12, plain, (big_p(esk1_0))).
+# 1,2,3,0 
+cnf(i_0_7, plain, (~big_p(esk1_0))).
+# 0,2,6,0 
+cnf(i_0_6, watchlist, (~big_p(esk1_0)|~big_r(esk1_0))).
+
+# 1,0,0,0  c s
+cnf(i_0_8, plain, (~big_r(esk1_0))).
+# 0,2,6,0 
+cnf(i_0_6, watchlist, (~big_p(esk1_0)|~big_r(esk1_0))).
+
+# SZS output end CNFRefutation for SYN054+1.p
+# Branches closed with saturation will be marked with an "s"
+# Proof search success!
+# Exiting...

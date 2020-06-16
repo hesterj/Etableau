@@ -156,6 +156,8 @@ bool TableauDominatesNode(ClauseTableau_p tab, ClauseTableau_p node);
 typedef struct tableaucontrol_cell
 {
 	int number_of_extensions;
+	long neg_conjectures;
+	char *problem_name;
 	PStack_p new_tableaux;
 	ClauseTableau_p closed_tableau;
 	TB_p terms;
@@ -166,7 +168,7 @@ typedef struct tableaucontrol_cell
 #define TableauControlCellFree(junk) SizeFree(junk, sizeof(TableauControlCell))
 
 
-TableauControl_p TableauControlAlloc();
+TableauControl_p TableauControlAlloc(long neg_conjectures, char *problem_name);
 void TableauControlFree(TableauControl_p trash);
 
 #endif

@@ -1,222 +1,40 @@
 # No SInE strategy applied
-# Auto-Mode selected heuristic G_E___208_C18_F1_SE_CS_SP_PS_S5PRR_S2mI
-# and selection function SelectCQArNTNpEqFirst.
+# Auto-Mode selected heuristic G_E___208_C18_F1_SE_CS_SP_PS_S5PRR_RG_S04AN
+# and selection function SelectComplexExceptUniqMaxHorn.
 #
 # Presaturation interreduction done
-# Number of axioms: 82 Number of unprocessed: 73
+# Number of axioms: 6 Number of unprocessed: 0
 # Tableaux proof search.
-# 73 active clauses before start rule.
-# Conjecture clause: cnf(i_0_80, negated_conjecture, (~disjoint(esk11_0,esk13_0))).
-# Conjecture clause: cnf(i_0_81, negated_conjecture, (disjoint(esk12_0,esk13_0))).
-# Conjecture clause: cnf(i_0_82, negated_conjecture, (subset(esk11_0,esk12_0))).
-# 70 active clauses.  3 extension candidates.
-###
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
+# 6 active clauses before start rule.
+# Conjecture clause: cnf(i_0_6, negated_conjecture, (~big_p(X1)|~big_r(X1))).
+# 5 active clauses.  1 extension candidates.
+#
+# Beginning tableaux proof search with 6 extension candidates.
 # All 2 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 2 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# All 1 remaining open branches were closed with E.
-# Moving 25 tableaux to active set...
+# Moving 1 tableaux to active set...
 # Increasing maximum depth to 2
-# Begin proof output
+# SZS status Theorem for SYN054+1.p
+# SZS output start CNFRefutation for SYN054+1.p
 # 2,0,0,0  c s
-cnf(i_0_531, plain, (subset(set_difference(esk11_0,set_difference(esk11_0,X129)),set_difference(esk12_0,set_difference(esk12_0,X129))))).
-# 1,2,57,0 
-cnf(i_0_103, plain, (subset(esk11_0,esk12_0))).
-# 0,1,82,0 
-cnf(i_0_82, watchlist, (subset(esk11_0,esk12_0))).
+cnf(i_0_11, plain, (big_q(esk2_0))).
+# 1,2,3,0 
+cnf(i_0_7, plain, (~big_p(esk1_0))).
+# 0,2,6,0 
+cnf(i_0_6, watchlist, (~big_p(esk1_0)|~big_r(esk1_0))).
 
 # 2,0,0,1  x c
-cnf(i_0_532, plain, (~subset(esk11_0,esk12_0))).
-# 1,2,57,0 
-cnf(i_0_103, plain, (subset(esk11_0,esk12_0))).
-# 0,1,82,0 
-cnf(i_0_82, watchlist, (subset(esk11_0,esk12_0))).
+cnf(i_0_12, plain, (big_p(esk1_0))).
+# 1,2,3,0 
+cnf(i_0_7, plain, (~big_p(esk1_0))).
+# 0,2,6,0 
+cnf(i_0_6, watchlist, (~big_p(esk1_0)|~big_r(esk1_0))).
 
-# End proof output
+# 1,0,0,0  c s
+cnf(i_0_8, plain, (~big_r(esk1_0))).
+# 0,2,6,0 
+cnf(i_0_6, watchlist, (~big_p(esk1_0)|~big_r(esk1_0))).
+
+# SZS output end CNFRefutation for SYN054+1.p
 # Branches closed with saturation will be marked with an "s"
-# Connection tableau proof search finished.
 # Proof search success!
-# SZS status Theorem
+# Exiting...

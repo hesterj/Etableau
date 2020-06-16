@@ -1245,13 +1245,15 @@ long ClauseGetIdent(Clause_p clause)
 	return ident;
 }
 
-TableauControl_p TableauControlAlloc()
+TableauControl_p TableauControlAlloc(long neg_conjectures, char *problem_name)
 {
 	TableauControl_p handle = TableauControlCellAlloc();
 	handle->terms = NULL; // The termbank for this tableau control..
 	handle->number_of_extensions = 0;  // Total number of extensions done
 	handle->closed_tableau = NULL;
 	handle->satisfiable = false;
+	handle->problem_name = problem_name;
+	handle->neg_conjectures = neg_conjectures;
 	return handle;
 }
 

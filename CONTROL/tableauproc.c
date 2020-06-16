@@ -197,7 +197,8 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
 	VarBankPushEnv(bank->vars);
 	PStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extionsion rules.
 	// New tableaux are added to the collection of distinct tableaux when the depth limit is increased, as new
-	// tableaux are already at the max depth.  
+	// tableaux are already at the max depth.
+	printf("# Beginning tableaux proof search with %ld extension candidates.\n", extension_candidates->members);  
 	for (int current_depth = 1; current_depth < max_depth; current_depth++)
 	{
 		assert(proofstate);
@@ -206,7 +207,7 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
 		assert(extension_candidates);
 		assert(current_depth);
 		assert(new_tableaux);
-		int max_num_threads = 4;
+		int max_num_threads = 2;
 		#pragma omp parallel num_threads(max_num_threads)
 		{
 			#pragma omp single
@@ -222,10 +223,33 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
 		}
 		if (resulting_tab)
 		{
+			long neg_conjectures = tableaucontrol->neg_conjectures;
+			if (!tableaucontrol->satisfiable)
+			{
+				if(neg_conjectures)
+				{
+					fprintf(GlobalOut, "# SZS status Theorem for %s\n", tableaucontrol->problem_name);
+				}
+				else
+				{
+					fprintf(GlobalOut, "# SZS status Unsatisfiable for %s\n", tableaucontrol->problem_name);
+				}
+			}
+			else
+			{
+				if (neg_conjectures)
+				{
+					fprintf(GlobalOut, "# SZS status CounterSatisfiable for %s\n", tableaucontrol->problem_name);
+				}
+				else
+				{
+					fprintf(GlobalOut, "# SZS status Satisfiable for %s\n", tableaucontrol->problem_name);
+				}
+			}
 			//ClauseTableauPrintDOTGraph(resulting_tab);
-			fprintf(GlobalOut, "# Begin proof output\n");
+			fprintf(GlobalOut, "# SZS output start CNFRefutation for %s\n", tableaucontrol->problem_name);
 			ClauseTableauPrint(resulting_tab);
-			fprintf(GlobalOut, "# End proof output\n");
+			fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
 			fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
 			break;
 		}
@@ -233,19 +257,6 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
 		long num_moved = move_new_tableaux_to_distinct(distinct_tableaux, new_tableaux);
 		if (num_moved == 0) printf("# No new tableaux???\n");
 		printf("# Increasing maximum depth to %d\n", current_depth + 1);
-	}
-   if (!resulting_tab) // failure
-   {
-	  printf("# ConnectionTableauProofSearch returns NULL. Failure.\n");
-	  return NULL;
-   }
-   if (resulting_tab) // success
-   {
-		assert(resulting_tab == tableaucontrol->closed_tableau);
-		printf("# Proof search success!\n");
-		//ClauseTableauPrintDOTGraph(resulting_tab);
-		Clause_p empty = EmptyClauseAlloc();
-		return empty;
 	}
 	
 	PStackFree(new_tableaux);
@@ -259,6 +270,20 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
    {
 		TableauMasterSetFree(distinct_tableaux);
 		distinct_tableaux = NULL;
+	}
+   if (!resulting_tab) // failure
+   {
+	  fprintf(GlobalOut, "# ConnectionTableauProofSearch returns NULL. Failure.\n");
+	  fprintf(GlobalOut, "# SZS status ResourceOut for %s\n", tableaucontrol->problem_name);
+	  return NULL;
+   }
+   if (resulting_tab) // success
+   {
+		//assert(resulting_tab == tableaucontrol->closed_tableau);
+		printf("# Proof search success!\n");
+		//ClauseTableauPrintDOTGraph(resulting_tab);
+		Clause_p empty = EmptyClauseAlloc();
+		return empty;
 	}
 	
 	return NULL;

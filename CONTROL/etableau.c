@@ -168,13 +168,11 @@ int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, Br
 			{
 				process_branch(proofstate, proofcontrol, pool, return_status, branches, i);
 			}
-			#pragma omp atomic
-			process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
 		}
 	}
-	
-	//~ #pragma omp task
-	//~ process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
+	#pragma omp taskwait
+	#pragma omp task
+	process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
 	
 	// Exit and return to tableaux proof search
 	return 0;
