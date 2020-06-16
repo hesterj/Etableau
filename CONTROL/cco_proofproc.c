@@ -1342,10 +1342,10 @@ void ProofStateInit(ProofState_p state, ProofControl_p control)
 
    OUTPRINT(1, "# Initializing proof state\n");
 
-   assert(ClauseSetEmpty(state->processed_pos_rules));
-   assert(ClauseSetEmpty(state->processed_pos_eqns));
-   assert(ClauseSetEmpty(state->processed_neg_units));
-   assert(ClauseSetEmpty(state->processed_non_units));
+   //assert(ClauseSetEmpty(state->processed_pos_rules));
+   //assert(ClauseSetEmpty(state->processed_pos_eqns));
+   //assert(ClauseSetEmpty(state->processed_neg_units));
+   //assert(ClauseSetEmpty(state->processed_non_units));
 
    if(!state->fvi_initialized)
    {

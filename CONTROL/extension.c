@@ -333,6 +333,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 				if (maybe_extended->open_branches->members == 0)
 				{
 					fprintf(GlobalOut, "# Closed tableau found!\n");
+					assert(maybe_extended->master->label);
 					tableau_control->closed_tableau = maybe_extended->master;
 					ClauseSetFree(new_leaf_clauses);
 					return extensions_done;

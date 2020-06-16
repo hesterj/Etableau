@@ -234,19 +234,6 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
 		if (num_moved == 0) printf("# No new tableaux???\n");
 		printf("# Increasing maximum depth to %d\n", current_depth + 1);
 	}
-	
-	PStackFree(new_tableaux);
-	ClauseSetFree(extension_candidates);
-	ClauseSetFree(unit_axioms);
-	VarBankPopEnv(bank->vars);
-   
-   printf("# Connection tableau proof search finished.\n");
-
-   if (distinct_tableaux) // Free the tableux
-   {
-		TableauMasterSetFree(distinct_tableaux);
-		distinct_tableaux = NULL;
-	}
    if (!resulting_tab) // failure
    {
 	  printf("# ConnectionTableauProofSearch returns NULL. Failure.\n");
@@ -254,11 +241,27 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
    }
    if (resulting_tab) // success
    {
+		assert(resulting_tab == tableaucontrol->closed_tableau);
+		ClauseTableauPrintDOTGraph(resulting_tab);
 		printf("# Proof search success!\n");
 		//ClauseTableauPrintDOTGraph(resulting_tab);
 		Clause_p empty = EmptyClauseAlloc();
 		return empty;
 	}
+	
+	PStackFree(new_tableaux);
+	ClauseSetFree(extension_candidates);
+	ClauseSetFree(unit_axioms);
+	VarBankPopEnv(bank->vars);
+   
+   //printf("# Connection tableau proof search finished.\n");
+
+   if (distinct_tableaux) // Free the tableaux
+   {
+		TableauMasterSetFree(distinct_tableaux);
+		distinct_tableaux = NULL;
+	}
+	
 	return NULL;
 }
 

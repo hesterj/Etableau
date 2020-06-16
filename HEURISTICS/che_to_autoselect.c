@@ -879,7 +879,9 @@ OCB_p  TOCreateOrdering(ProofState_p state, OrderParms_p params,
 {
    OCB_p handle;
    bool prec_by_weight = pre_precedence?false:true;
-
+	
+	assert(state);
+	assert(params);
    /* printf("TOCreateOrdering(%d, %d, %d, %ld)\n", params->ordertype,
       params->to_weight_gen, params->to_prec_gen,
       params->to_const_weight); */
