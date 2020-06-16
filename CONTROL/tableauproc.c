@@ -242,7 +242,6 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
    if (resulting_tab) // success
    {
 		assert(resulting_tab == tableaucontrol->closed_tableau);
-		ClauseTableauPrintDOTGraph(resulting_tab);
 		printf("# Proof search success!\n");
 		//ClauseTableauPrintDOTGraph(resulting_tab);
 		Clause_p empty = EmptyClauseAlloc();

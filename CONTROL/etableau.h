@@ -6,6 +6,7 @@ typedef struct branch_saturation
 	ProofState_p proofstate;
 	ProofControl_p proofcontrol;
 	ClauseTableau_p master;
+	int num_open_branches;
 }BranchSaturationCell, *BranchSaturation_p;
 
 #define BranchSaturationCellAlloc()    (BranchSaturationCell*)SizeMalloc(sizeof(BranchSaturationCell))

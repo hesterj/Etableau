@@ -246,6 +246,51 @@ long SubstPrint(FILE* out, Subst_p subst, Sig_p sig, DerefType deref)
    return (long)limit;
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: SubstPrint()
+//
+//   Print a substitution. Note: Due to the different interpretations
+//   of terms (follow/ignore bindings) and share variable, printing
+//   substitutions with deref=DEREF_ALWAYS may lead to
+//   unpredictable behaviour (if e.g. the substitution was generated
+//   by matching x onto f(x)). Returns number of variables in subst
+//   (well, why not...).
+//
+// Global Variables: -
+//
+// Side Effects    : Output
+//
+/----------------------------------------------------------------------*/
+
+long SubstDStrPrint(DStr_p str, Subst_p subst, Sig_p sig, DerefType deref)
+{
+   PStackPointer i, limit;
+	FILE *out;
+	char *buf;
+	size_t len;
+	
+	out = open_memstream(&buf, &len);
+   limit = PStackGetSP(subst);
+   fprintf(out, "{");
+   if(limit)
+   {
+      SubstBindingPrint(out,  PStackElementP(subst,0), sig, deref);
+      {
+         for(i=1; i<limit;i++)
+         {
+            fprintf(out, ", ");
+            SubstBindingPrint(out,  PStackElementP(subst,i), sig,
+                              deref);
+         }
+      }
+   }
+   fprintf(out, "}");
+   fclose(out);
+	DStrAppendStr(str, buf);
+	free(buf);
+   return (long)limit;
+}
 
 /*-----------------------------------------------------------------------
 //

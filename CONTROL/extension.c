@@ -157,6 +157,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	
 	Clause_p head_literal_clause = NULL;
 	TB_p bank = parent->terms;
+	Sig_p sig = bank->sig;
 	bool regular = true;
 	ClauseSet_p new_leaf_clauses_set = ClauseSetAlloc(); // Copy the clauses of the extension
 	for (Clause_p handle = extension->other_clauses->anchor->succ;
@@ -193,6 +194,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 			parent->children[p]->open = false; 
 			parent->children[p]->mark_int = 1;
 			parent->children[p]->head_lit = true;
+			SubstDStrPrint(parent->children[p]->info, extension->subst, sig, DEREF_ONCE); 
 		}
 		else
 		{

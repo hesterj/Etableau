@@ -160,8 +160,6 @@ int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, Br
 	int raw_status = 0, status = OTHER_ERROR;
 	pid_t worker = 0, respid;
 
-	fflush(GlobalOut);
-	
 	#pragma omp task
 	{
 		for (int i=0; i<num_open_branches; i++)
@@ -170,11 +168,13 @@ int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, Br
 			{
 				process_branch(proofstate, proofcontrol, pool, return_status, branches, i);
 			}
+			#pragma omp atomic
+			process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
 		}
-		// Process any results
-		#pragma omp taskwait
-		process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
 	}
+	
+	//~ #pragma omp task
+	//~ process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
 	
 	// Exit and return to tableaux proof search
 	return 0;
@@ -219,6 +219,7 @@ int process_saturation_output(TableauControl_p tableau_control,
 					TableauSetExtractEntry(closed_branch);
 					closed_branch->open = false;
 					closed_branch->saturation_closed = true;
+					DStrAppendStr(closed_branch->info, "Saturation closed");
 					return_status[i] = PROOF_FOUND;
 					successful_count++;
 					break;

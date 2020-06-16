@@ -81,6 +81,7 @@ int ClauseTableauDifference(ClauseTableau_p higher, ClauseTableau_p lower);
 
 void ClauseTableauScoreActive(ClauseTableau_p tab);
 void ClauseTableauPrint(ClauseTableau_p tab);
+void ClauseTableauPrint2(ClauseTableau_p tab);
 
 void HCBClauseSetEvaluate(HCB_p hcb, ClauseSet_p clauses);
 
@@ -136,6 +137,7 @@ TableauSet_p TableauSetAlloc();
 TableauSet_p TableauSetCopy(TableauSet_p set);
 void TableauSetInsert(TableauSet_p list, ClauseTableau_p set);
 void ClauseTableauPrintBranch(ClauseTableau_p branch);
+void ClauseTableauPrintBranch2(ClauseTableau_p branch);
 ClauseTableau_p   TableauSetExtractFirst(TableauSet_p list);
 ClauseTableau_p TableauSetExtractEntry(ClauseTableau_p set);
 void TableauSetFree(TableauSet_p handle);

@@ -58,6 +58,7 @@ PStackPointer SubstNormTerm(Term_p term, Subst_p subst, VarBank_p vars, Sig_p si
 
 bool          SubstBindingPrint(FILE* out, Term_p var, Sig_p sig, DerefType deref);
 long          SubstPrint(FILE* out, Subst_p subst, Sig_p sig, DerefType deref);
+long          SubstDStrPrint(DStr_p str, Subst_p subst, Sig_p sig, DerefType deref);
 bool          SubstIsRenaming(Subst_p subt);
 
 PStackPointer SubstBindAppVar(Subst_p subst, Term_p var,
@@ -68,6 +69,7 @@ void          SubstBacktrackSkolem(Subst_p subst);
 void          SubstSkolemizeTerm(Term_p term, Subst_p subst, Sig_p sig);
 void          SubstCompleteInstance(Subst_p subst, Term_p term,
                                     Term_p default_binding);
+                                    
 
 
 /*-----------------------------------------------------------------------

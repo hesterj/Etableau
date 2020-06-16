@@ -22,6 +22,8 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 		bool leaf_regular = ClauseTableauIsLeafRegular(temp);
 		if (leaf_regular)
 		{
+			
+			SubstDStrPrint(tab->info, subst, tab->terms->sig, DEREF_ONCE);
 			ClauseTableauApplySubstitution(tab, subst);
 		}
 		ClauseTableauFree(temp->master);

@@ -26,7 +26,7 @@ ClauseTableau_p ClauseTableauAlloc()
 	handle->saturation_closed = false;
 	handle->id = 0;
 	handle->max_var = 0;
-	handle->info = NULL;
+	handle->info = DStrAlloc();
 	handle->master_set = NULL;
 	handle->active_branch = NULL;
 	handle->pred = NULL;
@@ -59,10 +59,11 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
 	handle->arity = tab->arity;
-	handle->info = NULL;
+	char *info = DStrCopy(tab->info);
+	handle->info = DStrAlloc();
+	DStrAppendStr(handle->info, info);
 	handle->depth = tab->depth;
 	handle->position = tab->position;
-	
 	assert(handle->depth == 0);
 	assert(tab->unit_axioms);
 	
@@ -139,7 +140,9 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	assert(parent->unit_axioms);
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
 	handle->unit_axioms = parent->unit_axioms;
-	handle->info = NULL;
+	char *info = DStrCopy(tab->info);
+	handle->info = DStrAlloc();
+	DStrAppendStr(handle->info, info);
 	handle->open_branches = parent->open_branches;
 	handle->control = parent->control;
 	handle->set = NULL;
@@ -233,7 +236,7 @@ ClauseTableau_p ClauseTableauChildAlloc(ClauseTableau_p parent, int position)
 	handle->control = parent->control;
 	handle->label = NULL;
 	handle->max_var = parent->max_var;
-	handle->info = NULL;
+	handle->info = DStrAlloc();
 	handle->active_branch = NULL;
 	handle->set = NULL;
 	handle->mark_int = 0;
@@ -279,7 +282,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->mark_int = 0;
 	handle->folded_up = 0;
 	handle->folding_labels = NULL;
-	handle->info = NULL;
+	handle->info = DStrAlloc();
 	handle->active_branch = NULL;
 	handle->master_set = NULL;
 	handle->pred = NULL;
@@ -512,6 +515,18 @@ void ClauseTableauPrint(ClauseTableau_p tab)
 	PStackFree(leaves);
 }
 
+void ClauseTableauPrint2(ClauseTableau_p tab)
+{
+	PStack_p leaves = PStackAlloc();
+	ClauseTableauCollectLeavesStack(tab, leaves);
+	for (PStackPointer p = 0; p<PStackGetSP(leaves); p++)
+	{
+		ClauseTableau_p handle = PStackElementP(leaves, p);
+		ClauseTableauPrintBranch2(handle);printf("\n");
+	}
+	PStackFree(leaves);
+}
+
 /*  Checks to see if the node dominates tab, properly.
  *  i/e if they are the same, return false;
  * 
@@ -594,6 +609,45 @@ void ClauseTableauPrintBranch(ClauseTableau_p branch)
 	assert (depth_check->label);
 	
 	printf("# %d,%d,%ld,%d \n", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
+	ClausePrint(GlobalOut, depth_check->label, true);
+	printf("\n");
+	//printf("\033[0m");
+}
+
+void ClauseTableauPrintBranch2(ClauseTableau_p branch)
+{
+	ClauseTableau_p depth_check = branch;
+	assert(depth_check);
+	//printf("\033[1;33m");
+	while (depth_check->depth != 0)
+	{
+		assert(depth_check->label);
+		assert(depth_check->id >= 0);
+		printf("# Depth: %d, Arity: %d, Id: %ld, Mark: %d\n", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
+		printf("# Properties:");
+		if (depth_check->head_lit)
+		{
+			printf(" Head literal.");
+		}
+		if (depth_check->saturation_closed)
+		{
+			printf(" Closed by saturation.");
+		}
+		else if (!depth_check->open)
+		{
+			printf(" Closed by extension or closure.");
+		}
+		printf("\n");
+		ClausePrint(GlobalOut, depth_check->label, true);
+		
+		printf("\n");
+		depth_check = depth_check->parent;
+	}
+	assert (depth_check->depth == 0);
+	assert (depth_check->label);
+	
+	printf("# Depth: %d, Arity: %d, Id: %ld, Mark: %d\n", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
+	printf("# Root.\n");
 	ClausePrint(GlobalOut, depth_check->label, true);
 	printf("\n");
 	//printf("\033[0m");

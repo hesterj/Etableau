@@ -150,6 +150,7 @@ ProofState_p parse_spec(CLState_p state,
    proofstate = ProofStateAlloc(free_symb_prop_local);
    for(i=0; state->argv[i]; i++)
    {
+		printf("i:%d arg:%s\n", i, state->argv[i]);
       in = CreateScanner(StreamTypeFile, state->argv[i], true, NULL, true);
       ScannerSetFormat(in, parse_format_local);
       if(parse_format_local == AutoFormat && in->format == TSTPFormat)
@@ -183,6 +184,8 @@ ProofState_p parse_spec(CLState_p state,
    if(error_on_empty_local && (parsed_ax_no == 0))
    {
 #ifdef PRINT_SOMEERRORS_STDOUT
+
+
       fprintf(GlobalOut, "# Error: Input file contains no clauses or formulas\n");
       TSTPOUT(GlobalOut, "InputError");
 #endif
@@ -573,16 +576,23 @@ int main(int argc, char* argv[])
 			{
 				if(neg_conjectures)
 				{
-					TSTPOUT(GlobalOut, "Theorem");
+					fprintf(GlobalOut, "# SZS status Theorem\n");
 				}
 				else
 				{
-					TSTPOUT(GlobalOut, "Unsatisfiable");
+					fprintf(GlobalOut, "# SZS status Unsatisfiable\n");
 				}
 			}
 			else
 			{
-				TSTPOUT(GlobalOut, neg_conjectures?"CounterSatisfiable":"Satisfiable");
+				if (neg_conjectures)
+				{
+					fprintf(GlobalOut, "# SZS status CounterSatisfiable\n");
+				}
+				else
+				{
+					fprintf(GlobalOut, "# SZS status Satisfiable\n");
+				}
 			}
 		}
 		ClauseSetFree(new_axioms);
