@@ -208,10 +208,10 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
 		assert(current_depth);
 		assert(new_tableaux);
 		int max_num_threads = 2;
-		#pragma omp parallel num_threads(max_num_threads)
-		{
-			#pragma omp single
-			{
+		//~ #pragma omp parallel num_threads(max_num_threads)
+		//~ {
+			//~ #pragma omp single
+			//~ {
 				resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
 																			proofstate, 
 																			proofcontrol, 
@@ -219,8 +219,8 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
 																			extension_candidates, 
 																			current_depth,
 																			new_tableaux);
-			}
-		}
+			//~ }
+		//~ }
 		if (resulting_tab)
 		{
 			long neg_conjectures = tableaucontrol->neg_conjectures;

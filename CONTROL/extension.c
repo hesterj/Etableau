@@ -257,8 +257,10 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	{
 		BranchSaturation_p branch_saturation = BranchSaturationAlloc(proofstate, proofcontrol, parent->master);
 		// The branch saturation object is freed by AttemptToCloseBranchesWithSuperposition
+		// Trying to keep one object in extensions and saturations
 		AttemptToCloseBranchesWithSuperposition(tableau_control, branch_saturation);
 	}
+	fflush(GlobalOut);
 	
 	// The parent may have been completely closed and extracted
 	// from the collection of open branches during the foldup close

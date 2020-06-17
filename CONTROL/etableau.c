@@ -46,10 +46,12 @@ void process_branch(ProofState_p proofstate,
 		assert(branches[i]);
 		SilentTimeOut = true;
 		int branch_status = ECloseBranch(proofstate, proofcontrol, branch);
-		//printf("%ld processed clauses, status %d, branch %p\n", ProofStateProcCardinality(proofstate), branch_status, branch);
+		#ifndef DNDEBUG
+		fprintf(GlobalOut, "# FORK FINAL REPORT %ld processed clauses, branch_status %d, branch %p\n", ProofStateProcCardinality(proofstate), branch_status, branch);
+		#endif
 		exit(branch_status);
 	}
-	else if (worker > 0)
+	else if (worker > 0)  // parent process
 	{
 		pool[i] = worker;
 		return_status[i] = RESOURCE_OUT;
@@ -119,7 +121,7 @@ int ECloseBranch(ProofState_p proofstate,
 							 LLONG_MAX, LONG_MAX);
 	if (success)
 	{
-		//fprintf(GlobalOut, "Saturate returned empty clause.\n");
+		fprintf(GlobalOut, "Saturate returned empty clause.\n");
 		//ProofStateStatisticsPrint(GlobalOut, proofstate);
 		return PROOF_FOUND;
 	}
@@ -134,20 +136,27 @@ int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, Br
 	ProofState_p proofstate = jobs->proofstate;
 	ProofControl_p proofcontrol = jobs->proofcontrol;
 	ClauseTableau_p master = jobs->master;
-	BranchSaturationFree(jobs);
-	
 	TableauSet_p open_branches = master->open_branches;
+	
+	BranchSaturationFree(jobs);  // The controlling struct can be free'd
+	
 	int num_open_branches = (int) open_branches->members;
-	pid_t pool[num_open_branches];
-	int return_status[num_open_branches];
 	
 	// Collect the local branches in an array
+	pid_t pool[num_open_branches];  // Uninitialized array
+	int return_status[num_open_branches]; // Uninitialized array
+	ClauseTableau_p branches[num_open_branches]; // Uninitialized array
+	// Initialize the arrays: We are only interested in local branches
 	ClauseTableau_p handle = open_branches->anchor->succ;
-	ClauseTableau_p branches[num_open_branches];
 	for (int i=0; i<num_open_branches; i++)
 	{
 		assert(handle != master->open_branches->anchor);
-		if (BranchIsLocal(handle)) branches[i] = handle;
+		if (BranchIsLocal(handle))
+		{
+			branches[i] = handle;
+			pool[i] = 0;
+			return_status[i] = RESOURCE_OUT;
+		}
 		else 
 		{
 			branches[i] = NULL;
@@ -159,20 +168,31 @@ int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, Br
 	
 	int raw_status = 0, status = OTHER_ERROR;
 	pid_t worker = 0, respid;
-
-	#pragma omp task
+	
+	for (int i=0; i<num_open_branches; i++)
 	{
-		for (int i=0; i<num_open_branches; i++)
+		if (branches[i]) // Branch is local, so we will try to close it
 		{
-			if (branches[i]) // Branch is local, so we will try to close it
-			{
-				process_branch(proofstate, proofcontrol, pool, return_status, branches, i);
-			}
+			fprintf(GlobalOut, "# Processing branch %d\n", i);
+			process_branch(proofstate, proofcontrol, pool, return_status, branches, i);
 		}
 	}
-	#pragma omp taskwait
-	#pragma omp task
 	process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
+
+	//~ #pragma omp task
+	//~ {
+		//~ for (int i=0; i<num_open_branches; i++)
+		//~ {
+			//~ if (branches[i]) // Branch is local, so we will try to close it
+			//~ {
+				//~ fprintf(GlobalOut, "# Processing branch %d\n", i);
+				//~ process_branch(proofstate, proofcontrol, pool, return_status, branches, i);
+			//~ }
+		//~ }
+		//~ process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
+	//~ }
+	//~ #pragma omp taskwait
+	//~ #pragma omp task
 	
 	// Exit and return to tableaux proof search
 	return 0;
@@ -196,14 +216,15 @@ int process_saturation_output(TableauControl_p tableau_control,
 			if (worker == -1) break;
 			assert(branches[i]);
 			respid = waitpid(worker, &raw_status, 0);
-			//printf("Fork %d dead, respid %d, status %d.\n", worker, respid, raw_status);
 			if (WIFEXITED(raw_status))
          {
+				fprintf(GlobalOut, "# Fork %d dead, respid %d, status %d.\n", worker, respid, raw_status);
             status = WEXITSTATUS(raw_status);
             if (status == SATISFIABLE)
             {
 					return_status[i] = SATISFIABLE;
 					ClauseTableau_p satisfiable_branch = branches[i];
+					fprintf(GlobalOut, "Satisfiable branch!\n");
 					tableau_control->closed_tableau = satisfiable_branch;
 					tableau_control->satisfiable = true;
 					successful_count++;
@@ -211,7 +232,7 @@ int process_saturation_output(TableauControl_p tableau_control,
 				}
             if (status == PROOF_FOUND)
             {
-					//printf("Branch %d detected with signal PROOF_FOUND, %d\n", i, status);
+					fprintf(GlobalOut, "# Branch %d detected with exit status %d, raw status %d\n", i, status, raw_status);
 					assert(respid);
 					closed_branch = branches[i];
 					TableauSetExtractEntry(closed_branch);
