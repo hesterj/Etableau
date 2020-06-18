@@ -212,13 +212,13 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
 		//~ {
 			//~ #pragma omp single
 			//~ {
-				resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
-																			proofstate, 
-																			proofcontrol, 
-																			distinct_tableaux,
-																			extension_candidates, 
-																			current_depth,
-																			new_tableaux);
+		resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
+																	proofstate, 
+																	proofcontrol, 
+																	distinct_tableaux,
+																	extension_candidates, 
+																	current_depth,
+																	new_tableaux);
 			//~ }
 		//~ }
 		if (resulting_tab)
@@ -246,7 +246,7 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
 					fprintf(GlobalOut, "# SZS status Satisfiable for %s\n", tableaucontrol->problem_name);
 				}
 			}
-			//ClauseTableauPrintDOTGraph(resulting_tab);
+			ClauseTableauPrintDOTGraph(resulting_tab);
 			fprintf(GlobalOut, "# SZS output start CNFRefutation for %s\n", tableaucontrol->problem_name);
 			ClauseTableauPrint(resulting_tab);
 			fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);

@@ -70,6 +70,9 @@ void     ProofStateResetProcessed(ProofState_p state,
                                   ProofControl_p control);
 Clause_p ProcessClause(ProofState_p state, ProofControl_p control,
                        long answer_limit);
+Clause_p ProcessSpecificClause(ProofState_p state, ProofControl_p control,
+							  Clause_p clause,
+                       long answer_limit);
 Clause_p Saturate(ProofState_p state, ProofControl_p control, long
                   step_limit, long proc_limit, long unproc_limit, long
                   total_limit,  long generated_limit, long tb_insert_limit,
