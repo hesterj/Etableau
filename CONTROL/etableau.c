@@ -63,75 +63,6 @@ void process_branch(ProofState_p proofstate,
 	}
 }
 
-int ECloseBranch(ProofState_p proofstate, 
-					  ProofControl_p proofcontrol, 
-					  ClauseTableau_p branch)
-{
-	ClauseSet_p branch_clauses = ClauseSetAlloc();
-	ClauseTableau_p node = branch;
-	assert(proofstate);
-	assert(proofcontrol);
-	long proc_limit = 500;
-	
-	// Collect the clauses of the branch
-	
-	while (node)
-	{
-		if (node != node->master)
-		{
-			Clause_p label = node->label;
-			label->weight = ClauseStandardWeight(label);
-			ClauseSetIndexedInsertClause(branch_clauses, label);
-		}
-		if (node->folding_labels)
-		{
-			ClauseSetIndexedInsertClauseSet(branch_clauses, node->folding_labels);
-		}
-		node = node->parent;
-	}
-	
-	// Switch the unprocessed set with branch_clauses, so that the branches are processed first
-	
-	ClauseSetSetProp(branch_clauses, CPInitial);
-	ClauseSetSetProp(branch_clauses, CPLimitedRW);
-	
-	ClauseSet_p axioms = proofstate->axioms;
-	ClauseSet_p unproc = proofstate->unprocessed;
-	proofstate->axioms = branch_clauses;
-	proofstate->unprocessed = ClauseSetAlloc();
-	ProofStateInit(proofstate, proofcontrol);
-	Clause_p success = Saturate(proofstate, proofcontrol, LONG_MAX,
-							 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
-							 LLONG_MAX, LONG_MAX);
-	if (success)
-	{
-		fprintf(GlobalOut, "# Superposition contradiction purely within branch! %p\n", success);
-		ProofStateStatisticsPrint(GlobalOut, proofstate);
-		return PROOF_FOUND;
-	}
-	// Undo the switching so that we can proceed with normal saturation
-	assert(proofstate->unprocessed->members == 0);
-	ClauseSetFree(proofstate->unprocessed);
-	proofstate->axioms = axioms;
-	proofstate->unprocessed = unproc;
-	assert(proofstate->unprocessed);
-	ClauseSetFree(branch_clauses);
-	
-	// Now do normal saturation
-	success = Saturate(proofstate, proofcontrol, 1000,
-							 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
-							 LLONG_MAX, LONG_MAX);
-	if (success)
-	{
-		fprintf(GlobalOut, "# Saturate returned empty clause %p.\n", success);
-		ProofStateStatisticsPrint(GlobalOut, proofstate);
-		return PROOF_FOUND;
-	}
-	//printf("Returning RESOURCE_OUT\n");
-	ProofStateStatisticsPrint(GlobalOut, proofstate);
-	return RESOURCE_OUT;
-}
-
 int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proofcontrol, 
 					  ClauseTableau_p branch)
 {
@@ -139,7 +70,7 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 	ClauseTableau_p node = branch;
 	assert(proofstate);
 	assert(proofcontrol);
-	long proc_limit = 500;
+	//long proc_limit = 500;
 	
 	// Collect the clauses of the branch
 	
@@ -154,14 +85,16 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 			success = ProcessSpecificClause(proofstate, proofcontrol, label, LONG_MAX);
 			if (success)
 			{
-				//~ fprintf(GlobalOut, "# Saturate returned empty clause %p.\n", success);
-				//~ ProofStateStatisticsPrint(GlobalOut, proofstate);
+				//fprintf(GlobalOut, "# Saturate returned empty clause on branch.\n");
+				//ProofStateStatisticsPrint(GlobalOut, proofstate);
 				return PROOF_FOUND;
 			}
 		}
 		//~ if (node->folding_labels) // Process the folding labels, if there are any
 		//~ {
 			//~ ClauseSetSetProp(node->folding_labels, CPInitial);
+			//~ printf("# Folded up clauses:\n");
+			//~ ClauseSetPrint(GlobalOut, node->folding_labels, true);printf("\n");
 			//~ while (!ClauseSetEmpty(node->folding_labels))
 			//~ {
 				//~ Clause_p fold_label = ClauseSetExtractFirst(node->folding_labels);
@@ -171,6 +104,8 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 														  //~ LONG_MAX);
 				//~ if (success)
 				//~ {
+					//~ fprintf(GlobalOut, "# Saturate returned empty clause on folds.\n");
+					//~ //ProofStateStatisticsPrint(GlobalOut, proofstate);
 					//~ return PROOF_FOUND;
 				//~ }
 			//~ }
@@ -184,24 +119,17 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 							 LLONG_MAX, LONG_MAX);
 	if (success)
 	{
-		//~ fprintf(GlobalOut, "# Saturate returned empty clause %p.\n", success);
-		//~ ProofStateStatisticsPrint(GlobalOut, proofstate);
+		//fprintf(GlobalOut, "# Saturate returned empty clause %p.\n", success);
+		//ProofStateStatisticsPrint(GlobalOut, proofstate);
 		return PROOF_FOUND;
 	}
-	//~ fprintf(GlobalOut, "# Attempting SATCheck\n");
-	//~ success = SATCheck(proofstate, proofcontrol);
-	//~ if (success)
-	//~ {
-		//~ fprintf(GlobalOut, "# Branch is satisfiable!\n");
-		//~ return SATISFIABLE;
-	//~ }
+	
 	//~ fprintf(GlobalOut, "# Surrendering\n");
 	return RESOURCE_OUT;
 }
 
 int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, BranchSaturation_p jobs)
 {
-	int num_threads = omp_get_num_threads();
 	ProofState_p proofstate = jobs->proofstate;
 	ProofControl_p proofcontrol = jobs->proofcontrol;
 	ClauseTableau_p master = jobs->master;
@@ -237,36 +165,19 @@ int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, Br
 		handle = handle->succ;
 	}
 	
-	int raw_status = 0, status = OTHER_ERROR;
-	pid_t worker = 0, respid;
-	
 	fflush(GlobalOut);
-	//fprintf(GlobalOut, "# %d local branches\n", num_local_branches);
-	for (int i=0; i<num_open_branches; i++)
+	#pragma omp task
 	{
-		if (branches[i]) // Branch is local, so we will try to close it
+		for (int i=0; i<num_open_branches; i++)
 		{
-			//~ fprintf(GlobalOut, "# Processing branch %d\n", i);
-			process_branch(proofstate, proofcontrol, pool, return_status, branches, i);
+			if (branches[i]) // Branch is local, so we will try to close it
+			{
+				//fprintf(GlobalOut, "# Processing branch %d\n", i);
+				process_branch(proofstate, proofcontrol, pool, return_status, branches, i);
+			}
 		}
+		process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
 	}
-	process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
-	fflush(GlobalOut);
-
-	//~ #pragma omp task
-	//~ {
-		//~ for (int i=0; i<num_open_branches; i++)
-		//~ {
-			//~ if (branches[i]) // Branch is local, so we will try to close it
-			//~ {
-				//~ fprintf(GlobalOut, "# Processing branch %d\n", i);
-				//~ process_branch(proofstate, proofcontrol, pool, return_status, branches, i);
-			//~ }
-		//~ }
-		//~ process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
-	//~ }
-	//~ #pragma omp taskwait
-	//~ #pragma omp task
 	
 	// Exit and return to tableaux proof search
 	return 0;

@@ -17,7 +17,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 			SubstDelete(subst);
 			return true;
 		}
-		// Regularity checking?
+		// Regularity checking (Is checking for duplicate terms in the tree worthwhile?)
 		ClauseTableau_p temp = ClauseTableauMasterCopy(tab->master);
 		bool leaf_regular = ClauseTableauIsLeafRegular(temp);
 		if (leaf_regular)
@@ -78,9 +78,10 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 {
 	assert(tab);
 	assert(tab->label);
-	assert(tab->unit_axioms);
+	assert(tab->master->unit_axioms);
 	Subst_p subst = NULL;
 	Clause_p temporary_label;
+	ClauseSet_p unit_axioms = tab->master->unit_axioms;
 	
 	long num_local_variables = UpdateLocalVariables(tab);
 	if (num_local_variables)
@@ -88,18 +89,15 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		original_clause = ReplaceLocalVariablesWithFresh(tab->master, original_clause, tab->local_variables);
 	}
 	// Check against the unit axioms
-	Clause_p unit_handle = tab->unit_axioms->anchor->succ;
-	while (unit_handle != tab->unit_axioms->anchor)
+	Clause_p unit_handle = unit_axioms->anchor->succ;
+	while (unit_handle != unit_axioms->anchor)
 	{
 		assert(unit_handle);
-		Clause_p fresh_unit = ClauseFlatCopyFresh(unit_handle, tab);
 		if ((subst = ClauseContradictsClause(tab, original_clause, unit_handle)))
 		{
-			ClauseFree(fresh_unit);
-			tab->mark_int = (tab->depth)-1; // mark the root node
+			tab->mark_int = tab->depth; // mark the root node
 			goto return_point;
 		}
-		ClauseFree(fresh_unit);
 		unit_handle = unit_handle->succ;
 	}
 	

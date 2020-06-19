@@ -166,14 +166,14 @@ long CollectVariablesAtNode(ClauseTableau_p node, PTree_p *var_tree)
 	   }
    }
    
-   if (node->depth == 0)
-   {
-		for(handle = node->unit_axioms->anchor->succ; handle!= node->unit_axioms->anchor; handle =
-				 handle->succ)
-		{
-			num_collected += ClauseCollectVariables(handle, var_tree);
-		}
-	}
+   //~ if (node->depth == 0) // Unit axioms have indeterminate variables
+   //~ {
+		//~ for(handle = node->unit_axioms->anchor->succ; handle!= node->unit_axioms->anchor; handle =
+				 //~ handle->succ)
+		//~ {
+			//~ num_collected += ClauseCollectVariables(handle, var_tree);
+		//~ }
+	//~ }
 	//printf("Variables found in node in CollectVariablesAtNode:");
 	//PTreeDebugPrint(GlobalOut, *var_tree);
 	//printf("\n");

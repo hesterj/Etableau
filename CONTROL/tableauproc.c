@@ -36,10 +36,10 @@ long move_new_tableaux_to_distinct(TableauSet_p distinct_tableaux, PStack_p new_
 
 /*-----------------------------------------------------------------------
 //
-// Function: ClauseSetMoveNonUnits()
+// Function: ClauseSetMoveUnits()
 //
-//   Move all unit-clauses from set to nonunits, return number of
-//   clauses moved.xc
+//   Move all unit-clauses from set to units, return number of
+//   clauses moved.
 //
 // Global Variables: -
 //
@@ -58,6 +58,7 @@ long ClauseSetMoveUnits(ClauseSet_p set, ClauseSet_p units)
 
    handle = set->anchor->succ;
    long count = 0;
+   printf("%p\n", set->anchor);
    while(handle != set->anchor)
    {
 		assert(handle);
@@ -67,8 +68,92 @@ long ClauseSetMoveUnits(ClauseSet_p set, ClauseSet_p units)
 			handle = handle->succ;
 			assert(handle->pred);
 			Clause_p unit = ClauseSetExtractEntry(handle->pred);
+			printf("# Moving unit: ");ClausePrint(GlobalOut, unit, true);printf(" %p\n", unit);
 			ClauseSetInsert(units, unit);
-         //ClauseSetMoveClause(units, handle->pred);
+      }
+      else
+      {
+			handle = handle->succ;
+		}
+   }
+   return count;
+}
+
+/*-----------------------------------------------------------------------
+//
+// Function: ClauseSetCopyUnits()
+//
+//   Copy all unit-clauses from set to units, return number of
+//   clauses moved.
+//
+// Global Variables: -
+//
+// Side Effects    : -
+//
+/----------------------------------------------------------------------*/
+
+long ClauseSetCopyUnits(TB_p bank, ClauseSet_p set, ClauseSet_p units)
+{
+   Clause_p handle;
+
+   assert(set);
+   assert(units);
+   assert(!set->demod_index);
+   assert(!set->demod_index);
+
+   handle = set->anchor->succ;
+   long count = 0;
+   printf("%p\n", set->anchor);
+   while(handle != set->anchor)
+   {
+		assert(handle);
+      if(ClauseLiteralNumber(handle) == 1)
+      {
+			count++;
+			Clause_p unit = ClauseCopy(handle, bank);
+			printf("# Copying unit: ");ClausePrint(GlobalOut, unit, true);printf(" %p\n", unit);
+			assert(unit != handle);
+			ClauseSetInsert(units, unit);
+      }
+		handle = handle->succ;
+   }
+   return count;
+}
+
+/*-----------------------------------------------------------------------
+//
+// Function: ClauseSetFreeUnits()
+//
+//   Free all unit-clauses from set to units, return number of
+//   clauses freed.
+//
+// Global Variables: -
+//
+// Side Effects    : -
+//
+/----------------------------------------------------------------------*/
+
+long ClauseSetFreeUnits(ClauseSet_p set)
+{
+   Clause_p handle;
+
+   assert(set);
+   assert(!set->demod_index);
+
+   handle = set->anchor->succ;
+   long count = 0;
+   printf("%p\n", set->anchor);
+   while(handle != set->anchor)
+   {
+		assert(handle);
+      if(ClauseLiteralNumber(handle) == 1)
+      {
+			count++;
+			handle = handle->succ;
+			assert(handle->pred);
+			Clause_p unit = ClauseSetExtractEntry(handle->pred);
+			printf("# Freeing unit: ");ClausePrint(GlobalOut, unit, true);printf(" %p\n", unit);
+			ClauseFree(unit);
       }
       else
       {
@@ -104,44 +189,59 @@ WFormula_p ProofStateGetConjecture(ProofState_p state)
  *  applications at once.  Does not use any multhreading.
 */
 
-Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p proofstate, ProofControl_p proofcontrol, TB_p bank, ClauseSet_p active, int max_depth, int tableauequality)
+Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, 
+											ProofState_p proofstate, 
+											ProofControl_p proofcontrol, 
+											TB_p bank, 
+											ClauseSet_p active, 
+											int max_depth, 
+											int tableauequality)
 {
+	fprintf(GlobalOut, "# %ld beginning clauses after preprocessing and clausification\n", active->members);
 	assert(proofstate);
 	assert(proofcontrol);
-	assert(active->members > 0);
+	ClauseSet_p extension_candidates = ClauseSetCopy(bank, active);
+	ClauseSet_p unit_axioms = ClauseSetAlloc();
    problemType = PROBLEM_FO;
    PList_p conjectures = PListAlloc();
    PList_p non_conjectures = PListAlloc();
-   //bool conjectures_present = false;
-   ClauseSet_p extension_candidates = NULL;
-   fprintf(GlobalOut, "# %ld active clauses before start rule.\n", active->members);
-   ClauseSetSplitConjectures(active, conjectures, non_conjectures);
+   FunCode max_var = ClauseSetGetMaxVar(extension_candidates);
+   ClauseSet_p start_rule_candidates = NULL;
+   
+   ClauseSetSplitConjectures(extension_candidates, conjectures, non_conjectures);
+   
    if (PListEmpty(conjectures))
    {
 		fprintf(GlobalOut, "# No conjectures.\n");
-		extension_candidates = ClauseSetCopy(bank, active);
+		start_rule_candidates = ClauseSetAlloc();
+		ClauseSetInsertSet(start_rule_candidates, extension_candidates);
 	}
 	else
 	{
-		//conjectures_present = true;
-		extension_candidates = ClauseSetAlloc();
+		fprintf(GlobalOut, "# Creating start rules for all conjectures.\n");
+		start_rule_candidates = ClauseSetAlloc();
 		PList_p handle;
 		for(handle=conjectures->succ;
-		handle != conjectures;
-		handle = handle->succ)
+			 handle != conjectures;
+			 handle = handle->succ)
 		{
 			Clause_p conj_handle = handle->key.p_val;
-			//printf("# Conjecture clause: ");ClausePrint(GlobalOut, conj_handle, true);printf("\n");
 			ClauseSetExtractEntry(conj_handle);
 			ClauseSetProp(conj_handle, CPTypeConjecture);
-			ClauseSetInsert(extension_candidates, conj_handle);
+			ClauseSetInsert(start_rule_candidates, conj_handle);
 		}
 		
 	}
+	
+	
+	ClauseSetMoveUnits(extension_candidates, unit_axioms);
+	ClauseSetCopyUnits(bank, start_rule_candidates, unit_axioms);
+	
+	
 	PListFree(non_conjectures);
-	fprintf(GlobalOut, "# %ld active clauses.  %ld extension candidates.\n", active->members, extension_candidates->members);
+	PListFree(conjectures);
+	
    assert(max_depth);
-   ClauseSet_p unit_axioms = ClauseSetAlloc();
    
    ClauseTableau_p initial_tab = ClauseTableauAlloc();
    ClauseTableau_p resulting_tab = NULL;
@@ -151,22 +251,25 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
    TableauSet_p open_branches = initial_tab->open_branches;
    TableauSetInsert(open_branches, initial_tab);
    
-   FunCode max_var = ClauseSetGetMaxVar(active);
-   assert(max_var <= 0);
    
    initial_tab->terms = bank;
-   initial_tab->signature = NULL;
+   initial_tab->signature = bank->sig;
    initial_tab->state = proofstate;
    initial_tab->control = proofcontrol;
-   
-   //  Move all of the unit clauses to be on the initial tableau
    initial_tab->unit_axioms = unit_axioms;
+   
+   fprintf(GlobalOut, "# %ld unit axioms, %ld start rules, and %ld other extension candidates.\n", 
+																													unit_axioms->members, 
+																													start_rule_candidates->members, 
+																													extension_candidates->members);
+   
+   ClauseSet_p unit_conjectures = ClauseSetAlloc();
    
 	ClauseTableau_p beginning_tableau = NULL;
 	
 	// Create a tableau for each axiom using the start rule
-   Clause_p start_label = extension_candidates->anchor->succ;
-   while (start_label != extension_candidates->anchor)
+   Clause_p start_label = start_rule_candidates->anchor->succ;
+   while (start_label != start_rule_candidates->anchor)
    {
 		if (ClauseQueryProp(start_label, CPTypeConjecture))
 		{
@@ -178,27 +281,25 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
 		beginning_tableau = TableauStartRule(beginning_tableau, start_label);
 		start_label = start_label->succ;
 	}
-	fprintf(GlobalOut, "\n");
-	if (active->members > 0)
-	{
-		while (!ClauseSetEmpty(active))
-		{
-			Clause_p non_conj = ClauseSetExtractFirst(active);
-			ClauseSetInsert(extension_candidates, non_conj);
-		}
-	}
+	
+	ClauseSetFreeUnits(start_rule_candidates);
+	ClauseSetInsertSet(extension_candidates, start_rule_candidates);
+	
+	ClauseSetFree(start_rule_candidates);
+	
 	if (tableauequality)
 	{
 		ClauseSet_p equality_axioms = EqualityAxioms(bank);
 		ClauseSetInsertSet(extension_candidates, equality_axioms);
 		ClauseSetFree(equality_axioms);
 	}
+	initial_tab->unit_axioms = NULL;
 	ClauseTableauFree(initial_tab);  // Free the  initialization tableau used to make the tableaux with start rule
 	VarBankPushEnv(bank->vars);
 	PStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extionsion rules.
 	// New tableaux are added to the collection of distinct tableaux when the depth limit is increased, as new
 	// tableaux are already at the max depth.
-	fprintf(GlobalOut, "# Beginning tableaux proof search with %ld extension candidates.\n", extension_candidates->members);  
+	fprintf(GlobalOut, "# Beginning tableaux proof search with %ld start rule applications.\n", distinct_tableaux->members);
 	for (int current_depth = 1; current_depth < max_depth; current_depth++)
 	{
 		assert(proofstate);
@@ -208,19 +309,19 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, ProofState_p pr
 		assert(current_depth);
 		assert(new_tableaux);
 		int max_num_threads = 2;
-		//~ #pragma omp parallel num_threads(max_num_threads)
-		//~ {
-			//~ #pragma omp single
-			//~ {
-		resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
+		#pragma omp parallel num_threads(max_num_threads)
+		{
+			#pragma omp single
+			{
+				resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
 																	proofstate, 
 																	proofcontrol, 
 																	distinct_tableaux,
 																	extension_candidates, 
 																	current_depth,
 																	new_tableaux);
-			//~ }
-		//~ }
+			}
+		}
 		if (resulting_tab)
 		{
 			long neg_conjectures = tableaucontrol->neg_conjectures;
@@ -300,7 +401,6 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 	assert(distinct_tableaux);
 	assert(distinct_tableaux->anchor->master_succ);
 	ClauseTableau_p active_tableau = distinct_tableaux->anchor->master_succ;
-	ClauseTableau_p open_branch = NULL;
 	
 	// tableau_select method instead of iteration?
 	 

@@ -230,7 +230,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	// The work is done- try to close the remaining branches
 	SubstDelete(extension->subst);
 	
-	int branches_closed = FoldUpCloseCycle(parent->master);
+	FoldUpCloseCycle(parent->master);
 	
 	// The parent may have been completely closed and extracted
 	// from the collection of open branches during the foldup close
@@ -252,15 +252,15 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	ProofState_p proofstate = parent->master->state;
 	ProofControl_p proofcontrol = parent->master->control;
 	
-	fflush(GlobalOut);
-	if (parent->open_branches->anchor->succ->depth > 0)
-	{
-		BranchSaturation_p branch_saturation = BranchSaturationAlloc(proofstate, proofcontrol, parent->master);
-		// The branch saturation object is freed by AttemptToCloseBranchesWithSuperposition
-		// Trying to keep one object in extensions and saturations
-		AttemptToCloseBranchesWithSuperposition(tableau_control, branch_saturation);
-	}
-	fflush(GlobalOut);
+	//~ fflush(GlobalOut);
+	//~ if (parent->open_branches->anchor->succ->depth > 0)
+	//~ {
+		//~ BranchSaturation_p branch_saturation = BranchSaturationAlloc(proofstate, proofcontrol, parent->master);
+		//~ // The branch saturation object is freed by AttemptToCloseBranchesWithSuperposition
+		//~ // Trying to keep one object in extensions and saturations
+		//~ AttemptToCloseBranchesWithSuperposition(tableau_control, branch_saturation);
+	//~ }
+	//~ fflush(GlobalOut);
 	
 	// The parent may have been completely closed and extracted
 	// from the collection of open branches during the foldup close

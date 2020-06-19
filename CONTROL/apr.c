@@ -866,7 +866,7 @@ void APRProofStateProcess(ProofState_p proofstate, int relevance, bool equality,
 		fprintf(GlobalOut, "# Relevant axioms at relevance distance %d: %ld of %ld\n", relevance, 
 																								 PStackGetSP(relevant), 
 																								 proofstate->axioms->members);
-		int old_ax_no = proofstate->axioms->members;
+		//int old_ax_no = proofstate->axioms->members;
 		if (PStackGetSP(relevant) < proofstate->axioms->members)
 		{
 			proofstate->state_is_complete = false;

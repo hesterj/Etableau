@@ -68,7 +68,8 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	assert(tab->unit_axioms);
 	
 	//handle->unit_axioms = ClauseSetCopy(bank, tab->unit_axioms);
-	handle->unit_axioms = tab->unit_axioms;
+	//handle->unit_axioms = tab->unit_axioms;
+	handle->unit_axioms = ClauseSetCopy(bank, tab->unit_axioms);
 	handle->set = NULL;
 	handle->master_set = NULL;
 	handle->pred = NULL;
@@ -137,9 +138,8 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p parent)
 {
 	TB_p bank = tab->terms; //Copy tableau tab
-	assert(parent->unit_axioms);
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
-	handle->unit_axioms = parent->unit_axioms;
+	handle->unit_axioms = NULL;
 	char *info = DStrCopy(tab->info);
 	handle->info = DStrAlloc();
 	DStrAppendStr(handle->info, info);
@@ -229,7 +229,7 @@ ClauseTableau_p ClauseTableauChildAlloc(ClauseTableau_p parent, int position)
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
 	parent->open = true; // We only want leaf nodes in the collection of open breanches
 	
-	handle->unit_axioms = parent->unit_axioms;
+	handle->unit_axioms = NULL;
 	handle->open_branches = parent->open_branches;
 	handle->depth = parent->depth + 1;
 	handle->position = position;
@@ -270,7 +270,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	parent->arity += 1;
 	handle->depth = parent->depth + 1;
 	handle->position = position;
-	handle->unit_axioms = parent->unit_axioms;
+	handle->unit_axioms = NULL;
 	handle->open_branches = parent->open_branches;
 	handle->label = label;
 	handle->id = 0;
@@ -314,6 +314,10 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	if (trash->info)
 	{
 		DStrFree(trash->info);
+	}
+	if (trash->unit_axioms) //unit axioms are only at the master node
+	{
+		ClauseSetFree(trash->unit_axioms);
 	}
 	if (trash->local_variables)
 	{
@@ -370,15 +374,20 @@ FunCode ClauseSetGetMaxVar(ClauseSet_p set)
 	FunCode max_funcode = 0;
 	Clause_p start_label = set->anchor->succ;
    PStack_p start_subterms = PStackAlloc();
+   PTree_p tree = NULL;
    while (start_label != set->anchor)
    {
-		ClauseCollectSubterms(start_label, start_subterms);
+		ClauseCollectVariables(start_label, &tree);
+		//ClauseCollectSubterms(start_label, start_subterms);
 		start_label = start_label->succ;
 	}
+	PTreeToPStack(start_subterms, tree);
+	//printf("%ld subterms found", PStackGetSP(start_subterms));
 	Term_p temp_term = NULL;
 	for (PStackPointer p = 0; p<PStackGetSP(start_subterms); p++)
 	{
 		temp_term = PStackElementP(start_subterms, p);
+		//printf("tmp term fcode %ld ", temp_term->f_code);
 		if (TermIsVar(temp_term))
 		{
 			FunCode var_funcode = temp_term->f_code;
@@ -457,18 +466,6 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 	return NULL;
 }
 
-ClauseSet_p ClauseSetFlatCopy(TB_p bank, ClauseSet_p set)
-{
-	Clause_p handle, temp;
-	ClauseSet_p new = ClauseSetAlloc();
-	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
-	{
-		temp = ClauseFlatCopy(handle);
-		ClauseSetInsert(new, temp);
-	}
-	return new;
-}
-
 ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set)
 {
 	Clause_p handle, temp;
@@ -478,6 +475,20 @@ ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set)
 	{
 		assert(handle);
 		temp = ClauseCopy(handle,bank);
+		ClauseSetInsert(new, temp);
+	}
+	return new;
+}
+
+ClauseSet_p ClauseSetFlatCopy(TB_p bank, ClauseSet_p set)
+{
+	Clause_p handle, temp;
+	assert(set);
+	ClauseSet_p new = ClauseSetAlloc();
+	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
+	{
+		assert(handle);
+		temp = ClauseFlatCopy(handle);
 		ClauseSetInsert(new, temp);
 	}
 	return new;
@@ -705,7 +716,8 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
    {
 	   old_var = PStackElementP(variables, p);
 	   //fresh_var = VarBankGetFreshVar(variable_bank, old_var->type);  // 2 is individual sort
-	   //printf("tableau max var: %ld\n", tableau->master->max_var);
+	   //~ printf("tableau max var: %ld\n", tableau->master->max_var);
+	   //~ printf("old var: %ld\n", old_var->f_code);
 	   //printf("# Old_var->type in ClauseFlatCopyFresh: %ld\n", old_var->type->f_code);
 	   tableau->master->max_var -= 2;
 	   fresh_var = VarBankVarAssertAlloc(variable_bank, tableau->master->max_var, old_var->type);
@@ -1156,6 +1168,7 @@ void ClauseTableauPrintDOTGraphChildren(ClauseTableau_p tab, FILE* dotgraph)
 	fprintf(dotgraph, "f:%d ", folds);
 	fprintf(dotgraph, "s:%d ", tab_saturation_closed);
 	fprintf(dotgraph, "m:%d ", tab_mark_int);
+	fprintf(dotgraph, "id:%ld ", tab->id);
 	fprintf(dotgraph, "fu:%d\"]\n ", tab_folded_up);
 	fprintf(dotgraph,"   %ld -> %ld\n", parent_ident, ident);
 	
