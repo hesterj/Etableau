@@ -181,6 +181,38 @@ long CollectVariablesAtNode(ClauseTableau_p node, PTree_p *var_tree)
 	return num_collected;
 }
 
+/*  Only call this method if the local variables of the tableau have been udpated!
+ *  This method incorporates the replacement of replacements of variables with fresh ones into subst.
+*/
+
+Clause_p ReplaceLocalVariablesWithFreshSubst(ClauseTableau_p master, Clause_p clause, PStack_p local_variables, Subst_p subst)
+{
+	Clause_p new_clause = NULL;
+	assert(PStackGetSP(local_variables));
+	VarBank_p variable_bank = master->terms->vars;
+	//printf("Old clause: ");ClausePrint(GlobalOut, clause, true);printf("\n");
+	//Subst_p subst = SubstAlloc();
+	for (PStackPointer p = 0; p < PStackGetSP(local_variables); p++)
+	{
+		Term_p old_var = PStackElementP(local_variables, p);
+		assert(old_var);
+		assert(old_var->f_code < 0);
+		master->max_var -= 2;
+		Term_p fresh_var = VarBankVarAssertAlloc(variable_bank, master->max_var, old_var->type);
+		assert(old_var != fresh_var);
+		assert(old_var->f_code != fresh_var->f_code);
+		SubstAddBinding(subst, old_var, fresh_var);
+	}
+	new_clause = ClauseCopy(clause, master->terms);
+	//printf("New clause with binding: ");ClausePrint(GlobalOut, new_clause, true);printf("\n");
+	//SubstDelete(subst);
+	return new_clause;
+}
+
+/*  Only call this method if the local variables of the tableau have been udpated!
+ *  This method deletes the substitution used in the replacement.
+*/
+
 Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause, PStack_p local_variables)
 {
 	Clause_p new_clause = NULL;
@@ -205,23 +237,23 @@ Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause,
 	return new_clause;
 }
 
+/*  Return true if the branch is local
+ *  Side Effect: Updates local variables of branch
+*/
+
 bool BranchIsLocal(ClauseTableau_p branch)
 {
 	PTree_p branch_vars = NULL;
 	long local_vars = UpdateLocalVariables(branch);
 	long branch_local_variables = PStackGetSP(branch->local_variables);
 	long num_vars = CollectVariablesOfBranch(branch, &branch_vars, true);
-	if (branch_local_variables != local_vars) assert(0);
+	assert(branch_local_variables == local_vars);
 	//printf("# %ld local vars, %ld total vars\n", local_vars, num_vars);
 	if (num_vars == 0)
 	{
 		PTree_p temp = NULL;
-		int no_variables = ClauseCollectVariables(branch->label, &temp);
-		//printf("Clause with no variables has %d variables... ", no_variables); 
-		//ClausePrint(GlobalOut, branch->label, true);
-		//printf("\n");
+		ClauseCollectVariables(branch->label, &temp);
 		PTreeFree(temp);
-		assert(no_variables <= num_vars);
 	}
 	if (local_vars == num_vars)
 	{

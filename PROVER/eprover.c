@@ -549,7 +549,7 @@ int main(int argc, char* argv[])
 
 	if (TableauOptions == 1)
 	{
-		TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures, argv[argc-1]);
+		TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures, argv[argc-1], proofstate, proofcontrol);
 		//TB_p tableau_terms = TBAlloc(proofstate->terms->sig);
 		printf("# Number of axioms: %ld Number of unprocessed: %ld\n", proofstate->axioms->members, 
 																						 proofstate->unprocessed->members);

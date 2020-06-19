@@ -11,8 +11,9 @@ typedef struct branch_saturation
 
 #define BranchSaturationCellAlloc()    (BranchSaturationCell*)SizeMalloc(sizeof(BranchSaturationCell))
 #define BranchSaturationCellFree(junk) SizeFree(junk, sizeof(BranchSaturationCell))
-
+void BranchSaturationFree(BranchSaturation_p branch_sat);
 BranchSaturation_p BranchSaturationAlloc(ProofState_p proofstate, ProofControl_p proofcontrol, ClauseTableau_p master);
+
 int ECloseBranch(ProofState_p proofstate, ProofControl_p proofcontrol, 
 					  ClauseTableau_p branch);
 int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proofcontrol, 

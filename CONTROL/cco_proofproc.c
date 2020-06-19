@@ -1765,6 +1765,186 @@ Clause_p ProcessSpecificClause(ProofState_p state, ProofControl_p control,
    return NULL;
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: ProcessAnyClause()
+//
+//   Process a clause. Return pointer to empty
+//   clause if it can be derived, NULL otherwise. This is the core of
+//   the main proof procedure.
+* 
+* 	  This method calls cleanup_unprocessed_clauses at the end!
+//
+// Global Variables: -
+//
+// Side Effects    : Everything ;-)
+//
+/----------------------------------------------------------------------*/
+
+Clause_p ProcessAnyClause(ProofState_p state, ProofControl_p control,
+                       long answer_limit)
+{
+   Clause_p         clause, resclause, tmp_copy, empty, arch_copy = NULL;
+   FVPackedClause_p pclause;
+   SysDate          clausedate;
+
+
+	clause = control->hcb->hcb_select(control->hcb,
+                                     state->unprocessed);
+   if(!clause)
+   {
+      return NULL;
+   }
+   //EvalListPrintComment(GlobalOut, clause->evaluations); printf("\n");
+   if(OutputLevel==1)
+   {
+      putc('#', GlobalOut);
+   }
+   assert(clause);
+
+   ClauseSetExtractEntry(clause);
+   ClauseRemoveEvaluations(clause);
+   
+   // Orphans have been excluded during selection now
+
+   ClauseSetProp(clause, CPIsProcessed);
+   state->processed_count++;
+
+   assert(!ClauseQueryProp(clause, CPIsIRVictim));
+
+   if(ProofObjectRecordsGCSelection)
+   {
+      arch_copy = ClauseArchiveCopy(state->archive, clause);
+   }
+
+   if(!(pclause = ForwardContractClause(state, control,
+                                        clause, true,
+                                        control->heuristic_parms.forward_context_sr,
+                                        control->heuristic_parms.condensing,
+                                        FullRewrite)))
+   {
+      if(arch_copy)
+      {
+         ClauseSetDeleteEntry(arch_copy);
+      }
+      return NULL;
+   }
+
+   if(ClauseIsSemFalse(pclause->clause))
+   {
+      state->answer_count ++;
+      ClausePrintAnswer(GlobalOut, pclause->clause, state);
+      PStackPushP(state->extract_roots, pclause->clause);
+      if(ClauseIsEmpty(pclause->clause)||
+         state->answer_count>=answer_limit)
+      {
+         clause = FVUnpackClause(pclause);
+         ClauseEvaluateAnswerLits(clause);
+         return clause;
+      }
+   }
+   assert(ClauseIsSubsumeOrdered(pclause->clause));
+   check_ac_status(state, control, pclause->clause);
+
+   document_processing(pclause->clause);
+   state->proc_non_trivial_count++;
+
+   resclause = replacing_inferences(state, control, pclause);
+   if(!resclause || ClauseIsEmpty(resclause))
+   {
+      if(resclause)
+      {
+         PStackPushP(state->extract_roots, resclause);
+      }
+      return resclause;
+   }
+
+   check_watchlist(&(state->wlindices), state->watchlist,
+                      pclause->clause, state->archive,
+                      control->heuristic_parms.watchlist_is_static);
+
+   /* Now on to backward simplification. */
+   clausedate = ClauseSetListGetMaxDate(state->demods, FullRewrite);
+
+   eliminate_backward_rewritten_clauses(state, control, pclause->clause, &clausedate);
+   eliminate_backward_subsumed_clauses(state, pclause);
+   eliminate_unit_simplified_clauses(state, pclause->clause);
+   eliminate_context_sr_clauses(state, control, pclause->clause);
+   ClauseSetSetProp(state->tmp_store, CPIsIRVictim);
+
+   clause = pclause->clause;
+
+   ClauseNormalizeVars(clause, state->freshvars);
+   tmp_copy = ClauseCopyDisjoint(clause);
+   tmp_copy->ident = clause->ident;
+
+   clause->date = clausedate;
+   ClauseSetProp(clause, CPLimitedRW);
+
+   if(ClauseIsDemodulator(clause))
+   {
+      assert(clause->neg_lit_no == 0);
+      if(EqnIsOriented(clause->literals))
+      {
+         TermCellSetProp(clause->literals->lterm, TPIsRewritable);
+         state->processed_pos_rules->date = clausedate;
+         ClauseSetIndexedInsert(state->processed_pos_rules, pclause);
+      }
+      else
+      {
+         state->processed_pos_eqns->date = clausedate;
+         ClauseSetIndexedInsert(state->processed_pos_eqns, pclause);
+      }
+   }
+   else if(ClauseLiteralNumber(clause) == 1)
+   {
+      assert(clause->neg_lit_no == 1);
+      ClauseSetIndexedInsert(state->processed_neg_units, pclause);
+   }
+   else
+   {
+      ClauseSetIndexedInsert(state->processed_non_units, pclause);
+   }
+   GlobalIndicesInsertClause(&(state->gindices), clause);
+
+   FVUnpackClause(pclause);
+   ENSURE_NULL(pclause);
+   if(state->watchlist && control->heuristic_parms.watchlist_simplify)
+   {
+      simplify_watchlist(state, control, clause);
+   }
+   if(control->heuristic_parms.selection_strategy != SelectNoGeneration)
+   {
+      generate_new_clauses(state, control, clause, tmp_copy);
+   }
+   ClauseFree(tmp_copy);
+   if(TermCellStoreNodes(&(state->tmp_terms->term_store))>TMPBANK_GC_LIMIT)
+   {
+      TBGCSweep(state->tmp_terms);
+   }
+#ifdef PRINT_SHARING
+   print_sharing_factor(state);
+#endif
+#ifdef PRINT_RW_STATE
+   print_rw_state(state);
+#endif
+   if(control->heuristic_parms.detsort_tmpset)
+   {
+      ClauseSetSort(state->tmp_store, ClauseCmpByStructWeight);
+   }
+   if((empty = insert_new_clauses(state, control)))
+   {
+      PStackPushP(state->extract_roots, empty);
+      return empty;
+   }
+   Clause_p unsatisfiable = cleanup_unprocessed_clauses(state, control);
+   if (unsatisfiable)
+   {
+		return unsatisfiable;
+	}
+   return NULL;
+}
+
 
 /*-----------------------------------------------------------------------
 //

@@ -90,26 +90,44 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 				return PROOF_FOUND;
 			}
 		}
-		//~ if (node->folding_labels) // Process the folding labels, if there are any
-		//~ {
-			//~ ClauseSetSetProp(node->folding_labels, CPInitial);
-			//~ printf("# Folded up clauses:\n");
-			//~ ClauseSetPrint(GlobalOut, node->folding_labels, true);printf("\n");
-			//~ while (!ClauseSetEmpty(node->folding_labels))
-			//~ {
-				//~ Clause_p fold_label = ClauseSetExtractFirst(node->folding_labels);
-				//~ success = ProcessSpecificClause(proofstate, 
-														  //~ proofcontrol, 
-														  //~ fold_label, 
-														  //~ LONG_MAX);
-				//~ if (success)
-				//~ {
-					//~ fprintf(GlobalOut, "# Saturate returned empty clause on folds.\n");
-					//~ //ProofStateStatisticsPrint(GlobalOut, proofstate);
-					//~ return PROOF_FOUND;
-				//~ }
-			//~ }
-		//~ }
+		if (node->folding_labels) // Process the folding labels, if there are any
+		{
+			ClauseSetSetProp(node->folding_labels, CPInitial);
+			//printf("# Folded up clauses:\n");
+			//ClauseSetPrint(GlobalOut, node->folding_labels, true);printf("\n");
+			while (!ClauseSetEmpty(node->folding_labels))
+			{
+				Clause_p fold_label = ClauseSetExtractFirst(node->folding_labels);
+				success = ProcessSpecificClause(proofstate, 
+														  proofcontrol, 
+														  fold_label, 
+														  LONG_MAX);
+				if (success)
+				{
+					fprintf(GlobalOut, "# Saturate returned empty clause on folds.\n");
+					//ProofStateStatisticsPrint(GlobalOut, proofstate);
+					return PROOF_FOUND;
+				}
+			}
+		}
+		if (node->unit_axioms) // Process the units, if there are any
+		{
+			ClauseSetSetProp(node->unit_axioms, CPInitial);
+			while (!ClauseSetEmpty(node->unit_axioms))
+			{
+				Clause_p unit = ClauseSetExtractFirst(node->unit_axioms);
+				success = ProcessSpecificClause(proofstate, 
+														  proofcontrol, 
+														  unit, 
+														  LONG_MAX);
+				if (success)
+				{
+					fprintf(GlobalOut, "# Saturate returned empty clause on units.\n");
+					//ProofStateStatisticsPrint(GlobalOut, proofstate);
+					return PROOF_FOUND;
+				}
+			}
+		}
 		node = node->parent;
 	}
 	
@@ -134,8 +152,6 @@ int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, Br
 	ProofControl_p proofcontrol = jobs->proofcontrol;
 	ClauseTableau_p master = jobs->master;
 	TableauSet_p open_branches = master->open_branches;
-	
-	BranchSaturationFree(jobs);  // The controlling struct can be free'd
 	
 	int num_open_branches = (int) open_branches->members;
 	
@@ -165,20 +181,18 @@ int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, Br
 		handle = handle->succ;
 	}
 	
-	fflush(GlobalOut);
 	#pragma omp task
 	{
 		for (int i=0; i<num_open_branches; i++)
 		{
 			if (branches[i]) // Branch is local, so we will try to close it
 			{
-				//fprintf(GlobalOut, "# Processing branch %d\n", i);
 				process_branch(proofstate, proofcontrol, pool, return_status, branches, i);
 			}
 		}
 		process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
 	}
-	
+	fflush(GlobalOut);
 	// Exit and return to tableaux proof search
 	return 0;
 }
@@ -198,6 +212,7 @@ int process_saturation_output(TableauControl_p tableau_control,
 		while(respid == -1)
 		{
 			pid_t worker = pool[i];
+			//fprintf(GlobalOut, "#");
 			if (worker == -1) break;
 			assert(branches[i]);
 			respid = waitpid(worker, &raw_status, 0);
@@ -217,6 +232,7 @@ int process_saturation_output(TableauControl_p tableau_control,
 				}
             if (status == PROOF_FOUND)
             {
+					proof_found:
 					//fprintf(GlobalOut, "# Branch %d of %d detected with exit status %d, raw status %d\n", i, num_open_branches, status, raw_status);
 					assert(respid);
 					closed_branch = branches[i];
@@ -227,11 +243,6 @@ int process_saturation_output(TableauControl_p tableau_control,
 					return_status[i] = PROOF_FOUND;
 					successful_count++;
 					break;
-            }
-            else
-            {
-					//printf("#%d", status);
-               //fprintf(GlobalOut, "# No success with fork\n");
             }
          }
          else if (WIFSIGNALED(raw_status))

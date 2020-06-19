@@ -58,7 +58,7 @@ long ClauseSetMoveUnits(ClauseSet_p set, ClauseSet_p units)
 
    handle = set->anchor->succ;
    long count = 0;
-   printf("%p\n", set->anchor);
+   //printf("%p\n", set->anchor);
    while(handle != set->anchor)
    {
 		assert(handle);
@@ -68,7 +68,6 @@ long ClauseSetMoveUnits(ClauseSet_p set, ClauseSet_p units)
 			handle = handle->succ;
 			assert(handle->pred);
 			Clause_p unit = ClauseSetExtractEntry(handle->pred);
-			printf("# Moving unit: ");ClausePrint(GlobalOut, unit, true);printf(" %p\n", unit);
 			ClauseSetInsert(units, unit);
       }
       else
@@ -103,7 +102,6 @@ long ClauseSetCopyUnits(TB_p bank, ClauseSet_p set, ClauseSet_p units)
 
    handle = set->anchor->succ;
    long count = 0;
-   printf("%p\n", set->anchor);
    while(handle != set->anchor)
    {
 		assert(handle);
@@ -111,7 +109,6 @@ long ClauseSetCopyUnits(TB_p bank, ClauseSet_p set, ClauseSet_p units)
       {
 			count++;
 			Clause_p unit = ClauseCopy(handle, bank);
-			printf("# Copying unit: ");ClausePrint(GlobalOut, unit, true);printf(" %p\n", unit);
 			assert(unit != handle);
 			ClauseSetInsert(units, unit);
       }
@@ -142,7 +139,6 @@ long ClauseSetFreeUnits(ClauseSet_p set)
 
    handle = set->anchor->succ;
    long count = 0;
-   printf("%p\n", set->anchor);
    while(handle != set->anchor)
    {
 		assert(handle);
@@ -152,7 +148,6 @@ long ClauseSetFreeUnits(ClauseSet_p set)
 			handle = handle->succ;
 			assert(handle->pred);
 			Clause_p unit = ClauseSetExtractEntry(handle->pred);
-			printf("# Freeing unit: ");ClausePrint(GlobalOut, unit, true);printf(" %p\n", unit);
 			ClauseFree(unit);
       }
       else
@@ -263,8 +258,6 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 																													start_rule_candidates->members, 
 																													extension_candidates->members);
    
-   ClauseSet_p unit_conjectures = ClauseSetAlloc();
-   
 	ClauseTableau_p beginning_tableau = NULL;
 	
 	// Create a tableau for each axiom using the start rule
@@ -299,7 +292,12 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	PStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extionsion rules.
 	// New tableaux are added to the collection of distinct tableaux when the depth limit is increased, as new
 	// tableaux are already at the max depth.
-	fprintf(GlobalOut, "# Beginning tableaux proof search with %ld start rule applications.\n", distinct_tableaux->members);
+	fprintf(GlobalOut, " Beginning tableaux proof search with %ld start rule applications.\n", distinct_tableaux->members);
+	fprintf(GlobalOut, "# Extension candidates:\n");
+	ClauseSetPrint(GlobalOut, extension_candidates, true);
+	fprintf(GlobalOut, "# Unit axioms:\n");
+	ClauseSetPrint(GlobalOut, unit_axioms, true);
+	
 	for (int current_depth = 1; current_depth < max_depth; current_depth++)
 	{
 		assert(proofstate);

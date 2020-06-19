@@ -68,6 +68,8 @@ void     ProofStateResetProcessedSet(ProofState_p state,
                                      ClauseSet_p set);
 void     ProofStateResetProcessed(ProofState_p state,
                                   ProofControl_p control);
+Clause_p ProcessAnyClause(ProofState_p state, ProofControl_p control,
+                       long answer_limit);
 Clause_p ProcessClause(ProofState_p state, ProofControl_p control,
                        long answer_limit);
 Clause_p ProcessSpecificClause(ProofState_p state, ProofControl_p control,

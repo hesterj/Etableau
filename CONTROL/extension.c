@@ -219,7 +219,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 		assert(new_leaf_clauses_set->members == 0);
 		ClauseSetFree(new_leaf_clauses_set);
 		ClauseTableauFree(parent->master);
-		SubstDelete(extension->subst);
+		//SubstDelete(extension->subst);
 		return NULL;
 	}
 	else // the extension is regular- add it to the new tabeleax to be processed later
@@ -228,7 +228,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	}
 	
 	// The work is done- try to close the remaining branches
-	SubstDelete(extension->subst);
+	//SubstDelete(extension->subst);
 	
 	FoldUpCloseCycle(parent->master);
 	
@@ -252,15 +252,14 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	ProofState_p proofstate = parent->master->state;
 	ProofControl_p proofcontrol = parent->master->control;
 	
-	//~ fflush(GlobalOut);
-	//~ if (parent->open_branches->anchor->succ->depth > 0)
-	//~ {
-		//~ BranchSaturation_p branch_saturation = BranchSaturationAlloc(proofstate, proofcontrol, parent->master);
-		//~ // The branch saturation object is freed by AttemptToCloseBranchesWithSuperposition
-		//~ // Trying to keep one object in extensions and saturations
-		//~ AttemptToCloseBranchesWithSuperposition(tableau_control, branch_saturation);
-	//~ }
-	//~ fflush(GlobalOut);
+	if (parent->open_branches->anchor->succ->depth > 0)
+	{
+		BranchSaturation_p branch_saturation = BranchSaturationAlloc(proofstate, proofcontrol, parent->master);
+		// Trying to keep one object in extensions and saturations
+		AttemptToCloseBranchesWithSuperposition(tableau_control, branch_saturation);
+		BranchSaturationFree(branch_saturation);
+	}
+	fflush(GlobalOut);
 	
 	// The parent may have been completely closed and extracted
 	// from the collection of open branches during the foldup close
@@ -292,7 +291,8 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	int subst_completed = 0;
 	ClauseSet_p new_leaf_clauses = SplitClauseFresh(open_branch->terms, open_branch->master, selected);
 	assert(new_leaf_clauses->members);
-	Subst_p subst = NULL;
+	Subst_p subst = SubstAlloc();
+	PStackPointer local_subst_length = 0;
 	Clause_p leaf_clause = new_leaf_clauses->anchor->succ;
 	
 	Clause_p open_branch_label = open_branch->label;
@@ -300,9 +300,11 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	if (num_local_variables)
 	{
 		assert(PStackGetSP(open_branch->local_variables) > 0);
-		open_branch_label = ReplaceLocalVariablesWithFresh(open_branch->master,
+		open_branch_label = ReplaceLocalVariablesWithFreshSubst(open_branch->master,
 																			open_branch_label,
-																			open_branch->local_variables);
+																			open_branch->local_variables,
+																			subst);
+		local_subst_length = PStackGetSP(subst);
 	}
 	while (leaf_clause != new_leaf_clauses->anchor)
 	{
@@ -313,13 +315,18 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		assert(open_branch->arity == 0);
 		assert(leaf_clause);
 		assert(selected);
-		subst = NULL;
+		PStackPointer extension_contradiction_length = 0;
 		
 		// Here we are only doing the first possible extension- need to create a list of all of the extensions and do them...
 		// The subst, leaf_clause, new_leaf_clauses, will have to be reset, but the open_branch can remain the same since we have not affected it.
-		if ((subst = ClauseContradictsClause(open_branch, leaf_clause, open_branch_label))) // stricter extension step
+		if ((extension_contradiction_length = ClauseContradictsClauseSubst(leaf_clause, open_branch_label, subst))) // stricter extension step
 		{
 			subst_completed++;
+			//~ printf("=== %ld\n", ClauseGetIdent(selected));
+			//~ SubstPrint(GlobalOut,subst, open_branch->master->terms->sig, DEREF_NEVER);printf("\n");
+			//~ ClausePrint(GlobalOut, leaf_clause, true);printf("\n");
+			//~ ClausePrint(GlobalOut, open_branch_label, true);printf("\n");
+			//~ printf("===\n");
 			Clause_p head_clause = leaf_clause;
 			TableauExtension_p extension_candidate = TableauExtensionAlloc(selected, 
 																		   subst, 
@@ -341,10 +348,11 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 					assert(maybe_extended->master->label);
 					tableau_control->closed_tableau = maybe_extended->master;
 					ClauseSetFree(new_leaf_clauses);
+					SubstDelete(subst);
 					return extensions_done;
 				}
 			}
-			// The substitution has been deleted, the tableau parent is unchanged, so we can continue.
+			SubstBacktrackToPos(subst, local_subst_length);
 		}
 		leaf_clause = leaf_clause->succ;
 	}
@@ -357,6 +365,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	// The current open branch is now "old" and will only be used for other extensions.
    
    //  OK We're done
+   SubstDelete(subst);
    ClauseSetFree(new_leaf_clauses);
 	return extensions_done;
 }

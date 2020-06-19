@@ -452,18 +452,29 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 	{
 		return subst;
 	}
-	else 
-	{
-		//~ printf("# Clauses not unifiable:\n");
-		//~ ClausePrint(GlobalOut, a, true);
-		//~ printf("\n");
-		//~ ClausePrint(GlobalOut, b, true);
-		//~ printf("\n");
-	}
 	
 	SubstDelete(subst);
 	
 	return NULL;
+}
+
+PStackPointer ClauseContradictsClauseSubst(Clause_p a, Clause_p b, Subst_p subst)
+{
+	assert (a && b);
+	if (a==b) return 0;  // Easy case...
+	//if (!ClauseIsUnit(a) || !ClauseIsUnit(b)) return 0;  // Should not happen
+	Eqn_p a_eqn = a->literals;
+	Eqn_p b_eqn = b->literals;
+	
+	if (EqnIsPositive(a_eqn) && EqnIsPositive(b_eqn)) return 0;
+	if (EqnIsNegative(a_eqn) && EqnIsNegative(b_eqn)) return 0;
+	
+	if (EqnUnify(a_eqn, b_eqn, subst))
+	{
+		return PStackGetSP(subst);
+	}
+	
+	return 0;
 }
 
 ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set)
@@ -1092,7 +1103,7 @@ void ClauseTableauPrintDOTGraphToFile(FILE* dotgraph, ClauseTableau_p tab)
 {
 	if (dotgraph == NULL)
 	{
-		printf("# File failure\n");
+		printf("# Failed to print DOT graph, continuing\n");
 		return;
 	}
 	else
@@ -1258,7 +1269,7 @@ long ClauseGetIdent(Clause_p clause)
 	return ident;
 }
 
-TableauControl_p TableauControlAlloc(long neg_conjectures, char *problem_name)
+TableauControl_p TableauControlAlloc(long neg_conjectures, char *problem_name, ProofState_p proofstate, ProofControl_p proofcontrol)
 {
 	TableauControl_p handle = TableauControlCellAlloc();
 	handle->terms = NULL; // The termbank for this tableau control..
@@ -1267,6 +1278,8 @@ TableauControl_p TableauControlAlloc(long neg_conjectures, char *problem_name)
 	handle->satisfiable = false;
 	handle->problem_name = problem_name;
 	handle->neg_conjectures = neg_conjectures;
+	handle->proofstate = proofstate;
+	handle->proofcontrol = proofcontrol;
 	return handle;
 }
 

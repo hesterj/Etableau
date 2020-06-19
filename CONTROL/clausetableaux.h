@@ -97,6 +97,7 @@ ClauseSet_p EqualityAxioms(TB_p bank);
 long ClauseGetIdent(Clause_p clause);
 
 Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b);
+PStackPointer ClauseContradictsClauseSubst(Clause_p a, Clause_p b, Subst_p subst);
 
 
 ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start);
@@ -156,6 +157,8 @@ bool TableauDominatesNode(ClauseTableau_p tab, ClauseTableau_p node);
 
 typedef struct tableaucontrol_cell
 {
+	ProofState_p proofstate;
+	ProofControl_p proofcontrol;
 	int number_of_extensions;
 	long neg_conjectures;
 	char *problem_name;
@@ -169,7 +172,7 @@ typedef struct tableaucontrol_cell
 #define TableauControlCellFree(junk) SizeFree(junk, sizeof(TableauControlCell))
 
 
-TableauControl_p TableauControlAlloc(long neg_conjectures, char *problem_name);
+TableauControl_p TableauControlAlloc(long neg_conjectures, char *problem_name, ProofState_p proofstate, ProofControl_p proofcontrol);
 void TableauControlFree(TableauControl_p trash);
 
 #endif
