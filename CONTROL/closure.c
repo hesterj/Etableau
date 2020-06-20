@@ -93,15 +93,19 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	}
 	// Check against the unit axioms
 	Clause_p unit_handle = unit_axioms->anchor->succ;
+	Clause_p temporary_unit = unit_handle;
 	while (unit_handle != unit_axioms->anchor)
 	{
+		temporary_unit = ClauseCopyFresh(unit_handle, tab);
 		assert(unit_handle);
 		//if ((subst = ClauseContradictsClause(tab, original_clause, unit_handle)))
-		if ((success_subst = ClauseContradictsClauseSubst(original_clause, unit_handle, subst)))
+		if ((success_subst = ClauseContradictsClauseSubst(original_clause, temporary_unit, subst)))
 		{
 			tab->mark_int = tab->depth; // mark the root node
+			ClauseFree(temporary_unit);
 			goto return_point;
 		}
+		ClauseFree(temporary_unit);
 		unit_handle = unit_handle->succ;
 	}
 	

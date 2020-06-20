@@ -230,7 +230,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	// The work is done- try to close the remaining branches
 	//SubstDelete(extension->subst);
 	
-	//FoldUpCloseCycle(parent->master);
+	FoldUpCloseCycle(parent->master);
 	
 	// The parent may have been completely closed and extracted
 	// from the collection of open branches during the foldup close
