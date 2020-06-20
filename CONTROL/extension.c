@@ -230,7 +230,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	// The work is done- try to close the remaining branches
 	//SubstDelete(extension->subst);
 	
-	FoldUpCloseCycle(parent->master);
+	//FoldUpCloseCycle(parent->master);
 	
 	// The parent may have been completely closed and extracted
 	// from the collection of open branches during the foldup close
@@ -292,6 +292,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	ClauseSet_p new_leaf_clauses = SplitClauseFresh(open_branch->terms, open_branch->master, selected);
 	assert(new_leaf_clauses->members);
 	Subst_p subst = SubstAlloc();
+	Subst_p success_subst = NULL;
 	PStackPointer local_subst_length = 0;
 	Clause_p leaf_clause = new_leaf_clauses->anchor->succ;
 	
@@ -319,7 +320,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		
 		// Here we are only doing the first possible extension- need to create a list of all of the extensions and do them...
 		// The subst, leaf_clause, new_leaf_clauses, will have to be reset, but the open_branch can remain the same since we have not affected it.
-		if ((extension_contradiction_length = ClauseContradictsClauseSubst(leaf_clause, open_branch_label, subst))) // stricter extension step
+		if ((success_subst = ClauseContradictsClauseSubst(leaf_clause, open_branch_label, subst))) // stricter extension step
 		{
 			subst_completed++;
 			//~ printf("=== %ld\n", ClauseGetIdent(selected));

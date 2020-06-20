@@ -104,7 +104,7 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 														  LONG_MAX);
 				if (success)
 				{
-					fprintf(GlobalOut, "# Saturate returned empty clause on folds.\n");
+					//fprintf(GlobalOut, "# Saturate returned empty clause on folds.\n");
 					//ProofStateStatisticsPrint(GlobalOut, proofstate);
 					return PROOF_FOUND;
 				}
@@ -122,7 +122,7 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 														  LONG_MAX);
 				if (success)
 				{
-					fprintf(GlobalOut, "# Saturate returned empty clause on units.\n");
+					//fprintf(GlobalOut, "# Saturate returned empty clause on units.\n");
 					//ProofStateStatisticsPrint(GlobalOut, proofstate);
 					return PROOF_FOUND;
 				}
@@ -247,11 +247,11 @@ int process_saturation_output(TableauControl_p tableau_control,
          }
          else if (WIFSIGNALED(raw_status))
          {
-				Error("#%d %d Signalled termination\n", raw_status, respid);
+				fprintf(GlobalOut, "# %d %d Signalled termination\n", raw_status, respid);
 			}
          else
          {
-            Error("#%d %d Abnormal termination\n", raw_status, respid);
+            fprintf(GlobalOut, "# %d %d Abnormal termination\n", raw_status, respid);
          }
 		}
 	}

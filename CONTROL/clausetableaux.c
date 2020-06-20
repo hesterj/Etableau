@@ -458,23 +458,24 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 	return NULL;
 }
 
-PStackPointer ClauseContradictsClauseSubst(Clause_p a, Clause_p b, Subst_p subst)
+Subst_p ClauseContradictsClauseSubst(Clause_p a, Clause_p b, Subst_p subst)
 {
 	assert (a && b);
-	if (a==b) return 0;  // Easy case...
+	if (a==b) return NULL;  // Easy case...
 	//if (!ClauseIsUnit(a) || !ClauseIsUnit(b)) return 0;  // Should not happen
 	Eqn_p a_eqn = a->literals;
 	Eqn_p b_eqn = b->literals;
+	bool success = false;
 	
-	if (EqnIsPositive(a_eqn) && EqnIsPositive(b_eqn)) return 0;
-	if (EqnIsNegative(a_eqn) && EqnIsNegative(b_eqn)) return 0;
+	if (EqnIsPositive(a_eqn) && EqnIsPositive(b_eqn)) return NULL;
+	if (EqnIsNegative(a_eqn) && EqnIsNegative(b_eqn)) return NULL;
 	
-	if (EqnUnify(a_eqn, b_eqn, subst))
+	if ((success = EqnUnify(a_eqn, b_eqn, subst)))
 	{
-		return PStackGetSP(subst);
+		return subst;
 	}
 	
-	return 0;
+	return NULL;
 }
 
 ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set)

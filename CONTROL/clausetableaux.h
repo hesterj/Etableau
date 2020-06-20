@@ -97,7 +97,7 @@ ClauseSet_p EqualityAxioms(TB_p bank);
 long ClauseGetIdent(Clause_p clause);
 
 Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b);
-PStackPointer ClauseContradictsClauseSubst(Clause_p a, Clause_p b, Subst_p subst);
+Subst_p ClauseContradictsClauseSubst(Clause_p a, Clause_p b, Subst_p subst);
 
 
 ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start);

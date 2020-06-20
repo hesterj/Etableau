@@ -212,7 +212,8 @@ int FoldUpAtNode(ClauseTableau_p node)
 	assert(ClauseLiteralNumber(node->label) == 1);
 	
 	//Easy situation- if the node has already been folded up to the root do nothing
-	if (node->mark_int == node->depth)
+	if (node->folded_up == node->depth)
+	//if (node->mark_int == node->depth)
 	{
 		//printf("Node has already been folded up to root.\n");
 		return 0;

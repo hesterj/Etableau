@@ -95,7 +95,7 @@ PStackPointer SubstAddBinding(Subst_p subst, Term_p var, Term_p bind)
    assert(var);
    assert(bind);
    assert(TermIsVar(var));
-   assert(!(var->binding));
+   //assert(!(var->binding));
    //assert(problemType == PROBLEM_HO || !TermCellQueryProp(bind, TPPredPos)
    //      || bind->f_code == SIG_TRUE_CODE || bind->f_code == SIG_FALSE_CODE); // Skolem symbols also
    assert(var->type);
@@ -103,7 +103,14 @@ PStackPointer SubstAddBinding(Subst_p subst, Term_p var, Term_p bind)
    assert(problemType == PROBLEM_FO || var->type == bind->type);
 
    /* printf("# %ld <- %ld \n", var->f_code, bind->f_code); */
-   var->binding = bind;
+   if (var->binding)
+   {
+		SubstAddBinding(subst, var->binding, bind);
+	}
+   else
+   {
+		var->binding = bind;
+	}
    PStackPushP(subst, var);
 
    return ret;
