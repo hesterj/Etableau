@@ -3,8 +3,11 @@
 
 #include <closure.h>
 
-bool ClauseTableauMarkClosedNodes(ClauseTableau_p tableau);
-#define ClauseTableauNodeIsClosed(tab) ClauseTableauMarkClosedNodes(tab)
+#define NO_CHILDREN_CLOSED_BY_SATURATION 0
+#define CHILD_CLOSED_BY_SATURATION 1
+
+bool ClauseTableauMarkClosedNodes(ClauseTableau_p tableau, int *subtree_saturation_closed);
+#define ClauseTableauNodeIsClosed(tab) ClauseTableauMarkClosedNodes(tab, NULL)
 
 PStack_p CollectDominatedMarkingsWrapper(ClauseTableau_p tableau);
 void CollectDominatedMarkings(ClauseTableau_p original, ClauseTableau_p tableau, PStack_p stack);

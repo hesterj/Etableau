@@ -404,14 +404,15 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 	 
 	while (active_tableau != distinct_tableaux->anchor) // iterate over the active tableaux
 	{
+		//fprintf(GlobalOut, "#\n");
 		assert(active_tableau->master_pred == distinct_tableaux->anchor);
 		assert(active_tableau->label);
 		assert(active_tableau->master_set);
 		assert(active_tableau->master == active_tableau);
 		
-		#ifndef DNDEBUG
-		ClauseTableauAssertCheck(active_tableau);
-		#endif
+		//~ #ifndef DNDEBUG
+		//~ ClauseTableauAssertCheck(active_tableau);
+		//~ #endif
 		
 		if (tableaucontrol->closed_tableau)
 		{

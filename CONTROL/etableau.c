@@ -79,6 +79,7 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 		if (node != node->master)
 		{
 			Clause_p label = node->label;
+			label->weight = ClauseStandardWeight(label);
 			assert(!label->set);
 			assert(!label->evaluations);
 			ClauseSetProp(label, CPInitial);
@@ -98,6 +99,7 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 			while (!ClauseSetEmpty(node->folding_labels))
 			{
 				Clause_p fold_label = ClauseSetExtractFirst(node->folding_labels);
+				fold_label->weight = ClauseStandardWeight(fold_label);
 				success = ProcessSpecificClause(proofstate, 
 														  proofcontrol, 
 														  fold_label, 
@@ -116,6 +118,7 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 			while (!ClauseSetEmpty(node->unit_axioms))
 			{
 				Clause_p unit = ClauseSetExtractFirst(node->unit_axioms);
+				unit->weight = ClauseStandardWeight(unit);
 				success = ProcessSpecificClause(proofstate, 
 														  proofcontrol, 
 														  unit, 
@@ -181,17 +184,17 @@ int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, Br
 		handle = handle->succ;
 	}
 	
-	#pragma omp task
+	//~ #pragma omp task
+	//~ {
+	for (int i=0; i<num_open_branches; i++)
 	{
-		for (int i=0; i<num_open_branches; i++)
+		if (branches[i]) // Branch is local, so we will try to close it
 		{
-			if (branches[i]) // Branch is local, so we will try to close it
-			{
-				process_branch(proofstate, proofcontrol, pool, return_status, branches, i);
-			}
+			process_branch(proofstate, proofcontrol, pool, return_status, branches, i);
 		}
-		process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
 	}
+	process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
+	//~ }
 	fflush(GlobalOut);
 	// Exit and return to tableaux proof search
 	return 0;
@@ -239,6 +242,7 @@ int process_saturation_output(TableauControl_p tableau_control,
 					TableauSetExtractEntry(closed_branch);
 					closed_branch->open = false;
 					closed_branch->saturation_closed = true;
+					closed_branch->mark_int = 0;
 					DStrAppendStr(closed_branch->info, "Saturation closed");
 					return_status[i] = PROOF_FOUND;
 					successful_count++;

@@ -252,7 +252,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	ProofState_p proofstate = parent->master->state;
 	ProofControl_p proofcontrol = parent->master->control;
 	
-	if (parent->open_branches->anchor->succ->depth > 0)
+	if ((parent->open_branches->anchor->succ->depth % 3) == 0)
 	{
 		BranchSaturation_p branch_saturation = BranchSaturationAlloc(proofstate, proofcontrol, parent->master);
 		// Trying to keep one object in extensions and saturations

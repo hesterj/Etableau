@@ -227,11 +227,12 @@ Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause,
 		assert(old_var->f_code < 0);
 		master->max_var -= 2;
 		Term_p fresh_var = VarBankVarAssertAlloc(variable_bank, master->max_var, old_var->type);
+		//Term_p fresh_var =  VarBankGetFreshVar(variable_bank, old_var->type);
 		assert(old_var != fresh_var);
 		assert(old_var->f_code != fresh_var->f_code);
 		SubstAddBinding(subst, old_var, fresh_var);
 	}
-	new_clause = ClauseCopy(clause, master->terms);
+	new_clause = ClauseCopyOpt(clause);
 	//printf("New clause with binding: ");ClausePrint(GlobalOut, new_clause, true);printf("\n");
 	SubstDelete(subst);
 	return new_clause;

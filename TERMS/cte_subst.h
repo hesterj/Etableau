@@ -102,10 +102,12 @@ PStackPointer SubstAddBinding(Subst_p subst, Term_p var, Term_p bind)
    assert(bind->type);
    assert(problemType == PROBLEM_FO || var->type == bind->type);
 
-   /* printf("# %ld <- %ld \n", var->f_code, bind->f_code); */
    if (var->binding)
    {
+		printf("# %ld <- %ld \n", var->f_code, bind->f_code);
+		printf("# %ld <= %ld\n", var->f_code, var->binding->f_code);
 		SubstAddBinding(subst, var->binding, bind);
+		assert(0);
 	}
    else
    {

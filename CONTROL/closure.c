@@ -79,39 +79,34 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	assert(tab);
 	assert(tab->label);
 	assert(tab->master->unit_axioms);
-	Subst_p subst = SubstAlloc();
-	Subst_p success_subst = NULL;
+	Subst_p subst = NULL;
 	Clause_p temporary_label;
 	ClauseSet_p unit_axioms = tab->master->unit_axioms;
 	PStackPointer stack_pointer = 0;
 	
 	long num_local_variables = UpdateLocalVariables(tab);
+	
 	if (num_local_variables)
 	{
-		//original_clause = ReplaceLocalVariablesWithFresh(tab->master, original_clause, tab->local_variables);
-		original_clause = ReplaceLocalVariablesWithFreshSubst(tab->master, original_clause, tab->local_variables, subst);
+		original_clause = ReplaceLocalVariablesWithFresh(tab, original_clause, tab->local_variables);
 	}
 	// Check against the unit axioms
 	Clause_p unit_handle = unit_axioms->anchor->succ;
 	Clause_p temporary_unit = unit_handle;
 	while (unit_handle != unit_axioms->anchor)
 	{
-		temporary_unit = ClauseCopyFresh(unit_handle, tab);
 		assert(unit_handle);
-		//if ((subst = ClauseContradictsClause(tab, original_clause, unit_handle)))
-		if ((success_subst = ClauseContradictsClauseSubst(original_clause, temporary_unit, subst)))
+		if ((subst = ClauseContradictsClause(tab, original_clause, unit_handle)))
 		{
 			tab->mark_int = tab->depth; // mark the root node
-			ClauseFree(temporary_unit);
 			goto return_point;
 		}
-		ClauseFree(temporary_unit);
 		unit_handle = unit_handle->succ;
 	}
 	
 	// Check against the tableau AND its edges
-	ClauseTableau_p temporary_tab = tab;
-	int distance_up = 0;
+	ClauseTableau_p temporary_tab = tab->parent;
+	int distance_up = 1;
 	while (temporary_tab)
 	{
 		if (num_local_variables == 0)
@@ -121,11 +116,9 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		else
 		{
 			assert(num_local_variables > 0);
-			//temporary_label = ReplaceLocalVariablesWithFresh(tab->master, temporary_tab->label, tab->local_variables);
-			temporary_label = ReplaceLocalVariablesWithFreshSubst(tab->master, temporary_tab->label, tab->local_variables, subst);
+			temporary_label = ReplaceLocalVariablesWithFresh(tab->master, temporary_tab->label, tab->local_variables);
 		}
-		//if ((subst = ClauseContradictsClause(tab, temporary_label, original_clause)))
-		if ((success_subst = ClauseContradictsClauseSubst(temporary_label, original_clause, subst)))
+		if ((subst = ClauseContradictsClause(tab, temporary_label, original_clause)))
 		{
 			tab->mark_int = distance_up;
 			if (num_local_variables)
@@ -136,16 +129,13 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		}
 		if (temporary_tab->folding_labels)
 		{
-			//printf("Checking for edge contradiction.\n");
-			//if ((subst = ClauseContradictsSet(temporary_tab, original_clause, temporary_tab->folding_labels, tab)))
-			if ((success_subst = ClauseContradictsSetSubst(temporary_tab, original_clause, temporary_tab->folding_labels, tab, subst)))
+			if ((subst = ClauseContradictsSet(temporary_tab, original_clause, temporary_tab->folding_labels, tab)))
 			{
 				tab->mark_int = distance_up;
 				if (num_local_variables)
 				{
 					ClauseFree(temporary_label);
 				}
-				//~ SubstPrint(GlobalOut, subst, tab->master->terms->sig, DEREF_NEVER);printf("\n");
 				goto return_point;
 			}
 		}
@@ -157,7 +147,6 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		temporary_tab = temporary_tab->parent;
 	}
 	
-	SubstDelete(subst);
 	return NULL;
 	
 	return_point: // Only accessed if a contradiction was found
@@ -254,4 +243,3 @@ Subst_p ClauseContradictsSetSubst(ClauseTableau_p tab, Clause_p leaf, ClauseSet_
 	}
 	return NULL;
 }
-

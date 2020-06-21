@@ -39,6 +39,7 @@ ClauseTableau_p ClauseTableauAlloc()
 	handle->open_branches = NULL;
 	handle->children = NULL;
 	handle->label = NULL;
+	handle->tmp_label = NULL;
 	handle->master = handle;
 	handle->parent = NULL;
 	handle->open = true;
@@ -58,6 +59,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	TB_p bank = tab->terms;
 	
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
+	handle->tmp_label = NULL;
 	handle->arity = tab->arity;
 	char *info = DStrCopy(tab->info);
 	handle->info = DStrAlloc();
@@ -100,7 +102,8 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	
 	if (tab->label)
 	{
-		handle->label = ClauseCopy(tab->label, bank);
+		//handle->label = ClauseCopy(tab->label, bank);
+		handle->label = ClauseCopyOpt(tab->label);
 		assert(handle->label);
 	}
 	else 
@@ -164,6 +167,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	handle->state = parent->state;
 	handle->open = tab->open;
 	handle->arity = tab->arity;
+	handle->tmp_label = NULL;
 	if (tab->local_variables)
 	{
 		handle->local_variables = PStackCopy(tab->local_variables);
@@ -188,7 +192,8 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	
 	if (tab->label)
 	{
-		handle->label = ClauseCopy(tab->label, handle->terms);
+		//handle->label = ClauseCopy(tab->label, handle->terms);
+		handle->label = ClauseCopyOpt(tab->label);
 		assert(handle->label);
 	}
 	else
@@ -235,6 +240,7 @@ ClauseTableau_p ClauseTableauChildAlloc(ClauseTableau_p parent, int position)
 	handle->position = position;
 	handle->control = parent->control;
 	handle->label = NULL;
+	handle->tmp_label = NULL;
 	handle->max_var = parent->max_var;
 	handle->info = DStrAlloc();
 	handle->active_branch = NULL;
@@ -273,6 +279,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->unit_axioms = NULL;
 	handle->open_branches = parent->open_branches;
 	handle->label = label;
+	handle->tmp_label = NULL;
 	handle->id = 0;
 	handle->head_lit = false;
 	handle->local_variables = NULL;
@@ -416,7 +423,7 @@ void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 	
 	assert(tab->label);
 	
-	Clause_p new_label = ClauseCopy(tab->label, tab->terms);
+	Clause_p new_label = ClauseCopyOpt(tab->label);
 	ClauseFree(tab->label);
 	assert(new_label);
 	tab->label = new_label;
@@ -486,7 +493,8 @@ ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set)
 	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
 	{
 		assert(handle);
-		temp = ClauseCopy(handle,bank);
+		//temp = ClauseCopy(handle,bank);
+		temp = ClauseCopyOpt(handle);
 		ClauseSetInsert(new, temp);
 	}
 	return new;
@@ -516,7 +524,7 @@ ClauseSet_p ClauseSetApplySubstitution(TB_p bank, ClauseSet_p set, Subst_p subst
 	
 	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
 	{
-		temp = ClauseCopy(handle, bank);
+		temp = ClauseCopyOpt(handle);
 		ClauseSetInsert(new, temp);
 	}
 	return new;
@@ -681,7 +689,7 @@ Clause_p ClauseApplySubst(Clause_p clause,  TB_p bank, Subst_p subst)
    Clause_p new_clause;
    Term_p variable_in_clause __attribute__((unused));
    assert(clause);
-   new_clause = ClauseCopy(clause, bank);
+   new_clause = ClauseCopyOpt(clause);
    return new_clause;
 }
 
@@ -748,7 +756,7 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
    
 	//printf("max_var %ld\n", tableau->master->max_var);
    
-   handle = ClauseCopy(clause, clause->literals->bank);
+   handle = ClauseCopyOpt(clause);
    
    SubstDelete(subst);
    PStackFree(variables);
@@ -846,7 +854,7 @@ ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 	tab->open = true;
 	TableauSetExtractEntry(tab); // no longer open
 	assert(tab->open_branches->members == 0);
-	tab->label = ClauseCopy(start, bank);
+	tab->label = ClauseCopyOpt(start);
 	assert(tab->label);
 	//ClauseGCMarkTerms(tab->label);
 	

@@ -40,6 +40,7 @@ typedef struct clausetableau
 	//PStack_p spawned_tableaux;
 	
 	Clause_p label;
+	Clause_p tmp_label; // For creating temporary copies of clauses, i/e in closure
 	ClauseSet_p unit_axioms; // Only present at the master node
 	ClauseSet_p folding_labels; // These are clauses that have been folded up to this node.
 	
@@ -113,6 +114,7 @@ void ClauseTableauPrintDOTGraphChildren(ClauseTableau_p tab, FILE* dotgraph);
 
 #define NodeIsLeaf(tab) (tab->arity == 0)
 #define NodeIsNonLeaf(tab) (tab->arity != 0)
+#define NodeIsHeadLiteral(tab) (tab->head_lit)
 
 
 /*  Now for tableau sets...

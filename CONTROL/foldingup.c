@@ -1,16 +1,23 @@
 #include <foldingup.h>
 
 /*  Returns true if all of the nodes below tableau are closed
+ *  Return FALSE if a branch dominated by tableau has been closed by superposition!
  *  Closes nodes that have all children closed
 */
 
-bool ClauseTableauMarkClosedNodes(ClauseTableau_p tableau)
+bool ClauseTableauMarkClosedNodes(ClauseTableau_p tableau, int *subtree_saturation_closed)
 {
 	//printf("Attempting to mark a new node.");
 	assert(tableau);
 	if (tableau->set)
 	{
 		//printf("Found an open branch while attempting to mark nodes as closed.\n");
+	}
+	if (tableau->saturation_closed)
+	{
+		//fprintf(GlobalOut, "# Found saturation closed branch by marking\n");
+		*subtree_saturation_closed = CHILD_CLOSED_BY_SATURATION;
+		return false;
 	}
 	if (!tableau->open)
 	{
@@ -29,7 +36,7 @@ bool ClauseTableauMarkClosedNodes(ClauseTableau_p tableau)
 	{
 			assert(tableau->children[i]);
 			ClauseTableau_p child = tableau->children[i];
-			bool child_is_superclosed = ClauseTableauMarkClosedNodes(child);
+			bool child_is_superclosed = ClauseTableauMarkClosedNodes(child, subtree_saturation_closed);
 			if (!child_is_superclosed) // there is a child that is open or whose children are open
 			{
 				all_children_closed = false;
@@ -203,9 +210,16 @@ int FoldUpAtNode(ClauseTableau_p node)
 	// Do not fold up leaf nodes
 	if (NodeIsLeaf(node)) return 0;
 	// Do not fold up nodes that are not superclosed
-	if (!ClauseTableauNodeIsClosed(node))
+	int child_saturation_closed = NO_CHILDREN_CLOSED_BY_SATURATION;
+	//fprintf(GlobalOut, "# Checking if subtree is closed...\n");
+	if (!ClauseTableauMarkClosedNodes(node, &child_saturation_closed))
 	{
 		//printf("Attempted to fold up nonclosed node, returning 0 in FoldUpAtNode\n");
+		return 0;
+	}
+	if (child_saturation_closed == CHILD_CLOSED_BY_SATURATION)
+	{
+		//fprintf(GlobalOut, "# Do not fold up nodes with saturation closed children.\n");
 		return 0;
 	}
 	
