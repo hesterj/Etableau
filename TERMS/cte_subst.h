@@ -104,10 +104,14 @@ PStackPointer SubstAddBinding(Subst_p subst, Term_p var, Term_p bind)
 
    if (var->binding)
    {
+		if (var->binding == bind)
+		{
+			return ret;
+		}
 		printf("# %ld <- %ld \n", var->f_code, bind->f_code);
 		printf("# %ld <= %ld\n", var->f_code, var->binding->f_code);
-		SubstAddBinding(subst, var->binding, bind);
-		assert(0);
+		//SubstAddBinding(subst, var->binding, bind);
+		Error("# Attempting to instantiate variable that is already instantiated", 1);
 	}
    else
    {

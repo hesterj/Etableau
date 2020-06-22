@@ -134,15 +134,18 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 		node = node->parent;
 	}
 	
-	// Now do normal saturation
-	success = Saturate(proofstate, proofcontrol, 1000,
-							 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
-							 LLONG_MAX, LONG_MAX);
-	if (success)
+	//~ // Now do normal saturation
+	if (branch->open_branches->members == 1 && branch->depth > 8)
 	{
-		//fprintf(GlobalOut, "# Saturate returned empty clause %p.\n", success);
-		//ProofStateStatisticsPrint(GlobalOut, proofstate);
-		return PROOF_FOUND;
+		success = Saturate(proofstate, proofcontrol, 10000,
+								 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
+								 LLONG_MAX, LONG_MAX);
+		if (success)
+		{
+			fprintf(GlobalOut, "# Saturate returned empty clause %p.\n", success);
+			//ProofStateStatisticsPrint(GlobalOut, proofstate);
+			return PROOF_FOUND;
+		}
 	}
 	
 	//~ fprintf(GlobalOut, "# Surrendering\n");
@@ -184,17 +187,17 @@ int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, Br
 		handle = handle->succ;
 	}
 	
-	//~ #pragma omp task
-	//~ {
-	for (int i=0; i<num_open_branches; i++)
+	#pragma omp task
 	{
-		if (branches[i]) // Branch is local, so we will try to close it
+		for (int i=0; i<num_open_branches; i++)
 		{
-			process_branch(proofstate, proofcontrol, pool, return_status, branches, i);
+			if (branches[i]) // Branch is local, so we will try to close it
+			{
+				process_branch(proofstate, proofcontrol, pool, return_status, branches, i);
+			}
 		}
+		process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
 	}
-	process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
-	//~ }
 	fflush(GlobalOut);
 	// Exit and return to tableaux proof search
 	return 0;

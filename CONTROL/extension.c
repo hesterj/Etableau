@@ -288,6 +288,8 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 {
 	int extensions_done = 0;
 	int subst_completed = 0;
+	long split_clause_ident = ClauseGetIdent(selected);
+	if (split_clause_ident == open_branch->parent->id) return 0; // Don't split the same clause twice
 	ClauseSet_p new_leaf_clauses = SplitClauseFresh(open_branch->terms, open_branch->master, selected);
 	assert(new_leaf_clauses->members);
 	Subst_p subst = SubstAlloc();
