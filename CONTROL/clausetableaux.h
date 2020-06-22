@@ -151,7 +151,9 @@ TableauSet_p TableauMasterSetCopy(TableauSet_p set);
 void TableauMasterSetInsert(TableauSet_p list, ClauseTableau_p set);
 ClauseTableau_p   TableauMasterSetExtractFirst(TableauSet_p list);
 ClauseTableau_p TableauMasterSetExtractEntry(ClauseTableau_p set);
+long TableauMasterSetPushClauses(PStack_p stack, TableauSet_p set);
 void TableauMasterSetFree(TableauSet_p handle);
+void TableauStackFreeTableaux(PStack_p stack);
 void ClauseTableauCollectLeaves(ClauseTableau_p tab, TableauSet_p leaves);
 void ClauseTableauCollectLeavesStack(ClauseTableau_p tab, PStack_p leaves);
 

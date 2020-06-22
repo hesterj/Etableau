@@ -240,7 +240,7 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
    
    ClauseTableau_p initial_tab = ClauseTableauAlloc();
    ClauseTableau_p resulting_tab = NULL;
-   TableauSet_p distinct_tableaux = TableauMasterSetAlloc();
+   PStack_p distinct_tableaux_stack = PStackAlloc();
    
    initial_tab->open_branches = TableauSetAlloc();
    TableauSet_p open_branches = initial_tab->open_branches;
@@ -270,7 +270,8 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 		}
 		beginning_tableau = ClauseTableauMasterCopy(initial_tab);
 		beginning_tableau->max_var = max_var;
-		TableauMasterSetInsert(distinct_tableaux, beginning_tableau);
+		//TableauMasterSetInsert(distinct_tableaux, beginning_tableau);
+		PStackPushP(distinct_tableaux_stack, beginning_tableau);
 		beginning_tableau = TableauStartRule(beginning_tableau, start_label);
 		start_label = start_label->succ;
 	}
@@ -292,34 +293,28 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	PStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extionsion rules.
 	// New tableaux are added to the collection of distinct tableaux when the depth limit is increased, as new
 	// tableaux are already at the max depth.
-	fprintf(GlobalOut, " Beginning tableaux proof search with %ld start rule applications.\n", distinct_tableaux->members);
-	fprintf(GlobalOut, "# Extension candidates:\n");
-	ClauseSetPrint(GlobalOut, extension_candidates, true);
-	fprintf(GlobalOut, "# Unit axioms:\n");
-	ClauseSetPrint(GlobalOut, unit_axioms, true);
+	fprintf(GlobalOut, " Beginning tableaux proof search with %ld start rule applications.\n", PStackGetSP(distinct_tableaux_stack));
+	//~ fprintf(GlobalOut, "# Extension candidates:\n");
+	//~ ClauseSetPrint(GlobalOut, extension_candidates, true);
+	//~ fprintf(GlobalOut, "# Unit axioms:\n");
+	//~ ClauseSetPrint(GlobalOut, unit_axioms, true);
 	
-	for (int current_depth = 1; current_depth < max_depth; current_depth++)
+	for (int current_depth = 2; current_depth < max_depth; current_depth++)
 	{
 		assert(proofstate);
 		assert(proofcontrol);
-		assert(distinct_tableaux);
 		assert(extension_candidates);
 		assert(current_depth);
 		assert(new_tableaux);
 		int max_num_threads = 2;
-		#pragma omp parallel num_threads(max_num_threads)
-		{
-			#pragma omp single
-			{
-				resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
-																	proofstate, 
-																	proofcontrol, 
-																	distinct_tableaux,
-																	extension_candidates, 
-																	current_depth,
-																	new_tableaux);
-			}
-		}
+		
+		resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
+															proofstate, 
+															proofcontrol, 
+															distinct_tableaux_stack,
+															extension_candidates, 
+															current_depth,
+															new_tableaux);
 		if (resulting_tab)
 		{
 			long neg_conjectures = tableaucontrol->neg_conjectures;
@@ -352,24 +347,25 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 			fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
 			break;
 		}
+		TableauStackFreeTableaux(distinct_tableaux_stack);
+		assert(PStackEmpty(distinct_tableaux_stack));
 		fprintf(GlobalOut, "# Moving %ld tableaux to active set...\n", PStackGetSP(new_tableaux));
-		long num_moved = move_new_tableaux_to_distinct(distinct_tableaux, new_tableaux);
-		if (num_moved == 0) printf("# No new tableaux???\n");
+		PStackPushStack(distinct_tableaux_stack, new_tableaux);
+		PStackReset(new_tableaux);
+		//long num_moved = move_new_tableaux_to_distinct(distinct_tableaux, new_tableaux);
 		fprintf(GlobalOut, "# Increasing maximum depth to %d\n", current_depth + 1);
 	}
 	
+	TableauStackFreeTableaux(new_tableaux);
 	PStackFree(new_tableaux);
 	ClauseSetFree(extension_candidates);
 	ClauseSetFree(unit_axioms);
 	VarBankPopEnv(bank->vars);
    
    //printf("# Connection tableau proof search finished.\n");
-
-   if (distinct_tableaux) // Free the tableaux
-   {
-		TableauMasterSetFree(distinct_tableaux);
-		distinct_tableaux = NULL;
-	}
+   TableauStackFreeTableaux(distinct_tableaux_stack);
+	PStackFree(distinct_tableaux_stack);
+		
    if (!resulting_tab) // failure
    {
 	  fprintf(GlobalOut, "# ConnectionTableauProofSearch returns NULL. Failure.\n");
@@ -391,24 +387,27 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 											  ProofState_p proofstate, 
 											  ProofControl_p proofcontrol, 
-											  TableauSet_p distinct_tableaux,
+											  PStack_p distinct_tableaux_stack,
 										     ClauseSet_p extension_candidates,
 										     int max_depth,
 										     PStack_p new_tableaux)
 {
-	assert(distinct_tableaux);
-	assert(distinct_tableaux->anchor->master_succ);
-	ClauseTableau_p active_tableau = distinct_tableaux->anchor->master_succ;
+	assert(distinct_tableaux_stack);
+	ClauseTableau_p active_tableau = NULL;
+	//assert(distinct_tableaux->anchor->master_succ);
+	//ClauseTableau_p active_tableau = distinct_tableaux->anchor->master_succ;
 	
 	// tableau_select method instead of iteration?
 	 
-	while (active_tableau != distinct_tableaux->anchor) // iterate over the active tableaux
+	//while (active_tableau != distinct_tableaux->anchor) // iterate over the active tableaux
+	for (PStackPointer i=0; i<PStackGetSP(distinct_tableaux_stack); i++)
 	{
-		//fprintf(GlobalOut, "#\n");
-		assert(active_tableau->master_pred == distinct_tableaux->anchor);
+		//fprintf(GlobalOut, "# %ld\n", i);
+		active_tableau = PStackElementP(distinct_tableaux_stack, i);
+		assert(active_tableau);
 		assert(active_tableau->label);
-		assert(active_tableau->master_set);
 		assert(active_tableau->master == active_tableau);
+		assert(active_tableau->open_branches);
 		
 		//~ #ifndef DNDEBUG
 		//~ ClauseTableauAssertCheck(active_tableau);
@@ -426,16 +425,16 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 		ClauseTableau_p closed_tableau = ConnectionCalculusExtendOpenBranches(active_tableau, 
 																					   new_tableaux, 
 																					   tableaucontrol,
-																					   distinct_tableaux,
+																					   NULL,
 																					   extension_candidates,
 																					   max_depth);
 		if (closed_tableau)
 		{
 			return closed_tableau;
 		}
-		TableauMasterSetExtractEntry(active_tableau);
-		ClauseTableauFree(active_tableau);
-		active_tableau = distinct_tableaux->anchor->master_succ;
+		//TableauMasterSetExtractEntry(active_tableau);
+		//ClauseTableauFree(active_tableau);
+		//active_tableau = distinct_tableaux->anchor->master_succ;
 	}
 	return NULL;  // Went through all possible tableaux... failure
 }

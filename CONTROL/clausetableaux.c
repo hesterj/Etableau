@@ -352,6 +352,28 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	ClauseTableauCellFree(trash);
 }
 
+void TableauStackFreeTableaux(PStack_p stack)
+{
+	while (!PStackEmpty(stack))
+	{
+		ClauseTableau_p tab = PStackPopP(stack);
+		ClauseTableauFree(tab);
+	}
+}
+
+long TableauMasterSetPushClauses(PStack_p stack, TableauSet_p set)
+{
+   ClauseTableau_p handle;
+   long     res = 0;
+
+   for(handle = set->anchor->master_succ; handle!=set->anchor; handle = handle->master_succ)
+   {
+      PStackPushP(stack, handle);
+      res++;
+   }
+   return res;
+}
+
 void HCBClauseSetEvaluate(HCB_p hcb, ClauseSet_p clauses)
 {
 	Clause_p handle = clauses->anchor->succ;
@@ -843,7 +865,6 @@ ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 	Clause_p new_clause;
 	assert(!(tab->label));
 	assert(!(tab->arity));
-	assert(tab->master_set);
 	assert(start);
 	assert(tab->unit_axioms);
 	assert(tab->state);

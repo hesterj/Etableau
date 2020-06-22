@@ -19,3 +19,4 @@ int ECloseBranch(ProofState_p proofstate, ProofControl_p proofcontrol,
 int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proofcontrol, 
 					  ClauseTableau_p branch);
 int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, BranchSaturation_p jobs);
+int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_control, BranchSaturation_p jobs);

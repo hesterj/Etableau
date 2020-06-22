@@ -1,0 +1,9 @@
+Pin: pin-3.12-98018-b59b2543d
+Copyright 2002-2019 Intel Corporation.
+E:  Attach to pid 30306 failed. 
+  The Operating System configuration prevents Pin from using the default (parent) injection mode.
+  To resolve this, either execute the following (as root):
+  $ echo 0 > /proc/sys/kernel/yama/ptrace_scope
+  Or use the "-injection child" option.
+  For more information, regarding child injection, see Injection section in the Pin User Manual.
+

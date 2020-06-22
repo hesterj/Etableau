@@ -141,7 +141,6 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	
 	assert(extension->parent->id == 0);
 	assert(old_tableau_master->parent == NULL);
-	assert(distinct_tableaux);
 	assert(tableau_copy->open_branches);
 	assert(tableau_copy->open_branches->members != 0);
 	assert(tableau_copy->active_branch);
