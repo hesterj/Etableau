@@ -85,13 +85,13 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	PStackPointer stack_pointer = 0;
 	bool original_label_replaced = false;
 	
-	//long num_local_variables = 0;
-	long num_local_variables = UpdateLocalVariables(tab);
-	if (num_local_variables)
-	{
-		original_label_replaced = true;
-		original_clause = ReplaceLocalVariablesWithFresh(tab, original_clause, tab->local_variables);
-	}
+	long num_local_variables = 0;
+	//~ long num_local_variables = UpdateLocalVariables(tab);
+	//~ if (num_local_variables)
+	//~ {
+		//~ original_label_replaced = true;
+		//~ original_clause = ReplaceLocalVariablesWithFresh(tab, original_clause, tab->local_variables);
+	//~ }
 	//num_local_variables = 0;
 	
 	// Check against the unit axioms
@@ -175,24 +175,24 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 {
 	assert(set->anchor);
 	//bool local_vars = false;
-	if ((open_branch->local_variables) && (PStackGetSP(open_branch->local_variables) > 0))
-	{
-		Clause_p handle = set->anchor->succ;
-		Subst_p subst = NULL;
-		while (handle != set->anchor)
-		{
-			Clause_p handle_clause = ReplaceLocalVariablesWithFresh(tab->master, handle, open_branch->local_variables);
-			if ((subst = ClauseContradictsClause(tab, leaf, handle_clause)))
-			{
-				ClauseFree(handle_clause);
-				return subst;
-			}
-			ClauseFree(handle_clause);
-			handle = handle->succ;
-		}
-	}
-	else // no local variables- easy situation
-	{
+	//~ if ((open_branch->local_variables) && (PStackGetSP(open_branch->local_variables) > 0))
+	//~ {
+		//~ Clause_p handle = set->anchor->succ;
+		//~ Subst_p subst = NULL;
+		//~ while (handle != set->anchor)
+		//~ {
+			//~ Clause_p handle_clause = ReplaceLocalVariablesWithFresh(tab->master, handle, open_branch->local_variables);
+			//~ if ((subst = ClauseContradictsClause(tab, leaf, handle_clause)))
+			//~ {
+				//~ ClauseFree(handle_clause);
+				//~ return subst;
+			//~ }
+			//~ ClauseFree(handle_clause);
+			//~ handle = handle->succ;
+		//~ }
+	//~ }
+	//~ else // no local variables- easy situation
+	//~ {
 		Clause_p handle = set->anchor->succ;
 		Subst_p subst = NULL;
 		while (handle != set->anchor)
@@ -204,7 +204,7 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 			}
 			handle = handle->succ;
 		}
-	}
+	//~ }
 	return NULL;
 }
 
