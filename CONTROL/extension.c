@@ -294,7 +294,6 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	Clause_p open_branch_label = open_branch->label;
 	//fprintf(GlobalOut, "Updating local variables\n");
 	
-	long num_local_variables = 0;
 	//~ long num_local_variables = UpdateLocalVariables(open_branch);
 	//~ if (num_local_variables)
 	//~ {
@@ -359,11 +358,11 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 				extensions_done++;
 				if (maybe_extended->open_branches->members == 0)
 				{
-					//fprintf(GlobalOut, "# Closed tableau found!\n");
-					if (num_local_variables)
-					{
-						ClauseFree(open_branch_label);
-					}
+					//~ fprintf(GlobalOut, "# Closed tableau found!\n");
+					//~ if (num_local_variables)
+					//~ {
+						//~ ClauseFree(open_branch_label);
+					//~ }
 					assert(maybe_extended->master->label);
 					tableau_control->closed_tableau = maybe_extended->master;
 					ClauseSetFree(new_leaf_clauses);
@@ -375,10 +374,10 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		SubstDelete(subst);
 		leaf_clause = leaf_clause->succ;
 	}
-	if (num_local_variables)
-	{
-		ClauseFree(open_branch_label);
-	}
+	//~ if (num_local_variables)
+	//~ {
+		//~ ClauseFree(open_branch_label);
+	//~ }
 	
 	// Do not work here.  The tableau of open branch has been copied and worked on. 
 	// The current open branch is now "old" and will only be used for other extensions.

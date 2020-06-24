@@ -92,7 +92,7 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		original_label_replaced = true;
 		original_clause = ReplaceLocalVariablesWithFresh(tab, original_clause, tab->local_variables);
 	}
-	num_local_variables = 0;
+	//num_local_variables = 0;
 	
 	// Check against the unit axioms
 	Clause_p unit_handle = unit_axioms->anchor->succ;
@@ -122,7 +122,6 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		}
 		else
 		{
-			assert(num_local_variables > 0);
 			temporary_label = ReplaceLocalVariablesWithFresh(tab->master, temporary_tab->label, tab->local_variables);
 		}
 		if ((subst = ClauseContradictsClause(tab, temporary_label, original_clause)))

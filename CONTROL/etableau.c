@@ -86,7 +86,7 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 			success = ProcessSpecificClause(proofstate, proofcontrol, label, LONG_MAX);
 			if (success)
 			{
-				fprintf(GlobalOut, "# Saturate returned empty clause on branch.\n");
+				//fprintf(GlobalOut, "# Saturate returned empty clause on branch.\n");
 				//ProofStateStatisticsPrint(GlobalOut, proofstate);
 				return PROOF_FOUND;
 			}
@@ -106,7 +106,7 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 														  LONG_MAX);
 				if (success)
 				{
-					fprintf(GlobalOut, "# Saturate returned empty clause on folds.\n");
+					//fprintf(GlobalOut, "# Saturate returned empty clause on folds.\n");
 					//ProofStateStatisticsPrint(GlobalOut, proofstate);
 					return PROOF_FOUND;
 				}
@@ -125,7 +125,7 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 														  LONG_MAX);
 				if (success)
 				{
-					fprintf(GlobalOut, "# Saturate returned empty clause on units.\n");
+					//fprintf(GlobalOut, "# Saturate returned empty clause on units.\n");
 					//ProofStateStatisticsPrint(GlobalOut, proofstate);
 					return PROOF_FOUND;
 				}
@@ -141,7 +141,7 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 		success = Saturate(proofstate, proofcontrol, 10000,
 								 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
 								 LLONG_MAX, LONG_MAX);
-		fprintf(GlobalOut, "# Deep saturation check done\n");
+		//fprintf(GlobalOut, "# Deep saturation check done\n");
 		if (success)
 		{
 			fprintf(GlobalOut, "# Saturate returned empty clause %p.\n", success);
