@@ -86,7 +86,7 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 			success = ProcessSpecificClause(proofstate, proofcontrol, label, LONG_MAX);
 			if (success)
 			{
-				//fprintf(GlobalOut, "# Saturate returned empty clause on branch.\n");
+				fprintf(GlobalOut, "# Saturate returned empty clause on branch.\n");
 				//ProofStateStatisticsPrint(GlobalOut, proofstate);
 				return PROOF_FOUND;
 			}
@@ -106,7 +106,7 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 														  LONG_MAX);
 				if (success)
 				{
-					//fprintf(GlobalOut, "# Saturate returned empty clause on folds.\n");
+					fprintf(GlobalOut, "# Saturate returned empty clause on folds.\n");
 					//ProofStateStatisticsPrint(GlobalOut, proofstate);
 					return PROOF_FOUND;
 				}
@@ -125,7 +125,7 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 														  LONG_MAX);
 				if (success)
 				{
-					//fprintf(GlobalOut, "# Saturate returned empty clause on units.\n");
+					fprintf(GlobalOut, "# Saturate returned empty clause on units.\n");
 					//ProofStateStatisticsPrint(GlobalOut, proofstate);
 					return PROOF_FOUND;
 				}
@@ -137,9 +137,11 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 	//~ // Now do normal saturation
 	if (branch->open_branches->members == 1 && branch->depth > 8)
 	{
+		fprintf(GlobalOut, "# Beginning deep saturation check\n");
 		success = Saturate(proofstate, proofcontrol, 10000,
 								 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
 								 LLONG_MAX, LONG_MAX);
+		fprintf(GlobalOut, "# Deep saturation check done\n");
 		if (success)
 		{
 			fprintf(GlobalOut, "# Saturate returned empty clause %p.\n", success);
@@ -196,6 +198,7 @@ int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, Br
 				process_branch(proofstate, proofcontrol, pool, return_status, branches, i);
 			}
 		}
+		#pragma omp critical
 		process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
 	}
 	fflush(GlobalOut);
@@ -265,7 +268,14 @@ int process_saturation_output(TableauControl_p tableau_control,
 	if (successful_count == num_open_branches)
 	{
 		fprintf(GlobalOut, "# All %d remaining open branches were closed with E.\n", successful_count);
-		tableau_control->closed_tableau = closed_branch->master;
+		if (tableau_control->closed_tableau) 
+		{
+			return successful_count;
+		}
+		else
+		{ 
+			tableau_control->closed_tableau = closed_branch->master;
+		}
 	}
 	return successful_count;
 }

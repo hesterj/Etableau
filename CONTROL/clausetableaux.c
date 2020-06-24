@@ -786,77 +786,6 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
    return handle;
 }
 
-/*-----------------------------------------------------------------------
-//
-// Function: ClauseFlatCopyFresh()
-//
-//   Create a variable-fresh FLAT copy of clause.  Every variable that is 
-//   in the clause is replaced with a fresh one.  variable_subst is the address of the 
-//   substitution replacing the old variables with new ones.  Must be free'd afterwards!
-//
-//	John Hester
-// Global Variables: -
-//
-// Side Effects    : Memory operations
-//
-/----------------------------------------------------------------------*/
-
-Clause_p ClauseFlatCopyFresh(Clause_p clause, ClauseTableau_p tableau)
-{
-   PTree_p variable_tree;
-   PStack_p variables;
-   PStackPointer p;
-   Subst_p subst;
-   Term_p old_var, fresh_var;
-   Clause_p handle;
-   VarBank_p variable_bank;
-   
-   assert(clause);
-   
-   variable_bank = clause->literals->bank->vars;
-   variables = PStackAlloc();
-   variable_tree = NULL;
-   //VarBankSetVCountsToUsed(variable_bank);
-   subst = SubstAlloc();
-   
-   ClauseCollectVariables(clause, &variable_tree);
-   PTreeToPStack(variables, variable_tree);
-   PTreeFree(variable_tree);
-   
-   //printf("Clause being copied: ");ClausePrint(GlobalOut, clause, true);printf("\n");
-   
-   for (p = 0; p < PStackGetSP(variables); p++)
-   {
-	   old_var = PStackElementP(variables, p);
-	   //printf("# Old_var->type in ClauseFlatCopyFresh: %ld\n", old_var->type->f_code);
-	   //fresh_var = VarBankGetFreshVar(variable_bank, old_var->type);  // 2 is individual sort
-	   //printf("tableau max var: %ld\n", tableau->master->max_var);
-	   tableau->master->max_var -= 2;
-	   fresh_var = VarBankVarAssertAlloc(variable_bank, tableau->master->max_var, old_var->type);
-	   assert(fresh_var != old_var);
-	   assert(fresh_var->f_code != old_var->f_code);
-	   if (fresh_var->f_code == old_var->f_code)
-	   {
-			printf("Clause flat copy fresh error\n");
-			exit(0);
-		}
-	   SubstAddBinding(subst, old_var, fresh_var);
-	   //printf("The subst: %ld %ld\n", fresh_var->f_code, old_var->f_code);
-	   //SubstPrint(GlobalOut, subst, tableau->terms->sig, DEREF_NEVER);
-	   //printf("\n");
-   }
-   
-	//printf("max_var %ld\n", tableau->master->max_var);
-   
-   handle = ClauseFlatCopy(clause);
-   
-   SubstDelete(subst);
-   PStackFree(variables);
-
-   return handle;
-}
-
-
 ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 {
 	Eqn_p literals, lit;
@@ -876,6 +805,7 @@ ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 	TableauSetExtractEntry(tab); // no longer open
 	assert(tab->open_branches->members == 0);
 	tab->label = ClauseCopyOpt(start);
+	//tab->label = ClauseCopyFresh(start, tab);
 	assert(tab->label);
 	//ClauseGCMarkTerms(tab->label);
 	

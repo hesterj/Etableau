@@ -207,11 +207,22 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
    
    if (PListEmpty(conjectures))
    {
-		fprintf(GlobalOut, "# No conjectures.\n");
-		start_rule_candidates = ClauseSetAlloc();
-		ClauseSetInsertSet(start_rule_candidates, extension_candidates);
+		ClauseSet_p axiom_archive = proofstate->ax_archive;
+		assert(axiom_archive);
+		ClauseSetSplitConjectures(axiom_archive, conjectures, non_conjectures);
+		if (!PListEmpty(conjectures))
+		{
+			fprintf(GlobalOut, "# Conjectures eliminated in preprocessing, restoring them\n");
+		}
+		else
+		{
+			fprintf(GlobalOut, "# No conjectures.\n");
+			start_rule_candidates = ClauseSetAlloc();
+			ClauseSetInsertSet(start_rule_candidates, extension_candidates);
+		}
 	}
-	else
+	
+	if (!PListEmpty(conjectures))
 	{
 		fprintf(GlobalOut, "# Creating start rules for all conjectures.\n");
 		start_rule_candidates = ClauseSetAlloc();
@@ -293,7 +304,7 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	PStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extionsion rules.
 	// New tableaux are added to the collection of distinct tableaux when the depth limit is increased, as new
 	// tableaux are already at the max depth.
-	fprintf(GlobalOut, " Beginning tableaux proof search with %ld start rule applications.\n", PStackGetSP(distinct_tableaux_stack));
+	fprintf(GlobalOut, "# Beginning tableaux proof search with %ld start rule applications.\n", PStackGetSP(distinct_tableaux_stack));
 	//~ fprintf(GlobalOut, "# Extension candidates:\n");
 	//~ ClauseSetPrint(GlobalOut, extension_candidates, true);
 	//~ fprintf(GlobalOut, "# Unit axioms:\n");
@@ -307,16 +318,18 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 		assert(current_depth);
 		assert(new_tableaux);
 		int max_num_threads = 2;
-		#pragma omp parallel num_threads(4)
+		#pragma omp parallel num_threads(2)
 		{
 			#pragma omp single
-			resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
-															proofstate, 
-															proofcontrol, 
-															distinct_tableaux_stack,
-															extension_candidates, 
-															current_depth,
-															new_tableaux);
+			{
+				resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
+																proofstate, 
+																proofcontrol, 
+																distinct_tableaux_stack,
+																extension_candidates, 
+																current_depth,
+																new_tableaux);
+			}
 		}
 		if (resulting_tab)
 		{
@@ -439,7 +452,8 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 		//ClauseTableauFree(active_tableau);
 		//active_tableau = distinct_tableaux->anchor->master_succ;
 	}
-	return NULL;  // Went through all possible tableaux... failure
+	// Went through all possible tableaux...
+	return NULL;
 }
 
 ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tableau, PStack_p new_tableaux,
