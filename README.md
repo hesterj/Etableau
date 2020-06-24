@@ -13,4 +13,4 @@ Etableau is installed and licensed in the same way as Eprover.  Usage is also th
 ./eprover --auto -s --tableau=1 --tableau-depth=10 SET114-6.p
 ```
 
-If a successful proof (closed tableau) is not found up to tableau depth, search will abort.  If the option --tableau is not set to 1, Eprover will operate normally.
+If a successful proof (closed tableau) is not found up to --tableau-depth, search will abort.  If the option --tableau is not set to 1, Eprover will operate normally.
