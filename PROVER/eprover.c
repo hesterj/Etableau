@@ -594,7 +594,7 @@ int main(int argc, char* argv[])
    }
 
    out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
-   if(filter_sat)
+   if(filter_sat && !TableauOptions)
    {
       filter_success = ProofStateFilterUnprocessed(proofstate,
                                                    proofcontrol,
@@ -615,7 +615,7 @@ int main(int argc, char* argv[])
       }
       fprintf(GlobalOut, "\n# Proof found!\n");
 
-      if(print_full_deriv)
+      if(print_full_deriv && !TableauOptions)
       {
          ClauseSetPushClauses(proofstate->extract_roots,
                               proofstate->processed_pos_rules);
@@ -646,7 +646,7 @@ int main(int argc, char* argv[])
       }
 
 
-      if(PrintProofObject)
+      if(PrintProofObject && !TableauOptions)
       {
          DerivationPrintConditional(GlobalOut,
                                    "CNFRefutation",
@@ -765,7 +765,7 @@ int main(int argc, char* argv[])
 
    }
    /* ClauseSetDerivationStackStatistics(proofstate->unprocessed); */
-   if(print_sat)
+   if(print_sat && !TableauOptions)
    {
       if(proofstate->non_redundant_deleted)
       {

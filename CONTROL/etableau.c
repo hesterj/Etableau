@@ -91,27 +91,27 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 				return PROOF_FOUND;
 			}
 		}
-		//~ if (node->folding_labels) // Process the folding labels, if there are any
-		//~ {
-			//~ ClauseSetSetProp(node->folding_labels, CPInitial);
-			//~ assert(node->folding_labels->members == 0);
-			//~ //ClauseSetPrint(GlobalOut, node->folding_labels, true);printf("\n");
-			//~ while (!ClauseSetEmpty(node->folding_labels))
-			//~ {
-				//~ Clause_p fold_label = ClauseSetExtractFirst(node->folding_labels);
-				//~ fold_label->weight = ClauseStandardWeight(fold_label);
-				//~ success = ProcessSpecificClause(proofstate, 
-														  //~ proofcontrol, 
-														  //~ fold_label, 
-														  //~ LONG_MAX);
-				//~ if (success)
-				//~ {
-					//~ //fprintf(GlobalOut, "# Saturate returned empty clause on folds.\n");
-					//~ //ProofStateStatisticsPrint(GlobalOut, proofstate);
-					//~ return PROOF_FOUND;
-				//~ }
-			//~ }
-		//~ }
+		if (node->folding_labels) // Process the folding labels, if there are any
+		{
+			ClauseSetSetProp(node->folding_labels, CPInitial);
+			assert(node->folding_labels->members == 0);
+			//ClauseSetPrint(GlobalOut, node->folding_labels, true);printf("\n");
+			while (!ClauseSetEmpty(node->folding_labels))
+			{
+				Clause_p fold_label = ClauseSetExtractFirst(node->folding_labels);
+				fold_label->weight = ClauseStandardWeight(fold_label);
+				success = ProcessSpecificClause(proofstate, 
+														  proofcontrol, 
+														  fold_label, 
+														  LONG_MAX);
+				if (success)
+				{
+					//fprintf(GlobalOut, "# Saturate returned empty clause on folds.\n");
+					//ProofStateStatisticsPrint(GlobalOut, proofstate);
+					return PROOF_FOUND;
+				}
+			}
+		}
 		if (node->unit_axioms) // Process the units, if there are any
 		{
 			ClauseSetSetProp(node->unit_axioms, CPInitial);
@@ -249,7 +249,7 @@ int process_saturation_output(TableauControl_p tableau_control,
 					closed_branch->open = false;
 					closed_branch->saturation_closed = true;
 					closed_branch->mark_int = 0;
-					DStrAppendStr(closed_branch->info, "Saturation closed");
+					//DStrAppendStr(closed_branch->info, "Saturation closed");
 					return_status[i] = PROOF_FOUND;
 					successful_count++;
 					break;

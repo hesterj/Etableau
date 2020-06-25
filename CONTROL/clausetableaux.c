@@ -22,11 +22,12 @@ ClauseTableau_p ClauseTableauAlloc()
 	handle->folded_up = 0;
 	handle->folding_labels = NULL;
 	handle->set = NULL;
+	handle->derivation = PStackAlloc();
 	handle->head_lit = false;
 	handle->saturation_closed = false;
 	handle->id = 0;
 	handle->max_var = 0;
-	handle->info = DStrAlloc();
+	//handle->info = DStrAlloc();
 	handle->master_set = NULL;
 	handle->active_branch = NULL;
 	handle->pred = NULL;
@@ -59,19 +60,20 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	TB_p bank = tab->terms;
 	
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
+	handle->derivation = PStackCopy(tab->derivation);
+	PStackPushP(handle->derivation, tab);
 	handle->tmp_label = NULL;
 	handle->arity = tab->arity;
-	char *info = DStrCopy(tab->info);
-	handle->info = DStrAlloc();
-	DStrAppendStr(handle->info, info);
+	//~ char *info = DStrCopy(tab->info);
+	//~ handle->info = DStrAlloc();
+	//~ DStrAppendStr(handle->info, info);
 	handle->depth = tab->depth;
 	handle->position = tab->position;
 	assert(handle->depth == 0);
 	assert(tab->unit_axioms);
 	
-	//handle->unit_axioms = ClauseSetCopy(bank, tab->unit_axioms);
-	//handle->unit_axioms = tab->unit_axioms;
-	handle->unit_axioms = ClauseSetCopy(bank, tab->unit_axioms);
+	// Do NOT copy the unit axioms because there may be a subst active!!
+	handle->unit_axioms = ClauseSetAlloc();
 	handle->set = NULL;
 	handle->master_set = NULL;
 	handle->pred = NULL;
@@ -142,10 +144,11 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 {
 	TB_p bank = tab->terms; //Copy tableau tab
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
+	handle->derivation = NULL;
 	handle->unit_axioms = NULL;
-	char *info = DStrCopy(tab->info);
-	handle->info = DStrAlloc();
-	DStrAppendStr(handle->info, info);
+	//~ char *info = DStrCopy(tab->info);
+	//~ handle->info = DStrAlloc();
+	//~ DStrAppendStr(handle->info, info);
 	handle->open_branches = parent->open_branches;
 	handle->control = parent->control;
 	handle->set = NULL;
@@ -168,14 +171,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	handle->open = tab->open;
 	handle->arity = tab->arity;
 	handle->tmp_label = NULL;
-	if (tab->local_variables)
-	{
-		handle->local_variables = PStackCopy(tab->local_variables);
-	}
-	else
-	{
-		handle->local_variables = NULL;
-	}
+	handle->local_variables = NULL;
 	if (tab->folding_labels)
 	{
 		handle->folding_labels = ClauseSetCopy(bank, tab->folding_labels);
@@ -232,6 +228,7 @@ void ClauseTableauInitialize(ClauseTableau_p handle, ProofState_p initial)
 ClauseTableau_p ClauseTableauChildAlloc(ClauseTableau_p parent, int position)
 {
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
+	handle->derivation = NULL;
 	parent->open = true; // We only want leaf nodes in the collection of open breanches
 	
 	handle->unit_axioms = NULL;
@@ -242,7 +239,7 @@ ClauseTableau_p ClauseTableauChildAlloc(ClauseTableau_p parent, int position)
 	handle->label = NULL;
 	handle->tmp_label = NULL;
 	handle->max_var = parent->max_var;
-	handle->info = DStrAlloc();
+	//handle->info = DStrAlloc();
 	handle->active_branch = NULL;
 	handle->set = NULL;
 	handle->mark_int = 0;
@@ -271,6 +268,7 @@ ClauseTableau_p ClauseTableauChildAlloc(ClauseTableau_p parent, int position)
 ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p label, int position)
 {
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
+	handle->derivation = NULL;
 	assert(parent);
 	assert(label);
 	parent->arity += 1;
@@ -289,7 +287,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->mark_int = 0;
 	handle->folded_up = 0;
 	handle->folding_labels = NULL;
-	handle->info = DStrAlloc();
+	//handle->info = DStrAlloc();
 	handle->active_branch = NULL;
 	handle->master_set = NULL;
 	handle->pred = NULL;
@@ -318,10 +316,6 @@ void ClauseTableauFree(ClauseTableau_p trash)
 		ClauseFree(trash->label);
 		trash->label = NULL;
 	}
-	if (trash->info)
-	{
-		DStrFree(trash->info);
-	}
 	if (trash->unit_axioms) //unit axioms are only at the master node
 	{
 		ClauseSetFree(trash->unit_axioms);
@@ -349,6 +343,7 @@ void ClauseTableauFree(ClauseTableau_p trash)
 		TableauSetFree(trash->open_branches);
 		trash->open_branches = NULL;
 	}
+	//DStrFree(trash->info);
 	ClauseTableauCellFree(trash);
 }
 
@@ -444,6 +439,7 @@ void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 {
 	
 	assert(tab->label);
+	assert(subst);
 	
 	Clause_p new_label = ClauseCopyOpt(tab->label);
 	ClauseFree(tab->label);
@@ -494,6 +490,8 @@ Subst_p ClauseContradictsClauseSubst(Clause_p a, Clause_p b, Subst_p subst)
 	//if (!ClauseIsUnit(a) || !ClauseIsUnit(b)) return 0;  // Should not happen
 	Eqn_p a_eqn = a->literals;
 	Eqn_p b_eqn = b->literals;
+	assert(a_eqn);
+	assert(b_eqn);
 	bool success = false;
 	
 	if (EqnIsPositive(a_eqn) && EqnIsPositive(b_eqn)) return NULL;
@@ -1068,7 +1066,7 @@ void ClauseTableauPrintDOTGraphToFile(FILE* dotgraph, ClauseTableau_p tab)
 	}
 	else
 	{
-		printf("# Printing DOT graph to ~/Projects/APRTESTING/DOT/graph.dot\n");
+		printf("# Printing DOT graph to specified file\n");
 	}
 	
 	Clause_p root_label = tab->label;
@@ -1148,6 +1146,7 @@ void ClauseTableauPrintDOTGraphChildren(ClauseTableau_p tab, FILE* dotgraph)
 		ClauseTableau_p child = tab->children[i];
 		ClauseTableauPrintDOTGraphChildren(child, dotgraph);
 	}
+	fflush(dotgraph);
 }
 
 /*  Checks to see if labels on leaf nodes are duplicated higher up on their branch.
@@ -1240,6 +1239,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures, char *problem_name, P
 	handle->neg_conjectures = neg_conjectures;
 	handle->proofstate = proofstate;
 	handle->proofcontrol = proofcontrol;
+	//handle->trash = PStackAlloc();
 	return handle;
 }
 

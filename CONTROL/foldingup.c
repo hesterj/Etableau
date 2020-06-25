@@ -345,8 +345,8 @@ int FoldUpCloseCycle(ClauseTableau_p tableau)
 	do
 	{
 		closures_done = 0;
-		folding_ups_done += FoldUpEveryNodeOnce(tableau);
-		closures_done = AttemptClosureRuleOnAllOpenBranches(tableau);
+		//folding_ups_done += FoldUpEveryNodeOnce(tableau);
+		//closures_done = AttemptClosureRuleOnAllOpenBranches(tableau);
 		total_closures_done += closures_done;
 		//printf("Closures done in FoldUpCloseCycle: %d\n", closures_done);
 		if (closures_done < 0)

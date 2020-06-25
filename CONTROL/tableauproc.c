@@ -299,7 +299,7 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 		ClauseSetFree(equality_axioms);
 	}
 	initial_tab->unit_axioms = NULL;
-	ClauseTableauFree(initial_tab);  // Free the  initialization tableau used to make the tableaux with start rule
+	ClauseTableauFree(initial_tab);
 	VarBankPushEnv(bank->vars);
 	PStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extionsion rules.
 	// New tableaux are added to the collection of distinct tableaux when the depth limit is increased, as new
@@ -318,10 +318,10 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 		assert(current_depth);
 		assert(new_tableaux);
 		int max_num_threads = 2;
-		#pragma omp parallel num_threads(2)
-		{
-			#pragma omp single
-			{
+		//~ #pragma omp parallel num_threads(2)
+		//~ {
+			//~ #pragma omp single
+			//~ {
 				resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
 																proofstate, 
 																proofcontrol, 
@@ -329,10 +329,34 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 																extension_candidates, 
 																current_depth,
 																new_tableaux);
-			}
-		}
+			//~ }
+		//~ }
 		if (resulting_tab)
 		{
+			//~ assert(resulting_tab);
+			//~ assert(resulting_tab->derivation);
+			//~ assert(PStackGetSP(resulting_tab->derivation));
+			//~ fprintf(GlobalOut, "# Printing tableaux derivation.  These have not been free'd.\n");
+			//~ PStack_p derivation = resulting_tab->derivation;
+			//~ for (PStackPointer p = 1; p < PStackGetSP(derivation); p++)
+			//~ {
+				//~ ClauseTableau_p previous_step = PStackElementP(derivation, p);
+				//~ assert(previous_step);
+				//~ ClauseTableauPrint(previous_step);
+				//~ DStr_p str = DStrAlloc();
+				//~ DStrAppendStr(str, "/home/hesterj/Projects/APRTESTING/DOT/unsattest/graph");
+				//~ DStrAppendInt(str, p);
+				//~ DStrAppendStr(str, ".dot");
+				//~ FILE *dotgraph = fopen(DStrView(str), "w");
+				//~ ClauseTableauPrintDOTGraphToFile(GlobalOut, previous_step->master);
+				//~ fclose(dotgraph);
+				//~ printf("# %d\n", p);
+				//~ printf("#############################\n");
+				//~ DStrFree(str);
+				//~ sleep(1);
+				//~ ClauseTableauPrintDOTGraph(previous_step);
+			//~ }
+			// AAAAAAHHHHHHHHHH
 			long neg_conjectures = tableaucontrol->neg_conjectures;
 			if (!tableaucontrol->satisfiable)
 			{
@@ -448,11 +472,8 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 		{
 			return closed_tableau;
 		}
-		//TableauMasterSetExtractEntry(active_tableau);
-		//ClauseTableauFree(active_tableau);
-		//active_tableau = distinct_tableaux->anchor->master_succ;
 	}
-	// Went through all possible tableaux...
+	// Went through all possible tableaux at this depth...
 	return NULL;
 }
 
@@ -477,7 +498,7 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 		Clause_p selected = extension_candidates->anchor->succ;
 		while (selected != extension_candidates->anchor) // iterate over the clauses we can split on the branch
 		{
-			number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranch(control,
+			number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranchNoLocal(control,
 																									open_branch,
 																									distinct_tableaux,
 																									selected,

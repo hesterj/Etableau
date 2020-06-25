@@ -9,6 +9,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 	Subst_p subst;
 	assert(tab);
 	assert(tab->label);
+	bool leaf_regularity_checking = false;
 
 	if ((subst = ClauseContradictsBranch(tab, tab->label)))
 	{
@@ -17,18 +18,12 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 			SubstDelete(subst);
 			return true;
 		}
-		// Regularity checking (Is checking for duplicate terms in the tree worthwhile?)
-		ClauseTableau_p temp = ClauseTableauMasterCopy(tab->master);
-		bool leaf_regular = ClauseTableauIsLeafRegular(temp);
-		if (leaf_regular)
+		else
 		{
-			
-			SubstDStrPrint(tab->info, subst, tab->terms->sig, DEREF_ONCE);
-			ClauseTableauApplySubstitution(tab, subst);
+			ClauseTableauApplySubstitution(tab->master, subst);
+			SubstDelete(subst);
+			return true;
 		}
-		ClauseTableauFree(temp->master);
-		SubstDelete(subst);
-		return leaf_regular;  // Subst was only applied and branch closed if the new tableaux is leaf regular
 	}
 	return false;
 }
@@ -38,7 +33,10 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
  *  Returns the total number of closures that were accomplished.
  *  If there are no more open branches (a closed tableau was found),
  *  return the negative of the total number of branches closed.
+ * 
+ *  
 */
+
 
 int AttemptClosureRuleOnAllOpenBranches(ClauseTableau_p tableau)
 {
@@ -97,23 +95,25 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	// Check against the unit axioms
 	Clause_p unit_handle = unit_axioms->anchor->succ;
 	Clause_p temporary_unit = unit_handle;
-	//fprintf(GlobalOut, "Checking units...  ");
 	while (unit_handle != unit_axioms->anchor)
 	{
 		assert(unit_handle);
-		if ((subst = ClauseContradictsClause(tab, original_clause, unit_handle)))
+		Clause_p tmp_unit_handle = ClauseCopyFresh(unit_handle, tab->master);
+		if ((subst = ClauseContradictsClause(tab, original_clause, tmp_unit_handle)))
 		{
 			tab->mark_int = tab->depth; // mark the root node
+			ClauseFree(tmp_unit_handle);
 			goto return_point;
 		}
+		ClauseFree(tmp_unit_handle);
 		unit_handle = unit_handle->succ;
 	}
+	assert(!subst);
 	//fprintf(GlobalOut, "  Done.\n");
 	
 	// Check against the tableau AND its edges
 	ClauseTableau_p temporary_tab = tab->parent;
 	int distance_up = 1;
-	//fprintf(GlobalOut, "Checking labels...  ");
 	while (temporary_tab)
 	{
 		if (num_local_variables == 0)
@@ -133,7 +133,6 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 			}
 			goto return_point;
 		}
-		//fprintf(GlobalOut, "  Checking folding labels.\n");
 		if (temporary_tab->folding_labels)
 		{
 			if ((subst = ClauseContradictsSet(temporary_tab, original_clause, temporary_tab->folding_labels, tab)))
@@ -154,8 +153,6 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		temporary_tab = temporary_tab->parent;
 	}
 	
-	//fprintf(GlobalOut, "  Done with failure.\n");
-	
 	return NULL;
 	
 	return_point: // Only accessed if a contradiction was found
@@ -174,37 +171,38 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set, ClauseTableau_p open_branch)
 {
 	assert(set->anchor);
-	//bool local_vars = false;
-	//~ if ((open_branch->local_variables) && (PStackGetSP(open_branch->local_variables) > 0))
-	//~ {
-		//~ Clause_p handle = set->anchor->succ;
-		//~ Subst_p subst = NULL;
-		//~ while (handle != set->anchor)
-		//~ {
-			//~ Clause_p handle_clause = ReplaceLocalVariablesWithFresh(tab->master, handle, open_branch->local_variables);
-			//~ if ((subst = ClauseContradictsClause(tab, leaf, handle_clause)))
-			//~ {
-				//~ ClauseFree(handle_clause);
-				//~ return subst;
-			//~ }
-			//~ ClauseFree(handle_clause);
-			//~ handle = handle->succ;
-		//~ }
-	//~ }
-	//~ else // no local variables- easy situation
-	//~ {
+	//~ //bool local_vars = false;
+	// This IF statement has been disabled!!!
+	if (NULL && (open_branch->local_variables) && (PStackGetSP(open_branch->local_variables) > 0))
+	{
+		fprintf(GlobalOut, "# Not allowed!!!\n");
 		Clause_p handle = set->anchor->succ;
 		Subst_p subst = NULL;
 		while (handle != set->anchor)
 		{
-			Clause_p handle_clause = handle;
+			Clause_p handle_clause = ReplaceLocalVariablesWithFresh(tab->master, handle, open_branch->local_variables);
 			if ((subst = ClauseContradictsClause(tab, leaf, handle_clause)))
+			{
+				ClauseFree(handle_clause);
+				return subst;
+			}
+			ClauseFree(handle_clause);
+			handle = handle->succ;
+		}
+	}
+	else // no local variables- easy situation
+	{
+		Clause_p handle = set->anchor->succ;
+		Subst_p subst = NULL;
+		while (handle != set->anchor)
+		{
+			if ((subst = ClauseContradictsClause(tab, leaf, handle)))
 			{
 				return subst;
 			}
 			handle = handle->succ;
 		}
-	//~ }
+	}
 	return NULL;
 }
 

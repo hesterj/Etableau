@@ -18,7 +18,7 @@
 
 long UpdateLocalVariables(ClauseTableau_p node)
 {
-	//Sig_p sig = node->signature;
+	Sig_p sig = node->signature;
 	long num_variables = 0;
 	PTree_p local_variables_tree = NULL;
 	if (node->local_variables)
@@ -88,30 +88,29 @@ long UpdateLocalVariables(ClauseTableau_p node)
 	*/
 	node->local_variables = local_variables;
 	
-	//~ // Bug checking
-	//~ if (num_variables)
-	//~ {
-		//~ //printf("%ld Local variables found! ", num_variables);
-		//~ for (PStackPointer p = 0; p<PStackGetSP(local_variables); p++)
-		//~ {
-			//~ Term_p local_variable = PStackElementP(local_variables, p);
-			//~ printf("# Local variable ");
-			//~ TermPrint(GlobalOut, local_variable, sig,DEREF_ALWAYS);
-			//~ //TermPrint(GlobalOut, local_variable, node->terms->sig, DEREF_ALWAYS);printf(" ");
-			//~ if (PTreeFind(&temp_variable_tree, local_variable))
-			//~ {
-				//~ printf("Found local variable in other branches var tree...\n");
-				//~ printf("Root of temp_variable_tree: %7p\n", temp_variable_tree->key);
-				//~ printf("Able to delete? %d\n", PTreeDeleteEntry(&temp_variable_tree, local_variable));
-				//~ printf("Root of temp_variable_tree: %7p\n", temp_variable_tree->key);
-				//~ printf("%ld nodes in temp_variable_tree.\n", PTreeNodes(temp_variable_tree));
-				//~ //TermPrint(GlobalOut, temp_variable_tree->key, node->terms->sig, DEREF_ALWAYS);printf("\n");
-				//~ assert(0);
-			//~ }
+	// Bug checking
+	if (num_variables)
+	{
+		//printf("%ld Local variables found! ", num_variables);
+		for (PStackPointer p = 0; p<PStackGetSP(local_variables); p++)
+		{
+			Term_p local_variable = PStackElementP(local_variables, p);
+			//printf("# Local variable ");
+			//TermPrint(GlobalOut, local_variable, sig,DEREF_ALWAYS);
+			//TermPrint(GlobalOut, local_variable, node->terms->sig, DEREF_ALWAYS);printf(" ");
+			if (PTreeFind(&temp_variable_tree, local_variable))
+			{
+				printf("Found local variable in other branches var tree...\n");
+				printf("Root of temp_variable_tree: %7p\n", temp_variable_tree->key);
+				printf("Able to delete? %d\n", PTreeDeleteEntry(&temp_variable_tree, local_variable));
+				printf("Root of temp_variable_tree: %7p\n", temp_variable_tree->key);
+				printf("%ld nodes in temp_variable_tree.\n", PTreeNodes(temp_variable_tree));
+				//TermPrint(GlobalOut, temp_variable_tree->key, node->terms->sig, DEREF_ALWAYS);printf("\n");
+				assert(0);
+			}
 			
-		//~ }
-		//~ printf("\n");
-	//~ }
+		}
+	}
 	/*
 	if (num_variables >= 2)
 	{

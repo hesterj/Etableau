@@ -34,8 +34,10 @@ typedef struct clausetableau
 	int folded_up;  // If the node has been folded up, this is the number of steps up it went
 	long id;  		// If a clause was split on a node, this is the id of the clause used to split.
 	long max_var;   // f_code of the maximal variable in the tableau
-	DStr_p info;
+	//DStr_p info;
 	PStack_p local_variables; // The variables of the tableau that are local to the branch.
+	
+	PStack_p derivation;
 	
 	//PStack_p spawned_tableaux;
 	
@@ -170,6 +172,7 @@ typedef struct tableaucontrol_cell
 	ClauseTableau_p closed_tableau;
 	TB_p terms;
 	bool satisfiable;
+	//PStack_p trash;  // Old tableaux for tracing bugs... should not be used normally
 }TableauControlCell, *TableauControl_p;
 
 #define TableauControlCellAlloc()    (TableauControlCell*)SizeMalloc(sizeof(TableauControlCell))
