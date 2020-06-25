@@ -344,16 +344,6 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			TableauExtensionFree(extension_candidate);
 			if (maybe_extended) // extension may not happen due to regularity
 			{
-				if ((maybe_extended->open_branches->anchor->succ->depth > 7) == 0)
-				{
-					BranchSaturation_p branch_saturation = BranchSaturationAlloc(tableau_control->proofstate, 
-																									 tableau_control->proofcontrol, 
-																									 maybe_extended->master);
-					// Trying to keep one object in extensions and saturations
-					AttemptToCloseBranchesWithSuperposition(tableau_control, branch_saturation);
-					BranchSaturationFree(branch_saturation);
-				}
-				fflush(GlobalOut);
 				//printf("# Extension completed.  There are %ld new_tableaux\n", PStackGetSP(new_tableaux));
 				extensions_done++;
 				if (maybe_extended->open_branches->members == 0)
@@ -369,6 +359,16 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 					SubstDelete(subst);
 					return extensions_done;
 				}
+				else if ((maybe_extended->open_branches->anchor->succ->depth > 7) == 0)
+				{
+					BranchSaturation_p branch_saturation = BranchSaturationAlloc(tableau_control->proofstate, 
+																									 tableau_control->proofcontrol, 
+																									 maybe_extended->master);
+					// Trying to keep one object in extensions and saturations
+					AttemptToCloseBranchesWithSuperposition(tableau_control, branch_saturation);
+					BranchSaturationFree(branch_saturation);
+				}
+				fflush(GlobalOut);
 			}
 		}
 		SubstDelete(subst);
