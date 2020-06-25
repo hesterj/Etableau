@@ -362,15 +362,15 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 					ClauseSetFree(new_leaf_clauses);
 					return extensions_done;
 				}
-				//~ else if ((maybe_extended->open_branches->anchor->succ->depth > 7) == 0)
-				//~ {
-					//~ BranchSaturation_p branch_saturation = BranchSaturationAlloc(tableau_control->proofstate, 
-																									 //~ tableau_control->proofcontrol, 
-																									 //~ maybe_extended->master);
-					//~ // Trying to keep one object in extensions and saturations
-					//~ AttemptToCloseBranchesWithSuperposition(tableau_control, branch_saturation);
-					//~ BranchSaturationFree(branch_saturation);
-				//~ }
+				else if ((maybe_extended->open_branches->anchor->succ->depth > 7) == 0)
+				{
+					BranchSaturation_p branch_saturation = BranchSaturationAlloc(tableau_control->proofstate, 
+																									 tableau_control->proofcontrol, 
+																									 maybe_extended->master);
+					// Trying to keep one object in extensions and saturations
+					AttemptToCloseBranchesWithSuperposition(tableau_control, branch_saturation);
+					BranchSaturationFree(branch_saturation);
+				}
 			}
 		}
 		leaf_clause = leaf_clause->succ;

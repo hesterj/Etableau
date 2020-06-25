@@ -498,7 +498,7 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 		Clause_p selected = extension_candidates->anchor->succ;
 		while (selected != extension_candidates->anchor) // iterate over the clauses we can split on the branch
 		{
-			number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranchNoLocal(control,
+			number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranch(control,
 																									open_branch,
 																									distinct_tableaux,
 																									selected,
