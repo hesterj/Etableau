@@ -75,10 +75,6 @@ int process_branch_nofork(ProofState_p proofstate,
 	//ClauseSetFreeClauses(proofstate->unprocessed);
 	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
 	int branch_status = ECloseBranchProcessBranchFirstSerial(proofstate, proofcontrol, branch);
-	if (branch_status == PROOF_FOUND)
-	{
-		ProofStatePrint(GlobalOut, proofstate);
-	}
 	ProofStateResetClauseSets(proofstate, false);
 	ClauseSetFree(unprocessed);
 	return branch_status;
@@ -210,28 +206,6 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate, ProofControl_p
 		}
 		node = node->parent;
 	}
-	//~ if (branch->master->unit_axioms) // Process the units, if there are any
-	//~ {
-		//~ ClauseSet_p unit_axioms = branch->master->unit_axioms;
-		//~ ClauseSetSetProp(unit_axioms, CPInitial);
-		//~ Clause_p unit = unit_axioms->anchor->succ;
-		//~ while (unit != unit_axioms->anchor)
-		//~ {
-			//~ Clause_p unit_copy = ClauseCopyOpt(unit);
-			//~ unit->weight = ClauseStandardWeight(unit);
-			//~ success = ProcessSpecificClause(proofstate, 
-													  //~ proofcontrol, 
-													  //~ unit_copy, 
-													  //~ LONG_MAX);
-			//~ if (success)
-			//~ {
-				//~ //fprintf(GlobalOut, "# Saturate returned empty clause on units.\n");
-				//~ //ProofStateStatisticsPrint(GlobalOut, proofstate);
-				//~ return PROOF_FOUND;
-			//~ }
-			//~ unit = unit->succ;
-		//~ }
-	//~ }
 	
 	//~ // Now do normal saturation
 	if (branch->open_branches->members == 1)

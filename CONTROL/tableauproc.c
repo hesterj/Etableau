@@ -291,8 +291,8 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 			fprintf(GlobalOut, "#");
 		}
 		beginning_tableau = ClauseTableauMasterCopy(initial_tab);
-		//beginning_tableau ->unit_axioms = ClauseSetCopy(initial_tab->terms, unit_axioms);
-		beginning_tableau->unit_axioms = NULL;
+		beginning_tableau ->unit_axioms = ClauseSetCopy(initial_tab->terms, unit_axioms);
+		//beginning_tableau->unit_axioms = NULL;
 		beginning_tableau->max_var = max_var;
 		//TableauMasterSetInsert(distinct_tableaux, beginning_tableau);
 		PStackPushP(distinct_tableaux_stack, beginning_tableau);
@@ -313,11 +313,10 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	// New tableaux are added to the collection of distinct tableaux when the depth limit is increased, as new
 	// tableaux are already at the max depth.
 	fprintf(GlobalOut, "# Beginning tableaux proof search with %ld start rule applications.\n", PStackGetSP(distinct_tableaux_stack));
-	fprintf(GlobalOut, "# Extension candidates:\n");
-	ClauseSetPrint(GlobalOut, extension_candidates, true);
-	fprintf(GlobalOut, "# Unit axioms:\n");
-	ClauseSetPrint(GlobalOut, unit_axioms, true);
-	ClauseSetInsertSet(extension_candidates, unit_axioms);
+	//~ fprintf(GlobalOut, "# Extension candidates:\n");
+	//~ ClauseSetPrint(GlobalOut, extension_candidates, true);
+	//~ fprintf(GlobalOut, "# Unit axioms:\n");
+	//~ ClauseSetPrint(GlobalOut, unit_axioms, true);
 	
 	//ClauseSetInsertSet(extension_candidates, unit_axioms); // TEMPORARY
 	
@@ -330,55 +329,49 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 		assert(current_depth);
 		assert(new_tableaux);
 		int max_num_threads = 2;
-		//~ #pragma omp parallel num_threads(6)
-		//~ {
-			//~ #pragma omp single
-			//~ {
-				resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
-																proofstate, 
-																proofcontrol, 
-																distinct_tableaux_stack,
-																extension_candidates, 
-																current_depth,
-																new_tableaux);
-			//~ }
-		//~ }
+		resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
+														proofstate, 
+														proofcontrol, 
+														distinct_tableaux_stack,
+														extension_candidates, 
+														current_depth,
+														new_tableaux);
 		if (resulting_tab)
 		{
 			assert(resulting_tab);
 			assert(resulting_tab->derivation);
 			assert(PStackGetSP(resulting_tab->derivation));
 			//fprintf(GlobalOut, "# Printing tableaux derivation..\n");
-			PStack_p derivation = resulting_tab->derivation;
-			for (PStackPointer p = 1; p < PStackGetSP(derivation); p++)
-			{
-				ClauseTableau_p previous_step = PStackElementP(derivation, p);
-				assert(previous_step);
-				ClauseTableauPrint(previous_step);
-				DStr_p str = DStrAlloc();
-				DStrAppendStr(str, "/home/hesterj/Projects/APRTESTING/DOT/unsattest/graph");
-				DStrAppendInt(str, p);
-				DStrAppendStr(str, ".dot");
-				FILE *dotgraph = fopen(DStrView(str), "w");
-				ClauseTableauPrintDOTGraphToFile(dotgraph, previous_step->master);
-				fclose(dotgraph);
-				printf("# %ld\n", p);
-				if ((p + 1) == PStackGetSP(derivation))
-				{
-					sleep(1);
-					DStr_p str2 = DStrAlloc();
-					DStrAppendStr(str2, "/home/hesterj/Projects/APRTESTING/DOT/unsattest/graph");
-					DStrAppendInt(str2, p+1);
-					DStrAppendStr(str2, ".dot");
-					FILE *dotgraph = fopen(DStrView(str2), "w");
-					ClauseTableauPrintDOTGraphToFile(dotgraph, resulting_tab);
-					fclose(dotgraph);
-					DStrFree(str2);
-				}
-				printf("#############################\n");
-				DStrFree(str);
-				sleep(1);
-			}
+			//~ PStack_p derivation = resulting_tab->derivation;
+			//~ for (PStackPointer p = 1; p < PStackGetSP(derivation); p++)
+			//~ {
+				//~ ClauseTableau_p previous_step = PStackElementP(derivation, p);
+				//~ assert(previous_step);
+				//~ ClauseTableauPrint(previous_step);
+				//~ DStr_p str = DStrAlloc();
+				//~ DStrAppendStr(str, "/home/hesterj/Projects/APRTESTING/DOT/unsattest/graph");
+				//~ DStrAppendInt(str, p);
+				//~ DStrAppendStr(str, ".dot");
+				//~ FILE *dotgraph = fopen(DStrView(str), "w");
+				//~ ClauseTableauPrintDOTGraphToFile(dotgraph, previous_step->master);
+				//~ fclose(dotgraph);
+				//~ printf("# %ld\n", p);
+				//~ if ((p + 1) == PStackGetSP(derivation))
+				//~ {
+					//~ sleep(1);
+					//~ DStr_p str2 = DStrAlloc();
+					//~ DStrAppendStr(str2, "/home/hesterj/Projects/APRTESTING/DOT/unsattest/graph");
+					//~ DStrAppendInt(str2, p+1);
+					//~ DStrAppendStr(str2, ".dot");
+					//~ FILE *dotgraph = fopen(DStrView(str2), "w");
+					//~ ClauseTableauPrintDOTGraphToFile(dotgraph, resulting_tab);
+					//~ fclose(dotgraph);
+					//~ DStrFree(str2);
+				//~ }
+				//~ printf("#############################\n");
+				//~ DStrFree(str);
+				//~ sleep(1);
+			//~ }
 			// AAAAAAHHHHHHHHHH
 			long neg_conjectures = tableaucontrol->neg_conjectures;
 			if (!tableaucontrol->satisfiable)

@@ -91,23 +91,25 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	}
 	//num_local_variables = 0;
 	
-	//~ // Check against the unit axioms
-	//~ Clause_p unit_handle = unit_axioms->anchor->succ;
-	//~ Clause_p temporary_unit = unit_handle;
-	//~ while (unit_handle != unit_axioms->anchor)
-	//~ {
-		//~ assert(unit_handle);
-		//~ Clause_p tmp_unit_handle = ClauseCopyFresh(unit_handle, tab->master);
-		//~ if ((subst = ClauseContradictsClause(tab, original_clause, tmp_unit_handle)))
-		//~ {
-			//~ tab->mark_int = 0; // Closing by a unit simulates an extension step
-			//~ // Marking the root would case some leaves to be folded up too high in one step, unsound.
-			//~ ClauseFree(tmp_unit_handle);
-			//~ goto return_point;
-		//~ }
-		//~ ClauseFree(tmp_unit_handle);
-		//~ unit_handle = unit_handle->succ;
-	//~ }
+	// Check against the unit axioms
+	ClauseSet_p unit_axioms = tab->master->unit_axioms;
+	assert(unit_axioms);
+	Clause_p unit_handle = unit_axioms->anchor->succ;
+	Clause_p temporary_unit = unit_handle;
+	while (unit_handle != unit_axioms->anchor)
+	{
+		assert(unit_handle);
+		Clause_p tmp_unit_handle = ClauseCopyFresh(unit_handle, tab->master);
+		if ((subst = ClauseContradictsClause(tab, original_clause, tmp_unit_handle)))
+		{
+			tab->mark_int = 0; // Closing by a unit simulates an extension step
+			// Marking the root would case some leaves to be folded up too high in one step, unsound.
+			ClauseFree(tmp_unit_handle);
+			goto return_point;
+		}
+		ClauseFree(tmp_unit_handle);
+		unit_handle = unit_handle->succ;
+	}
 	//fprintf(GlobalOut, "  Done.\n");
 	
 	// Check against the tableau AND its edges
