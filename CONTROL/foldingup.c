@@ -241,7 +241,8 @@ int FoldUpAtNode(ClauseTableau_p node)
 	
 	// Get the nodes that are eligible to fold up to
 	PStack_p dominated_markings = CollectDominatedMarkingsWrapper(node);
-	PStack_p dominators = NodesThatDominateTableauFromMarks(node, dominated_markings); // This may not be necessary, the markings of dominated nodes must come from the same branch?
+	// This may not be necessary, the markings of dominated nodes must come from the same branch?
+	PStack_p dominators = NodesThatDominateTableauFromMarks(node, dominated_markings); 
 	PStackFree(dominated_markings);
 	
 	Clause_p flipped_label = NULL;
@@ -346,7 +347,7 @@ int FoldUpCloseCycle(ClauseTableau_p tableau)
 	{
 		closures_done = 0;
 		//folding_ups_done += FoldUpEveryNodeOnce(tableau);
-		//closures_done = AttemptClosureRuleOnAllOpenBranches(tableau);
+		closures_done = AttemptClosureRuleOnAllOpenBranches(tableau);
 		total_closures_done += closures_done;
 		//printf("Closures done in FoldUpCloseCycle: %d\n", closures_done);
 		if (closures_done < 0)

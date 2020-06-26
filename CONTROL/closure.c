@@ -13,7 +13,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 
 	if ((subst = ClauseContradictsBranch(tab, tab->label)))
 	{
-		if (!PStackGetSP(subst))  // Only subst needed was identity
+		if (PStackGetSP(subst) == 0)  // Only subst needed was identity
 		{
 			SubstDelete(subst);
 			return true;
@@ -83,32 +83,33 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	PStackPointer stack_pointer = 0;
 	bool original_label_replaced = false;
 	
-	long num_local_variables = 0;
-	//~ long num_local_variables = UpdateLocalVariables(tab);
-	//~ if (num_local_variables)
-	//~ {
-		//~ original_label_replaced = true;
-		//~ original_clause = ReplaceLocalVariablesWithFresh(tab, original_clause, tab->local_variables);
-	//~ }
+	//long num_local_variables = 0;
+	long num_local_variables = UpdateLocalVariables(tab);
+	if (num_local_variables)
+	{
+		original_label_replaced = true;
+		original_clause = ReplaceLocalVariablesWithFresh(tab, original_clause, tab->local_variables);
+	}
 	//num_local_variables = 0;
 	
 	// Check against the unit axioms
-	Clause_p unit_handle = unit_axioms->anchor->succ;
-	Clause_p temporary_unit = unit_handle;
-	while (unit_handle != unit_axioms->anchor)
-	{
-		assert(unit_handle);
-		Clause_p tmp_unit_handle = ClauseCopyFresh(unit_handle, tab->master);
-		if ((subst = ClauseContradictsClause(tab, original_clause, tmp_unit_handle)))
-		{
-			tab->mark_int = tab->depth; // mark the root node
-			ClauseFree(tmp_unit_handle);
-			goto return_point;
-		}
-		ClauseFree(tmp_unit_handle);
-		unit_handle = unit_handle->succ;
-	}
-	assert(!subst);
+	//~ Clause_p unit_handle = unit_axioms->anchor->succ;
+	//~ Clause_p temporary_unit = unit_handle;
+	//~ while (unit_handle != unit_axioms->anchor)
+	//~ {
+		//~ assert(unit_handle);
+		//~ Clause_p tmp_unit_handle = ClauseCopyFresh(unit_handle, tab->master);
+		//~ if ((subst = ClauseContradictsClause(tab, original_clause, tmp_unit_handle)))
+		//~ {
+			//~ tab->mark_int = 0; // Closing by a unit simulates an extension step
+			//~ // Marking the root would case some leaves to be folded up too high in one step, unsound.
+			//~ ClauseFree(tmp_unit_handle);
+			//~ goto return_point;
+		//~ }
+		//~ ClauseFree(tmp_unit_handle);
+		//~ unit_handle = unit_handle->succ;
+	//~ }
+	//~ assert(!subst);
 	//fprintf(GlobalOut, "  Done.\n");
 	
 	// Check against the tableau AND its edges
@@ -137,7 +138,15 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		{
 			if ((subst = ClauseContradictsSet(temporary_tab, original_clause, temporary_tab->folding_labels, tab)))
 			{
-				tab->mark_int = distance_up;
+				//tab->mark_int = distance_up;
+				if (tab->depth == distance_up)
+				{
+					tab->mark_int = distance_up;
+				}
+				else 
+				{
+					tab->mark_int = distance_up - 1; // Etableau reduction
+				}
 				if (num_local_variables)
 				{
 					ClauseFree(temporary_label);

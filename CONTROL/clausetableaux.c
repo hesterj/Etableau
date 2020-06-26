@@ -1235,11 +1235,12 @@ TableauControl_p TableauControlAlloc(long neg_conjectures, char *problem_name, P
 	handle->number_of_extensions = 0;  // Total number of extensions done
 	handle->closed_tableau = NULL;
 	handle->satisfiable = false;
+	handle->axioms = NULL;
 	handle->problem_name = problem_name;
 	handle->neg_conjectures = neg_conjectures;
 	handle->proofstate = proofstate;
 	handle->proofcontrol = proofcontrol;
-	//handle->trash = PStackAlloc();
+	handle->trash = PStackAlloc();
 	return handle;
 }
 

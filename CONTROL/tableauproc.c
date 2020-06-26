@@ -197,6 +197,8 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	assert(proofcontrol);
 	ClauseSet_p extension_candidates = ClauseSetCopy(bank, active);
 	ClauseSet_p unit_axioms = ClauseSetAlloc();
+	ClauseSet_p axioms_archive = ClauseSetCopy(bank, proofstate->unprocessed);
+	tableaucontrol->unprocessed = axioms_archive;
    problemType = PROBLEM_FO;
    PList_p conjectures = PListAlloc();
    PList_p non_conjectures = PListAlloc();
@@ -262,7 +264,8 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
    initial_tab->signature = bank->sig;
    initial_tab->state = proofstate;
    initial_tab->control = proofcontrol;
-   initial_tab->unit_axioms = unit_axioms;
+   //initial_tab->unit_axioms = unit_axioms; Disabled unit axiom closure
+   initial_tab->unit_axioms = ClauseSetAlloc();
    
    fprintf(GlobalOut, "# %ld unit axioms, %ld start rules, and %ld other extension candidates.\n", 
 																													unit_axioms->members, 
@@ -302,13 +305,16 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	ClauseTableauFree(initial_tab);
 	VarBankPushEnv(bank->vars);
 	PStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extionsion rules.
+	PStack_p old_tableaux = PStackAlloc(); // These are the garbage tableaux kept around for tracing the proof
 	// New tableaux are added to the collection of distinct tableaux when the depth limit is increased, as new
 	// tableaux are already at the max depth.
 	fprintf(GlobalOut, "# Beginning tableaux proof search with %ld start rule applications.\n", PStackGetSP(distinct_tableaux_stack));
-	//~ fprintf(GlobalOut, "# Extension candidates:\n");
-	//~ ClauseSetPrint(GlobalOut, extension_candidates, true);
-	//~ fprintf(GlobalOut, "# Unit axioms:\n");
-	//~ ClauseSetPrint(GlobalOut, unit_axioms, true);
+	fprintf(GlobalOut, "# Extension candidates:\n");
+	ClauseSetPrint(GlobalOut, extension_candidates, true);
+	fprintf(GlobalOut, "# Unit axioms:\n");
+	ClauseSetPrint(GlobalOut, unit_axioms, true);
+	
+	ClauseSetInsertSet(extension_candidates, unit_axioms); // TEMPORARY
 	
 	for (int current_depth = 2; current_depth < max_depth; current_depth++)
 	{
@@ -318,10 +324,10 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 		assert(current_depth);
 		assert(new_tableaux);
 		int max_num_threads = 2;
-		//~ #pragma omp parallel num_threads(2)
-		//~ {
-			//~ #pragma omp single
-			//~ {
+		#pragma omp parallel num_threads(6)
+		{
+			#pragma omp single
+			{
 				resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
 																proofstate, 
 																proofcontrol, 
@@ -329,15 +335,15 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 																extension_candidates, 
 																current_depth,
 																new_tableaux);
-			//~ }
-		//~ }
+			}
+		}
 		if (resulting_tab)
 		{
-			//~ assert(resulting_tab);
-			//~ assert(resulting_tab->derivation);
-			//~ assert(PStackGetSP(resulting_tab->derivation));
-			//~ fprintf(GlobalOut, "# Printing tableaux derivation.  These have not been free'd.\n");
-			//~ PStack_p derivation = resulting_tab->derivation;
+			assert(resulting_tab);
+			assert(resulting_tab->derivation);
+			assert(PStackGetSP(resulting_tab->derivation));
+			//fprintf(GlobalOut, "# Printing tableaux derivation..\n");
+			PStack_p derivation = resulting_tab->derivation;
 			//~ for (PStackPointer p = 1; p < PStackGetSP(derivation); p++)
 			//~ {
 				//~ ClauseTableau_p previous_step = PStackElementP(derivation, p);
@@ -348,13 +354,24 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 				//~ DStrAppendInt(str, p);
 				//~ DStrAppendStr(str, ".dot");
 				//~ FILE *dotgraph = fopen(DStrView(str), "w");
-				//~ ClauseTableauPrintDOTGraphToFile(GlobalOut, previous_step->master);
+				//~ ClauseTableauPrintDOTGraphToFile(dotgraph, previous_step->master);
 				//~ fclose(dotgraph);
-				//~ printf("# %d\n", p);
+				//~ printf("# %ld\n", p);
+				//~ if ((p + 1) == PStackGetSP(derivation))
+				//~ {
+					//~ sleep(1);
+					//~ DStr_p str2 = DStrAlloc();
+					//~ DStrAppendStr(str2, "/home/hesterj/Projects/APRTESTING/DOT/unsattest/graph");
+					//~ DStrAppendInt(str2, p+1);
+					//~ DStrAppendStr(str2, ".dot");
+					//~ FILE *dotgraph = fopen(DStrView(str2), "w");
+					//~ ClauseTableauPrintDOTGraphToFile(dotgraph, resulting_tab);
+					//~ fclose(dotgraph);
+					//~ DStrFree(str2);
+				//~ }
 				//~ printf("#############################\n");
 				//~ DStrFree(str);
 				//~ sleep(1);
-				//~ ClauseTableauPrintDOTGraph(previous_step);
 			//~ }
 			// AAAAAAHHHHHHHHHH
 			long neg_conjectures = tableaucontrol->neg_conjectures;
@@ -380,14 +397,16 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 					fprintf(GlobalOut, "# SZS status Satisfiable for %s\n", tableaucontrol->problem_name);
 				}
 			}
-			ClauseTableauPrintDOTGraph(resulting_tab);
+			//ClauseTableauPrintDOTGraph(resulting_tab);
 			fprintf(GlobalOut, "# SZS output start CNFRefutation for %s\n", tableaucontrol->problem_name);
 			ClauseTableauPrint(resulting_tab);
 			fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
 			fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
 			break;
 		}
-		TableauStackFreeTableaux(distinct_tableaux_stack);
+		//TableauStackFreeTableaux(distinct_tableaux_stack);
+		PStackPushStack(old_tableaux, distinct_tableaux_stack);
+		PStackReset(distinct_tableaux_stack);
 		assert(PStackEmpty(distinct_tableaux_stack));
 		fprintf(GlobalOut, "# Moving %ld tableaux to active set...\n", PStackGetSP(new_tableaux));
 		PStackPushStack(distinct_tableaux_stack, new_tableaux);
@@ -396,8 +415,10 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 		fprintf(GlobalOut, "# Increasing maximum depth to %d\n", current_depth + 1);
 	}
 	
+	TableauStackFreeTableaux(old_tableaux);
 	TableauStackFreeTableaux(new_tableaux);
 	PStackFree(new_tableaux);
+	PStackFree(old_tableaux);
 	ClauseSetFree(extension_candidates);
 	ClauseSetFree(unit_axioms);
 	VarBankPopEnv(bank->vars);

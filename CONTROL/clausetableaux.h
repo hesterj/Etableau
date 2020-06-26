@@ -170,6 +170,7 @@ typedef struct tableaucontrol_cell
 	char *problem_name;
 	PStack_p new_tableaux;
 	ClauseTableau_p closed_tableau;
+	ClauseSet_p unprocessed;
 	TB_p terms;
 	bool satisfiable;
 	//PStack_p trash;  // Old tableaux for tracing bugs... should not be used normally

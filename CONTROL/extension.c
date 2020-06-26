@@ -146,8 +146,10 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	assert(tableau_copy->active_branch);
 	assert(tableau_copy->master == tableau_copy);
 	assert(extension->selected);
+	assert(ClauseSetEmpty(old_tableau_master->unit_axioms));
 	
 	Subst_p subst = extension->subst;
+	assert(subst);
 	
 	// Do the extension rule on the active branch of the newly created tableau
 	
@@ -288,8 +290,6 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	if (split_clause_ident == open_branch->parent->id) return 0; // Don't split the same clause twice
 	//fprintf(GlobalOut, "Splitting clause in to fresh variables\n");
 	ClauseSet_p new_leaf_clauses = SplitClauseFresh(open_branch->terms, open_branch->master, selected);
-	ClauseSet_p *leaf_clauses_for_contradiction_checking = &new_leaf_clauses;
-	ClauseSet_p local_leaf_clauses = NULL;
 	assert(new_leaf_clauses->members);
 	Clause_p open_branch_label = open_branch->label;
 	
@@ -300,14 +300,11 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		open_branch_label = ReplaceLocalVariablesWithFresh(open_branch->master,
 																			open_branch_label,
 																			open_branch->local_variables);
-		local_leaf_clauses = SplitClauseFresh(open_branch->terms, open_branch->master, selected);
-		leaf_clauses_for_contradiction_checking = &local_leaf_clauses;
 	}
 	
 	//while (leaf_clause != new_leaf_clauses->anchor)
-	Clause_p leaf_clause_tracker = new_leaf_clauses->anchor->succ;
-	Clause_p leaf_clause = (*leaf_clauses_for_contradiction_checking)->anchor->succ;
-	while (leaf_clause != (*leaf_clauses_for_contradiction_checking)->anchor)
+	Clause_p leaf_clause = new_leaf_clauses->anchor->succ;
+	while (leaf_clause != new_leaf_clauses->anchor)
 	{
 		assert(open_branch);
 		assert(open_branch != open_branch->open_branches->anchor);
@@ -319,7 +316,6 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		assert(leaf_clause->literals);
 		assert(open_branch_label->literals);
 		assert(selected);
-		assert(leaf_clause_tracker != new_leaf_clauses->anchor);
 		Subst_p subst = SubstAlloc();
 		Subst_p success_subst = NULL;
 		
@@ -333,7 +329,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			//~ ClausePrint(GlobalOut, open_branch_label, true);printf("\n");
 			//~ ClausePrint(GlobalOut, leaf_clause, true);printf("\n");
 			//~ printf("===\n");
-			Clause_p head_clause = leaf_clause_tracker;
+			Clause_p head_clause = leaf_clause;
 			TableauExtension_p extension_candidate = TableauExtensionAlloc(selected, 
 																		   success_subst, 
 																		   head_clause, 
@@ -355,14 +351,13 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 					if (num_local_variables)
 					{
 						ClauseFree(open_branch_label);
-						ClauseSetFree(local_leaf_clauses);
 					}
 					assert(maybe_extended->master->label);
 					tableau_control->closed_tableau = maybe_extended->master;
 					ClauseSetFree(new_leaf_clauses);
 					return extensions_done;
 				}
-				else if ((maybe_extended->open_branches->anchor->succ->depth > 7) == 0)
+				else if ((maybe_extended->open_branches->anchor->pred->depth > 5) == 0)
 				{
 					BranchSaturation_p branch_saturation = BranchSaturationAlloc(tableau_control->proofstate, 
 																									 tableau_control->proofcontrol, 
@@ -374,12 +369,10 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			}
 		}
 		leaf_clause = leaf_clause->succ;
-		leaf_clause_tracker = leaf_clause_tracker->succ;
 	}
 	if (num_local_variables)
 	{
 		ClauseFree(open_branch_label);
-		ClauseSetFree(local_leaf_clauses);
 	}
 	
 	// Do not work here.  The tableau of open branch has been copied and worked on. 

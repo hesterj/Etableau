@@ -63,6 +63,27 @@ void process_branch(ProofState_p proofstate,
 	}
 }
 
+void process_branch_nofork(ProofState_p proofstate, 
+						  ProofControl_p proofcontrol, 
+						  pid_t *pool, 
+						  int *return_status, 
+						  ClauseTableau_p *branches, 
+						  int i,
+						  TableauControl_p tableau_control)
+{
+	ClauseTableau_p branch = branches[i];
+	assert(branches[i]);
+	SilentTimeOut = true;
+	ClauseSet_p unprocessed = ClauseSetCopy(bank, tableau_control->unprocessed);
+	ProofStateResetProcessed(proofstate, proofcontrol);
+	ClauseSetFreeClauses(proofstate->unprocessed);
+	ProofStateResetProcessedSet(poroofstate, proofcontrol, unprocessed);
+	int branch_status = ECloseBranchProcessBranchFirst(proofstate, proofcontrol, branch);
+	ProofStateResetClauseSets(proofstate, false);
+	ClauseSetFree(unprocessed);
+	return branch_status
+}
+
 int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proofcontrol, 
 					  ClauseTableau_p branch)
 {
