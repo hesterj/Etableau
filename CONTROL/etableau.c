@@ -70,10 +70,15 @@ int process_branch_nofork(ProofState_p proofstate,
 {
 	SilentTimeOut = true;
 	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
-	ProofStateResetProcessed(proofstate, proofcontrol);
-	ClauseSetFreeClauses(proofstate->unprocessed);
+	//ProofStateResetProcessed(proofstate, proofcontrol);
+	ProofStateResetClauseSets(proofstate, false);
+	//ClauseSetFreeClauses(proofstate->unprocessed);
 	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
 	int branch_status = ECloseBranchProcessBranchFirstSerial(proofstate, proofcontrol, branch);
+	if (branch_status == PROOF_FOUND)
+	{
+		ProofStatePrint(GlobalOut, proofstate);
+	}
 	ProofStateResetClauseSets(proofstate, false);
 	ClauseSetFree(unprocessed);
 	return branch_status;
@@ -128,25 +133,25 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 				}
 			}
 		}
-		if (node->unit_axioms) // Process the units, if there are any
-		{
-			ClauseSetSetProp(node->unit_axioms, CPInitial);
-			while (!ClauseSetEmpty(node->unit_axioms))
-			{
-				Clause_p unit = ClauseSetExtractFirst(node->unit_axioms);
-				unit->weight = ClauseStandardWeight(unit);
-				success = ProcessSpecificClause(proofstate, 
-														  proofcontrol, 
-														  unit, 
-														  LONG_MAX);
-				if (success)
-				{
-					//fprintf(GlobalOut, "# Saturate returned empty clause on units.\n");
-					//ProofStateStatisticsPrint(GlobalOut, proofstate);
-					return PROOF_FOUND;
-				}
-			}
-		}
+		//~ if (node->unit_axioms) // Process the units, if there are any
+		//~ {
+			//~ ClauseSetSetProp(node->unit_axioms, CPInitial);
+			//~ while (!ClauseSetEmpty(node->unit_axioms))
+			//~ {
+				//~ Clause_p unit = ClauseSetExtractFirst(node->unit_axioms);
+				//~ unit->weight = ClauseStandardWeight(unit);
+				//~ success = ProcessSpecificClause(proofstate, 
+														  //~ proofcontrol, 
+														  //~ unit, 
+														  //~ LONG_MAX);
+				//~ if (success)
+				//~ {
+					//~ //fprintf(GlobalOut, "# Saturate returned empty clause on units.\n");
+					//~ //ProofStateStatisticsPrint(GlobalOut, proofstate);
+					//~ return PROOF_FOUND;
+				//~ }
+			//~ }
+		//~ }
 		node = node->parent;
 	}
 	
@@ -192,7 +197,10 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate, ProofControl_p
 			assert(!label->set);
 			assert(!label->evaluations);
 			ClauseSetProp(label, CPInitial);
-			success = ProcessSpecificClause(proofstate, proofcontrol, label, LONG_MAX);
+			ClauseSetProp(label, CPIsRelevant);
+			ClauseSetProp(label, CPLimitedRW);
+			ClauseSetInsert(proofstate->tmp_store, label);
+			//success = ProcessSpecificClause(proofstate, proofcontrol, label, LONG_MAX);
 			if (success)
 			{
 				//fprintf(GlobalOut, "# Saturate returned empty clause on branch.\n");
@@ -202,33 +210,34 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate, ProofControl_p
 		}
 		node = node->parent;
 	}
-	if (branch->master->unit_axioms) // Process the units, if there are any
-	{
-		ClauseSet_p unit_axioms = branch->master->unit_axioms;
-		ClauseSetSetProp(unit_axioms, CPInitial);
-		Clause_p unit = unit_axioms->anchor->succ;
-		while (unit != unit_axioms->anchor)
-		{
-			Clause_p unit_copy = ClauseCopyOpt(unit);
-			unit->weight = ClauseStandardWeight(unit);
-			success = ProcessSpecificClause(proofstate, 
-													  proofcontrol, 
-													  unit_copy, 
-													  LONG_MAX);
-			if (success)
-			{
-				//fprintf(GlobalOut, "# Saturate returned empty clause on units.\n");
-				//ProofStateStatisticsPrint(GlobalOut, proofstate);
-				return PROOF_FOUND;
-			}
-			unit = unit->succ;
-		}
-	}
+	//~ if (branch->master->unit_axioms) // Process the units, if there are any
+	//~ {
+		//~ ClauseSet_p unit_axioms = branch->master->unit_axioms;
+		//~ ClauseSetSetProp(unit_axioms, CPInitial);
+		//~ Clause_p unit = unit_axioms->anchor->succ;
+		//~ while (unit != unit_axioms->anchor)
+		//~ {
+			//~ Clause_p unit_copy = ClauseCopyOpt(unit);
+			//~ unit->weight = ClauseStandardWeight(unit);
+			//~ success = ProcessSpecificClause(proofstate, 
+													  //~ proofcontrol, 
+													  //~ unit_copy, 
+													  //~ LONG_MAX);
+			//~ if (success)
+			//~ {
+				//~ //fprintf(GlobalOut, "# Saturate returned empty clause on units.\n");
+				//~ //ProofStateStatisticsPrint(GlobalOut, proofstate);
+				//~ return PROOF_FOUND;
+			//~ }
+			//~ unit = unit->succ;
+		//~ }
+	//~ }
 	
 	//~ // Now do normal saturation
 	if (branch->open_branches->members == 1)
 	{
 		fprintf(GlobalOut, "# Beginning deep saturation check\n");
+		proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding;
 		success = Saturate(proofstate, proofcontrol, 10000,
 								 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
 								 LLONG_MAX, LONG_MAX);

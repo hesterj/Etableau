@@ -70,7 +70,6 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	handle->depth = tab->depth;
 	handle->position = tab->position;
 	assert(handle->depth == 0);
-	assert(tab->unit_axioms);
 	
 	// Do NOT copy the unit axioms because there may be a subst active!!
 	handle->unit_axioms = NULL;
@@ -795,7 +794,6 @@ ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 	assert(!(tab->label));
 	assert(!(tab->arity));
 	assert(start);
-	assert(tab->unit_axioms);
 	assert(tab->state);
 	assert(tab->control);
 	

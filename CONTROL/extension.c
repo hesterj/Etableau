@@ -209,7 +209,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	// The copying is done, we can delete the subst
 	SubstDelete(subst);
 	// Protect the unit axioms from the dirty substitution by copying them now...
-	parent->master->unit_axioms = ClauseSetCopy(parent->master->terms, old_tableau_master->unit_axioms);
+	// parent->master->unit_axioms = ClauseSetCopy(parent->master->terms, old_tableau_master->unit_axioms);
 	
 	// Now that the parent has been extended on, it should be removed from the collection of open leaves.
 	// Important to do this now, as otherwise folding up or branch saturation may not work correctly.
