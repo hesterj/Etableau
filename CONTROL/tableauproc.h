@@ -4,6 +4,7 @@
 
 //#include <etableau.h>
 #include <extension.h>
+#include <math.h>
 
 WFormula_p ProofStateGetConjecture(ProofState_p state);
 
