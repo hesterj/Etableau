@@ -177,6 +177,8 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate, ProofControl_p
 	ClauseTableau_p node = branch;
 	assert(proofstate);
 	assert(proofcontrol);
+	assert(node);
+	assert(node->master);
 	//long proc_limit = 500;
 	
 	// Collect the clauses of the branch
@@ -200,9 +202,31 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate, ProofControl_p
 		}
 		node = node->parent;
 	}
+	if (branch->master->unit_axioms) // Process the units, if there are any
+	{
+		ClauseSet_p unit_axioms = branch->master->unit_axioms;
+		ClauseSetSetProp(unit_axioms, CPInitial);
+		Clause_p unit = unit_axioms->anchor->succ;
+		while (unit != unit_axioms->anchor)
+		{
+			Clause_p unit_copy = ClauseCopyOpt(unit);
+			unit->weight = ClauseStandardWeight(unit);
+			success = ProcessSpecificClause(proofstate, 
+													  proofcontrol, 
+													  unit_copy, 
+													  LONG_MAX);
+			if (success)
+			{
+				//fprintf(GlobalOut, "# Saturate returned empty clause on units.\n");
+				//ProofStateStatisticsPrint(GlobalOut, proofstate);
+				return PROOF_FOUND;
+			}
+			unit = unit->succ;
+		}
+	}
 	
 	//~ // Now do normal saturation
-	if (branch->open_branches->members == 1 && branch->depth > 8)
+	if (branch->open_branches->members == 1)
 	{
 		fprintf(GlobalOut, "# Beginning deep saturation check\n");
 		success = Saturate(proofstate, proofcontrol, 10000,

@@ -146,7 +146,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	assert(tableau_copy->active_branch);
 	assert(tableau_copy->master == tableau_copy);
 	assert(extension->selected);
-	assert(ClauseSetEmpty(old_tableau_master->unit_axioms));
+	//assert(ClauseSetEmpty(old_tableau_master->unit_axioms));
 	
 	Subst_p subst = extension->subst;
 	assert(subst);
@@ -367,7 +367,6 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 																									 maybe_extended->master);
 					// Trying to keep one object in extensions and saturations
 					int num_closed_by_saturation = AttemptToCloseBranchesWithSuperpositionSerial(tableau_control, branch_saturation);
-					fprintf(GlobalOut, "# %d branches closed in serial saturation.\n", num_closed_by_saturation);
 					BranchSaturationFree(branch_saturation);
 					if (maybe_extended->open_branches->members == 0)
 					{

@@ -346,7 +346,7 @@ int FoldUpCloseCycle(ClauseTableau_p tableau)
 	do
 	{
 		closures_done = 0;
-		//folding_ups_done += FoldUpEveryNodeOnce(tableau);
+		folding_ups_done += FoldUpEveryNodeOnce(tableau);
 		closures_done = AttemptClosureRuleOnAllOpenBranches(tableau);
 		total_closures_done += closures_done;
 		//printf("Closures done in FoldUpCloseCycle: %d\n", closures_done);
@@ -357,7 +357,7 @@ int FoldUpCloseCycle(ClauseTableau_p tableau)
 			return -total_closures_done;
 		}
 	} while (closures_done > 0);
-	fprintf(GlobalOut, "# %d closures done\n", total_closures_done);
+	//fprintf(GlobalOut, "# %d closures done\n", total_closures_done);
 	return total_closures_done;
 }
 

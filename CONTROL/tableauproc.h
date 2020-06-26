@@ -29,7 +29,7 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 																							TableauControl_p control,
 																							TableauSet_p distinct_tableaux,
 																							ClauseSet_p extension_candidates,
-																							int max_depth);
+																							int max_depth, PStack_p max_depth_tableaux);
     
 
 #endif

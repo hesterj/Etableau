@@ -259,6 +259,13 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
    TableauSet_p open_branches = initial_tab->open_branches;
    TableauSetInsert(open_branches, initial_tab);
    
+  	if (tableauequality)
+	{
+		ClauseSet_p equality_axioms = EqualityAxioms(bank);
+		ClauseSetInsertSet(extension_candidates, equality_axioms);
+		ClauseSetFree(equality_axioms);
+	}
+   
    VarBankSetVCountsToUsed(bank->vars);
    VarBankSetVCountsToUsed(proofstate->freshvars);
    initial_tab->terms = bank;
@@ -284,6 +291,7 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 			fprintf(GlobalOut, "#");
 		}
 		beginning_tableau = ClauseTableauMasterCopy(initial_tab);
+		beginning_tableau ->unit_axioms = ClauseSetCopy(initial_tab->terms, unit_axioms);
 		beginning_tableau->max_var = max_var;
 		//TableauMasterSetInsert(distinct_tableaux, beginning_tableau);
 		PStackPushP(distinct_tableaux_stack, beginning_tableau);
@@ -295,13 +303,7 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	ClauseSetInsertSet(extension_candidates, start_rule_candidates);
 	
 	ClauseSetFree(start_rule_candidates);
-	
-	if (tableauequality)
-	{
-		ClauseSet_p equality_axioms = EqualityAxioms(bank);
-		ClauseSetInsertSet(extension_candidates, equality_axioms);
-		ClauseSetFree(equality_axioms);
-	}
+
 	initial_tab->unit_axioms = NULL;
 	ClauseTableauFree(initial_tab);
 	VarBankPushEnv(bank->vars);
@@ -457,6 +459,7 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 {
 	assert(distinct_tableaux_stack);
 	ClauseTableau_p active_tableau = NULL;
+	PStack_p max_depth_tableaux = PStackAlloc();
 	//assert(distinct_tableaux->anchor->master_succ);
 	//ClauseTableau_p active_tableau = distinct_tableaux->anchor->master_succ;
 	
@@ -475,6 +478,7 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 		//~ #ifndef DNDEBUG
 		//~ ClauseTableauAssertCheck(active_tableau);
 		//~ #endif
+		PStack_p newly_created_tableaux = PStackAlloc();
 		
 		if (tableaucontrol->closed_tableau)
 		{
@@ -486,16 +490,35 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 		}
 		
 		ClauseTableau_p closed_tableau = ConnectionCalculusExtendOpenBranches(active_tableau, 
-																					   new_tableaux, 
+																					   newly_created_tableaux, 
 																					   tableaucontrol,
 																					   NULL,
 																					   extension_candidates,
-																					   max_depth);
+																					   max_depth, max_depth_tableaux);
 		if (closed_tableau)
 		{
+			PStackFree(newly_created_tableaux);
 			return closed_tableau;
 		}
+		// At this point, there could be tableaux to be extended on at this depth in newly_created_tableaux
+		while (!PStackEmpty(newly_created_tableaux))  // Attempt to create extension tableaux until they are all at max depth or a closed tableau is found
+		{
+			ClauseTableau_p closed_tableau = ConnectionCalculusExtendOpenBranches(PStackPopP(newly_created_tableaux), 
+																				newly_created_tableaux, 
+																				tableaucontrol,
+																				NULL,
+																				extension_candidates,
+																				max_depth, max_depth_tableaux);
+			if (closed_tableau)
+			{
+				PStackFree(newly_created_tableaux);
+				return closed_tableau;
+			}
+		}
+		PStackFree(newly_created_tableaux);
 	}
+	PStackPushStack(new_tableaux, max_depth_tableaux);
+	PStackFree(max_depth_tableaux);
 	// Went through all possible tableaux at this depth...
 	return NULL;
 }
@@ -504,17 +527,20 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 																							TableauControl_p control,
 																							TableauSet_p distinct_tableaux,
 																							ClauseSet_p extension_candidates,
-																							int max_depth)
+																							int max_depth, PStack_p max_depth_tableaux)
 {
 	PStack_p tab_tmp_store = PStackAlloc();
 	int number_of_extensions = 0;
+	int num_branches_at_max_depth = 0;
 	
+	TableauSet_p open_branches = active_tableau->open_branches;
 	ClauseTableau_p open_branch = active_tableau->open_branches->anchor->succ;
 	while (open_branch != active_tableau->open_branches->anchor) // iterate over the open branches of the current tableau
 	{
 		if (open_branch->depth > max_depth)
 		{
 			open_branch = open_branch->succ;
+			num_branches_at_max_depth++;
 			continue;
 		}
 		
@@ -533,27 +559,35 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 			}
 			selected = selected->succ;
 		}
-		if (number_of_extensions == 0)
-		{
-			//fprintf(GlobalOut, "Unextendable branch... discarding tableaux\n");
-			while (PStackGetSP(tab_tmp_store))
-			{
-				ClauseTableau_p trash = PStackPopP(tab_tmp_store);
-				ClauseTableauFree(trash);
-			}
-			break;
-		}
-		else if (number_of_extensions > 0) // If we extended on the open branch with one or more clause, we need to move to a new active tableau.
-		{
-			PStackPushStack(new_tableaux, tab_tmp_store);
-			break;
-		}
-		else 
-		{
-			Error("ConnectionCalculusExtendOpenBranches error.", 1);
-		}
+		//~ if (number_of_extensions == 0)
+		//~ {
+			//~ fprintf(GlobalOut, "# Unextendable branch... discarding tableaux\n");
+			//~ while (PStackGetSP(tab_tmp_store))
+			//~ {
+				//~ ClauseTableau_p trash = PStackPopP(tab_tmp_store);
+				//~ ClauseTableauFree(trash);
+			//~ }
+			//~ break;
+		//~ }
+		//~ else if (number_of_extensions > 0) // If we extended on the open branch with one or more clause, we need to move to a new active tableau.
+		//~ {
+			//~ PStackPushStack(new_tableaux, tab_tmp_store);
+			//~ ClauseTableau_p newly_created = PStackPopP(tab_
+			//~ break;
+		//~ }
+		//~ else 
+		//~ {
+			//~ Error("ConnectionCalculusExtendOpenBranches error.", 1);
+		//~ }
 		open_branch = open_branch->succ;
 	}
+	
+	if (num_branches_at_max_depth == open_branches->members)
+	{
+		PStackPushP(max_depth_tableaux, active_tableau);
+	}
+	
+	PStackPushStack(new_tableaux, tab_tmp_store);
 	PStackFree(tab_tmp_store);
 	return NULL;
 }

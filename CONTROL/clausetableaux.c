@@ -73,7 +73,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	assert(tab->unit_axioms);
 	
 	// Do NOT copy the unit axioms because there may be a subst active!!
-	handle->unit_axioms = ClauseSetAlloc();
+	handle->unit_axioms = NULL;
 	handle->set = NULL;
 	handle->master_set = NULL;
 	handle->pred = NULL;
