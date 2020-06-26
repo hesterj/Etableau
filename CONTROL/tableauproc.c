@@ -259,13 +259,14 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
    TableauSet_p open_branches = initial_tab->open_branches;
    TableauSetInsert(open_branches, initial_tab);
    
-   
+   VarBankSetVCountsToUsed(bank->vars);
+   VarBankSetVCountsToUsed(proofstate->freshvars);
    initial_tab->terms = bank;
    initial_tab->signature = bank->sig;
    initial_tab->state = proofstate;
    initial_tab->control = proofcontrol;
-   //initial_tab->unit_axioms = unit_axioms; Disabled unit axiom closure
-   initial_tab->unit_axioms = ClauseSetAlloc();
+   initial_tab->unit_axioms = unit_axioms;
+   //initial_tab->unit_axioms = ClauseSetAlloc();
    
    fprintf(GlobalOut, "# %ld unit axioms, %ld start rules, and %ld other extension candidates.\n", 
 																													unit_axioms->members, 
@@ -314,7 +315,8 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	fprintf(GlobalOut, "# Unit axioms:\n");
 	ClauseSetPrint(GlobalOut, unit_axioms, true);
 	
-	ClauseSetInsertSet(extension_candidates, unit_axioms); // TEMPORARY
+	//ClauseSetInsertSet(extension_candidates, unit_axioms); // TEMPORARY
+	
 	
 	for (int current_depth = 2; current_depth < max_depth; current_depth++)
 	{
@@ -324,10 +326,10 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 		assert(current_depth);
 		assert(new_tableaux);
 		int max_num_threads = 2;
-		#pragma omp parallel num_threads(6)
-		{
-			#pragma omp single
-			{
+		//~ #pragma omp parallel num_threads(6)
+		//~ {
+			//~ #pragma omp single
+			//~ {
 				resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
 																proofstate, 
 																proofcontrol, 
@@ -335,8 +337,8 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 																extension_candidates, 
 																current_depth,
 																new_tableaux);
-			}
-		}
+			//~ }
+		//~ }
 		if (resulting_tab)
 		{
 			assert(resulting_tab);

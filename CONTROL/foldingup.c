@@ -357,6 +357,7 @@ int FoldUpCloseCycle(ClauseTableau_p tableau)
 			return -total_closures_done;
 		}
 	} while (closures_done > 0);
+	fprintf(GlobalOut, "# %d closures done\n", total_closures_done);
 	return total_closures_done;
 }
 

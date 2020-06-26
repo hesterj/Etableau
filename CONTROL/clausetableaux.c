@@ -740,7 +740,7 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
    
    assert(clause);
    
-   variable_bank = clause->literals->bank->vars;
+   variable_bank = tableau->master->terms->vars;
    variables = PStackAlloc();
    variable_tree = NULL;
    //VarBankSetVCountsToUsed(variable_bank);
@@ -755,12 +755,14 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
    for (p = 0; p < PStackGetSP(variables); p++)
    {
 	   old_var = PStackElementP(variables, p);
-	   //fresh_var = VarBankGetFreshVar(variable_bank, old_var->type);  // 2 is individual sort
 	   //~ printf("tableau max var: %ld\n", tableau->master->max_var);
 	   //~ printf("old var: %ld\n", old_var->f_code);
 	   //printf("# Old_var->type in ClauseFlatCopyFresh: %ld\n", old_var->type->f_code);
 	   tableau->master->max_var -= 2;
-	   fresh_var = VarBankVarAssertAlloc(variable_bank, tableau->master->max_var, old_var->type);
+	   //fresh_var = VarBankVarAssertAlloc(variable_bank, tableau->master->max_var, old_var->type);
+	   fresh_var = VarBankGetFreshVar(variable_bank, old_var->type);
+	   //~ printf("old var: %ld\n", old_var->f_code);
+	   //~ printf("fresh var: %ld\n", fresh_var->f_code);
 	   assert(fresh_var != old_var);
 	   assert(fresh_var->f_code != old_var->f_code);
 	   if (fresh_var->f_code == old_var->f_code)
@@ -849,9 +851,14 @@ ClauseSet_p EqualityAxioms(TB_p bank)
 {
 	//Clause_p symmetry
 	Type_p i_type = bank->sig->type_bank->i_type;
-	Term_p x = VarBankVarAssertAlloc(bank->vars, -2, i_type);
-	Term_p y = VarBankVarAssertAlloc(bank->vars, -4, i_type);
-	Term_p z = VarBankVarAssertAlloc(bank->vars, -6, i_type);
+	//~ Term_p x = VarBankVarAssertAlloc(bank->vars, -2, i_type);
+	//~ Term_p y = VarBankVarAssertAlloc(bank->vars, -4, i_type);
+	//~ Term_p z = VarBankVarAssertAlloc(bank->vars, -6, i_type);
+	Term_p x = VarBankGetFreshVar(bank->vars, i_type);
+	Term_p y = VarBankGetFreshVar(bank->vars, i_type);
+	Term_p z = VarBankGetFreshVar(bank->vars, i_type);
+	//VarBankSetVCountsToUsed(bank->vars);
+	
 	ClauseSet_p equality_axioms = ClauseSetAlloc();
 	
 	Eqn_p x_equals_x = EqnAlloc(x, x, bank, true);
@@ -1235,7 +1242,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures, char *problem_name, P
 	handle->number_of_extensions = 0;  // Total number of extensions done
 	handle->closed_tableau = NULL;
 	handle->satisfiable = false;
-	handle->axioms = NULL;
+	handle->unprocessed = NULL;
 	handle->problem_name = problem_name;
 	handle->neg_conjectures = neg_conjectures;
 	handle->proofstate = proofstate;

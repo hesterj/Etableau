@@ -197,7 +197,8 @@ Clause_p ReplaceLocalVariablesWithFreshSubst(ClauseTableau_p master, Clause_p cl
 		assert(old_var);
 		assert(old_var->f_code < 0);
 		master->max_var -= 2;
-		Term_p fresh_var = VarBankVarAssertAlloc(variable_bank, master->max_var, old_var->type);
+		//Term_p fresh_var = VarBankVarAssertAlloc(variable_bank, master->max_var, old_var->type);
+		Term_p fresh_var = VarBankGetFreshVar(master->state->freshvars, old_var->type);
 		assert(old_var != fresh_var);
 		assert(old_var->f_code != fresh_var->f_code);
 		SubstAddBinding(subst, old_var, fresh_var);
@@ -225,7 +226,9 @@ Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause,
 		assert(old_var);
 		assert(old_var->f_code < 0);
 		master->max_var -= 2;
-		Term_p fresh_var = VarBankVarAssertAlloc(variable_bank, master->max_var, old_var->type);
+		//Term_p fresh_var = VarBankVarAssertAlloc(variable_bank, master->max_var, old_var->type);
+		//VarBankSetVCountsToUsed(variable_bank);
+		Term_p fresh_var = VarBankGetFreshVar(variable_bank, old_var->type);
 		assert(fresh_var != old_var);
 		//~ Term_p fresh_var = old_var;
 		//~ while (old_var == fresh_var)

@@ -63,25 +63,20 @@ void process_branch(ProofState_p proofstate,
 	}
 }
 
-void process_branch_nofork(ProofState_p proofstate, 
-						  ProofControl_p proofcontrol, 
-						  pid_t *pool, 
-						  int *return_status, 
-						  ClauseTableau_p *branches, 
-						  int i,
+int process_branch_nofork(ProofState_p proofstate, 
+						  ProofControl_p proofcontrol,
+						  ClauseTableau_p branch,
 						  TableauControl_p tableau_control)
 {
-	ClauseTableau_p branch = branches[i];
-	assert(branches[i]);
 	SilentTimeOut = true;
-	ClauseSet_p unprocessed = ClauseSetCopy(bank, tableau_control->unprocessed);
+	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
 	ProofStateResetProcessed(proofstate, proofcontrol);
 	ClauseSetFreeClauses(proofstate->unprocessed);
-	ProofStateResetProcessedSet(poroofstate, proofcontrol, unprocessed);
-	int branch_status = ECloseBranchProcessBranchFirst(proofstate, proofcontrol, branch);
+	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
+	int branch_status = ECloseBranchProcessBranchFirstSerial(proofstate, proofcontrol, branch);
 	ProofStateResetClauseSets(proofstate, false);
 	ClauseSetFree(unprocessed);
-	return branch_status
+	return branch_status;
 }
 
 int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proofcontrol, 
@@ -175,6 +170,57 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 	return RESOURCE_OUT;
 }
 
+int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate, ProofControl_p proofcontrol, 
+					  ClauseTableau_p branch)
+{
+	Clause_p success = NULL;
+	ClauseTableau_p node = branch;
+	assert(proofstate);
+	assert(proofcontrol);
+	//long proc_limit = 500;
+	
+	// Collect the clauses of the branch
+	
+	while (node)
+	{
+		if (node != node->master)
+		{
+			Clause_p label = ClauseCopyOpt(node->label);
+			label->weight = ClauseStandardWeight(label);
+			assert(!label->set);
+			assert(!label->evaluations);
+			ClauseSetProp(label, CPInitial);
+			success = ProcessSpecificClause(proofstate, proofcontrol, label, LONG_MAX);
+			if (success)
+			{
+				//fprintf(GlobalOut, "# Saturate returned empty clause on branch.\n");
+				//ProofStateStatisticsPrint(GlobalOut, proofstate);
+				return PROOF_FOUND;
+			}
+		}
+		node = node->parent;
+	}
+	
+	//~ // Now do normal saturation
+	if (branch->open_branches->members == 1 && branch->depth > 8)
+	{
+		fprintf(GlobalOut, "# Beginning deep saturation check\n");
+		success = Saturate(proofstate, proofcontrol, 10000,
+								 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
+								 LLONG_MAX, LONG_MAX);
+		//fprintf(GlobalOut, "# Deep saturation check done\n");
+		if (success)
+		{
+			fprintf(GlobalOut, "# Saturate returned empty clause %p.\n", success);
+			//ProofStateStatisticsPrint(GlobalOut, proofstate);
+			return PROOF_FOUND;
+		}
+	}
+	
+	//~ fprintf(GlobalOut, "# Surrendering\n");
+	return RESOURCE_OUT;
+}
+
 int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, BranchSaturation_p jobs)
 {
 	ProofState_p proofstate = jobs->proofstate;
@@ -194,6 +240,7 @@ int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, Br
 	for (int i=0; i<num_open_branches; i++)
 	{
 		assert(handle != master->open_branches->anchor);
+		//VarBankSetVCountsToUsed(proofstate->freshvars);
 		if (BranchIsLocal(handle))
 		{
 			num_local_branches++;
@@ -300,3 +347,45 @@ int process_saturation_output(TableauControl_p tableau_control,
 	}
 	return successful_count;
 }
+
+int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_control, BranchSaturation_p jobs)
+{
+	ProofState_p proofstate = jobs->proofstate;
+	ProofControl_p proofcontrol = jobs->proofcontrol;
+	ClauseTableau_p master = jobs->master;
+	TableauSet_p open_branches = master->open_branches;
+	
+	int num_open_branches = (int) open_branches->members;
+	
+	ClauseTableau_p handle = open_branches->anchor->succ;
+	int num_local_branches = 0;
+	int successful_count = 0;
+	while (handle != open_branches->anchor)
+	{
+		assert(handle != master->open_branches->anchor);
+		if (BranchIsLocal(handle))
+		{
+			num_local_branches++;
+			int branch_status = process_branch_nofork(proofstate, proofcontrol, handle, tableau_control);
+			if (branch_status == PROOF_FOUND)
+			{
+				TableauSetExtractEntry(handle);
+				handle->open = false;
+				handle->saturation_closed = true;
+				handle->mark_int = 0;
+				//DStrAppendStr(closed_branch->info, "Saturation closed");
+				successful_count++;
+				handle = open_branches->anchor->succ;
+			}
+		}
+		handle = handle->succ;
+	}
+	if (open_branches->members == 0)
+	{
+		tableau_control->closed_tableau = master;
+	}
+	// Exit and return to tableaux proof search
+	return successful_count;
+}
+
+

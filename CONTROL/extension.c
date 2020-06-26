@@ -82,7 +82,7 @@ ClauseSet_p SplitClauseFresh(TB_p bank, ClauseTableau_p tableau, Clause_p clause
 {
 	assert(clause);
 	ClauseSet_p set = ClauseSetAlloc();
-	VarBankSetVCountsToUsed(bank->vars);
+	//VarBankSetVCountsToUsed(bank->vars);
 	//printf("Clause being copied fresh: ");ClausePrint(GlobalOut, clause, true);printf("\n");
 	Clause_p fresh_clause = ClauseCopyFresh(clause, tableau);
 	Eqn_p literals = EqnListCopy(fresh_clause->literals, bank);
@@ -330,6 +330,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			//~ ClausePrint(GlobalOut, leaf_clause, true);printf("\n");
 			//~ printf("===\n");
 			Clause_p head_clause = leaf_clause;
+			//fprintf(GlobalOut, "# %ld open_branches remaining\n", open_branch->master->open_branches->members);
 			TableauExtension_p extension_candidate = TableauExtensionAlloc(selected, 
 																		   success_subst, 
 																		   head_clause, 
@@ -344,6 +345,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			{
 				fflush(GlobalOut);
 				//printf("# Extension completed.  There are %ld new_tableaux\n", PStackGetSP(new_tableaux));
+				//fprintf(GlobalOut, "# %ld open_branches remaining before sat\n", maybe_extended->open_branches->members);
 				extensions_done++;
 				if (maybe_extended->open_branches->members == 0)
 				{
@@ -357,14 +359,28 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 					ClauseSetFree(new_leaf_clauses);
 					return extensions_done;
 				}
-				else if ((maybe_extended->open_branches->anchor->pred->depth > 5) == 0)
+				//~ //else if ((maybe_extended->open_branches->anchor->pred->depth > 5) == 0)
+				else
 				{
 					BranchSaturation_p branch_saturation = BranchSaturationAlloc(tableau_control->proofstate, 
 																									 tableau_control->proofcontrol, 
 																									 maybe_extended->master);
 					// Trying to keep one object in extensions and saturations
-					AttemptToCloseBranchesWithSuperposition(tableau_control, branch_saturation);
+					int num_closed_by_saturation = AttemptToCloseBranchesWithSuperpositionSerial(tableau_control, branch_saturation);
+					fprintf(GlobalOut, "# %d branches closed in serial saturation.\n", num_closed_by_saturation);
 					BranchSaturationFree(branch_saturation);
+					if (maybe_extended->open_branches->members == 0)
+					{
+						//~ // fprintf(GlobalOut, "# Closed tableau found!\n");
+						if (num_local_variables)
+						{
+							ClauseFree(open_branch_label);
+						}
+						assert(maybe_extended->master->label);
+						tableau_control->closed_tableau = maybe_extended->master;
+						ClauseSetFree(new_leaf_clauses);
+						return extensions_done;
+					}
 				}
 			}
 		}
