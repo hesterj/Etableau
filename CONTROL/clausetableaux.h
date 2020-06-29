@@ -174,6 +174,7 @@ typedef struct tableaucontrol_cell
 	TB_p terms;
 	bool satisfiable;
 	PStack_p trash;  // Old tableaux for tracing bugs... should not be used normally
+	char *clausification_buffer;
 }TableauControlCell, *TableauControl_p;
 
 #define TableauControlCellAlloc()    (TableauControlCell*)SizeMalloc(sizeof(TableauControlCell))

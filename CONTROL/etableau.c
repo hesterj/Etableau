@@ -316,7 +316,6 @@ int process_saturation_output(TableauControl_p tableau_control,
 				}
             if (status == PROOF_FOUND)
             {
-					proof_found:
 					//fprintf(GlobalOut, "# Branch %d of %d detected with exit status %d, raw status %d\n", i, num_open_branches, status, raw_status);
 					assert(respid);
 					closed_branch = branches[i];

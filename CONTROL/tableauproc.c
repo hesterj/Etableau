@@ -418,8 +418,17 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 				}
 			}
 			//ClauseTableauPrintDOTGraph(resulting_tab);
+			
 			fprintf(GlobalOut, "# SZS output start CNFRefutation for %s\n", tableaucontrol->problem_name);
+			if (tableaucontrol->clausification_buffer)
+			{
+				fprintf(GlobalOut, "# Begin clausification derivation\n");
+				fprintf(GlobalOut, "%s\n", tableaucontrol->clausification_buffer);
+				fprintf(GlobalOut, "# End clausification derivation\n");
+			}
+			fprintf(GlobalOut, "# Begin printing tableau\n");
 			ClauseTableauPrint(resulting_tab);
+			fprintf(GlobalOut, "# End printing tableau\n");
 			fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
 			fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
 			break;

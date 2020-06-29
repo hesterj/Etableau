@@ -554,14 +554,35 @@ int main(int argc, char* argv[])
 		printf("# Number of axioms: %ld Number of unprocessed: %ld\n", proofstate->axioms->members, 
 																						 proofstate->unprocessed->members);
 		ClauseSet_p new_axioms = ClauseSetCopy(proofstate->terms, proofstate->unprocessed);
+		ClauseSet_p *source = &proofstate->unprocessed;
 		if (ClauseSetEmpty(new_axioms))
 		{
 			ClauseSetFree(new_axioms);
+			fprintf(GlobalOut, "# No unprocessed, using axioms.\n");
 			new_axioms = ClauseSetCopy(proofstate->terms, proofstate->axioms);
+			source = &proofstate->axioms;
 		}
 		printf("# Tableaux proof search.\n");
 		if (TableauBatch == 1)
 		{
+			FILE *clausification_stream;
+			char *buf;
+			size_t len;
+			clausification_stream = open_memstream (&buf, &len);
+			if (clausification_stream == NULL)
+			{
+				fprintf(GlobalOut, "# Clausification stream error.\n");
+			}
+			ClauseSetPushClauses(proofstate->extract_roots, *source);
+			DerivationComputeAndPrint(clausification_stream,
+									  sat_status,
+									  proofstate->extract_roots,
+									  proofstate->signature,
+									  POEtableau,
+									  false);
+			PStackReset(proofstate->extract_roots);
+			fclose(clausification_stream);
+			tableaucontrol->clausification_buffer = buf;
 			success = ConnectionTableauBatch(tableaucontrol, 
 														proofstate, 
 														proofcontrol, 
@@ -569,6 +590,7 @@ int main(int argc, char* argv[])
 														new_axioms, 
 														TableauDepth, 
 														TableauEquality);
+			free(buf);
 		}
 		printf("# Exiting...\n");
 		ClauseSetFree(new_axioms);
