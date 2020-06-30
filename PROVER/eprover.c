@@ -583,6 +583,7 @@ int main(int argc, char* argv[])
 			PStackReset(proofstate->extract_roots);
 			fclose(clausification_stream);
 			tableaucontrol->clausification_buffer = buf;
+			// This is where the magic happens
 			success = ConnectionTableauBatch(tableaucontrol, 
 														proofstate, 
 														proofcontrol, 
@@ -590,7 +591,7 @@ int main(int argc, char* argv[])
 														new_axioms, 
 														TableauDepth, 
 														TableauEquality);
-			free(buf);
+			free(buf); // Do not free buf until the search is done
 		}
 		printf("# Exiting...\n");
 		ClauseSetFree(new_axioms);

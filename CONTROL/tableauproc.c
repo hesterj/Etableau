@@ -425,6 +425,13 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 				fprintf(GlobalOut, "# Begin clausification derivation\n");
 				fprintf(GlobalOut, "%s\n", tableaucontrol->clausification_buffer);
 				fprintf(GlobalOut, "# End clausification derivation\n");
+				fprintf(GlobalOut, "# Begin listing active clauses obtained from FOF to CNF conversion\n");
+				ClauseSetPrint(GlobalOut, active, true);
+				fprintf(GlobalOut, "# End listing active clauses.  There is an equivalent clause to each of these in the clausification!\n");
+			}
+			else
+			{
+				Error("No record of clausification?", 1);
 			}
 			fprintf(GlobalOut, "# Begin printing tableau\n");
 			ClauseTableauPrint(resulting_tab);
