@@ -321,25 +321,25 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	//ClauseSetInsertSet(extension_candidates, unit_axioms); // TEMPORARY
 	// BELOW IS FOR MULTIPROCESSING
 	
-	//~ fprintf(GlobalOut, "# Forking version..\n");
-	//~ pid_t pool[num_open_branches];
-	//~ int return_status[num_open_branches];
-	//~ PStack_p job_bank = PStackAlloc();
-	//~ for (PStackPointer j=0; j<6; j++)
-	//~ {
-		//~ PStack_p uniq_distinct_tableaux_stack = PStackAlloc();
-		//~ pool[j] = -1;
-		//~ return_status[j] = -1;
-	//~ }
-	//~ PStackPointer job_location = 0;
-	//~ while (!PStackEmpty(distinct_tableaux_stack))
-	//~ {
-		//~ ClauseTableau_p starting = PStackPopP(distinct_tableaux_stack);
-		//~ PStack_p uniq_dist_tab_stack = PStackElementP(job_bank, job_location);
-		//~ PStackPushP(uniq_dist_tab_stack, starting);
-		//~ job_location++;
-		//~ job_location = job_location % 6;
-	//~ }
+	fprintf(GlobalOut, "# Forking version..\n");
+	pid_t pool[num_open_branches];
+	int return_status[num_open_branches];
+	PStack_p job_bank = PStackAlloc();
+	for (PStackPointer j=0; j<6; j++)
+	{
+		PStack_p uniq_distinct_tableaux_stack = PStackAlloc();
+		pool[j] = -1;
+		return_status[j] = -1;
+	}
+	PStackPointer job_location = 0;
+	while (!PStackEmpty(distinct_tableaux_stack))
+	{
+		ClauseTableau_p starting = PStackPopP(distinct_tableaux_stack);
+		PStack_p uniq_dist_tab_stack = PStackElementP(job_bank, job_location);
+		PStackPushP(uniq_dist_tab_stack, starting);
+		job_location++;
+		job_location = job_location % 6;
+	}
 	
 	// FINISH SETUP FOR MULTIPROCESSING
 	for (int current_depth = 2; current_depth < max_depth; current_depth++)
@@ -435,6 +435,7 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 			}
 			fprintf(GlobalOut, "# Begin printing tableau\n");
 			ClauseTableauPrint(resulting_tab);
+			//ClauseTableauPrintDOTGraph(resulting_tab);
 			fprintf(GlobalOut, "# End printing tableau\n");
 			fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
 			fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
@@ -450,6 +451,9 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 		//long num_moved = move_new_tableaux_to_distinct(distinct_tableaux, new_tableaux);
 		fprintf(GlobalOut, "# Increasing maximum depth to %d\n", current_depth + 1);
 	}
+	
+	// TODO
+	// There needs to be something to wait here, while the various start rules are multiprocessed!
 	
 	TableauStackFreeTableaux(old_tableaux);
 	TableauStackFreeTableaux(new_tableaux);
