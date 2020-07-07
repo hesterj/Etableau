@@ -18,12 +18,16 @@ void process_branch(ProofState_p proofstate,
 
 // Function definitions 
 
-BranchSaturation_p BranchSaturationAlloc(ProofState_p proofstate, ProofControl_p proofcontrol, ClauseTableau_p master)
+BranchSaturation_p BranchSaturationAlloc(ProofState_p proofstate, 
+													  ProofControl_p proofcontrol, 
+													  ClauseTableau_p master,
+													  long max_proc)
 {
 	BranchSaturation_p branch_sat = BranchSaturationCellAlloc();
 	branch_sat->proofstate = proofstate;
 	branch_sat->proofcontrol = proofcontrol;
 	branch_sat->master = master;
+	branch_sat->max_proc = max_proc;
 	return branch_sat;
 }
 
@@ -66,7 +70,8 @@ void process_branch(ProofState_p proofstate,
 int process_branch_nofork(ProofState_p proofstate, 
 						  ProofControl_p proofcontrol,
 						  ClauseTableau_p branch,
-						  TableauControl_p tableau_control)
+						  TableauControl_p tableau_control,
+						  long max_proc)
 {
 	SilentTimeOut = true;
 	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
@@ -74,7 +79,10 @@ int process_branch_nofork(ProofState_p proofstate,
 	ProofStateResetClauseSets(proofstate, false);
 	//ClauseSetFreeClauses(proofstate->unprocessed);
 	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
-	int branch_status = ECloseBranchProcessBranchFirstSerial(proofstate, proofcontrol, branch);
+	int branch_status = ECloseBranchProcessBranchFirstSerial(proofstate, 
+																				proofcontrol, 
+																				branch, 
+																				max_proc);
 	ProofStateResetClauseSets(proofstate, false);
 	ClauseSetFree(unprocessed);
 	return branch_status;
@@ -171,8 +179,10 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 	return RESOURCE_OUT;
 }
 
-int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate, ProofControl_p proofcontrol, 
-					  ClauseTableau_p branch)
+int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate, 
+													  ProofControl_p proofcontrol, 
+													  ClauseTableau_p branch, 
+													  long max_proc)
 {
 	Clause_p success = NULL;
 	ClauseTableau_p node = branch;
@@ -208,11 +218,11 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate, ProofControl_p
 	}
 	
 	//~ // Now do normal saturation
-	if (branch->open_branches->members == 1)
+	if ((branch->open_branches->members <= 2) || (max_proc == LONG_MAX))
 	{
 		fprintf(GlobalOut, "# Beginning deep saturation check\n");
 		proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding;
-		success = Saturate(proofstate, proofcontrol, 10000,
+		success = Saturate(proofstate, proofcontrol, max_proc,
 								 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
 								 LLONG_MAX, LONG_MAX);
 		//fprintf(GlobalOut, "# Deep saturation check done\n");
@@ -359,6 +369,7 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 	ProofState_p proofstate = jobs->proofstate;
 	ProofControl_p proofcontrol = jobs->proofcontrol;
 	ClauseTableau_p master = jobs->master;
+	long max_proc = jobs->max_proc;
 	TableauSet_p open_branches = master->open_branches;
 	
 	int num_open_branches = (int) open_branches->members;
@@ -372,7 +383,11 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 		if (BranchIsLocal(handle))
 		{
 			num_local_branches++;
-			int branch_status = process_branch_nofork(proofstate, proofcontrol, handle, tableau_control);
+			int branch_status = process_branch_nofork(proofstate, 
+																	proofcontrol, 
+																	handle, 
+																	tableau_control, 
+																	max_proc);
 			if (branch_status == PROOF_FOUND)
 			{
 				TableauSetExtractEntry(handle);

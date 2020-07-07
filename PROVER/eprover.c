@@ -547,6 +547,9 @@ int main(int argc, char* argv[])
    assert(problemType != PROBLEM_HO || proofcontrol->ocb->type == KBO6);
 #endif
 
+	//~ fprintf(GlobalOut, "# Printing axioms for debugging purposes\n");
+	//~ ClauseSetPrint(GlobalOut, proofstate->axioms, true);
+
 	if (TableauOptions == 1)
 	{
 		TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures, argv[argc-1], proofstate, proofcontrol);

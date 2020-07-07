@@ -364,9 +364,11 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 				{
 					BranchSaturation_p branch_saturation = BranchSaturationAlloc(tableau_control->proofstate, 
 																									 tableau_control->proofcontrol, 
-																									 maybe_extended->master);
+																									 maybe_extended->master,
+																									 10000);
 					// Trying to keep one object in extensions and saturations
-					int num_closed_by_saturation = AttemptToCloseBranchesWithSuperpositionSerial(tableau_control, branch_saturation);
+					int num_closed_by_saturation = AttemptToCloseBranchesWithSuperpositionSerial(tableau_control, 
+																														  branch_saturation);
 					BranchSaturationFree(branch_saturation);
 					if (maybe_extended->open_branches->members == 0)
 					{
@@ -388,85 +390,6 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	if (num_local_variables)
 	{
 		ClauseFree(open_branch_label);
-	}
-	
-	// Do not work here.  The tableau of open branch has been copied and worked on. 
-	// The current open branch is now "old" and will only be used for other extensions.
-   
-   //  OK We're done
-   ClauseSetFree(new_leaf_clauses);
-	return extensions_done;
-}
-
-/*  Do all of the extension rules possible with the selected clause.
- *  There may be multiple literals extension can be done with.
- *  The resulting tableaux are added to distinct_tableaux.
- *  At the end, when all of the new tableaux are created, the original tableau is removed from
- *  distinct_tableaux.
-*/
-
-int ClauseTableauExtensionRuleAttemptOnBranchNoLocal(TableauControl_p tableau_control,
-															 ClauseTableau_p open_branch, 
-															 TableauSet_p distinct_tableaux,
-															 Clause_p selected,
-															 PStack_p new_tableaux)
-{
-	int extensions_done = 0;
-	int subst_completed = 0;
-	long split_clause_ident = ClauseGetIdent(selected);
-	if (split_clause_ident == open_branch->parent->id) return 0; // Don't split the same clause twice
-	//fprintf(GlobalOut, "Splitting clause in to fresh variables\n");
-	ClauseSet_p new_leaf_clauses = SplitClauseFresh(open_branch->terms, open_branch->master, selected);
-	assert(new_leaf_clauses->members);
-	Clause_p open_branch_label = open_branch->label;
-	
-	//while (leaf_clause != new_leaf_clauses->anchor)
-	Clause_p leaf_clause = new_leaf_clauses->anchor->succ;
-	while (leaf_clause != new_leaf_clauses->anchor)
-	{
-		Subst_p subst = SubstAlloc();
-		Subst_p success_subst = NULL;
-		
-		// Here we are only doing the first possible extension- need to create a list of all of the extensions and do them...
-		// The subst, leaf_clause, new_leaf_clauses, will have to be reset, but the open_branch can remain the same since we have not affected it.
-		if ((success_subst = ClauseContradictsClauseSubst(leaf_clause, open_branch_label, subst))) // stricter extension step
-		{
-			subst_completed++;
-			Clause_p head_clause = leaf_clause;
-			TableauExtension_p extension_candidate = TableauExtensionAlloc(selected, 
-																		   success_subst, 
-																		   head_clause, 
-																		   new_leaf_clauses, 
-																		   open_branch);
-			ClauseTableau_p maybe_extended = ClauseTableauExtensionRule(tableau_control,
-																							distinct_tableaux, 
-																							extension_candidate, 
-																							new_tableaux);
-			TableauExtensionFree(extension_candidate);
-			if (maybe_extended) // extension may not happen due to regularity
-			{
-				fflush(GlobalOut);
-				//printf("# Extension completed.  There are %ld new_tableaux\n", PStackGetSP(new_tableaux));
-				extensions_done++;
-				if (maybe_extended->open_branches->members == 0)
-				{
-					assert(maybe_extended->master->label);
-					tableau_control->closed_tableau = maybe_extended->master;
-					ClauseSetFree(new_leaf_clauses);
-					return extensions_done;
-				}
-				else if (maybe_extended->open_branches->anchor->succ->depth > 3)
-				{
-					BranchSaturation_p branch_saturation = BranchSaturationAlloc(tableau_control->proofstate, 
-																									 tableau_control->proofcontrol, 
-																									 maybe_extended->master);
-					// Trying to keep one object in extensions and saturations
-					AttemptToCloseBranchesWithSuperposition(tableau_control, branch_saturation);
-					BranchSaturationFree(branch_saturation);
-				}
-			}
-		}
-		leaf_clause = leaf_clause->succ;
 	}
 	
 	// Do not work here.  The tableau of open branch has been copied and worked on. 

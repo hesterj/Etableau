@@ -281,7 +281,9 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 																													extension_candidates->members);
    
 	ClauseTableau_p beginning_tableau = NULL;
-	
+	// Print start rule candidates
+	fprintf(GlobalOut, "# Start rule candidates:\n");
+	ClauseSetPrint(GlobalOut, start_rule_candidates, true);
 	// Create a tableau for each axiom using the start rule
    Clause_p start_label = start_rule_candidates->anchor->succ;
    while (start_label != start_rule_candidates->anchor)
@@ -357,11 +359,31 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 														extension_candidates, 
 														current_depth,
 														new_tableaux);
-		if (resulting_tab)
+		if (PStackEmpty(new_tableaux))
+		{
+			// If no new tableaux were created, we will do a "hail mary" saturation attempt on the remaining branches
+			// of some tableau...
+			fprintf(GlobalOut, "# No tableaux could be created.  Saturating branches.\n");
+			ClauseTableau_p some_tableau = PStackElementP(distinct_tableaux_stack, 0);
+			some_tableau = some_tableau->master;  // We want to call saturation method on the root node only
+			BranchSaturation_p branch_saturation = BranchSaturationAlloc(tableaucontrol->proofstate, 
+																							 tableaucontrol->proofcontrol, 
+																							 some_tableau,
+																							 LONG_MAX);
+			AttemptToCloseBranchesWithSuperpositionSerial(tableaucontrol, 
+																		 branch_saturation);
+			BranchSaturationFree(branch_saturation);
+			if (some_tableau->open_branches->members == 0)
+			{
+				resulting_tab = some_tableau;
+			}
+		}
+		if (resulting_tab)  // We successfully found a closed tableau- handle it and report results
 		{
 			assert(resulting_tab);
 			assert(resulting_tab->derivation);
 			assert(PStackGetSP(resulting_tab->derivation));
+			assert(resulting_tab == tableaucontrol->closed_tableau);
 			//fprintf(GlobalOut, "# Printing tableaux derivation..\n");
 			//~ PStack_p derivation = resulting_tab->derivation;
 			//~ for (PStackPointer p = 1; p < PStackGetSP(derivation); p++)
@@ -442,13 +464,11 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 			break;
 		}
 		//TableauStackFreeTableaux(distinct_tableaux_stack);
-		PStackPushStack(old_tableaux, distinct_tableaux_stack);
-		PStackReset(distinct_tableaux_stack);
-		assert(PStackEmpty(distinct_tableaux_stack));
+		PStackPushStack(old_tableaux, distinct_tableaux_stack);  // Store the old tableaux for proof printing
+		PStackReset(distinct_tableaux_stack); // Reset the stack for the next stage of proof search
 		fprintf(GlobalOut, "# Moving %ld tableaux to active set...\n", PStackGetSP(new_tableaux));
-		PStackPushStack(distinct_tableaux_stack, new_tableaux);
-		PStackReset(new_tableaux);
-		//long num_moved = move_new_tableaux_to_distinct(distinct_tableaux, new_tableaux);
+		PStackPushStack(distinct_tableaux_stack, new_tableaux); // Move the newly created tableaux to the working stack
+		PStackReset(new_tableaux);  // Reset the storage for new tableaux created in next iteration
 		fprintf(GlobalOut, "# Increasing maximum depth to %d\n", current_depth + 1);
 	}
 	
