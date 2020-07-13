@@ -359,7 +359,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 					ClauseSetFree(new_leaf_clauses);
 					return extensions_done;
 				}
-				//~ //else if ((maybe_extended->open_branches->anchor->pred->depth > 5) == 0)
+				// Etableau branch saturation methods here!
 				else
 				{
 					BranchSaturation_p branch_saturation = BranchSaturationAlloc(tableau_control->proofstate, 

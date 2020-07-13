@@ -10,29 +10,10 @@ long dive_depth = 10;
 /*  Forward Declarations
 */
 
-long move_new_tableaux_to_distinct(TableauSet_p distinct_tableaux, PStack_p new_tableaux);
 
 /*  Function Definitions
 */
 
-long move_new_tableaux_to_distinct(TableauSet_p distinct_tableaux, PStack_p new_tableaux)
-{
-	long num_moved = 0;
-	while (!PStackEmpty(new_tableaux))
-	{
-		ClauseTableau_p new_tab = PStackPopP(new_tableaux);
-		//~ printf("moving %p\n", new_tab);
-		//~ if (new_tab->master_set == distinct_tableaux)
-		//~ {
-			//~ printf("This tab is already part of distinct tableaux...\n");
-		//~ }
-		assert(new_tab->master_set == NULL);
-		assert(new_tab->set == NULL);
-		TableauMasterSetInsert(distinct_tableaux, new_tab);
-		num_moved += 1;
-	}
-	return num_moved;
-}
 
 /*-----------------------------------------------------------------------
 //
@@ -296,7 +277,6 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 		beginning_tableau ->unit_axioms = ClauseSetCopy(initial_tab->terms, unit_axioms);
 		//beginning_tableau->unit_axioms = NULL;
 		beginning_tableau->max_var = max_var;
-		//TableauMasterSetInsert(distinct_tableaux, beginning_tableau);
 		PStackPushP(distinct_tableaux_stack, beginning_tableau);
 		beginning_tableau = TableauStartRule(beginning_tableau, start_label);
 		start_label = start_label->succ;

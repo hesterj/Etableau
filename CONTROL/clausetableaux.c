@@ -28,14 +28,11 @@ ClauseTableau_p ClauseTableauAlloc()
 	handle->id = 0;
 	handle->max_var = 0;
 	//handle->info = DStrAlloc();
-	handle->master_set = NULL;
 	handle->active_branch = NULL;
 	handle->pred = NULL;
 	handle->control = NULL;
 	handle->state = NULL;
 	handle->succ = NULL;
-	handle->master_pred = NULL;
-	handle->master_succ = NULL;
 	handle->local_variables = NULL;
 	handle->open_branches = NULL;
 	handle->children = NULL;
@@ -74,7 +71,6 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	// Do NOT copy the unit axioms because there may be a subst active!!
 	handle->unit_axioms = NULL;
 	handle->set = NULL;
-	handle->master_set = NULL;
 	handle->pred = NULL;
 	handle->id = tab->id;
 	handle->mark_int = tab->mark_int;
@@ -90,8 +86,6 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	}
 	handle->head_lit = tab->head_lit;
 	handle->succ = NULL;
-	handle->master_pred = NULL;
-	handle->master_succ = NULL;
 	handle->active_branch = NULL;
 	handle->saturation_closed = tab->saturation_closed;
 	handle->max_var = tab->max_var;
@@ -247,11 +241,8 @@ ClauseTableau_p ClauseTableauChildAlloc(ClauseTableau_p parent, int position)
 	handle->folding_labels = NULL;
 	handle->id = 0;
 	handle->head_lit = false;
-	handle->master_set = NULL;
 	handle->pred = NULL;
 	handle->succ = NULL;
-	handle->master_pred = NULL;
-	handle->master_succ = NULL;
 	handle->children = NULL;
 	handle->signature = parent->signature;
 	handle->local_variables = NULL;
@@ -288,11 +279,8 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->folding_labels = NULL;
 	//handle->info = DStrAlloc();
 	handle->active_branch = NULL;
-	handle->master_set = NULL;
 	handle->pred = NULL;
 	handle->succ = NULL;
-	handle->master_pred = NULL;
-	handle->master_succ = NULL;
 	handle->signature = parent->signature;
 	handle->children = NULL;
 	handle->terms = parent->terms;
@@ -353,19 +341,6 @@ void TableauStackFreeTableaux(PStack_p stack)
 		ClauseTableau_p tab = PStackPopP(stack);
 		ClauseTableauFree(tab);
 	}
-}
-
-long TableauMasterSetPushClauses(PStack_p stack, TableauSet_p set)
-{
-   ClauseTableau_p handle;
-   long     res = 0;
-
-   for(handle = set->anchor->master_succ; handle!=set->anchor; handle = handle->master_succ)
-   {
-      PStackPushP(stack, handle);
-      res++;
-   }
-   return res;
 }
 
 void HCBClauseSetEvaluate(HCB_p hcb, ClauseSet_p clauses)
@@ -983,75 +958,6 @@ ClauseTableau_p   TableauSetExtractFirst(TableauSet_p list)
 void TableauSetFree(TableauSet_p set)
 {
 	ClauseTableauCellFree(set->anchor);
-	TableauSetCellFree(set);
-}
-
-TableauSet_p TableauMasterSetAlloc()
-{
-   TableauSet_p set = TableauSetCellAlloc();
-
-   set->members = 0;
-   set->anchor  = ClauseTableauAlloc();
-   set->anchor->master_succ = set->anchor;
-   set->anchor->master_pred = set->anchor;
-
-   return set;
-}
-
-TableauSet_p TableauMasterSetCopy(TableauSet_p set)
-{
-	return NULL;
-}
-
-void TableauMasterSetInsert(TableauSet_p list, ClauseTableau_p tab)
-{
-   assert(list);
-   assert(tab);
-   assert(!tab->master_set);
-
-   tab->master_succ = list->anchor;
-   tab->master_pred = list->anchor->master_pred;
-   list->anchor->master_pred->master_succ = tab;
-   list->anchor->master_pred = tab;
-   tab->master_set = list;
-   list->members++;
-}
-
-ClauseTableau_p TableauMasterSetExtractEntry(ClauseTableau_p fset)
-{
-   assert(fset);
-   assert(fset->master_set);
-
-   fset->master_pred->master_succ = fset->master_succ;
-   fset->master_succ->master_pred = fset->master_pred;
-   fset->master_set->members--;
-   fset->master_set = NULL;
-   fset->master_succ = NULL;
-   fset->master_pred = NULL;
-
-   return fset;
-}
-
-ClauseTableau_p   TableauMasterSetExtractFirst(TableauSet_p list)
-{
-   assert(list);
-
-   if(TableauMasterSetEmpty(list))
-   {
-      return NULL;
-   }
-   return TableauMasterSetExtractEntry(list->anchor->master_succ);
-}
-
-void TableauMasterSetFree(TableauSet_p set)
-{
-	ClauseTableau_p handle = NULL;
-	while (set->members > 0)
-	{
-		handle = TableauMasterSetExtractFirst(set);
-		ClauseTableauFree(handle);
-	}
-	ClauseTableauFree(set->anchor);
 	TableauSetCellFree(set);
 }
 

@@ -26,12 +26,13 @@ typedef struct clausetableau
 	Sig_p         signature;
 	bool open;
 	bool saturation_closed;
-	bool head_lit;  //If this node was made as a head literal in an extension step, it is true.  Otherwise false.
-	int depth;		// depth of the node in the tableau
-	int position;   // If the node is a child, this is its position in the children array of the parent
-	int arity;		// number of children
-	int mark_int;   // The number of steps up a node node was closed by.  0 if not closed by extension/closure
-	int folded_up;  // If the node has been folded up, this is the number of steps up it went
+	bool head_lit;    //If this node was made as a head literal in an extension step, it is true.  Otherwise false.
+	short step;       // Nodes are marked in the order they were expanded/closed on.
+	short depth;		// depth of the node in the tableau
+	short position;   // If the node is a child, this is its position in the children array of the parent
+	short arity;		// number of children
+	short mark_int;   // The number of steps up a node node was closed by.  0 if not closed by extension/closure
+	short folded_up;  // If the node has been folded up, this is the number of steps up it went
 	long id;  		// If a clause was split on a node, this is the id of the clause used to split.
 	long max_var;   // f_code of the maximal variable in the tableau
 	//DStr_p info;
@@ -47,16 +48,13 @@ typedef struct clausetableau
 	ClauseSet_p folding_labels; // These are clauses that have been folded up to this node.
 	
 	// Tableau set cell stuff...
-	struct tableau_set_cell* set; // if this node is in a set, it is the set of open branches 
-	struct tableau_set_cell* master_set;  // For controlling sets of distinct tableau
+	struct tableau_set_cell* set; // if this node is in a set, it is the set of open branches
 	struct tableau_set_cell* open_branches; // the open branches that should be operated on
 	
 	// Pointers for navigating tableaux/sets of tableaux
 	struct clausetableau* active_branch; // active branch for keeping track of what branch is being extended
 	struct clausetableau* pred; // For navigating the set- used for open branches
 	struct clausetableau* succ;
-	struct clausetableau* master_pred; // For navigating the master set of distinct tableaux
-	struct clausetableau* master_succ;
 	struct clausetableau* parent; // parent node
 	struct clausetableau* *children;  //array of children
 	struct clausetableau* master; // root node of the tableau
@@ -136,8 +134,6 @@ typedef struct tableau_set_cell
 
 #define      TableauSetEmpty(set)\
              ((set)->anchor->succ == (set)->anchor)
-#define      TableauMasterSetEmpty(set)\
-             ((set)->anchor->master_succ == (set)->anchor)
 
 TableauSet_p TableauSetAlloc();
 TableauSet_p TableauSetCopy(TableauSet_p set);
@@ -148,13 +144,6 @@ ClauseTableau_p   TableauSetExtractFirst(TableauSet_p list);
 ClauseTableau_p TableauSetExtractEntry(ClauseTableau_p set);
 void TableauSetFree(TableauSet_p handle);
 
-TableauSet_p TableauMasterSetAlloc();
-TableauSet_p TableauMasterSetCopy(TableauSet_p set);
-void TableauMasterSetInsert(TableauSet_p list, ClauseTableau_p set);
-ClauseTableau_p   TableauMasterSetExtractFirst(TableauSet_p list);
-ClauseTableau_p TableauMasterSetExtractEntry(ClauseTableau_p set);
-long TableauMasterSetPushClauses(PStack_p stack, TableauSet_p set);
-void TableauMasterSetFree(TableauSet_p handle);
 void TableauStackFreeTableaux(PStack_p stack);
 void ClauseTableauCollectLeaves(ClauseTableau_p tab, TableauSet_p leaves);
 void ClauseTableauCollectLeavesStack(ClauseTableau_p tab, PStack_p leaves);
