@@ -18,7 +18,6 @@
 
 long UpdateLocalVariables(ClauseTableau_p node)
 {
-	Sig_p sig = node->signature;
 	long num_variables = 0;
 	PTree_p local_variables_tree = NULL;
 	if (node->local_variables)
@@ -188,7 +187,6 @@ Clause_p ReplaceLocalVariablesWithFreshSubst(ClauseTableau_p master, Clause_p cl
 {
 	Clause_p new_clause = NULL;
 	assert(PStackGetSP(local_variables));
-	VarBank_p variable_bank = master->terms->vars;
 	//printf("Old clause: ");ClausePrint(GlobalOut, clause, true);printf("\n");
 	//Subst_p subst = SubstAlloc();
 	for (PStackPointer p = 0; p < PStackGetSP(local_variables); p++)

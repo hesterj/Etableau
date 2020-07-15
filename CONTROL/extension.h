@@ -31,13 +31,13 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p control,
 															 ClauseTableau_p open_branch, 
 															 TableauSet_p distinct_tableaux,
 															 Clause_p selected,
-															 PStack_p new_tableaux);
+															 TableauStack_p new_tableaux);
 ClauseSet_p SplitClauseFresh(TB_p bank, ClauseTableau_p tableau, Clause_p clause); // Major memory eating offender
 TableauExtension_p ClauseTableauCreateExtensionJobs(ClauseTableau_p open_branch, Clause_p selected);
 ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 														 TableauSet_p distinct_tableaux, 
 														 TableauExtension_p extension, 
-														 PStack_p new_tableaux);
+														 TableauStack_p new_tableaux);
 										   
 TableauExtension_p TableauExtensionAlloc(Clause_p selected,
 										 Subst_p subst, 

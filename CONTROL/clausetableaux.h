@@ -18,6 +18,9 @@
 #include <arpa/inet.h>
 #include <clb_plist.h>
 
+typedef PStack_p ClauseStack_p;
+typedef PStack_p TableauStack_p;
+
 typedef struct clausetableau 
 {
 	ProofState_p state;
@@ -26,23 +29,22 @@ typedef struct clausetableau
 	Sig_p         signature;
 	bool open;
 	bool saturation_closed;
-	bool head_lit;    //If this node was made as a head literal in an extension step, it is true.  Otherwise false.
+	bool head_lit;    // If this node was made as a head literal in an extension step, it is true.  Otherwise false.
+	short max_step;   // The number of expansion/closure steps done on the tableaux so far.  Nonzero at root node.
 	short step;       // Nodes are marked in the order they were expanded/closed on.
 	short depth;		// depth of the node in the tableau
 	short position;   // If the node is a child, this is its position in the children array of the parent
 	short arity;		// number of children
 	short mark_int;   // The number of steps up a node node was closed by.  0 if not closed by extension/closure
 	short folded_up;  // If the node has been folded up, this is the number of steps up it went
-	long id;  		// If a clause was split on a node, this is the id of the clause used to split.
-	long max_var;   // f_code of the maximal variable in the tableau
-	//DStr_p info;
+	long id;  		   // If a clause was split on a node, this is the id of the clause used to split.
+	long max_var;     // f_code of the maximal variable in the tableau
+	//DStr_p info;    // Contains the substitution used to close this node
 	PStack_p local_variables; // The variables of the tableau that are local to the branch.
 	
-	PStack_p derivation;
+	TableauStack_p derivation;
 	
-	//PStack_p spawned_tableaux;
-	
-	Clause_p label;
+	Clause_p label; // The clause at this node
 	Clause_p tmp_label; // For creating temporary copies of clauses, i/e in closure
 	ClauseSet_p unit_axioms; // Only present at the master node
 	ClauseSet_p folding_labels; // These are clauses that have been folded up to this node.
@@ -60,8 +62,6 @@ typedef struct clausetableau
 	struct clausetableau* master; // root node of the tableau
 }ClauseTableau, *ClauseTableau_p;
 
-typedef PStack_p ClauseStack_p;
-
 #define ClauseTableauCellAlloc() (ClauseTableau*)SizeMalloc(sizeof(ClauseTableau))
 #define ClauseTableauCellFree(junk) SizeFree(junk, sizeof(ClauseTableau))
 #define ClauseTableauArgArrayAlloc(arity) ((ClauseTableau_p*)SizeMalloc((arity)*sizeof(ClauseTableau_p)))
@@ -71,7 +71,6 @@ void ClauseTableauInitialize(ClauseTableau_p handle, ProofState_p state);
 void ClauseTableauFree(ClauseTableau_p trash);
 ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab);
 ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p parent);
-ClauseTableau_p ClauseTableauChildAlloc(ClauseTableau_p parent, int position);
 ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p label, int position);
 void ClauseTableauApplySubstitution(ClauseTableau_p tab, Subst_p subst);
 void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst);
@@ -161,6 +160,7 @@ typedef struct tableaucontrol_cell
 	ClauseTableau_p closed_tableau;
 	ClauseSet_p unprocessed;
 	TB_p terms;
+	bool branch_saturation_enabled; // Is branch saturation enabled?
 	bool satisfiable;
 	PStack_p trash;  // Old tableaux for tracing bugs... should not be used normally
 	char *clausification_buffer;
@@ -170,7 +170,11 @@ typedef struct tableaucontrol_cell
 #define TableauControlCellFree(junk) SizeFree(junk, sizeof(TableauControlCell))
 
 
-TableauControl_p TableauControlAlloc(long neg_conjectures, char *problem_name, ProofState_p proofstate, ProofControl_p proofcontrol);
+TableauControl_p TableauControlAlloc(long neg_conjectures, 
+												 char *problem_name, 
+												 ProofState_p proofstate, 
+												 ProofControl_p proofcontrol,
+												 bool branch_saturation_enabled);
 void TableauControlFree(TableauControl_p trash);
 
 #endif

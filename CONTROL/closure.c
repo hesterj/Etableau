@@ -9,7 +9,6 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 	Subst_p subst;
 	assert(tab);
 	assert(tab->label);
-	bool leaf_regularity_checking = false;
 
 	if ((subst = ClauseContradictsBranch(tab, tab->label)))
 	{
@@ -78,8 +77,6 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	assert(tab->label);
 	Subst_p subst = NULL;
 	Clause_p temporary_label;
-	//ClauseSet_p unit_axioms = tab->master->unit_axioms;
-	PStackPointer stack_pointer = 0;
 	bool original_label_replaced = false;
 	
 	//long num_local_variables = 0;
@@ -95,7 +92,6 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	ClauseSet_p unit_axioms = tab->master->unit_axioms;
 	assert(unit_axioms);
 	Clause_p unit_handle = unit_axioms->anchor->succ;
-	Clause_p temporary_unit = unit_handle;
 	while (unit_handle != unit_axioms->anchor)
 	{
 		assert(unit_handle);
@@ -219,12 +215,9 @@ Subst_p ClauseContradictsSetSubst(ClauseTableau_p tab, Clause_p leaf, ClauseSet_
 {
 	assert(set->anchor);
 	Subst_p success_subst = NULL;
-	//bool local_vars = false;
-	PStackPointer stack_pointer = 0;
 	if (PStackGetSP(open_branch->local_variables) > 0)
 	{
 		Clause_p handle = set->anchor->succ;
-		//Subst_p subst = NULL;
 		while (handle != set->anchor)
 		{
 			//Clause_p handle_clause = ReplaceLocalVariablesWithFresh(tab->master, handle, open_branch->local_variables);

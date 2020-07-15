@@ -372,8 +372,6 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 	long max_proc = jobs->max_proc;
 	TableauSet_p open_branches = master->open_branches;
 	
-	int num_open_branches = (int) open_branches->members;
-	
 	ClauseTableau_p handle = open_branches->anchor->succ;
 	int num_local_branches = 0;
 	int successful_count = 0;

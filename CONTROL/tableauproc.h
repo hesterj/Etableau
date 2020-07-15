@@ -22,15 +22,15 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 											  ProofState_p proofstate, 
 											  ProofControl_p proofcontrol, 
-											  PStack_p distinct_tableaux_stack,
+											  TableauStack_p distinct_tableaux_stack,
 										     ClauseSet_p extension_candidates,
 										     int max_depth,
-										     PStack_p new_tableaux);
-ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tableau, PStack_p new_tableaux,
+										     TableauStack_p new_tableaux);
+ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tableau, TableauStack_p new_tableaux,
 																							TableauControl_p control,
 																							TableauSet_p distinct_tableaux,
 																							ClauseSet_p extension_candidates,
-																							int max_depth, PStack_p max_depth_tableaux);
+																							int max_depth, TableauStack_p max_depth_tableaux);
     
 
 #endif

@@ -20,6 +20,8 @@ ClauseTableau_p ClauseTableauAlloc()
 	//handle->mark = NULL;
 	handle->mark_int = 0;
 	handle->folded_up = 0;
+	handle->step = 0;
+	handle->max_step = 0;
 	handle->folding_labels = NULL;
 	handle->set = NULL;
 	handle->derivation = PStackAlloc();
@@ -74,6 +76,8 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	handle->pred = NULL;
 	handle->id = tab->id;
 	handle->mark_int = tab->mark_int;
+	handle->step = tab->step;
+	handle->max_step = tab->max_step;
 	handle->folded_up = tab->folded_up;
 	assert(handle->folded_up == 0); // the master node should not be folded up
 	if (tab->folding_labels)
@@ -135,6 +139,8 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 
 ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p parent)
 {
+	assert(tab);
+	assert(parent);
 	TB_p bank = tab->terms; //Copy tableau tab
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
 	handle->derivation = NULL;
@@ -146,6 +152,8 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	handle->control = parent->control;
 	handle->set = NULL;
 	handle->id = tab->id;
+	handle->step = tab->step;
+	handle->max_step = tab->max_step;
 	handle->head_lit = tab->head_lit;
 	handle->max_var = parent->max_var;
 	handle->active_branch = NULL;
@@ -218,42 +226,6 @@ void ClauseTableauInitialize(ClauseTableau_p handle, ProofState_p initial)
 	handle->terms = initial->terms;
 }
 
-ClauseTableau_p ClauseTableauChildAlloc(ClauseTableau_p parent, int position)
-{
-	ClauseTableau_p handle = ClauseTableauCellAlloc();
-	handle->derivation = NULL;
-	parent->open = true; // We only want leaf nodes in the collection of open breanches
-	
-	handle->unit_axioms = NULL;
-	handle->open_branches = parent->open_branches;
-	handle->depth = parent->depth + 1;
-	handle->position = position;
-	handle->control = parent->control;
-	handle->label = NULL;
-	handle->tmp_label = NULL;
-	handle->max_var = parent->max_var;
-	//handle->info = DStrAlloc();
-	handle->active_branch = NULL;
-	handle->set = NULL;
-	handle->mark_int = 0;
-	handle->saturation_closed = false;
-	handle->folded_up = 0;
-	handle->folding_labels = NULL;
-	handle->id = 0;
-	handle->head_lit = false;
-	handle->pred = NULL;
-	handle->succ = NULL;
-	handle->children = NULL;
-	handle->signature = parent->signature;
-	handle->local_variables = NULL;
-	handle->terms = parent->terms;
-	handle->parent = parent;
-	handle->master = parent->master;
-	handle->state = parent->state;
-	handle->open = true;
-	handle->arity = 0;
-	return handle;
-}
 
 ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p label, int position)
 {
@@ -262,6 +234,8 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	assert(parent);
 	assert(label);
 	parent->arity += 1;
+	handle->step = 0;
+	handle->max_step = 0;
 	handle->depth = parent->depth + 1;
 	handle->position = position;
 	handle->unit_axioms = NULL;
@@ -704,7 +678,7 @@ Clause_p ClauseApplySubst(Clause_p clause,  TB_p bank, Subst_p subst)
 
 Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
 {
-   PTree_p variable_tree;
+   PTree_p variable_tree = NULL;
    PStack_p variables;
    PStackPointer p;
    Subst_p subst;
@@ -716,12 +690,15 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
    
    variable_bank = tableau->master->terms->vars;
    variables = PStackAlloc();
-   variable_tree = NULL;
    //VarBankSetVCountsToUsed(variable_bank);
    subst = SubstAlloc();
    
    ClauseCollectVariables(clause, &variable_tree);
    PTreeToPStack(variables, variable_tree);
+   if (PStackGetSP(variables) > 0)
+   {
+		assert(variable_tree);
+	}
    PTreeFree(variable_tree);
    
    //printf("Clause being copied: ");ClausePrint(GlobalOut, clause, true);printf("\n");
@@ -773,17 +750,13 @@ ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 	assert(tab->control);
 	
 	arity = ClauseLiteralNumber(start);
-	tab->arity = arity;
 	tab->open = true;
 	TableauSetExtractEntry(tab); // no longer open
 	assert(tab->open_branches->members == 0);
 	tab->label = ClauseCopyOpt(start);
-	//tab->label = ClauseCopyFresh(start, tab);
 	assert(tab->label);
-	//ClauseGCMarkTerms(tab->label);
 	
-	if (tab->label->ident >= 0) tab->id = tab->label->ident;
-	else tab->id = tab->label->ident - LONG_MIN;
+	tab->id = ClauseGetIdent(tab->label);
 	
 	assert(arity > 0);
 	
@@ -791,16 +764,13 @@ ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 	literals = EqnListCopy(start->literals, bank);
 	for (int i=0; i<arity; i++)
 	{
-		ClauseTableau_p child;
 		lit = EqnListExtractFirst(&literals);
-		tab->children[i] = ClauseTableauChildAlloc(tab, i);
-		child = tab->children[i];
 		new_clause = ClauseAlloc(lit);
 		ClauseRecomputeLitCounts(new_clause);
-		child->label = new_clause;
-		//ClauseGCMarkTerms(child->label); // Do not delete clauses that are labels we could use
-		assert(child->label);
-		TableauSetInsert(child->open_branches, child);
+		tab->children[i] = ClauseTableauChildLabelAlloc(tab, new_clause, i);
+		assert(tab->children[i]);
+		assert(tab->children[i]->label);
+		TableauSetInsert(tab->children[i]->open_branches, tab->children[i]);
 	}
 	EqnListFree(literals);
 	
@@ -1139,12 +1109,17 @@ long ClauseGetIdent(Clause_p clause)
 	return ident;
 }
 
-TableauControl_p TableauControlAlloc(long neg_conjectures, char *problem_name, ProofState_p proofstate, ProofControl_p proofcontrol)
+TableauControl_p TableauControlAlloc(long neg_conjectures, 
+												 char *problem_name, 
+												 ProofState_p proofstate, 
+												 ProofControl_p proofcontrol,
+												 bool branch_saturation_enabled)
 {
 	TableauControl_p handle = TableauControlCellAlloc();
 	handle->terms = NULL; // The termbank for this tableau control..
 	handle->number_of_extensions = 0;  // Total number of extensions done
 	handle->closed_tableau = NULL;
+	handle->branch_saturation_enabled = branch_saturation_enabled;
 	handle->satisfiable = false;
 	handle->unprocessed = NULL;
 	handle->problem_name = problem_name;

@@ -146,7 +146,6 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	assert(tableau_copy->active_branch);
 	assert(tableau_copy->master == tableau_copy);
 	assert(extension->selected);
-	//assert(ClauseSetEmpty(old_tableau_master->unit_axioms));
 	
 	Subst_p subst = extension->subst;
 	assert(subst);
@@ -282,7 +281,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 															 ClauseTableau_p open_branch, 
 															 TableauSet_p distinct_tableaux,
 															 Clause_p selected,
-															 PStack_p new_tableaux)
+															 TableauStack_p new_tableaux)
 {
 	int extensions_done = 0;
 	int subst_completed = 0;
@@ -360,15 +359,14 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 					return extensions_done;
 				}
 				// Etableau branch saturation methods here!
-				else
+				else if (tableau_control->branch_saturation_enabled)
 				{
 					BranchSaturation_p branch_saturation = BranchSaturationAlloc(tableau_control->proofstate, 
 																									 tableau_control->proofcontrol, 
 																									 maybe_extended->master,
 																									 10000);
 					// Trying to keep one object in extensions and saturations
-					int num_closed_by_saturation = AttemptToCloseBranchesWithSuperpositionSerial(tableau_control, 
-																														  branch_saturation);
+					AttemptToCloseBranchesWithSuperpositionSerial(tableau_control, branch_saturation);
 					BranchSaturationFree(branch_saturation);
 					if (maybe_extended->open_branches->members == 0)
 					{

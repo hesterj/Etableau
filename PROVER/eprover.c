@@ -106,6 +106,7 @@ int TableauOptions = 0; // John
 int TableauDepth = 2;
 int TableauBatch = 1;
 int TableauEquality = 0;
+bool TableauSaturation = false;
 
 /*---------------------------------------------------------------------*/
 /*                      Forward Declarations                           */
@@ -552,7 +553,7 @@ int main(int argc, char* argv[])
 
 	if (TableauOptions == 1)
 	{
-		TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures, argv[argc-1], proofstate, proofcontrol);
+		TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures, argv[argc-1], proofstate, proofcontrol, TableauSaturation);
 		//TB_p tableau_terms = TBAlloc(proofstate->terms->sig);
 		printf("# Number of axioms: %ld Number of unprocessed: %ld\n", proofstate->axioms->members, 
 																						 proofstate->unprocessed->members);
@@ -586,7 +587,7 @@ int main(int argc, char* argv[])
 			PStackReset(proofstate->extract_roots);
 			fclose(clausification_stream);
 			tableaucontrol->clausification_buffer = buf;
-			// This is where the magic happens
+			// This is the entry point for tableaux proof search
 			success = ConnectionTableauBatch(tableaucontrol, 
 														proofstate, 
 														proofcontrol, 
@@ -598,10 +599,10 @@ int main(int argc, char* argv[])
 		}
 		printf("# Exiting...\n");
 		ClauseSetFree(new_axioms);
-		//TBFree(tableau_terms);
 		TableauControlFree(tableaucontrol);
-		exit(0);
+		goto cleanuptableau;
 	}
+	
 	printf("# Warning: Approaching standard saturation\n");
 	// Main E saturation method
    if(!success  && !TableauOptions)  
@@ -820,6 +821,7 @@ int main(int argc, char* argv[])
                      relevancy_pruned,
                      raw_clause_no,
                      preproc_removed);
+cleanuptableau:
 #ifndef FAST_EXIT
 #ifdef FULL_MEM_STATS
    fprintf(GlobalOut,
@@ -935,10 +937,17 @@ CLState_p process_options(int argc, char* argv[])
    {
       switch(handle->option_code)
       {
+		case OPT_TABLEAU_SATURATION:
+			if (strcmp(arg, "1") == 0)
+			{
+				TableauSaturation = true;
+				break;
+			}
+			break;
 		case OPT_TABLEAU_EQUALITY:
 			if (strcmp(arg, "1") == 0)
 			{
-				TableauEquality = 1;
+				TableauEquality = true;
 				break;
 			}
 			break;

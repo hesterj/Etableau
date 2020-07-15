@@ -191,6 +191,7 @@ typedef enum
    OPT_TABLEAU_DEPTH,
    OPT_TABLEAU_BATCH,
    OPT_TABLEAU_EQUALITY,
+   OPT_TABLEAU_SATURATION,
    OPT_DUMMY
 }OptionCodes;
 
@@ -1438,7 +1439,7 @@ OptCell opts[] =
 		 OptArg, "2",
 		 "Specify an integer."
 		 "This is the max depth of tableaux used in proof search."
-		 "Default is 2, which will likely not work often."
+		 "Default is 2, which will likely not work."
 	 },
 	 {
 		 OPT_TABLEAU_BATCH,
@@ -1449,12 +1450,21 @@ OptCell opts[] =
 		 "The default 1 causes proof search in batch mode, which works better and uses more memory."
 	 },
 	 {
-	 OPT_TABLEAU_EQUALITY,
-	 '\0', "tableau-equality",
-	 OptArg, "0",
-	 "Specify an integer."
-	 "The defualt 0 means that no equality axioms will be added."
-	 "If this is enabled, SRT equality axioms will be added as extension candidates."
+		 OPT_TABLEAU_EQUALITY,
+		 '\0', "tableau-equality",
+		 OptArg, "0",
+		 "Specify an integer."
+		 "The defualt 0 means that no equality axioms will be added."
+		 "If this is enabled, SRT equality axioms will be added as extension candidates."
+		 "This makes the search space larger, but is necessary on some problems."
+	 },
+	 {
+		 OPT_TABLEAU_SATURATION,
+		 '\0', "tableau-saturation",
+		 OptArg, "0",
+		 "Specify an integer."
+		 "The defualt 0 means that no tableau saturation will be done."
+		 "If this is enabled (1), local branches of tableaux may be saturated with the superposition calculus."
 	 },
 
    {OPT_NOOPT,
