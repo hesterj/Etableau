@@ -272,6 +272,10 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 
 void ClauseTableauFree(ClauseTableau_p trash)
 {
+	if (trash->derivation)
+	{
+		PStackFree(trash->derivation);
+	}
 	if (trash->label)
 	{
 		ClauseFree(trash->label);
@@ -695,10 +699,6 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
    
    ClauseCollectVariables(clause, &variable_tree);
    PTreeToPStack(variables, variable_tree);
-   if (PStackGetSP(variables) > 0)
-   {
-		assert(variable_tree);
-	}
    PTreeFree(variable_tree);
    
    //printf("Clause being copied: ");ClausePrint(GlobalOut, clause, true);printf("\n");

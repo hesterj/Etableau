@@ -165,7 +165,7 @@ WFormula_p ProofStateGetConjecture(ProofState_p state)
  *  applications at once.  Does not use any multhreading.
 */
 
-Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol, 
+int ConnectionTableauBatch(TableauControl_p tableaucontrol, 
 											ProofState_p proofstate, 
 											ProofControl_p proofcontrol, 
 											TB_p bank, 
@@ -440,6 +440,7 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 			fprintf(GlobalOut, "# End printing tableau\n");
 			fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
 			fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
+			ClauseTableauFree(resulting_tab);
 			break;
 		}
 		//TableauStackFreeTableaux(distinct_tableaux_stack);
@@ -460,28 +461,24 @@ Clause_p ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	PStackFree(old_tableaux);
 	ClauseSetFree(extension_candidates);
 	ClauseSetFree(unit_axioms);
+	ClauseSetFree(axioms_archive);
 	VarBankPopEnv(bank->vars);
    
    //printf("# Connection tableau proof search finished.\n");
    TableauStackFreeTableaux(distinct_tableaux_stack);
 	PStackFree(distinct_tableaux_stack);
-		
-   if (!resulting_tab) // failure
-   {
-	  fprintf(GlobalOut, "# ConnectionTableauProofSearch returns NULL. Failure.\n");
-	  fprintf(GlobalOut, "# SZS status ResourceOut for %s\n", tableaucontrol->problem_name);
-	  return NULL;
-   }
+	
    if (resulting_tab) // success
    {
 		//assert(resulting_tab == tableaucontrol->closed_tableau);
-		printf("# Proof search success!\n");
+		printf("# Proof search success for %s!\n", tableaucontrol->problem_name);
 		//ClauseTableauPrintDOTGraph(resulting_tab);
-		Clause_p empty = EmptyClauseAlloc();
-		return empty;
+		return 1;
 	}
-	
-	return NULL;
+	// failure
+	fprintf(GlobalOut, "# ConnectionTableauProofSearch returns NULL. Failure.\n");
+	fprintf(GlobalOut, "# SZS status ResourceOut for %s\n", tableaucontrol->problem_name);
+	return 0;
 }
 
 ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,

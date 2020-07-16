@@ -356,6 +356,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 					assert(maybe_extended->master->label);
 					tableau_control->closed_tableau = maybe_extended->master;
 					ClauseSetFree(new_leaf_clauses);
+					SubstDelete(subst);
 					return extensions_done;
 				}
 				// Etableau branch saturation methods here!
@@ -378,11 +379,13 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 						assert(maybe_extended->master->label);
 						tableau_control->closed_tableau = maybe_extended->master;
 						ClauseSetFree(new_leaf_clauses);
+						SubstDelete(subst);
 						return extensions_done;
 					}
 				}
 			}
 		}
+		SubstDelete(subst);
 		leaf_clause = leaf_clause->succ;
 	}
 	if (num_local_variables)

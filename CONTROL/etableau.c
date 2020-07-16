@@ -162,7 +162,7 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 	//~ // Now do normal saturation
 	if (branch->open_branches->members == 1 && branch->depth > 8)
 	{
-		fprintf(GlobalOut, "# Beginning deep saturation check\n");
+		fprintf(GlobalOut, "# Beginning deep saturation check (p)\n");
 		success = Saturate(proofstate, proofcontrol, 10000,
 								 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
 								 LLONG_MAX, LONG_MAX);
@@ -206,13 +206,13 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 			ClauseSetProp(label, CPIsRelevant);
 			ClauseSetProp(label, CPLimitedRW);
 			ClauseSetInsert(proofstate->tmp_store, label);
-			//success = ProcessSpecificClause(proofstate, proofcontrol, label, LONG_MAX);
-			if (success)
-			{
-				//fprintf(GlobalOut, "# Saturate returned empty clause on branch.\n");
-				//ProofStateStatisticsPrint(GlobalOut, proofstate);
-				return PROOF_FOUND;
-			}
+			//~ success = ProcessSpecificClause(proofstate, proofcontrol, label, LONG_MAX);
+			//~ if (success)
+			//~ {
+				//~ fprintf(GlobalOut, "# Saturate returned empty clause on branch.\n");
+				//~ ProofStateStatisticsPrint(GlobalOut, proofstate);
+				//~ return PROOF_FOUND;
+			//~ }
 		}
 		node = node->parent;
 	}
@@ -220,7 +220,7 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 	//~ // Now do normal saturation
 	if ((branch->open_branches->members <= 2) || (max_proc == LONG_MAX))
 	{
-		fprintf(GlobalOut, "# Beginning deep saturation check\n");
+		fprintf(GlobalOut, "# Beginning deep saturation check (%ld)\n", max_proc);
 		proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding;
 		success = Saturate(proofstate, proofcontrol, max_proc,
 								 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
