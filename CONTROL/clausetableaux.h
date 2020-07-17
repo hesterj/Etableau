@@ -60,7 +60,7 @@ typedef struct clausetableau
 	struct clausetableau* parent; // parent node
 	struct clausetableau* *children;  //array of children
 	struct clausetableau* master; // root node of the tableau
-}ClauseTableau, *ClauseTableau_p;
+}ClauseTableau, *ClauseTableau_p, **ClauseTableau_ref;
 
 #define ClauseTableauCellAlloc() (ClauseTableau*)SizeMalloc(sizeof(ClauseTableau))
 #define ClauseTableauCellFree(junk) SizeFree(junk, sizeof(ClauseTableau))

@@ -272,7 +272,8 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 
 void ClauseTableauFree(ClauseTableau_p trash)
 {
-	if (trash->derivation)
+	assert(trash);
+	if (trash->depth == 0 && trash->derivation)
 	{
 		PStackFree(trash->derivation);
 	}
@@ -375,6 +376,7 @@ FunCode ClauseSetGetMaxVar(ClauseSet_p set)
 		}
 	}
 	//printf("\n");
+	PTreeFree(tree);
 	PStackFree(start_subterms);
 	if (max_funcode == 0)
 	{
@@ -868,7 +870,9 @@ TableauSet_p TableauSetAlloc()
    TableauSet_p set = TableauSetCellAlloc();
 
    set->members = 0;
-   set->anchor  = ClauseTableauAlloc();
+   //set->anchor  = ClauseTableauAlloc();
+   set->anchor = ClauseTableauCellAlloc();
+   set->anchor->label = NULL;
    set->anchor->succ = set->anchor;
    set->anchor->pred = set->anchor;
 

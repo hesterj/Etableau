@@ -205,11 +205,6 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 		}
 	}
 	
-	// The copying is done, we can delete the subst
-	SubstDelete(subst);
-	// Protect the unit axioms from the dirty substitution by copying them now...
-	parent->master->unit_axioms = ClauseSetCopy(parent->master->terms, old_tableau_master->unit_axioms);
-	
 	// Now that the parent has been extended on, it should be removed from the collection of open leaves.
 	// Important to do this now, as otherwise folding up or branch saturation may not work correctly.
 	
@@ -218,7 +213,6 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 		TableauSetExtractEntry(parent);
 	}
 	
-	//fprintf(GlobalOut, "Checking regularity\n");
 	//  If this tableau is irregular, we have to undo all of the work.
 	//  This can probably be detected earlier to save
 	//  unnecessary allocations and work.
@@ -227,12 +221,18 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 		assert(new_leaf_clauses_set->members == 0);
 		ClauseSetFree(new_leaf_clauses_set);
 		ClauseTableauFree(parent->master);
+		SubstDelete(subst);
 		return NULL;
 	}
 	else // the extension is regular- add it to the new tabeleax to be processed later
 	{
 		PStackPushP(new_tableaux, parent->master);
 	}
+	
+	// The copying is done, we can delete the subst
+	SubstDelete(subst);
+	// Protect the unit axioms from the dirty substitution by copying them now...
+	parent->master->unit_axioms = ClauseSetCopy(parent->master->terms, old_tableau_master->unit_axioms);
 	
 	// The work is done- try to close the remaining branches
 	
@@ -356,19 +356,18 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 					assert(maybe_extended->master->label);
 					tableau_control->closed_tableau = maybe_extended->master;
 					ClauseSetFree(new_leaf_clauses);
-					SubstDelete(subst);
 					return extensions_done;
 				}
 				// Etableau branch saturation methods here!
 				else if (tableau_control->branch_saturation_enabled)
 				{
-					BranchSaturation_p branch_saturation = BranchSaturationAlloc(tableau_control->proofstate, 
+					BranchSaturation_p branch_sat = BranchSaturationAlloc(tableau_control->proofstate, 
 																									 tableau_control->proofcontrol, 
 																									 maybe_extended->master,
 																									 10000);
 					// Trying to keep one object in extensions and saturations
-					AttemptToCloseBranchesWithSuperpositionSerial(tableau_control, branch_saturation);
-					BranchSaturationFree(branch_saturation);
+					AttemptToCloseBranchesWithSuperpositionSerial(tableau_control, branch_sat);
+					BranchSaturationFree(branch_sat);
 					if (maybe_extended->open_branches->members == 0)
 					{
 						//~ // fprintf(GlobalOut, "# Closed tableau found!\n");
@@ -379,13 +378,17 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 						assert(maybe_extended->master->label);
 						tableau_control->closed_tableau = maybe_extended->master;
 						ClauseSetFree(new_leaf_clauses);
-						SubstDelete(subst);
 						return extensions_done;
 					}
 				}
 			}
 		}
-		SubstDelete(subst);
+		else
+		{
+			// If an extension is attempted, the substitution is free'd in that method
+			// Otherwise, we must free it here
+			SubstDelete(subst);
+		}
 		leaf_clause = leaf_clause->succ;
 	}
 	if (num_local_variables)

@@ -440,7 +440,9 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 			fprintf(GlobalOut, "# End printing tableau\n");
 			fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
 			fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
-			ClauseTableauFree(resulting_tab);
+			PStackPushStack(old_tableaux, distinct_tableaux_stack);
+			PStackPushStack(old_tableaux, new_tableaux);
+			//ClauseTableauFree(resulting_tab);
 			break;
 		}
 		//TableauStackFreeTableaux(distinct_tableaux_stack);
@@ -492,12 +494,8 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 	assert(distinct_tableaux_stack);
 	ClauseTableau_p active_tableau = NULL;
 	TableauStack_p max_depth_tableaux = PStackAlloc();
-	//assert(distinct_tableaux->anchor->master_succ);
-	//ClauseTableau_p active_tableau = distinct_tableaux->anchor->master_succ;
 	
 	// tableau_select method instead of iteration?
-	 
-	//while (active_tableau != distinct_tableaux->anchor) // iterate over the active tableaux
 	for (PStackPointer i=0; i<PStackGetSP(distinct_tableaux_stack); i++)
 	{
 		//fprintf(GlobalOut, "# %ld\n", i);
@@ -506,36 +504,14 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 		assert(active_tableau->label);
 		assert(active_tableau->master == active_tableau);
 		assert(active_tableau->open_branches);
+		ClauseTableau_ref selected_ref = &active_tableau;
 		
-		//~ #ifndef DNDEBUG
-		//~ ClauseTableauAssertCheck(active_tableau);
-		//~ #endif
 		TableauStack_p newly_created_tableaux = PStackAlloc();
 		
-		if (tableaucontrol->closed_tableau)
-		{
-			return tableaucontrol->closed_tableau;
-		}
-		if (active_tableau->open_branches->members == 0)
-		{
-			return active_tableau;
-		}
-		
-		ClauseTableau_p closed_tableau = ConnectionCalculusExtendOpenBranches(active_tableau, 
-																					   newly_created_tableaux, 
-																					   tableaucontrol,
-																					   NULL,
-																					   extension_candidates,
-																					   max_depth, max_depth_tableaux);
-		if (closed_tableau)
-		{
-			PStackFree(newly_created_tableaux);
-			return closed_tableau;
-		}
 		// At this point, there could be tableaux to be extended on at this depth in newly_created_tableaux
-		while (!PStackEmpty(newly_created_tableaux))  // Attempt to create extension tableaux until they are all at max depth or a closed tableau is found
+		do  // Attempt to create extension tableaux until they are all at max depth or a closed tableau is found
 		{
-			ClauseTableau_p closed_tableau = ConnectionCalculusExtendOpenBranches(PStackPopP(newly_created_tableaux), 
+			ClauseTableau_p closed_tableau = ConnectionCalculusExtendOpenBranches(*selected_ref, 
 																				newly_created_tableaux, 
 																				tableaucontrol,
 																				NULL,
@@ -543,10 +519,17 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 																				max_depth, max_depth_tableaux);
 			if (closed_tableau)
 			{
+				assert(tableaucontrol->closed_tableau);
+				PStackPushStack(new_tableaux, max_depth_tableaux);
+				PStackPushStack(new_tableaux, newly_created_tableaux);
 				PStackFree(newly_created_tableaux);
+				PStackFree(max_depth_tableaux);
 				return closed_tableau;
 			}
-		}
+			else if (PStackEmpty(newly_created_tableaux)) break;
+			ClauseTableau_p new = PStackPopP(newly_created_tableaux);
+			selected_ref = &new;
+		} while (true);
 		PStackFree(newly_created_tableaux);
 	}
 	PStackPushStack(new_tableaux, max_depth_tableaux);

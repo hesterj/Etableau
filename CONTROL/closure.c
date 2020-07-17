@@ -158,8 +158,13 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		temporary_tab = temporary_tab->parent;
 	}
 	
+	if (original_label_replaced)
+	{
+		ClauseFree(original_clause);
+	}
 	return NULL;
 	
+	Error("Code flow reached inaccessible area!", 1);
 	return_point: // Only accessed if a contradiction was found
 	if (original_label_replaced)
 	{

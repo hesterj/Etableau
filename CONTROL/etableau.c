@@ -408,3 +408,5 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 }
 
 
+
+
