@@ -109,6 +109,7 @@ bool ClauseTableauIsLeafRegular(ClauseTableau_p tab);
 void ClauseTableauPrintDOTGraphToFile(FILE* file, ClauseTableau_p tab);
 void ClauseTableauPrintDOTGraph(ClauseTableau_p tab);
 void ClauseTableauPrintDOTGraphChildren(ClauseTableau_p tab, FILE* dotgraph);
+void ClauseTableauPrintDerivation(FILE* out, ClauseTableau_p final_tableau, TableauStack_p derivation);
 
 
 #define NodeIsLeaf(tab) (tab->arity == 0)
@@ -162,7 +163,7 @@ typedef struct tableaucontrol_cell
 	TB_p terms;
 	bool branch_saturation_enabled; // Is branch saturation enabled?
 	bool satisfiable;
-	PStack_p trash;  // Old tableaux for tracing bugs... should not be used normally
+	TableauStack_p tableaux_trash;
 	char *clausification_buffer;
 }TableauControlCell, *TableauControl_p;
 

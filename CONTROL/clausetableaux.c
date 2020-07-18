@@ -317,6 +317,8 @@ void TableauStackFreeTableaux(PStack_p stack)
 {
 	while (!PStackEmpty(stack))
 	{
+		printf("f");
+		fflush(stdout);
 		ClauseTableau_p tab = PStackPopP(stack);
 		ClauseTableauFree(tab);
 	}
@@ -1130,12 +1132,46 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->neg_conjectures = neg_conjectures;
 	handle->proofstate = proofstate;
 	handle->proofcontrol = proofcontrol;
-	handle->trash = PStackAlloc();
+	handle->tableaux_trash = PStackAlloc();
 	handle->clausification_buffer = NULL;
 	return handle;
 }
 
 void TableauControlFree(TableauControl_p trash)
 {
+	PStackFree(trash->tableaux_trash);
 	TableauControlCellFree(trash);
+}
+
+void ClauseTableauPrintDerivation(FILE* out, ClauseTableau_p final_tableau, TableauStack_p derivation)
+{
+	for (PStackPointer p = 1; p < PStackGetSP(derivation); p++)
+	{
+		ClauseTableau_p previous_step = PStackElementP(derivation, p);
+		assert(previous_step);
+		ClauseTableauPrint(previous_step);
+		DStr_p str = DStrAlloc();
+		DStrAppendStr(str, "/home/hesterj/Projects/APRTESTING/DOT/unsattest/graph");
+		DStrAppendInt(str, p);
+		DStrAppendStr(str, ".dot");
+		FILE *dotgraph = fopen(DStrView(str), "w");
+		ClauseTableauPrintDOTGraphToFile(dotgraph, previous_step->master);
+		fclose(dotgraph);
+		printf("# %ld\n", p);
+		if ((p + 1) == PStackGetSP(derivation))
+		{
+			sleep(1);
+			DStr_p str2 = DStrAlloc();
+			DStrAppendStr(str2, "/home/hesterj/Projects/APRTESTING/DOT/unsattest/graph");
+			DStrAppendInt(str2, p+1);
+			DStrAppendStr(str2, ".dot");
+			FILE *dotgraph = fopen(DStrView(str2), "w");
+			ClauseTableauPrintDOTGraphToFile(dotgraph, final_tableau);
+			fclose(dotgraph);
+			DStrFree(str2);
+		}
+		printf("#############################\n");
+		DStrFree(str);
+		sleep(1);
+	}
 }

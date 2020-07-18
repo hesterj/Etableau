@@ -363,38 +363,7 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 			assert(resulting_tab->derivation);
 			assert(PStackGetSP(resulting_tab->derivation));
 			assert(resulting_tab == tableaucontrol->closed_tableau);
-			//fprintf(GlobalOut, "# Printing tableaux derivation..\n");
-			//~ TableauStack_p derivation = resulting_tab->derivation;
-			//~ for (PStackPointer p = 1; p < PStackGetSP(derivation); p++)
-			//~ {
-				//~ ClauseTableau_p previous_step = PStackElementP(derivation, p);
-				//~ assert(previous_step);
-				//~ ClauseTableauPrint(previous_step);
-				//~ DStr_p str = DStrAlloc();
-				//~ DStrAppendStr(str, "/home/hesterj/Projects/APRTESTING/DOT/unsattest/graph");
-				//~ DStrAppendInt(str, p);
-				//~ DStrAppendStr(str, ".dot");
-				//~ FILE *dotgraph = fopen(DStrView(str), "w");
-				//~ ClauseTableauPrintDOTGraphToFile(dotgraph, previous_step->master);
-				//~ fclose(dotgraph);
-				//~ printf("# %ld\n", p);
-				//~ if ((p + 1) == PStackGetSP(derivation))
-				//~ {
-					//~ sleep(1);
-					//~ DStr_p str2 = DStrAlloc();
-					//~ DStrAppendStr(str2, "/home/hesterj/Projects/APRTESTING/DOT/unsattest/graph");
-					//~ DStrAppendInt(str2, p+1);
-					//~ DStrAppendStr(str2, ".dot");
-					//~ FILE *dotgraph = fopen(DStrView(str2), "w");
-					//~ ClauseTableauPrintDOTGraphToFile(dotgraph, resulting_tab);
-					//~ fclose(dotgraph);
-					//~ DStrFree(str2);
-				//~ }
-				//~ printf("#############################\n");
-				//~ DStrFree(str);
-				//~ sleep(1);
-			//~ }
-			// AAAAAAHHHHHHHHHH
+			
 			long neg_conjectures = tableaucontrol->neg_conjectures;
 			if (!tableaucontrol->satisfiable)
 			{
@@ -418,7 +387,6 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 					fprintf(GlobalOut, "# SZS status Satisfiable for %s\n", tableaucontrol->problem_name);
 				}
 			}
-			//ClauseTableauPrintDOTGraph(resulting_tab);
 			
 			fprintf(GlobalOut, "# SZS output start CNFRefutation for %s\n", tableaucontrol->problem_name);
 			if (tableaucontrol->clausification_buffer)
@@ -436,13 +404,9 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 			}
 			fprintf(GlobalOut, "# Begin printing tableau\n");
 			ClauseTableauPrint(resulting_tab);
-			//ClauseTableauPrintDOTGraph(resulting_tab);
 			fprintf(GlobalOut, "# End printing tableau\n");
 			fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
 			fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
-			PStackPushStack(old_tableaux, distinct_tableaux_stack);
-			PStackPushStack(old_tableaux, new_tableaux);
-			//ClauseTableauFree(resulting_tab);
 			break;
 		}
 		//TableauStackFreeTableaux(distinct_tableaux_stack);
@@ -457,18 +421,17 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	// TODO
 	// There needs to be something to wait here, while the various start rules are multiprocessed!
 	
+	TableauStackFreeTableaux(tableaucontrol->tableaux_trash);
 	TableauStackFreeTableaux(old_tableaux);
+	TableauStackFreeTableaux(distinct_tableaux_stack);
 	TableauStackFreeTableaux(new_tableaux);
 	PStackFree(new_tableaux);
 	PStackFree(old_tableaux);
+	PStackFree(distinct_tableaux_stack);
 	ClauseSetFree(extension_candidates);
 	ClauseSetFree(unit_axioms);
 	ClauseSetFree(axioms_archive);
 	VarBankPopEnv(bank->vars);
-   
-   //printf("# Connection tableau proof search finished.\n");
-   TableauStackFreeTableaux(distinct_tableaux_stack);
-	PStackFree(distinct_tableaux_stack);
 	
    if (resulting_tab) // success
    {
@@ -528,6 +491,7 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 			}
 			else if (PStackEmpty(newly_created_tableaux)) break;
 			ClauseTableau_p new = PStackPopP(newly_created_tableaux);
+			PStackPushP(tableaucontrol->tableaux_trash, new);
 			selected_ref = &new;
 		} while (true);
 		PStackFree(newly_created_tableaux);
@@ -569,31 +533,13 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 																									tab_tmp_store);
 			if (control->closed_tableau)
 			{
+				PStackPushStack(new_tableaux, tab_tmp_store);
+				PStackFree(tab_tmp_store);
 				fprintf(GlobalOut, "# Success\n");
 				return control->closed_tableau;
 			}
 			selected = selected->succ;
 		}
-		//~ if (number_of_extensions == 0)
-		//~ {
-			//~ fprintf(GlobalOut, "# Unextendable branch... discarding tableaux\n");
-			//~ while (PStackGetSP(tab_tmp_store))
-			//~ {
-				//~ ClauseTableau_p trash = PStackPopP(tab_tmp_store);
-				//~ ClauseTableauFree(trash);
-			//~ }
-			//~ break;
-		//~ }
-		//~ else if (number_of_extensions > 0) // If we extended on the open branch with one or more clause, we need to move to a new active tableau.
-		//~ {
-			//~ PStackPushStack(new_tableaux, tab_tmp_store);
-			//~ ClauseTableau_p newly_created = PStackPopP(tab_
-			//~ break;
-		//~ }
-		//~ else 
-		//~ {
-			//~ Error("ConnectionCalculusExtendOpenBranches error.", 1);
-		//~ }
 		open_branch = open_branch->succ;
 	}
 	
