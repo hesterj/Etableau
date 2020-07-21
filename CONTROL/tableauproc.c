@@ -421,9 +421,16 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	// TODO
 	// There needs to be something to wait here, while the various start rules are multiprocessed!
 	
+	// Now, we are freeing the tableaux.
+	// There may be multiple references to a given tableaux around.
+	// The references are in stacks of pointers, so sort/merge the stacks while discarding duplicates.
+	printf("# Freeing tableaux trash\n");
 	TableauStackFreeTableaux(tableaucontrol->tableaux_trash);
+	printf("\n# Freeing old tableaux\n");
 	TableauStackFreeTableaux(old_tableaux);
+	printf("\n# Freeing distinct tableaux\n");
 	TableauStackFreeTableaux(distinct_tableaux_stack);
+	printf("\n# Freeing new tableaux\n");
 	TableauStackFreeTableaux(new_tableaux);
 	PStackFree(new_tableaux);
 	PStackFree(old_tableaux);
@@ -432,6 +439,8 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	ClauseSetFree(unit_axioms);
 	ClauseSetFree(axioms_archive);
 	VarBankPopEnv(bank->vars);
+	
+	// Memory is cleaned up...
 	
    if (resulting_tab) // success
    {
@@ -456,7 +465,9 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 {
 	assert(distinct_tableaux_stack);
 	ClauseTableau_p active_tableau = NULL;
+	ClauseTableau_p closed_tableau = NULL;
 	TableauStack_p max_depth_tableaux = PStackAlloc();
+	TableauStack_p newly_created_tableaux = PStackAlloc();
 	
 	// tableau_select method instead of iteration?
 	for (PStackPointer i=0; i<PStackGetSP(distinct_tableaux_stack); i++)
@@ -469,12 +480,10 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 		assert(active_tableau->open_branches);
 		ClauseTableau_ref selected_ref = &active_tableau;
 		
-		TableauStack_p newly_created_tableaux = PStackAlloc();
-		
 		// At this point, there could be tableaux to be extended on at this depth in newly_created_tableaux
 		do  // Attempt to create extension tableaux until they are all at max depth or a closed tableau is found
 		{
-			ClauseTableau_p closed_tableau = ConnectionCalculusExtendOpenBranches(*selected_ref, 
+			closed_tableau = ConnectionCalculusExtendOpenBranches(*selected_ref, 
 																				newly_created_tableaux, 
 																				tableaucontrol,
 																				NULL,
@@ -483,32 +492,34 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 			if (closed_tableau)
 			{
 				assert(tableaucontrol->closed_tableau);
-				PStackPushStack(new_tableaux, max_depth_tableaux);
 				PStackPushStack(new_tableaux, newly_created_tableaux);
-				PStackFree(newly_created_tableaux);
-				PStackFree(max_depth_tableaux);
-				return closed_tableau;
+				PStackReset(newly_created_tableaux);
+				goto return_point;
 			}
 			else if (PStackEmpty(newly_created_tableaux)) break;
 			ClauseTableau_p new = PStackPopP(newly_created_tableaux);
-			PStackPushP(tableaucontrol->tableaux_trash, new);
+			PStackPushP(tableaucontrol->tableaux_trash, new);  // This is causing a double free error!!!
 			selected_ref = &new;
 		} while (true);
-		PStackFree(newly_created_tableaux);
+		PStackReset(newly_created_tableaux);
 	}
+	return_point:
+	assert(PStackEmpty(newly_created_tableaux));
 	PStackPushStack(new_tableaux, max_depth_tableaux);
 	PStackFree(max_depth_tableaux);
+	PStackFree(newly_created_tableaux);
 	// Went through all possible tableaux at this depth...
-	return NULL;
+	return closed_tableau;
 }
 
-ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tableau, TableauStack_p new_tableaux,
+ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tableau, TableauStack_p newly_created_tableaux,
 																							TableauControl_p control,
 																							TableauSet_p distinct_tableaux,
 																							ClauseSet_p extension_candidates,
 																							int max_depth, TableauStack_p max_depth_tableaux)
 {
 	TableauStack_p tab_tmp_store = PStackAlloc();
+	ClauseTableau_p closed_tableau = NULL;
 	int number_of_extensions = 0;
 	int num_branches_at_max_depth = 0;
 	
@@ -533,10 +544,9 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 																									tab_tmp_store);
 			if (control->closed_tableau)
 			{
-				PStackPushStack(new_tableaux, tab_tmp_store);
-				PStackFree(tab_tmp_store);
+				closed_tableau = control->closed_tableau;
 				fprintf(GlobalOut, "# Success\n");
-				return control->closed_tableau;
+				goto return_point;
 			}
 			selected = selected->succ;
 		}
@@ -548,7 +558,8 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 		PStackPushP(max_depth_tableaux, active_tableau);
 	}
 	
-	PStackPushStack(new_tableaux, tab_tmp_store);
+	return_point:
+	PStackPushStack(newly_created_tableaux, tab_tmp_store);
 	PStackFree(tab_tmp_store);
-	return NULL;
+	return closed_tableau;
 }

@@ -272,7 +272,6 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 
 void ClauseTableauFree(ClauseTableau_p trash)
 {
-	assert(trash);
 	if (trash->depth == 0 && trash->derivation)
 	{
 		PStackFree(trash->derivation);
