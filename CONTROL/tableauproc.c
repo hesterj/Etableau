@@ -470,6 +470,15 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 	TableauStack_p newly_created_tableaux = PStackAlloc();
 	
 	// tableau_select method instead of iteration?
+	/*
+	while (!PListEmpty(distinct_tableau_list))
+	{
+		// tableau_select must extract the right key from the list,
+		// and return the p_val of the corresponding IntOrP
+		active_tableau = tableau_select(distinct_tableau_list);
+		...
+	}
+	*/
 	for (PStackPointer i=0; i<PStackGetSP(distinct_tableaux_stack); i++)
 	{
 		//fprintf(GlobalOut, "# %ld\n", i);

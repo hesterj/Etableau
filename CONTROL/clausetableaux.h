@@ -20,6 +20,7 @@
 
 typedef PStack_p ClauseStack_p;
 typedef PStack_p TableauStack_p;
+typedef PList_p TableauList_p;
 
 typedef struct clausetableau 
 {

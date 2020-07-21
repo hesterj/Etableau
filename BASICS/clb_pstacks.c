@@ -79,7 +79,7 @@ void __attribute__ ((noinline)) PStackGrow(PStack_p stack)
 //
 //   Remove element number i from the stack. If it is not the top
 //   element, the top element gets swapped in.
-//0
+//
 // Global Variables:
 //
 // Side Effects    :
