@@ -208,7 +208,8 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	// Now that the parent has been extended on, it should be removed from the collection of open leaves.
 	// Important to do this now, as otherwise folding up or branch saturation may not work correctly.
 	
-	if (parent->set)
+	assert(parent != parent->master);
+	if (parent->set == parent->open_branches)
 	{
 		TableauSetExtractEntry(parent);
 	}
@@ -248,7 +249,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 		//ClauseTableauPrintDOTGraph(parent->master);
 		tableau_control->closed_tableau = parent->master;
 		ClauseSetFree(new_leaf_clauses_set);
-		return parent;
+		return parent->master;
 	}
 	
 	// We have tried to close the remaining branches with closure rule- try superposition
@@ -263,6 +264,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	assert(number_of_children == parent->arity);
 	assert(parent->arity == number_of_children);
 	assert(new_leaf_clauses_set->members == 0);
+	assert(parent->master->open_branches);
 	
 	// There is no need to apply the substitution to the tablaeu, it has already been done by copying labels.
 	// In fact, the substitution should be free'd before this function ever returns.

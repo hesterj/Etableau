@@ -114,8 +114,9 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	
 	if (tab->arity == 0) // tab does not have children
 	{
+		//assert(0);
 		handle->open = true;
-		TableauSetInsert(handle->open_branches, handle);
+		//TableauSetInsert(handle->open_branches, handle);
 	}
 	else
 	{
@@ -272,7 +273,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 
 void ClauseTableauFree(ClauseTableau_p trash)
 {
-	if (trash->depth == 0 && trash->derivation)
+	if (trash->depth == 0)
 	{
 		PStackFree(trash->derivation);
 	}
@@ -281,7 +282,7 @@ void ClauseTableauFree(ClauseTableau_p trash)
 		ClauseFree(trash->label);
 		trash->label = NULL;
 	}
-	if (trash->unit_axioms) //unit axioms are only at the master node
+	if (trash->depth == 0 && trash->unit_axioms) //unit axioms are only at the master node
 	{
 		ClauseSetFree(trash->unit_axioms);
 	}
@@ -298,15 +299,12 @@ void ClauseTableauFree(ClauseTableau_p trash)
 		for (int i=0; i<trash->arity; i++)
 		{
 			ClauseTableauFree(trash->children[i]);
-			trash->children[i] = NULL;
 		}
 		ClauseTableauArgArrayFree(trash->children, trash->arity);
-		trash->children = NULL;
 	}
-	if (trash->depth == 0 && trash->open_branches)
+	if (trash->depth == 0)
 	{
 		TableauSetFree(trash->open_branches);
-		trash->open_branches = NULL;
 	}
 	//DStrFree(trash->info);
 	ClauseTableauCellFree(trash);
@@ -319,6 +317,7 @@ void TableauStackFreeTableaux(PStack_p stack)
 		printf("f");
 		fflush(stdout);
 		ClauseTableau_p tab = PStackPopP(stack);
+		assert(tab == tab->master);
 		ClauseTableauFree(tab);
 	}
 }
@@ -754,7 +753,8 @@ ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 	
 	arity = ClauseLiteralNumber(start);
 	tab->open = true;
-	TableauSetExtractEntry(tab); // no longer open
+	//TableauSetExtractEntry(tab); // no longer open
+	assert(!(tab->set));
 	assert(tab->open_branches->members == 0);
 	tab->label = ClauseCopyOpt(start);
 	assert(tab->label);
@@ -885,18 +885,18 @@ TableauSet_p TableauSetCopy(TableauSet_p set)
 	return NULL;
 }
 
-void TableauSetInsert(TableauSet_p list, ClauseTableau_p tab)
+void TableauSetInsert(TableauSet_p set, ClauseTableau_p tab)
 {
-   assert(list);
+   assert(set);
    assert(tab);
    assert(!tab->set);
 
-   tab->succ = list->anchor;
-   tab->pred = list->anchor->pred;
-   list->anchor->pred->succ = tab;
-   list->anchor->pred = tab;
-   tab->set = list;
-   list->members++;
+   tab->succ = set->anchor;
+   tab->pred = set->anchor->pred;
+   set->anchor->pred->succ = tab;
+   set->anchor->pred = tab;
+   tab->set = set;
+   set->members++;
 }
 
 ClauseTableau_p TableauSetExtractEntry(ClauseTableau_p fset)
@@ -934,6 +934,17 @@ void TableauSetFree(TableauSet_p set)
 {
 	ClauseTableauCellFree(set->anchor);
 	TableauSetCellFree(set);
+}
+
+/*  Empty the set "from" and push all its members to "to"
+*/
+
+void TableauSetDrainToStack(PStack_p to, TableauSet_p from)
+{
+	while (!TableauSetEmpty(from))
+	{
+		PStackPushP(to, TableauSetExtractFirst(from));
+	}
 }
 
 void ClauseTableauPrintDOTGraph(ClauseTableau_p tab)

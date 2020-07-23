@@ -138,18 +138,24 @@ typedef struct tableau_set_cell
 
 TableauSet_p TableauSetAlloc();
 TableauSet_p TableauSetCopy(TableauSet_p set);
-void TableauSetInsert(TableauSet_p list, ClauseTableau_p set);
+void TableauSetInsert(TableauSet_p set, ClauseTableau_p tab);
 void ClauseTableauPrintBranch(ClauseTableau_p branch);
 void ClauseTableauPrintBranch2(ClauseTableau_p branch);
 ClauseTableau_p   TableauSetExtractFirst(TableauSet_p list);
 ClauseTableau_p TableauSetExtractEntry(ClauseTableau_p set);
 void TableauSetFree(TableauSet_p handle);
+void TableauSetDrainToStack(PStack_p to, TableauSet_p from);
 
 void TableauStackFreeTableaux(PStack_p stack);
 void ClauseTableauCollectLeaves(ClauseTableau_p tab, TableauSet_p leaves);
 void ClauseTableauCollectLeavesStack(ClauseTableau_p tab, PStack_p leaves);
 
 bool TableauDominatesNode(ClauseTableau_p tab, ClauseTableau_p node);
+
+/*  Tableau control struct
+ * 
+ * 
+*/
 
 typedef struct tableaucontrol_cell
 {

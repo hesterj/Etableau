@@ -75,15 +75,13 @@ int process_branch_nofork(ProofState_p proofstate,
 {
 	SilentTimeOut = true;
 	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
-	//ProofStateResetProcessed(proofstate, proofcontrol);
-	ProofStateResetClauseSets(proofstate, false);
-	//ClauseSetFreeClauses(proofstate->unprocessed);
+	EtableauProofStateResetClauseSets(proofstate);
 	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
 	int branch_status = ECloseBranchProcessBranchFirstSerial(proofstate, 
 																				proofcontrol, 
 																				branch, 
 																				max_proc);
-	ProofStateResetClauseSets(proofstate, false);
+	EtableauProofStateResetClauseSets(proofstate);
 	ClauseSetFree(unprocessed);
 	return branch_status;
 }
@@ -407,6 +405,41 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 	return successful_count;
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: ProofStateResetClauseSets()
+//
+//   Empty _all_ clause and formula sets in proof state. Keep the
+//   signature and term bank.
+//
+// Global Variables: -
+//
+// Side Effects    : Memory operations.
+//
+/----------------------------------------------------------------------*/
+
+void EtableauProofStateResetClauseSets(ProofState_p state)
+{
+   ClauseSetFreeClauses(state->axioms);
+   FormulaSetFreeFormulas(state->f_axioms);
+   FormulaSetFreeFormulas(state->f_ax_archive);
+   ClauseSetFreeClauses(state->processed_pos_rules);
+   ClauseSetFreeClauses(state->processed_pos_eqns);
+   ClauseSetFreeClauses(state->processed_neg_units);
+   ClauseSetFreeClauses(state->processed_non_units);
+   ClauseSetFreeClauses(state->unprocessed);
+   ClauseSetFreeClauses(state->tmp_store);
+   ClauseSetFreeClauses(state->eval_store);
+   ClauseSetFreeClauses(state->archive);
+   ClauseSetFreeClauses(state->ax_archive);
+   FormulaSetFreeFormulas(state->f_ax_archive);
+   GlobalIndicesReset(&(state->gindices));
+   if(state->watchlist)
+   {
+      ClauseSetFreeClauses(state->watchlist);
+      GlobalIndicesReset(&(state->wlindices));
+   }
+}
 
 
 
