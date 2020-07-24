@@ -314,8 +314,8 @@ void TableauStackFreeTableaux(PStack_p stack)
 {
 	while (!PStackEmpty(stack))
 	{
-		printf("f");
-		fflush(stdout);
+		//printf("f");
+		//fflush(stdout);
 		ClauseTableau_p tab = PStackPopP(stack);
 		assert(tab == tab->master);
 		ClauseTableauFree(tab);

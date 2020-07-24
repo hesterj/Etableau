@@ -74,6 +74,7 @@ int process_branch_nofork(ProofState_p proofstate,
 						  long max_proc)
 {
 	SilentTimeOut = true;
+	proofcontrol->heuristic_parms.prefer_initial_clauses = true;
 	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
 	EtableauProofStateResetClauseSets(proofstate);
 	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
@@ -190,6 +191,23 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 	assert(node->master);
 	//long proc_limit = 500;
 	
+	// Do not deep saturate branches on very small tableaux
+	if (GetTotalCPUTime() < (double) 60) max_proc = 50;
+	
+	// Process more clauses on tableaux with fewer open branches
+	if (branch->open_branches->members == 1 && max_proc != LONG_MAX && max_proc != 50)
+	{
+		max_proc = 10000;
+	}
+	else if (branch->open_branches->members == 2 && max_proc != LONG_MAX && max_proc != 50)
+	{
+		max_proc = 1000;
+	}
+	else if (max_proc != LONG_MAX && max_proc != 50)
+	{
+		max_proc = 100;
+	}
+	
 	// Collect the clauses of the branch
 	
 	while (node)
@@ -216,9 +234,10 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 	}
 	
 	//~ // Now do normal saturation
-	if ((branch->open_branches->members <= 2) || (max_proc == LONG_MAX))
+	//if ((branch->open_branches->members == 1) || (max_proc == LONG_MAX))
+	if (true)
 	{
-		fprintf(GlobalOut, "# Beginning deep saturation check (%ld)\n", max_proc);
+		fprintf(GlobalOut, "# Beginning deep saturation check (%ld) d:%d\n", max_proc, branch->depth);
 		proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding;
 		success = Saturate(proofstate, proofcontrol, max_proc,
 								 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
@@ -411,6 +430,8 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 //
 //   Empty _all_ clause and formula sets in proof state. Keep the
 //   signature and term bank.
+// 
+//   Copied in case this needs to be changed, but looks like it should be ok...
 //
 // Global Variables: -
 //

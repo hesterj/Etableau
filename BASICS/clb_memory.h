@@ -218,7 +218,6 @@ static inline void SizeFreeReal(void* junk, size_t size)
 
    if(size>=MEM_ARR_MIN_INDEX && size<MEM_ARR_SIZE)
    {
-		printf("What the heck is this?  Why is it making me leak memory?\n");
       ((Mem_p)junk)->next = free_mem_list[size];
       free_mem_list[size] = (Mem_p)junk;
       assert(free_mem_list[size]->test != MEM_FREE_PATTERN);
