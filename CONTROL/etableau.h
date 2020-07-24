@@ -34,4 +34,8 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 													  long max_proc);
 int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, BranchSaturation_p jobs);
 int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_control, BranchSaturation_p jobs);
+
 void EtableauProofStateResetClauseSets(ProofState_p state);
+void EtableauInsertBranchClausesIntoUnprocessed(ProofState_p state,
+                                 ProofControl_p control,
+                                 ClauseTableau_p branch);

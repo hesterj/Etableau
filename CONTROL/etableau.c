@@ -161,14 +161,14 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 	//~ // Now do normal saturation
 	if (branch->open_branches->members == 1 && branch->depth > 8)
 	{
-		fprintf(GlobalOut, "# Beginning deep saturation check (p)\n");
+		//fprintf(GlobalOut, "# Beginning deep saturation check (p)\n");
 		success = Saturate(proofstate, proofcontrol, 10000,
 								 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
 								 LLONG_MAX, LONG_MAX);
 		//fprintf(GlobalOut, "# Deep saturation check done\n");
 		if (success)
 		{
-			fprintf(GlobalOut, "# Saturate returned empty clause %p.\n", success);
+			fprintf(GlobalOut, "# Saturate returned empty clause %p on a branch.\n", success);
 			//ProofStateStatisticsPrint(GlobalOut, proofstate);
 			return PROOF_FOUND;
 		}
@@ -192,7 +192,7 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 	//long proc_limit = 500;
 	
 	// Do not deep saturate branches on very small tableaux
-	if (GetTotalCPUTime() < (double) 60) max_proc = 50;
+	if (GetTotalCPUTime() < (double) 10) max_proc = 50;
 	
 	// Process more clauses on tableaux with fewer open branches
 	if (branch->open_branches->members == 1 && max_proc != LONG_MAX && max_proc != 50)
@@ -209,46 +209,34 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 	}
 	
 	// Collect the clauses of the branch
+	//~ while (node)
+	//~ {
+		//~ if (node != node->master)
+		//~ {
+			//~ Clause_p label = ClauseCopyOpt(node->label);
+			//~ label->weight = ClauseStandardWeight(label);
+			//~ assert(!label->set);
+			//~ assert(!label->evaluations);
+			//~ ClauseSetProp(label, CPInitial);
+			//~ ClauseSetProp(label, CPIsRelevant);
+			//~ //ClauseSetProp(label, CPLimitedRW);
+			//~ ClauseSetInsert(proofstate->tmp_store, label);
+		//~ }
+		//~ node = node->parent;
+	//~ }
+	EtableauInsertBranchClausesIntoUnprocessed(proofstate, proofcontrol, branch);
 	
-	while (node)
+	fprintf(GlobalOut, "# Beginning deep saturation check (%ld) d:%d\n", max_proc, branch->depth);
+	proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding;
+	success = Saturate(proofstate, proofcontrol, max_proc,
+							 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
+							 LLONG_MAX, LONG_MAX);
+	//fprintf(GlobalOut, "# Deep saturation check done\n");
+	if (success)
 	{
-		if (node != node->master)
-		{
-			Clause_p label = ClauseCopyOpt(node->label);
-			label->weight = ClauseStandardWeight(label);
-			assert(!label->set);
-			assert(!label->evaluations);
-			ClauseSetProp(label, CPInitial);
-			ClauseSetProp(label, CPIsRelevant);
-			ClauseSetProp(label, CPLimitedRW);
-			ClauseSetInsert(proofstate->tmp_store, label);
-			//~ success = ProcessSpecificClause(proofstate, proofcontrol, label, LONG_MAX);
-			//~ if (success)
-			//~ {
-				//~ fprintf(GlobalOut, "# Saturate returned empty clause on branch.\n");
-				//~ ProofStateStatisticsPrint(GlobalOut, proofstate);
-				//~ return PROOF_FOUND;
-			//~ }
-		}
-		node = node->parent;
-	}
-	
-	//~ // Now do normal saturation
-	//if ((branch->open_branches->members == 1) || (max_proc == LONG_MAX))
-	if (true)
-	{
-		fprintf(GlobalOut, "# Beginning deep saturation check (%ld) d:%d\n", max_proc, branch->depth);
-		proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding;
-		success = Saturate(proofstate, proofcontrol, max_proc,
-								 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
-								 LLONG_MAX, LONG_MAX);
-		//fprintf(GlobalOut, "# Deep saturation check done\n");
-		if (success)
-		{
-			fprintf(GlobalOut, "# Saturate returned empty clause %p.\n", success);
-			//ProofStateStatisticsPrint(GlobalOut, proofstate);
-			return PROOF_FOUND;
-		}
+		fprintf(GlobalOut, "# Saturate returned empty clause %p on branch %p with fewer than %ld processed.\n", success, branch, max_proc);
+		//ProofStateStatisticsPrint(GlobalOut, proofstate);
+		return PROOF_FOUND;
 	}
 	
 	//~ fprintf(GlobalOut, "# Surrendering\n");
@@ -459,6 +447,48 @@ void EtableauProofStateResetClauseSets(ProofState_p state)
    {
       ClauseSetFreeClauses(state->watchlist);
       GlobalIndicesReset(&(state->wlindices));
+   }
+}
+
+/*-----------------------------------------------------------------------
+//
+// Function: ProofStateResetProcessedSet()
+//
+//   Move all label clauses on branch into state->unprocessed.
+//   Modified from ProofStateResetProcessedSet
+//
+// Global Variables: -
+//
+// Side Effects    : -
+//
+/----------------------------------------------------------------------*/
+
+void EtableauInsertBranchClausesIntoUnprocessed(ProofState_p state,
+                                 ProofControl_p control,
+                                 ClauseTableau_p branch)
+{
+   Clause_p handle = NULL;
+   Clause_p tmpclause = NULL;
+   
+   ClauseTableau_p node = branch;
+
+   while (node != node->master)
+   {
+		handle = ClauseCopyOpt(node->label);
+		assert(!ClauseQueryProp(handle, CPIsGlobalIndexed));
+		assert(!ProofObjectRecordsGCSelection);
+		
+      tmpclause = ClauseFlatCopy(handle);
+      ClausePushDerivation(tmpclause, DCCnfQuote, handle, NULL);
+      ClauseSetInsert(state->archive, handle);
+      handle = tmpclause;
+      HCBClauseEvaluate(control->hcb, handle);
+      ClauseDelProp(handle, CPIsOriented);
+      ClauseSetProp(handle, CPInitial);
+      DocClauseQuoteDefault(6, handle, "move_eval");
+      EvalListChangePriority(handle->evaluations, -PrioLargestReasonable);
+      ClauseSetInsert(state->unprocessed, handle);
+      node = node->parent;
    }
 }
 
