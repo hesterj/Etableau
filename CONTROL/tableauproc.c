@@ -271,6 +271,7 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 																													extension_candidates->members);
    
 	ClauseTableau_p beginning_tableau = NULL;
+	TableauSet_p distinct_tableaux_set = TableauSetAlloc();
 	// Print start rule candidates
 	fprintf(GlobalOut, "# Start rule candidates:\n");
 	ClauseSetPrint(GlobalOut, start_rule_candidates, true);
@@ -286,8 +287,9 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 		beginning_tableau ->unit_axioms = ClauseSetCopy(initial_tab->terms, unit_axioms);
 		//beginning_tableau->unit_axioms = NULL;
 		beginning_tableau->max_var = max_var;
-		PStackPushP(distinct_tableaux_stack, beginning_tableau);
+		//PStackPushP(distinct_tableaux_stack, beginning_tableau);
 		beginning_tableau = TableauStartRule(beginning_tableau, start_label);
+		TableauSetInsert(distinct_tableaux_set, beginning_tableau->master);
 		start_label = start_label->succ;
 	}
 	
@@ -332,30 +334,14 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	//~ }
 	
 	// FINISH SETUP FOR MULTIPROCESSING
+	assert(proofstate);
+	assert(proofcontrol);
+	assert(extension_candidates);
+	assert(new_tableaux);
 
-	TableauSet_p distinct_tableaux_set = TableauSetAlloc();
 	for (int current_depth = 2; current_depth < max_depth; current_depth++)
 	{
-		assert(proofstate);
-		assert(proofcontrol);
-		assert(extension_candidates);
-		assert(current_depth);
-		assert(new_tableaux);
-		// move distinct tableaux stack to distinct tableaux set
-		while (!PStackEmpty(distinct_tableaux_stack))
-		{
-			ClauseTableau_p distinct = PStackPopP(distinct_tableaux_stack);
-			assert(distinct->master == distinct);
-			TableauSetInsert(distinct_tableaux_set, distinct);
-		}
-		//~ resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
-														//~ proofstate, 
-														//~ proofcontrol, 
-														//~ distinct_tableaux_stack,
-														//~ extension_candidates, 
-														//~ current_depth,
-														//~ new_tableaux);
-		resulting_tab = ConnectionTableauProofSearch2(tableaucontrol, 
+		resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
 														proofstate, 
 														proofcontrol, 
 														distinct_tableaux_set,
@@ -364,81 +350,20 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 														new_tableaux);
 		if (PStackEmpty(new_tableaux) && !resulting_tab && tableaucontrol->branch_saturation_enabled)
 		{
-			// If no new tableaux were created, we will do a "hail mary" saturation attempt on the remaining branches
-			// of some tableau...
-			fprintf(GlobalOut, "# No tableaux could be created.  Saturating branches.\n");
-			ClauseTableau_p some_tableau = PStackElementP(tableaucontrol->tableaux_trash, 0);
-			assert(some_tableau);
-			assert(some_tableau->master == some_tableau);
-			some_tableau = some_tableau->master;  // Whe want to call saturation method on the root node only
-			BranchSaturation_p branch_saturation = BranchSaturationAlloc(tableaucontrol->proofstate, 
-																							 tableaucontrol->proofcontrol, 
-																							 some_tableau,
-																							 LONG_MAX);
-			AttemptToCloseBranchesWithSuperpositionSerial(tableaucontrol, 
-																		 branch_saturation);
-			BranchSaturationFree(branch_saturation);
-			if (some_tableau->open_branches->members == 0)
-			{
-				resulting_tab = some_tableau;
-			}
+			resulting_tab = EtableauHailMary(tableaucontrol);
 		}
 		if (resulting_tab)  // We successfully found a closed tableau- handle it and report results
 		{
-			assert(resulting_tab);
-			assert(resulting_tab->derivation);
-			assert(PStackGetSP(resulting_tab->derivation));
-			assert(resulting_tab == tableaucontrol->closed_tableau);
-			
-			long neg_conjectures = tableaucontrol->neg_conjectures;
-			if (!tableaucontrol->satisfiable)
-			{
-				if(neg_conjectures)
-				{
-					fprintf(GlobalOut, "# SZS status Theorem for %s\n", tableaucontrol->problem_name);
-				}
-				else
-				{
-					fprintf(GlobalOut, "# SZS status Unsatisfiable for %s\n", tableaucontrol->problem_name);
-				}
-			}
-			else
-			{
-				if (neg_conjectures)
-				{
-					fprintf(GlobalOut, "# SZS status CounterSatisfiable for %s\n", tableaucontrol->problem_name);
-				}
-				else
-				{
-					fprintf(GlobalOut, "# SZS status Satisfiable for %s\n", tableaucontrol->problem_name);
-				}
-			}
-			
-			fprintf(GlobalOut, "# SZS output start CNFRefutation for %s\n", tableaucontrol->problem_name);
-			if (tableaucontrol->clausification_buffer)
-			{
-				fprintf(GlobalOut, "# Begin clausification derivation\n");
-				fprintf(GlobalOut, "%s\n", tableaucontrol->clausification_buffer);
-				fprintf(GlobalOut, "# End clausification derivation\n");
-				fprintf(GlobalOut, "# Begin listing active clauses obtained from FOF to CNF conversion\n");
-				ClauseSetPrint(GlobalOut, active, true);
-				fprintf(GlobalOut, "# End listing active clauses.  There is an equivalent clause to each of these in the clausification!\n");
-			}
-			else
-			{
-				Error("No record of clausification?", 1);
-			}
-			fprintf(GlobalOut, "# Begin printing tableau\n");
-			ClauseTableauPrint(resulting_tab);
-			fprintf(GlobalOut, "# End printing tableau\n");
-			fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
-			fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
+			EtableauStatusReport(tableaucontrol, active, resulting_tab);
 			break;
 		}
 		assert(PStackEmpty(distinct_tableaux_stack));
 		fprintf(GlobalOut, "# Moving %ld tableaux to active set...\n", PStackGetSP(new_tableaux));
-		PStackPushStack(distinct_tableaux_stack, new_tableaux); // Move the newly created tableaux to the working stack
-		PStackReset(new_tableaux);  // Reset the storage for new tableaux created in next iteration
+		while (!PStackEmpty(new_tableaux))
+		{
+			ClauseTableau_p distinct = PStackPopP(new_tableaux);
+			TableauSetInsert(distinct_tableaux_set, distinct);
+		}
 		fprintf(GlobalOut, "# Increasing maximum depth to %d\n", current_depth + 1);
 	}
 	
@@ -480,72 +405,6 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 }
 
 ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
-											  ProofState_p proofstate, 
-											  ProofControl_p proofcontrol, 
-											  TableauStack_p distinct_tableaux_stack,
-										     ClauseSet_p extension_candidates,
-										     int max_depth,
-										     TableauStack_p new_tableaux)
-{
-	assert(distinct_tableaux_stack);
-	ClauseTableau_p active_tableau = NULL;
-	ClauseTableau_p closed_tableau = NULL;
-	TableauStack_p max_depth_tableaux = PStackAlloc();
-	TableauStack_p newly_created_tableaux = PStackAlloc();
-	
-	// tableau_select method instead of iteration?
-	/*
-	while (!PListEmpty(distinct_tableau_list))
-	{
-		// tableau_select must extract the right key from the list,
-		// and return the p_val of the corresponding IntOrP
-		active_tableau = tableau_select(distinct_tableau_list);
-		...
-	}
-	*/
-	for (PStackPointer i=0; i<PStackGetSP(distinct_tableaux_stack); i++)
-	{
-		//fprintf(GlobalOut, "# %ld\n", i);
-		active_tableau = PStackElementP(distinct_tableaux_stack, i);
-		assert(active_tableau);
-		assert(active_tableau->label);
-		assert(active_tableau->master == active_tableau);
-		assert(active_tableau->open_branches);
-		ClauseTableau_ref selected_ref = &active_tableau;
-		
-		// At this point, there could be tableaux to be extended on at this depth in newly_created_tableaux
-		do  // Attempt to create extension tableaux until they are all at max depth or a closed tableau is found
-		{
-			closed_tableau = ConnectionCalculusExtendOpenBranches(*selected_ref, 
-																				newly_created_tableaux, 
-																				tableaucontrol,
-																				NULL,
-																				extension_candidates,
-																				max_depth, max_depth_tableaux);
-			if (closed_tableau)
-			{
-				assert(tableaucontrol->closed_tableau);
-				PStackPushStack(new_tableaux, newly_created_tableaux);
-				PStackReset(newly_created_tableaux);
-				goto return_point;
-			}
-			else if (PStackEmpty(newly_created_tableaux)) break;
-			ClauseTableau_p new = PStackPopP(newly_created_tableaux);
-			PStackPushP(tableaucontrol->tableaux_trash, new);  // This is causing a double free error!!!
-			selected_ref = &new;
-		} while (true);
-		PStackReset(newly_created_tableaux);
-	}
-	return_point:
-	assert(PStackEmpty(newly_created_tableaux));
-	PStackPushStack(new_tableaux, max_depth_tableaux);
-	PStackFree(max_depth_tableaux);
-	PStackFree(newly_created_tableaux);
-	// Went through all possible tableaux at this depth...
-	return closed_tableau;
-}
-
-ClauseTableau_p ConnectionTableauProofSearch2(TableauControl_p tableaucontrol,
 											  ProofState_p proofstate, 
 											  ProofControl_p proofcontrol, 
 											  TableauSet_p distinct_tableaux_set,
@@ -655,4 +514,80 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 	PStackPushStack(newly_created_tableaux, tab_tmp_store);
 	PStackFree(tab_tmp_store);
 	return closed_tableau;
+}
+
+ClauseTableau_p EtableauHailMary(TableauControl_p tableaucontrol)
+{
+	// If no new tableaux were created, we will do a "hail mary" saturation attempt on the remaining branches
+	// of some tableau...
+	fprintf(GlobalOut, "# No tableaux could be created.  Saturating branches.\n");
+	ClauseTableau_p some_tableau = PStackElementP(tableaucontrol->tableaux_trash, 0);
+	assert(some_tableau);
+	assert(some_tableau->master == some_tableau);
+	some_tableau = some_tableau->master;  // Whe want to call saturation method on the root node only
+	BranchSaturation_p branch_saturation = BranchSaturationAlloc(tableaucontrol->proofstate, 
+																					 tableaucontrol->proofcontrol, 
+																					 some_tableau,
+																					 LONG_MAX);
+	AttemptToCloseBranchesWithSuperpositionSerial(tableaucontrol, 
+																 branch_saturation);
+	BranchSaturationFree(branch_saturation);
+	if (some_tableau->open_branches->members == 0)
+	{
+		return some_tableau;
+	}
+	return NULL;
+}
+
+void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, ClauseTableau_p resulting_tab)
+{
+	assert(resulting_tab);
+	assert(resulting_tab->derivation);
+	assert(PStackGetSP(resulting_tab->derivation));
+	assert(resulting_tab == tableaucontrol->closed_tableau);
+	
+	long neg_conjectures = tableaucontrol->neg_conjectures;
+	if (!tableaucontrol->satisfiable)
+	{
+		if(neg_conjectures)
+		{
+			fprintf(GlobalOut, "# SZS status Theorem for %s\n", tableaucontrol->problem_name);
+		}
+		else
+		{
+			fprintf(GlobalOut, "# SZS status Unsatisfiable for %s\n", tableaucontrol->problem_name);
+		}
+	}
+	else
+	{
+		if (neg_conjectures)
+		{
+			fprintf(GlobalOut, "# SZS status CounterSatisfiable for %s\n", tableaucontrol->problem_name);
+		}
+		else
+		{
+			fprintf(GlobalOut, "# SZS status Satisfiable for %s\n", tableaucontrol->problem_name);
+		}
+	}
+	
+	fprintf(GlobalOut, "# SZS output start CNFRefutation for %s\n", tableaucontrol->problem_name);
+	if (tableaucontrol->clausification_buffer)
+	{
+		fprintf(GlobalOut, "# Begin clausification derivation\n");
+		fprintf(GlobalOut, "%s\n", tableaucontrol->clausification_buffer);
+		fprintf(GlobalOut, "# End clausification derivation\n");
+		fprintf(GlobalOut, "# Begin listing active clauses obtained from FOF to CNF conversion\n");
+		ClauseSetPrint(GlobalOut, active, true);
+		fprintf(GlobalOut, "# End listing active clauses.  There is an equivalent clause to each of these in the clausification!\n");
+	}
+	else
+	{
+		Error("No record of clausification?", 1);
+	}
+	fprintf(GlobalOut, "# Begin printing tableau\n");
+	ClauseTableauPrint(resulting_tab);
+	fprintf(GlobalOut, "# End printing tableau\n");
+	fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
+	fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
+	return;
 }

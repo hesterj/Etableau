@@ -22,13 +22,6 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 											  ProofState_p proofstate, 
 											  ProofControl_p proofcontrol, 
-											  TableauStack_p distinct_tableaux_stack,
-										     ClauseSet_p extension_candidates,
-										     int max_depth,
-										     TableauStack_p new_tableaux);
-ClauseTableau_p ConnectionTableauProofSearch2(TableauControl_p tableaucontrol,
-											  ProofState_p proofstate, 
-											  ProofControl_p proofcontrol, 
 											  TableauSet_p distinct_tableaux_set,
 										     ClauseSet_p extension_candidates,
 										     int max_depth,
@@ -38,6 +31,8 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 																							TableauSet_p distinct_tableaux,
 																							ClauseSet_p extension_candidates,
 																							int max_depth, TableauStack_p max_depth_tableaux);
+ClauseTableau_p EtableauHailMary(TableauControl_p tableaucontrol);
+void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, ClauseTableau_p resulting_tab);
     
 
 #endif
