@@ -33,6 +33,13 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 																							int max_depth, TableauStack_p max_depth_tableaux);
 ClauseTableau_p EtableauHailMary(TableauControl_p tableaucontrol);
 void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, ClauseTableau_p resulting_tab);
+ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate, ClauseSet_p active);
+TableauSet_p EtableauCreateStartRules(ProofState_p proofstate, 
+												  ProofControl_p proofcontrol, 
+												  TB_p bank, 
+												  FunCode max_var,
+												  ClauseSet_p unit_axioms,
+												  ClauseSet_p start_rule_candidates);
     
 
 #endif

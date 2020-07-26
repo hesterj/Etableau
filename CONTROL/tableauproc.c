@@ -182,163 +182,43 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 											int max_depth, 
 											int tableauequality)
 {
+	problemType = PROBLEM_FO;
+	FunCode max_var = ClauseSetGetMaxVar(active);
+	tableaucontrol->unprocessed = ClauseSetCopy(bank, proofstate->unprocessed);
 	fprintf(GlobalOut, "# %ld beginning clauses after preprocessing and clausification\n", active->members);
-	assert(proofstate);
-	assert(proofcontrol);
 	ClauseSet_p extension_candidates = ClauseSetCopy(bank, active);
-	ClauseSet_p unit_axioms = ClauseSetAlloc();
-	ClauseSet_p axioms_archive = ClauseSetCopy(bank, proofstate->unprocessed);
-	tableaucontrol->unprocessed = axioms_archive;
-   problemType = PROBLEM_FO;
-   PList_p conjectures = PListAlloc();
-   PList_p non_conjectures = PListAlloc();
-   FunCode max_var = ClauseSetGetMaxVar(extension_candidates);
-   ClauseSet_p start_rule_candidates = NULL;
-   
-   ClauseSetSplitConjectures(extension_candidates, conjectures, non_conjectures);
-   
-   if (PListEmpty(conjectures))
-   {
-		ClauseSet_p axiom_archive = proofstate->ax_archive;
-		assert(axiom_archive);
-		ClauseSetSplitConjectures(axiom_archive, conjectures, non_conjectures);
-		if (!PListEmpty(conjectures))
-		{
-			fprintf(GlobalOut, "# Conjectures eliminated in preprocessing, restoring them\n");
-		}
-		else
-		{
-			fprintf(GlobalOut, "# No conjectures.\n");
-			start_rule_candidates = ClauseSetAlloc();
-			ClauseSetInsertSet(start_rule_candidates, extension_candidates);
-		}
-	}
-	
-	if (!PListEmpty(conjectures))
-	{
-		fprintf(GlobalOut, "# Creating start rules for all conjectures.\n");
-		start_rule_candidates = ClauseSetAlloc();
-		PList_p handle;
-		for(handle=conjectures->succ;
-			 handle != conjectures;
-			 handle = handle->succ)
-		{
-			Clause_p conj_handle = handle->key.p_val;
-			ClauseSetExtractEntry(conj_handle);
-			ClauseSetProp(conj_handle, CPTypeConjecture);
-			ClauseSetInsert(start_rule_candidates, conj_handle);
-		}
-		
-	}
-	
-	
-	ClauseSetMoveUnits(extension_candidates, unit_axioms);
-	ClauseSetCopyUnits(bank, start_rule_candidates, unit_axioms);
-	
-	
-	PListFree(non_conjectures);
-	PListFree(conjectures);
-	
-   assert(max_depth);
-   
-   ClauseTableau_p initial_tab = ClauseTableauAlloc();
-   ClauseTableau_p resulting_tab = NULL;
-   TableauStack_p distinct_tableaux_stack = PStackAlloc();
-   
-   initial_tab->open_branches = TableauSetAlloc();
-   TableauSet_p open_branches = initial_tab->open_branches;
-   TableauSetInsert(open_branches, initial_tab);
-   
   	if (tableauequality)
 	{
 		ClauseSet_p equality_axioms = EqualityAxioms(bank);
 		ClauseSetInsertSet(extension_candidates, equality_axioms);
 		ClauseSetFree(equality_axioms);
 	}
-   
-   VarBankSetVCountsToUsed(bank->vars);
-   VarBankSetVCountsToUsed(proofstate->freshvars);
-   initial_tab->terms = bank;
-   initial_tab->signature = bank->sig;
-   initial_tab->state = proofstate;
-   initial_tab->control = proofcontrol;
-   //initial_tab->unit_axioms = unit_axioms;
-   initial_tab->unit_axioms = NULL;
-   
-   fprintf(GlobalOut, "# %ld unit axioms, %ld start rules, and %ld other extension candidates.\n", 
-																													unit_axioms->members, 
-																													start_rule_candidates->members, 
-																													extension_candidates->members);
-   
-	ClauseTableau_p beginning_tableau = NULL;
-	TableauSet_p distinct_tableaux_set = TableauSetAlloc();
-	// Print start rule candidates
-	fprintf(GlobalOut, "# Start rule candidates:\n");
-	ClauseSetPrint(GlobalOut, start_rule_candidates, true);
-	// Create a tableau for each axiom using the start rule
-   Clause_p start_label = start_rule_candidates->anchor->succ;
-   while (start_label != start_rule_candidates->anchor)
-   {
-		if (ClauseQueryProp(start_label, CPTypeConjecture))
-		{
-			fprintf(GlobalOut, "#");
-		}
-		beginning_tableau = ClauseTableauMasterCopy(initial_tab);
-		beginning_tableau ->unit_axioms = ClauseSetCopy(initial_tab->terms, unit_axioms);
-		//beginning_tableau->unit_axioms = NULL;
-		beginning_tableau->max_var = max_var;
-		//PStackPushP(distinct_tableaux_stack, beginning_tableau);
-		beginning_tableau = TableauStartRule(beginning_tableau, start_label);
-		TableauSetInsert(distinct_tableaux_set, beginning_tableau->master);
-		start_label = start_label->succ;
-	}
+	ClauseSet_p start_rule_candidates = EtableauGetStartRuleCandidates(proofstate, extension_candidates);
 	
+	ClauseSet_p unit_axioms = ClauseSetAlloc();
+	ClauseSetMoveUnits(extension_candidates, unit_axioms);
+	ClauseSetCopyUnits(bank, start_rule_candidates, unit_axioms);
+   assert(max_depth);
+	
+	TableauSet_p distinct_tableaux_set = EtableauCreateStartRules(proofstate,
+																					  proofcontrol,
+																					  bank,
+																					  max_var,
+																					  unit_axioms,
+																					  start_rule_candidates);
+																					  
 	ClauseSetFreeUnits(start_rule_candidates);
 	ClauseSetInsertSet(extension_candidates, start_rule_candidates);
-	
 	ClauseSetFree(start_rule_candidates);
-
-	initial_tab->unit_axioms = NULL;
-	ClauseTableauFree(initial_tab);
 	VarBankPushEnv(bank->vars);
 	TableauStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extionsion rules.
-	// New tableaux are added to the collection of distinct tableaux when the depth limit is increased, as new
-	// tableaux are already at the max depth.
-	fprintf(GlobalOut, "# Beginning tableaux proof search with %ld start rule applications.\n", PStackGetSP(distinct_tableaux_stack));
-	//~ fprintf(GlobalOut, "# Extension candidates:\n");
-	//~ ClauseSetPrint(GlobalOut, extension_candidates, true);
-	//~ fprintf(GlobalOut, "# Unit axioms:\n");
-	//~ ClauseSetPrint(GlobalOut, unit_axioms, true);
 	
-	//ClauseSetInsertSet(extension_candidates, unit_axioms); // TEMPORARY
-	// BELOW IS FOR MULTIPROCESSING
-	
-	//~ fprintf(GlobalOut, "# Forking version..\n");
-	//~ pid_t pool[num_open_branches];
-	//~ int return_status[num_open_branches];
-	//~ PStack_p job_bank = PStackAlloc();
-	//~ for (PStackPointer j=0; j<6; j++)
-	//~ {
-		//~ PStack_p uniq_distinct_tableaux_stack = PStackAlloc();
-		//~ pool[j] = -1;
-		//~ return_status[j] = -1;
-	//~ }
-	//~ PStackPointer job_location = 0;
-	//~ while (!PStackEmpty(distinct_tableaux_stack))
-	//~ {
-		//~ ClauseTableau_p starting = PStackPopP(distinct_tableaux_stack);
-		//~ PStack_p uniq_dist_tab_stack = PStackElementP(job_bank, job_location);
-		//~ PStackPushP(uniq_dist_tab_stack, starting);
-		//~ job_location++;
-		//~ job_location = job_location % 6;
-	//~ }
-	
-	// FINISH SETUP FOR MULTIPROCESSING
 	assert(proofstate);
 	assert(proofcontrol);
 	assert(extension_candidates);
 	assert(new_tableaux);
-
+	assert(!ClauseSetEmpty(extension_candidates));
+	ClauseTableau_p resulting_tab = NULL;
 	for (int current_depth = 2; current_depth < max_depth; current_depth++)
 	{
 		resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
@@ -357,7 +237,6 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 			EtableauStatusReport(tableaucontrol, active, resulting_tab);
 			break;
 		}
-		assert(PStackEmpty(distinct_tableaux_stack));
 		fprintf(GlobalOut, "# Moving %ld tableaux to active set...\n", PStackGetSP(new_tableaux));
 		while (!PStackEmpty(new_tableaux))
 		{
@@ -367,33 +246,23 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 		fprintf(GlobalOut, "# Increasing maximum depth to %d\n", current_depth + 1);
 	}
 	
-	// TODO
-	// There needs to be something to wait here, while the various start rules are multiprocessed!
-	
-	// Now, we are freeing the tableaux.
-	// There may be multiple references to a given tableaux around.
-	// The references are in stacks of pointers, so sort/merge the stacks while discarding duplicates.
 	assert(TableauSetEmpty(distinct_tableaux_set));
 	printf("# Freeing tableaux trash\n");
 	TableauStackFreeTableaux(tableaucontrol->tableaux_trash);
 	printf("\n# Freeing distinct tableaux\n");
-	assert(PStackEmpty(distinct_tableaux_stack));
-	TableauStackFreeTableaux(distinct_tableaux_stack);
 	printf("\n# Freeing new tableaux\n");
 	TableauStackFreeTableaux(new_tableaux);
 	PStackFree(new_tableaux);
-	PStackFree(distinct_tableaux_stack);
 	TableauSetFree(distinct_tableaux_set);
 	ClauseSetFree(extension_candidates);
 	ClauseSetFree(unit_axioms);
-	ClauseSetFree(axioms_archive);
+	ClauseSetFree(tableaucontrol->unprocessed);
 	VarBankPopEnv(bank->vars);
 	
 	// Memory is cleaned up...
 	
    if (resulting_tab) // success
    {
-		//assert(resulting_tab == tableaucontrol->closed_tableau);
 		printf("# Proof search success for %s!\n", tableaucontrol->problem_name);
 		//ClauseTableauPrintDOTGraph(resulting_tab);
 		return 1;
@@ -590,4 +459,85 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 	fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
 	fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
 	return;
+}
+
+ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate, ClauseSet_p active)
+{
+   PList_p conjectures = PListAlloc();
+   PList_p non_conjectures = PListAlloc();
+   ClauseSet_p start_rule_candidates = NULL;
+   
+   ClauseSetSplitConjectures(active, conjectures, non_conjectures);
+   
+   if (PListEmpty(conjectures))
+   {
+		ClauseSet_p axiom_archive = proofstate->ax_archive;
+		assert(axiom_archive);
+		ClauseSetSplitConjectures(axiom_archive, conjectures, non_conjectures);
+		if (PListEmpty(conjectures))
+		{
+			fprintf(GlobalOut, "# No conjectures.\n");
+			start_rule_candidates = ClauseSetAlloc();
+			ClauseSetInsertSet(start_rule_candidates, active);
+			goto return_point;
+		}
+	}
+	assert(!PListEmpty(conjectures));
+	fprintf(GlobalOut, "# Creating start rules for all conjectures.\n");
+	start_rule_candidates = ClauseSetAlloc();
+	PList_p handle;
+	for(handle=conjectures->succ;
+		 handle != conjectures;
+		 handle = handle->succ)
+	{
+		Clause_p conj_handle = handle->key.p_val;
+		ClauseSetExtractEntry(conj_handle);
+		ClauseSetProp(conj_handle, CPTypeConjecture);
+		ClauseSetInsert(start_rule_candidates, conj_handle);
+	}
+		
+	return_point:
+	PListFree(non_conjectures);
+	PListFree(conjectures);
+	assert(start_rule_candidates);
+	assert(!ClauseSetEmpty(start_rule_candidates));
+	return start_rule_candidates;
+}
+
+TableauSet_p EtableauCreateStartRules(ProofState_p proofstate, 
+												  ProofControl_p proofcontrol, 
+												  TB_p bank, 
+												  FunCode max_var,
+												  ClauseSet_p unit_axioms,
+												  ClauseSet_p start_rule_candidates)
+{
+   ClauseTableau_p initial_tab = ClauseTableauAlloc();
+   initial_tab->open_branches = TableauSetAlloc();
+   TableauSet_p open_branches = initial_tab->open_branches;
+   TableauSetInsert(open_branches, initial_tab);
+   
+   VarBankSetVCountsToUsed(bank->vars);
+   VarBankSetVCountsToUsed(proofstate->freshvars);
+   initial_tab->terms = bank;
+   initial_tab->signature = bank->sig;
+   initial_tab->state = proofstate;
+   initial_tab->control = proofcontrol;
+   initial_tab->unit_axioms = NULL;
+   
+	ClauseTableau_p beginning_tableau = NULL;
+	TableauSet_p distinct_tableaux_set = TableauSetAlloc();
+	// Create a tableau for each axiom using the start rule
+   Clause_p start_label = start_rule_candidates->anchor->succ;
+   while (start_label != start_rule_candidates->anchor)
+   {
+		beginning_tableau = ClauseTableauMasterCopy(initial_tab);
+		beginning_tableau ->unit_axioms = ClauseSetCopy(initial_tab->terms, unit_axioms);
+		beginning_tableau->max_var = max_var;
+		beginning_tableau = TableauStartRule(beginning_tableau, start_label);
+		TableauSetInsert(distinct_tableaux_set, beginning_tableau->master);
+		start_label = start_label->succ;
+	}
+	
+	ClauseTableauFree(initial_tab);
+	return distinct_tableaux_set;
 }
