@@ -588,13 +588,13 @@ int main(int argc, char* argv[])
 			fclose(clausification_stream);
 			tableaucontrol->clausification_buffer = buf;
 			// This is the entry point for tableaux proof search
-			ConnectionTableauBatch(tableaucontrol, 
-											proofstate, 
-											proofcontrol, 
-											proofstate->terms, 
-											new_axioms, 
-											TableauDepth, 
-											TableauEquality);
+			Etableau(tableaucontrol, 
+						proofstate, 
+						proofcontrol, 
+						proofstate->terms, 
+						new_axioms, 
+						TableauDepth, 
+						TableauEquality);
 			free(buf); // Do not free buf until the search is done
 		}
 		printf("# Exiting...\n");

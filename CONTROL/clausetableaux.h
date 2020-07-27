@@ -136,6 +136,7 @@ typedef struct tableau_set_cell
 #define      TableauSetEmpty(set)\
              ((set)->anchor->succ == (set)->anchor)
 
+#define TableauSetCardinality(set) (set->members)
 TableauSet_p TableauSetAlloc();
 TableauSet_p TableauSetCopy(TableauSet_p set);
 void TableauSetInsert(TableauSet_p set, ClauseTableau_p tab);
@@ -169,6 +170,7 @@ typedef struct tableaucontrol_cell
 	ClauseSet_p unprocessed;
 	TB_p terms;
 	bool branch_saturation_enabled; // Is branch saturation enabled?
+	bool multiprocessing_active;  // Have we reached enough tableaux to break the problem in to forks?
 	bool satisfiable;
 	TableauStack_p tableaux_trash;
 	char *clausification_buffer;

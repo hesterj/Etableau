@@ -3972,4 +3972,8 @@ tableauproc.o: tableauproc.c /usr/include/stdc-predef.h tableauproc.h \
  /usr/include/x86_64-linux-gnu/asm/sockios.h \
  /usr/include/asm-generic/sockios.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
- /usr/include/x86_64-linux-gnu/bits/in.h
+ /usr/include/x86_64-linux-gnu/bits/in.h \
+ /usr/include/x86_64-linux-gnu/sys/sysinfo.h /usr/include/linux/kernel.h \
+ /usr/include/linux/sysinfo.h /usr/include/linux/types.h \
+ /usr/include/x86_64-linux-gnu/asm/types.h \
+ /usr/include/asm-generic/types.h /usr/include/asm-generic/int-ll64.h

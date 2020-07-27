@@ -184,11 +184,8 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 													  long max_proc)
 {
 	Clause_p success = NULL;
-	ClauseTableau_p node = branch;
 	assert(proofstate);
 	assert(proofcontrol);
-	assert(node);
-	assert(node->master);
 	//long proc_limit = 500;
 	
 	// Do not deep saturate branches on very small tableaux
@@ -208,22 +205,6 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 		max_proc = 100;
 	}
 	
-	// Collect the clauses of the branch
-	//~ while (node)
-	//~ {
-		//~ if (node != node->master)
-		//~ {
-			//~ Clause_p label = ClauseCopyOpt(node->label);
-			//~ label->weight = ClauseStandardWeight(label);
-			//~ assert(!label->set);
-			//~ assert(!label->evaluations);
-			//~ ClauseSetProp(label, CPInitial);
-			//~ ClauseSetProp(label, CPIsRelevant);
-			//~ //ClauseSetProp(label, CPLimitedRW);
-			//~ ClauseSetInsert(proofstate->tmp_store, label);
-		//~ }
-		//~ node = node->parent;
-	//~ }
 	EtableauInsertBranchClausesIntoUnprocessed(proofstate, proofcontrol, branch);
 	
 	fprintf(GlobalOut, "# Beginning deep saturation check (%ld) d:%d\n", max_proc, branch->depth);

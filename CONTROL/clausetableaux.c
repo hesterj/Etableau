@@ -1137,6 +1137,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->closed_tableau = NULL;
 	handle->branch_saturation_enabled = branch_saturation_enabled;
 	handle->satisfiable = false;
+	handle->multiprocessing_active = false;
 	handle->unprocessed = NULL;
 	handle->problem_name = problem_name;
 	handle->neg_conjectures = neg_conjectures;

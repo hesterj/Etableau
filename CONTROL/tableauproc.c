@@ -16,6 +16,21 @@ ClauseTableau_p tableau_select(TableauControl_p tableaucontrol, TableauSet_p set
 /*  Function Definitions
 */
 
+
+/*-----------------------------------------------------------------------
+//
+// Function: tableau_select()
+//
+//   This function will hopefully emulate hcb_select at some point.  
+//   Returns an arbitrary tableaux, but they could be ordered by 
+//   the number of open branches or a more sophisticated method at some point.
+//
+// Global Variables: -
+//
+// Side Effects    : -
+//
+/----------------------------------------------------------------------*/
+
 ClauseTableau_p tableau_select(TableauControl_p tableaucontrol, TableauSet_p set)
 {
 	assert(!TableauSetEmpty(set));
@@ -148,12 +163,11 @@ long ClauseSetFreeUnits(ClauseSet_p set)
    return count;
 }
 
-
-/*  Identify a single negated conjecture to form the tableau branches.
- *  If there is no conjecture return NULL.  
- *  Returns the first conjecture found, if there are multiple they will not affect the tableau.
- * 
-*/
+/*-----------------------------------------------------------------------
+//  Identify a single negated conjecture to form the tableau branches.
+//  If there is no conjecture return NULL.  
+//  Returns the first conjecture found, if there are multiple they will not affect the tableau.
+/----------------------------------------------------------------------*/
 
 WFormula_p ProofStateGetConjecture(ProofState_p state)
 {
@@ -170,11 +184,17 @@ WFormula_p ProofStateGetConjecture(ProofState_p state)
 	return NULL;
 }
 
-/*  As ConnectionTableauSerial, but builds tableau on all start rule
- *  applications at once.  Does not use any multhreading.
-*/
+/*-----------------------------------------------------------------------
+//
+// Function: Etableau(...)
+//
+//   This is the entry point into Etableau proof search.
+//
+// Side Effects    : Proofstate, proofcontrol, bank, everything.
+//
+/----------------------------------------------------------------------*/
 
-int ConnectionTableauBatch(TableauControl_p tableaucontrol, 
+int Etableau(TableauControl_p tableaucontrol, 
 											ProofState_p proofstate, 
 											ProofControl_p proofcontrol, 
 											TB_p bank, 
@@ -194,6 +214,7 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 		ClauseSetFree(equality_axioms);
 	}
 	ClauseSet_p start_rule_candidates = EtableauGetStartRuleCandidates(proofstate, extension_candidates);
+	fprintf(GlobalOut, "# There are %ld start rule candidates.\n", start_rule_candidates->members);
 	
 	ClauseSet_p unit_axioms = ClauseSetAlloc();
 	ClauseSetMoveUnits(extension_candidates, unit_axioms);
@@ -210,8 +231,10 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	ClauseSetFreeUnits(start_rule_candidates);
 	ClauseSetInsertSet(extension_candidates, start_rule_candidates);
 	ClauseSetFree(start_rule_candidates);
-	VarBankPushEnv(bank->vars);
-	TableauStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extionsion rules.
+	
+	int num_cores_available = get_nprocs();
+	fprintf(GlobalOut, "# Number of cores available: %d\n", num_cores_available);
+	TableauStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extension rules.
 	
 	assert(proofstate);
 	assert(proofcontrol);
@@ -221,13 +244,18 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	ClauseTableau_p resulting_tab = NULL;
 	for (int current_depth = 2; current_depth < max_depth; current_depth++)
 	{
-		resulting_tab = ConnectionTableauProofSearch(tableaucontrol, 
-														proofstate, 
-														proofcontrol, 
-														distinct_tableaux_set,
-														extension_candidates, 
-														current_depth,
-														new_tableaux);
+		if (TableauSetCardinality(distinct_tableaux_set) > num_cores_available)
+		{
+			fprintf(GlobalOut, "# Enough tableaux to fork... there are %ld.\n", TableauSetCardinality(distinct_tableaux_set));
+		}
+		resulting_tab = ConnectionTableauProofSearchAtDepth(tableaucontrol, 
+																			 proofstate, 
+																			 proofcontrol, 
+																			 distinct_tableaux_set,
+																			 extension_candidates, 
+																			 current_depth,
+																			 new_tableaux,
+																			 false);
 		if (PStackEmpty(new_tableaux) && !resulting_tab && tableaucontrol->branch_saturation_enabled)
 		{
 			resulting_tab = EtableauHailMary(tableaucontrol);
@@ -257,7 +285,6 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	ClauseSetFree(extension_candidates);
 	ClauseSetFree(unit_axioms);
 	ClauseSetFree(tableaucontrol->unprocessed);
-	VarBankPopEnv(bank->vars);
 	
 	// Memory is cleaned up...
 	
@@ -273,13 +300,27 @@ int ConnectionTableauBatch(TableauControl_p tableaucontrol,
 	return 0;
 }
 
-ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
-											  ProofState_p proofstate, 
-											  ProofControl_p proofcontrol, 
-											  TableauSet_p distinct_tableaux_set,
-										     ClauseSet_p extension_candidates,
-										     int max_depth,
-										     TableauStack_p new_tableaux)
+/*-----------------------------------------------------------------------
+//
+// Function: ConnectionTableauProofSearchAtDepth(...)
+//
+//   Try to extend on all the open branches of tableaux from distinct_tableaux_set.
+//   After an extension is done, the resulting tableaux can be extended on again 
+//   if there are potential new branches that do not exceed the depth limit.
+//   This method can be compared to "Saturate" of Eprover.
+//
+// Side Effects    :  Calls Saturate, so many.
+//
+/----------------------------------------------------------------------*/
+
+ClauseTableau_p ConnectionTableauProofSearchAtDepth(TableauControl_p tableaucontrol,
+																	 ProofState_p proofstate, 
+																	 ProofControl_p proofcontrol, 
+																	 TableauSet_p distinct_tableaux_set,
+																	 ClauseSet_p extension_candidates,
+																	 int max_depth,
+																	 TableauStack_p new_tableaux,
+																	 bool population_sweep)
 {
 	assert(distinct_tableaux_set);
 	ClauseTableau_p active_tableau = NULL;
@@ -328,6 +369,20 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 	// Went through all possible tableaux at this depth...
 	return closed_tableau;
 }
+
+/*-----------------------------------------------------------------------
+//
+// Function: ConnectionCalculusExtendOpenBranches(...)
+//
+//   Create all of the extension rules possible off of open branches of active_tableau,
+//   limited by max_depth.  Open tableaux with all of their branches at max_depth
+//   are added to max_depth_tableaux to be extended on later.  newly_created_tableaux
+//   contains just that, tableaux that will be extended on later at the next iteration
+//   and are likely at max depth.  
+//
+// Side Effects    :  Calls Saturate, so many.
+//
+/----------------------------------------------------------------------*/
 
 ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tableau, TableauStack_p newly_created_tableaux,
 																							TableauControl_p tableaucontrol,
@@ -385,6 +440,18 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 	return closed_tableau;
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: EtableauHailMary(...)
+//
+//   If no more tableaux could be created for some reason, try to do a 
+//   deep saturation on a tableau that will be deleted.  If this closes 
+//   the tableau return it.
+//
+// Side Effects    :  Calls Saturate, so many.
+//
+/----------------------------------------------------------------------*/
+
 ClauseTableau_p EtableauHailMary(TableauControl_p tableaucontrol)
 {
 	// If no new tableaux were created, we will do a "hail mary" saturation attempt on the remaining branches
@@ -407,6 +474,17 @@ ClauseTableau_p EtableauHailMary(TableauControl_p tableaucontrol)
 	}
 	return NULL;
 }
+
+/*-----------------------------------------------------------------------
+//
+// Function: EtableauStatusReport(...)
+//
+//   If a closed tableau was found (resulting_tab), interpret the specification
+//   to report an appropriate SZS status.  
+//
+// Side Effects    :  None
+//
+/----------------------------------------------------------------------*/
 
 void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, ClauseTableau_p resulting_tab)
 {
@@ -461,6 +539,19 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 	return;
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: EtableauGetStartRuleCandidates(...)
+//
+//   Find conjectures from the axiom specification, and insert them into the 
+//   returned set start_rule_candidates.  If there are no conjectures found,
+//   search for them in the axiom archive and do the same.  If there are really
+//   no conjectures, every clause in the specification is inserted into start_rule_candidates.
+//
+// Side Effects    :  Memory operations, active
+//
+/----------------------------------------------------------------------*/
+
 ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate, ClauseSet_p active)
 {
    PList_p conjectures = PListAlloc();
@@ -471,6 +562,7 @@ ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate, ClauseSet_p 
    
    if (PListEmpty(conjectures))
    {
+		fprintf(GlobalOut, "# No conjectures after preprocessing.  Attempting to resurrect them from ax_archive.\n");
 		ClauseSet_p axiom_archive = proofstate->ax_archive;
 		assert(axiom_archive);
 		ClauseSetSplitConjectures(axiom_archive, conjectures, non_conjectures);
@@ -503,6 +595,18 @@ ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate, ClauseSet_p 
 	assert(!ClauseSetEmpty(start_rule_candidates));
 	return start_rule_candidates;
 }
+
+/*-----------------------------------------------------------------------
+//
+// Function: EtableauCreateStartRules(...)
+//
+//   This function creates an initial "blank" tableau and creates instances
+//   of the start rule for tableaux, corresponding to the clauses in start_rule_candidates.
+//   They are returned in the TableauSet_p.
+//
+// Side Effects    :  Memory operations, proofstate->freshvars and bank->vars
+//
+/----------------------------------------------------------------------*/
 
 TableauSet_p EtableauCreateStartRules(ProofState_p proofstate, 
 												  ProofControl_p proofcontrol, 
