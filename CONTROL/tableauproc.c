@@ -233,6 +233,7 @@ int Etableau(TableauControl_p tableaucontrol,
 	ClauseSetFree(start_rule_candidates);
 	
 	int num_cores_available = get_nprocs();
+	assert(num_cores_available);
 	fprintf(GlobalOut, "# Number of cores available: %d\n", num_cores_available);
 	TableauStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extension rules.
 	
@@ -242,26 +243,68 @@ int Etableau(TableauControl_p tableaucontrol,
 	assert(new_tableaux);
 	assert(!ClauseSetEmpty(extension_candidates));
 	ClauseTableau_p resulting_tab = NULL;
+	int desired_number_of_starting_tableaux = num_cores_available;
+	resulting_tab = ConnectionTableauProofSearchPopulate(tableaucontrol, 
+																		 proofstate, 
+																		 proofcontrol, 
+																		 distinct_tableaux_set,
+																		 extension_candidates, 
+																		 3,
+																		 new_tableaux,
+																		 desired_number_of_starting_tableaux);
+	if (resulting_tab)
+	{
+		fprintf(GlobalOut, "# Found closed tableau during pool population.\n");
+		goto success_point;
+	}
+	assert(PStackGetSP(new_tableaux) > desired_number_of_starting_tableaux);
+	fprintf(GlobalOut, "# There are %ld tableaux, should be ready to fork.\n", PStackGetSP(new_tableaux));
+	assert(TableauSetEmpty(distinct_tableaux_set));
+	///////////////////////////  Construction zone
+	
+	//~ PStack_p buckets = PStackAlloc();
+	//~ for (int i=0; i < num_cores_available; i++)
+	//~ {
+		//~ PStackPushP(buckets, TableauSetAlloc());
+	//~ }
+	//~ int tableaux_distributor = 0;
+	//~ while (!PStackEmpty(new_tableaux))
+	//~ {
+		//~ tableaux_distributor = tableaux_distributor % num_cores_available;
+		//~ ClauseTableau_p tab = PStackPopP(new_tableaux);
+		//~ TableauSet_p process_bucket = PStackElementP(buckets, tableaux_distributor);
+		//~ TableauSetInsert(process_bucket, tab);
+		//~ tableaux_distributor++;
+	//~ }
+	//~ for (int i=0; i < num_cores_available; i++)
+	//~ {
+		//~ TableauSet_p process_bucket = PStackElementP(buckets, i);
+		//~ printf("# %ld\n", TableauSetCardinality(process_bucket));
+	//~ }
+	//~ exit(0);
+	
+	// fork num_cores_available times
+	
+	// Do proof search
+	// This should occur during cleanup.  Each process bucket has become a distinct_tableaux_set for a process.
+	
+	////////////////////////////
 	for (int current_depth = 2; current_depth < max_depth; current_depth++)
 	{
-		if (TableauSetCardinality(distinct_tableaux_set) > num_cores_available)
-		{
-			fprintf(GlobalOut, "# Enough tableaux to fork... there are %ld.\n", TableauSetCardinality(distinct_tableaux_set));
-		}
 		resulting_tab = ConnectionTableauProofSearchAtDepth(tableaucontrol, 
 																			 proofstate, 
 																			 proofcontrol, 
 																			 distinct_tableaux_set,
 																			 extension_candidates, 
 																			 current_depth,
-																			 new_tableaux,
-																			 false);
+																			 new_tableaux);
 		if (PStackEmpty(new_tableaux) && !resulting_tab && tableaucontrol->branch_saturation_enabled)
 		{
 			resulting_tab = EtableauHailMary(tableaucontrol);
 		}
 		if (resulting_tab)  // We successfully found a closed tableau- handle it and report results
 		{
+			success_point:
 			EtableauStatusReport(tableaucontrol, active, resulting_tab);
 			break;
 		}
@@ -319,8 +362,7 @@ ClauseTableau_p ConnectionTableauProofSearchAtDepth(TableauControl_p tableaucont
 																	 TableauSet_p distinct_tableaux_set,
 																	 ClauseSet_p extension_candidates,
 																	 int max_depth,
-																	 TableauStack_p new_tableaux,
-																	 bool population_sweep)
+																	 TableauStack_p new_tableaux)
 {
 	assert(distinct_tableaux_set);
 	ClauseTableau_p active_tableau = NULL;
@@ -354,6 +396,86 @@ ClauseTableau_p ConnectionTableauProofSearchAtDepth(TableauControl_p tableaucont
 				PStackPushStack(new_tableaux, newly_created_tableaux);
 				TableauSetDrainToStack(tableaucontrol->tableaux_trash, distinct_tableaux_set);
 				assert(TableauSetEmpty(distinct_tableaux_set));
+				goto return_point;
+			}
+			else if (PStackEmpty(newly_created_tableaux)) break;
+			ClauseTableau_p new = PStackPopP(newly_created_tableaux);
+			selected_ref = &new;
+		} while (true);
+		PStackReset(newly_created_tableaux);
+	}
+	return_point:
+	PStackPushStack(new_tableaux, max_depth_tableaux);
+	PStackFree(max_depth_tableaux);
+	PStackFree(newly_created_tableaux);
+	// Went through all possible tableaux at this depth...
+	return closed_tableau;
+}
+
+
+/*-----------------------------------------------------------------------
+//
+// Function: ConnectionTableauProofSearchPopulate(...)
+//
+//   As ConnectionTableauProofSearchAtDepth, but used to populate
+//   the collection of tableaux so that there are enough to split
+//   into multiple processes.  
+//
+// Side Effects    :  Calls Saturate, so many.
+//
+/----------------------------------------------------------------------*/
+
+ClauseTableau_p ConnectionTableauProofSearchPopulate(TableauControl_p tableaucontrol,
+																	 ProofState_p proofstate, 
+																	 ProofControl_p proofcontrol, 
+																	 TableauSet_p distinct_tableaux_set,
+																	 ClauseSet_p extension_candidates,
+																	 int max_depth,
+																	 TableauStack_p new_tableaux,
+																	 int desired_num_tableaux)
+{
+	assert(distinct_tableaux_set);
+	ClauseTableau_p active_tableau = NULL;
+	ClauseTableau_p closed_tableau = NULL;
+	TableauStack_p max_depth_tableaux = PStackAlloc();
+	TableauStack_p newly_created_tableaux = PStackAlloc();
+	
+	while (!TableauSetEmpty(distinct_tableaux_set))
+	{
+		//fprintf(GlobalOut, "# %ld\n", i);
+		active_tableau = tableau_select(tableaucontrol, distinct_tableaux_set);
+		assert(active_tableau);
+		assert(active_tableau->label);
+		assert(active_tableau->master == active_tableau);
+		assert(active_tableau->open_branches);
+		TableauSetExtractEntry(active_tableau);
+		ClauseTableau_ref selected_ref = &active_tableau;
+		
+		// At this point, there could be tableaux to be extended on at this depth in newly_created_tableaux
+		do  // Attempt to create extension tableaux until they are all at max depth or a closed tableau is found
+		{
+			int num_tableaux = (int) distinct_tableaux_set->members + (int) PStackGetSP(newly_created_tableaux);
+			num_tableaux += (int) PStackGetSP(max_depth_tableaux);
+			closed_tableau = ConnectionCalculusExtendOpenBranches(*selected_ref, 
+																				newly_created_tableaux, 
+																				tableaucontrol,
+																				NULL,
+																				extension_candidates,
+																				max_depth, max_depth_tableaux);
+			if (closed_tableau)
+			{
+				assert(tableaucontrol->closed_tableau);
+				PStackPushStack(new_tableaux, newly_created_tableaux);
+				TableauSetDrainToStack(tableaucontrol->tableaux_trash, distinct_tableaux_set);
+				assert(TableauSetEmpty(distinct_tableaux_set));
+				goto return_point;
+			}
+			else if (num_tableaux > desired_num_tableaux)
+			{
+				//  There can be tableaux in the distinct tableaux set, newly created tableaux, or max_depth_tableaux
+				TableauSetDrainToStack(new_tableaux, distinct_tableaux_set);
+				PStackPushStack(new_tableaux, newly_created_tableaux);
+				assert(PStackGetSP(new_tableaux) >= desired_num_tableaux);
 				goto return_point;
 			}
 			else if (PStackEmpty(newly_created_tableaux)) break;

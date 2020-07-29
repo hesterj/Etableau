@@ -44,8 +44,15 @@ ClauseTableau_p ConnectionTableauProofSearchAtDepth(TableauControl_p tableaucont
 																	 TableauSet_p distinct_tableaux_set,
 																	 ClauseSet_p extension_candidates,
 																	 int max_depth,
+																	 TableauStack_p new_tableaux);
+ClauseTableau_p ConnectionTableauProofSearchPopulate(TableauControl_p tableaucontrol,
+																	 ProofState_p proofstate, 
+																	 ProofControl_p proofcontrol, 
+																	 TableauSet_p distinct_tableaux_set,
+																	 ClauseSet_p extension_candidates,
+																	 int max_depth,
 																	 TableauStack_p new_tableaux,
-																	 bool population_sweep);
+																	 int desired_num_tableaux);
 ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tableau, 
 																	  TableauStack_p new_tableaux,
 																	  TableauControl_p control,
