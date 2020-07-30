@@ -38,6 +38,13 @@ int Etableau(TableauControl_p tableaucontrol,
 									TB_p bank, ClauseSet_p active, 
 									int max_depth, 
 									int tableauequality);
+ClauseTableau_p EtableauProofSearch(TableauControl_p tableaucontrol,
+									  ProofState_p proofstate,
+									  ProofControl_p proofcontrol,
+									  TableauSet_p distinct_tableaux_set,
+									  ClauseSet_p extension_candidates,
+									  int current_depth,
+									  PStack_p new_tableaux);
 ClauseTableau_p ConnectionTableauProofSearchAtDepth(TableauControl_p tableaucontrol,
 																	 ProofState_p proofstate, 
 																	 ProofControl_p proofcontrol, 

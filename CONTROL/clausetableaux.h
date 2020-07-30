@@ -147,6 +147,7 @@ ClauseTableau_p TableauSetExtractEntry(ClauseTableau_p set);
 void TableauSetFree(TableauSet_p handle);
 void TableauSetDrainToStack(PStack_p to, TableauSet_p from);
 void TableauStackDrainToSet(TableauSet_p to, PStack_p from);
+void TableauSetMoveClauses(TableauSet_p to, TableauSet_p from);
 
 
 void TableauStackFreeTableaux(PStack_p stack);

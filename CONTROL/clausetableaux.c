@@ -956,6 +956,15 @@ void TableauStackDrainToSet(TableauSet_p to, PStack_p from)
 	}
 }
 
+void TableauSetMoveClauses(TableauSet_p to, TableauSet_p from)
+{
+	while (!TableauSetEmpty(from))
+	{
+		ClauseTableau_p handle = TableauSetExtractFirst(from);
+		TableauSetInsert(to, handle);
+	}
+}
+
 void ClauseTableauPrintDOTGraph(ClauseTableau_p tab)
 {
 	FILE *dotgraph = fopen("/home/hesterj/Projects/APRTESTING/DOT/graph.dot", "w");

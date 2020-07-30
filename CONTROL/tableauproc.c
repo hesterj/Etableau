@@ -237,6 +237,7 @@ int Etableau(TableauControl_p tableaucontrol,
 	fprintf(GlobalOut, "# Number of cores available: %d\n", num_cores_available);
 	TableauStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extension rules.
 	
+	//  Create enough tableaux so that we can fork
 	assert(proofstate);
 	assert(proofcontrol);
 	assert(extension_candidates);
@@ -257,66 +258,68 @@ int Etableau(TableauControl_p tableaucontrol,
 		fprintf(GlobalOut, "# Found closed tableau during pool population.\n");
 		goto success_point;
 	}
+	///////////////////////////  Actually fork
 	assert(PStackGetSP(new_tableaux) > desired_number_of_starting_tableaux);
 	fprintf(GlobalOut, "# There are %ld tableaux, should be ready to fork.\n", PStackGetSP(new_tableaux));
 	assert(TableauSetEmpty(distinct_tableaux_set));
-	///////////////////////////  Construction zone
 	
-	//~ PStack_p buckets = PStackAlloc();
-	//~ for (int i=0; i < num_cores_available; i++)
-	//~ {
-		//~ PStackPushP(buckets, TableauSetAlloc());
-	//~ }
-	//~ int tableaux_distributor = 0;
-	//~ while (!PStackEmpty(new_tableaux))
-	//~ {
-		//~ tableaux_distributor = tableaux_distributor % num_cores_available;
-		//~ ClauseTableau_p tab = PStackPopP(new_tableaux);
-		//~ TableauSet_p process_bucket = PStackElementP(buckets, tableaux_distributor);
-		//~ TableauSetInsert(process_bucket, tab);
-		//~ tableaux_distributor++;
-	//~ }
-	//~ for (int i=0; i < num_cores_available; i++)
-	//~ {
-		//~ TableauSet_p process_bucket = PStackElementP(buckets, i);
-		//~ printf("# %ld\n", TableauSetCardinality(process_bucket));
-	//~ }
-	//~ exit(0);
-	
-	// fork num_cores_available times
-	
-	// Do proof search
-	// This should occur during cleanup.  Each process bucket has become a distinct_tableaux_set for a process.
-	
-	////////////////////////////
-	for (int current_depth = 2; current_depth < max_depth; current_depth++)
+	PStack_p buckets = PStackAlloc();
+	for (int i=0; i < num_cores_available; i++)
 	{
-		resulting_tab = ConnectionTableauProofSearchAtDepth(tableaucontrol, 
-																			 proofstate, 
-																			 proofcontrol, 
-																			 distinct_tableaux_set,
-																			 extension_candidates, 
-																			 current_depth,
-																			 new_tableaux);
-		if (PStackEmpty(new_tableaux) && !resulting_tab && tableaucontrol->branch_saturation_enabled)
-		{
-			resulting_tab = EtableauHailMary(tableaucontrol);
-		}
-		if (resulting_tab)  // We successfully found a closed tableau- handle it and report results
-		{
-			success_point:
-			EtableauStatusReport(tableaucontrol, active, resulting_tab);
-			break;
-		}
-		fprintf(GlobalOut, "# Moving %ld tableaux to active set...\n", PStackGetSP(new_tableaux));
-		while (!PStackEmpty(new_tableaux))
-		{
-			ClauseTableau_p distinct = PStackPopP(new_tableaux);
-			TableauSetInsert(distinct_tableaux_set, distinct);
-		}
-		fprintf(GlobalOut, "# Increasing maximum depth to %d\n", current_depth + 1);
+		PStackPushP(buckets, TableauSetAlloc());
+	}
+	int tableaux_distributor = 0;
+	while (!PStackEmpty(new_tableaux))
+	{
+		tableaux_distributor = tableaux_distributor % num_cores_available;
+		ClauseTableau_p tab = PStackPopP(new_tableaux);
+		TableauSet_p process_bucket = PStackElementP(buckets, tableaux_distributor);
+		TableauSetInsert(process_bucket, tab);
+		tableaux_distributor++;
+	}
+	for (int i=0; i < num_cores_available; i++)
+	{
+		TableauSet_p process_bucket = PStackElementP(buckets, i);
+		printf("# %ld\n", TableauSetCardinality(process_bucket));
 	}
 	
+	for (int i=0; i < num_cores_available; i++)
+	{
+		pid_t worker = fork();
+		if (worker == 0) // child process
+		{
+			TableauSet_p process_starting_tableaux = PStackElementP(buckets, i);
+			TableauSetMoveClauses(distinct_tableaux_set, process_starting_tableaux);
+			// should be good to go...
+			break;
+		}
+		else if (worker > 0) // parent
+		{
+			// go to wait
+		}
+		else Error("Fork error", 1);
+	}
+	
+	if (worker == 0)  // Only the workers will do proof search
+	{
+		resulting_tab = EtableauProofSearch(tableaucontrol, 
+														proofstate, 
+														proofcontrol, 
+														distinct_tableaux_set,
+														extension_candidates, 
+														current_depth,
+														new_tableaux);
+	}
+	else  // The master will wait patiently here
+	{
+	}
+	
+	while (!PStackEmpty(buckets))
+	{
+		TableauSet_p trash = PStackPopP(buckets);
+		TableauSetFree(trash);
+	}
+	PStackFree(buckets);
 	assert(TableauSetEmpty(distinct_tableaux_set));
 	printf("# Freeing tableaux trash\n");
 	TableauStackFreeTableaux(tableaucontrol->tableaux_trash);
@@ -766,4 +769,43 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
 	
 	ClauseTableauFree(initial_tab);
 	return distinct_tableaux_set;
+}
+
+ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
+									  ProofState_p proofstate,
+									  ProofControl_p proofcontrol,
+									  TableauSet_p distinct_tableaux_set,
+									  ClauseSet_p extension_candidates,
+									  int current_depth,
+									  PStack_p new_tableaux)
+{
+	ClauseTableau_p resulting_tab = NULL;
+	for (int current_depth = 2; current_depth < max_depth; current_depth++)
+	{
+		resulting_tab = ConnectionTableauProofSearchAtDepth(tableaucontrol, 
+																			 proofstate, 
+																			 proofcontrol, 
+																			 distinct_tableaux_set,
+																			 extension_candidates, 
+																			 current_depth,
+																			 new_tableaux);
+		if (PStackEmpty(new_tableaux) && !resulting_tab && tableaucontrol->branch_saturation_enabled)
+		{
+			resulting_tab = EtableauHailMary(tableaucontrol);
+		}
+		if (resulting_tab)  // We successfully found a closed tableau- handle it and report results
+		{
+			success_point:
+			EtableauStatusReport(tableaucontrol, active, resulting_tab);
+			break;
+		}
+		fprintf(GlobalOut, "# Moving %ld tableaux to active set...\n", PStackGetSP(new_tableaux));
+		while (!PStackEmpty(new_tableaux))
+		{
+			ClauseTableau_p distinct = PStackPopP(new_tableaux);
+			TableauSetInsert(distinct_tableaux_set, distinct);
+		}
+		fprintf(GlobalOut, "# Increasing maximum depth to %d\n", current_depth + 1);
+	}
+	return resutling_tab;
 }
