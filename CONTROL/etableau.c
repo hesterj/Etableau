@@ -188,7 +188,7 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 	//long proc_limit = 500;
 	
 	// Do not deep saturate branches on very small tableaux
-	if (GetTotalCPUTime() < (double) 10) max_proc = 50;
+	//if (GetTotalCPUTime() < (double) 10) max_proc = 50;
 	
 	// Process more clauses on tableaux with fewer open branches
 	if (branch->open_branches->members == 1 && max_proc != LONG_MAX && max_proc != 50)
@@ -207,7 +207,7 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 	EtableauInsertBranchClausesIntoUnprocessed(proofstate, proofcontrol, branch);
 	
 	//fprintf(GlobalOut, "# Beginning deep saturation check (%ld) d:%d\n", max_proc, branch->depth);
-	proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding;
+	proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver
 	success = Saturate(proofstate, proofcontrol, max_proc,
 							 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
 							 LLONG_MAX, LONG_MAX);

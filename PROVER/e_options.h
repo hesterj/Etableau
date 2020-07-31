@@ -1431,22 +1431,22 @@ OptCell opts[] =
 		 ReqArg, NULL,
 		 "0: Do not attempt creation of any tableaux."
 		 "1: Build a tableau at start of proof search."
-		 "2: Build tableaux during proof search."
+		 "2: Build tableaux during proof search.  This is unsupported and likely does not work."
 	 },
 	 {
 		 OPT_TABLEAU_DEPTH,
 		 '\0', "tableau-depth",
-		 OptArg, "2",
+		 OptArg, "10",
 		 "Specify an integer."
 		 "This is the max depth of tableaux used in proof search."
-		 "Default is 2, which will likely not work."
+		 "Default is 10."
 	 },
 	 {
 		 OPT_TABLEAU_BATCH,
 		 '\0', "tableau-batch",
 		 OptArg, "1",
 		 "Specify an integer."
-		 "0 means we will process tableau serially.  This saves memory, but can take longer for proof success."
+		 "This is an antiquated option.  The default is 1, so don't change it."
 		 "The default 1 causes proof search in batch mode, which works better and uses more memory."
 	 },
 	 {

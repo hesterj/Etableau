@@ -202,6 +202,8 @@ int Etableau(TableauControl_p tableaucontrol,
 											int max_depth, 
 											int tableauequality)
 {
+	if(geteuid() == 0) Error("# Please do not run Etableau as root.", 1);
+	bool status_reported = false;
 	problemType = PROBLEM_FO;
 	FunCode max_var = ClauseSetGetMaxVar(active);
 	tableaucontrol->unprocessed = ClauseSetCopy(bank, proofstate->unprocessed);
@@ -257,6 +259,7 @@ int Etableau(TableauControl_p tableaucontrol,
 	{
 		fprintf(GlobalOut, "# Found closed tableau during pool population.\n");
 		EtableauStatusReport(tableaucontrol, active, resulting_tab);
+		status_reported = true;
 		goto exit_point;
 	}
 	///////////////////////////  Actually fork
@@ -278,11 +281,6 @@ int Etableau(TableauControl_p tableaucontrol,
 		TableauSet_p process_bucket = PStackElementP(buckets, tableaux_distributor);
 		TableauSetInsert(process_bucket, tab);
 		tableaux_distributor++;
-	}
-	for (int i=0; i < num_cores_available; i++)
-	{
-		TableauSet_p process_bucket = PStackElementP(buckets, i);
-		printf("# %ld\n", TableauSetCardinality(process_bucket));
 	}
 	
 	for (int i=0; i < num_cores_available; i++)
@@ -307,37 +305,12 @@ int Etableau(TableauControl_p tableaucontrol,
 		else if (worker > 0) // parent
 		{
 			PStackPushInt(workers, (long) worker);
-			// go to wait
 		}
 		else Error("Fork error", 1);
 	}
 	
 	// Wait for the children to exit...
-	int num_children_exited = 0;
-	while (num_children_exited < num_cores_available)
-	{
-		int exit_status = -1;
-		pid_t exited_child = wait(&exit_status);
-		if (exit_status == PROOF_FOUND)
-		{
-			// kill all the children and move towards exit
-			while (!PStackEmpty(workers))
-			{
-				pid_t remaining_child = (pid_t) PStackPopInt(workers);
-				kill(remaining_child, SIGTERM);
-			}
-			break;
-		}
-		else if (exit_status == RESOURCE_OUT)
-		{
-			// let the remaining children work
-		}
-		else
-		{
-			Error("Unknown status from child", 1);
-		}
-		num_children_exited++;
-	}
+	EtableauWait(num_cores_available, workers, &status_reported);
 	
 	PStackFree(workers);
 	while (!PStackEmpty(buckets))
@@ -369,8 +342,11 @@ int Etableau(TableauControl_p tableaucontrol,
 		return 1;
 	}
 	// failure
-	fprintf(GlobalOut, "# ConnectionTableauProofSearch returns NULL. Failure.\n");
-	fprintf(GlobalOut, "# SZS status ResourceOut for %s\n", tableaucontrol->problem_name);
+	if (status_reported == false)
+	{
+		fprintf(GlobalOut, "# ConnectionTableauProofSearch returns NULL. Failure.\n");
+		fprintf(GlobalOut, "# SZS status ResourceOut for %s\n", tableaucontrol->problem_name);
+	}
 	return 0;
 }
 
@@ -837,5 +813,52 @@ void EtableauProofSearch(TableauControl_p tableaucontrol,
 		}
 		fprintf(GlobalOut, "# Increasing maximum depth to %d\n", current_depth + 1);
 	}
+	fprintf(GlobalOut, "# Ran out of tableaux... %d\n", RESOURCE_OUT);
 	exit(RESOURCE_OUT);
+}
+
+void KillTheWorkers(PStack_p workers)
+{
+	while (!PStackEmpty(workers))
+	{
+		pid_t remaining_child = (pid_t) PStackPopInt(workers);
+		kill(remaining_child, SIGTERM);
+	}
+}
+
+void EtableauWait(int num_cores_available, PStack_p workers, bool *status_reported)
+{
+	int num_children_exited = 0;
+	while (num_children_exited < num_cores_available)
+	{
+		int exit_status = -1;
+		int return_status = -1;
+		pid_t exited_child = wait(&exit_status);
+		if (WIFEXITED(exit_status))
+		{
+			return_status = WEXITSTATUS(exit_status);
+		}
+		else 
+		{
+			Error("Child did not exit normally", 1);
+		}
+		if (return_status == PROOF_FOUND)
+		{
+			// kill all the children and move towards exit
+			*status_reported = true;
+			KillTheWorkers(workers);
+			break;
+		}
+		else if (return_status == RESOURCE_OUT)
+		{
+			fprintf(GlobalOut, "# A child has run out of tableaux to operate on.\n");
+		}
+		else
+		{
+			fprintf(GlobalOut, "# Received strange output from child: %d\n", return_status);
+			KillTheWorkers(workers);
+			Error("Unknown status from child", 1);
+		}
+		num_children_exited++;
+	}
 }
