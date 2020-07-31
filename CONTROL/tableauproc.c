@@ -256,7 +256,8 @@ int Etableau(TableauControl_p tableaucontrol,
 	if (resulting_tab)
 	{
 		fprintf(GlobalOut, "# Found closed tableau during pool population.\n");
-		goto success_point;
+		EtableauStatusReport(tableaucontrol, active, resulting_tab);
+		goto exit_point;
 	}
 	///////////////////////////  Actually fork
 	assert(PStackGetSP(new_tableaux) > desired_number_of_starting_tableaux);
@@ -264,6 +265,7 @@ int Etableau(TableauControl_p tableaucontrol,
 	assert(TableauSetEmpty(distinct_tableaux_set));
 	
 	PStack_p buckets = PStackAlloc();
+	PStack_p workers = PStackAlloc();
 	for (int i=0; i < num_cores_available; i++)
 	{
 		PStackPushP(buckets, TableauSetAlloc());
@@ -290,36 +292,62 @@ int Etableau(TableauControl_p tableaucontrol,
 		{
 			TableauSet_p process_starting_tableaux = PStackElementP(buckets, i);
 			TableauSetMoveClauses(distinct_tableaux_set, process_starting_tableaux);
+			int starting_depth = 2;
 			// should be good to go...
-			break;
+			EtableauProofSearch(tableaucontrol, 
+									  proofstate, 
+									  proofcontrol, 
+									  distinct_tableaux_set,
+									  extension_candidates,
+									  active, 
+									  starting_depth,
+									  max_depth,
+									  new_tableaux);
 		}
 		else if (worker > 0) // parent
 		{
+			PStackPushInt(workers, (long) worker);
 			// go to wait
 		}
 		else Error("Fork error", 1);
 	}
 	
-	if (worker == 0)  // Only the workers will do proof search
+	// Wait for the children to exit...
+	int num_children_exited = 0;
+	while (num_children_exited < num_cores_available)
 	{
-		resulting_tab = EtableauProofSearch(tableaucontrol, 
-														proofstate, 
-														proofcontrol, 
-														distinct_tableaux_set,
-														extension_candidates, 
-														current_depth,
-														new_tableaux);
-	}
-	else  // The master will wait patiently here
-	{
+		int exit_status = -1;
+		pid_t exited_child = wait(&exit_status);
+		if (exit_status == PROOF_FOUND)
+		{
+			// kill all the children and move towards exit
+			while (!PStackEmpty(workers))
+			{
+				pid_t remaining_child = (pid_t) PStackPopInt(workers);
+				kill(remaining_child, SIGTERM);
+			}
+			break;
+		}
+		else if (exit_status == RESOURCE_OUT)
+		{
+			// let the remaining children work
+		}
+		else
+		{
+			Error("Unknown status from child", 1);
+		}
+		num_children_exited++;
 	}
 	
+	PStackFree(workers);
 	while (!PStackEmpty(buckets))
 	{
 		TableauSet_p trash = PStackPopP(buckets);
 		TableauSetFree(trash);
 	}
 	PStackFree(buckets);
+	
+	exit_point:
 	assert(TableauSetEmpty(distinct_tableaux_set));
 	printf("# Freeing tableaux trash\n");
 	TableauStackFreeTableaux(tableaucontrol->tableaux_trash);
@@ -771,14 +799,17 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
 	return distinct_tableaux_set;
 }
 
-ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
+void EtableauProofSearch(TableauControl_p tableaucontrol,
 									  ProofState_p proofstate,
 									  ProofControl_p proofcontrol,
 									  TableauSet_p distinct_tableaux_set,
 									  ClauseSet_p extension_candidates,
-									  int current_depth,
+									  ClauseSet_p active,
+									  int starting_depth,
+									  int max_depth,
 									  PStack_p new_tableaux)
 {
+	int current_depth = starting_depth;
 	ClauseTableau_p resulting_tab = NULL;
 	for (int current_depth = 2; current_depth < max_depth; current_depth++)
 	{
@@ -795,9 +826,8 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 		}
 		if (resulting_tab)  // We successfully found a closed tableau- handle it and report results
 		{
-			success_point:
 			EtableauStatusReport(tableaucontrol, active, resulting_tab);
-			break;
+			exit(PROOF_FOUND);  // 0 indicates success
 		}
 		fprintf(GlobalOut, "# Moving %ld tableaux to active set...\n", PStackGetSP(new_tableaux));
 		while (!PStackEmpty(new_tableaux))
@@ -807,5 +837,5 @@ ClauseTableau_p ConnectionTableauProofSearch(TableauControl_p tableaucontrol,
 		}
 		fprintf(GlobalOut, "# Increasing maximum depth to %d\n", current_depth + 1);
 	}
-	return resutling_tab;
+	exit(RESOURCE_OUT);
 }

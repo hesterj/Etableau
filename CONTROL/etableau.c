@@ -1,5 +1,4 @@
 #include <etableau.h>
-#include <cco_scheduling.h>
 #include <omp.h>
 
 // Forward declaration
@@ -168,7 +167,7 @@ int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proof
 		//fprintf(GlobalOut, "# Deep saturation check done\n");
 		if (success)
 		{
-			fprintf(GlobalOut, "# Saturate returned empty clause %p on a branch.\n", success);
+			//fprintf(GlobalOut, "# Saturate returned empty clause %p on a branch.\n", success);
 			//ProofStateStatisticsPrint(GlobalOut, proofstate);
 			return PROOF_FOUND;
 		}
@@ -207,7 +206,7 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 	
 	EtableauInsertBranchClausesIntoUnprocessed(proofstate, proofcontrol, branch);
 	
-	fprintf(GlobalOut, "# Beginning deep saturation check (%ld) d:%d\n", max_proc, branch->depth);
+	//fprintf(GlobalOut, "# Beginning deep saturation check (%ld) d:%d\n", max_proc, branch->depth);
 	proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding;
 	success = Saturate(proofstate, proofcontrol, max_proc,
 							 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
@@ -215,7 +214,7 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 	//fprintf(GlobalOut, "# Deep saturation check done\n");
 	if (success)
 	{
-		fprintf(GlobalOut, "# Saturate returned empty clause %p on branch %p with fewer than %ld processed.\n", success, branch, max_proc);
+		//fprintf(GlobalOut, "# Saturate returned empty clause %p on branch %p with fewer than %ld processed.\n", success, branch, max_proc);
 		//ProofStateStatisticsPrint(GlobalOut, proofstate);
 		return PROOF_FOUND;
 	}

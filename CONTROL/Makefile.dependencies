@@ -176,7 +176,8 @@ apr.o: apr.c /usr/include/stdc-predef.h ../include/apr.h \
  ../include/cco_factoring.h ../include/ccl_factor.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
- ../include/cco_proofproc.h /usr/include/time.h \
+ ../include/cco_proofproc.h ../include/cco_scheduling.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h /usr/include/time.h \
  /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
@@ -2726,8 +2727,10 @@ clausetableaux.o: clausetableaux.c /usr/include/stdc-predef.h \
  ../include/cco_factoring.h ../include/ccl_factor.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
- ../include/cco_proofproc.h ../include/apr.h ../include/clausetableaux.h \
- /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
+ ../include/cco_proofproc.h ../include/cco_scheduling.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h ../include/apr.h \
+ ../include/clausetableaux.h /usr/include/time.h \
+ /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
@@ -2929,8 +2932,9 @@ closure.o: closure.c /usr/include/stdc-predef.h ../include/closure.h \
  ../include/cco_factoring.h ../include/ccl_factor.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
- ../include/cco_proofproc.h ../include/apr.h /usr/include/time.h \
- /usr/include/x86_64-linux-gnu/bits/time.h \
+ ../include/cco_proofproc.h ../include/cco_scheduling.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h ../include/apr.h \
+ /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
@@ -3133,8 +3137,9 @@ etableau.o: etableau.c /usr/include/stdc-predef.h ../include/etableau.h \
  ../include/cco_factoring.h ../include/ccl_factor.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
- ../include/cco_proofproc.h ../include/apr.h /usr/include/time.h \
- /usr/include/x86_64-linux-gnu/bits/time.h \
+ ../include/cco_proofproc.h ../include/cco_scheduling.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h ../include/apr.h \
+ /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
@@ -3154,8 +3159,7 @@ etableau.o: etableau.c /usr/include/stdc-predef.h ../include/etableau.h \
  /usr/include/x86_64-linux-gnu/asm/sockios.h \
  /usr/include/asm-generic/sockios.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
- /usr/include/x86_64-linux-gnu/bits/in.h ../include/cco_scheduling.h \
- /usr/include/x86_64-linux-gnu/sys/wait.h \
+ /usr/include/x86_64-linux-gnu/bits/in.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/omp.h
 extension.o: extension.c /usr/include/stdc-predef.h extension.h \
  ../include/etableau.h ../include/foldingup.h ../include/closure.h \
@@ -3339,8 +3343,9 @@ extension.o: extension.c /usr/include/stdc-predef.h extension.h \
  ../include/cco_factoring.h ../include/ccl_factor.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
- ../include/cco_proofproc.h ../include/apr.h /usr/include/time.h \
- /usr/include/x86_64-linux-gnu/bits/time.h \
+ ../include/cco_proofproc.h ../include/cco_scheduling.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h ../include/apr.h \
+ /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
@@ -3543,8 +3548,9 @@ foldingup.o: foldingup.c /usr/include/stdc-predef.h \
  ../include/cco_factoring.h ../include/ccl_factor.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
- ../include/cco_proofproc.h ../include/apr.h /usr/include/time.h \
- /usr/include/x86_64-linux-gnu/bits/time.h \
+ ../include/cco_proofproc.h ../include/cco_scheduling.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h ../include/apr.h \
+ /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
@@ -3746,8 +3752,9 @@ localunification.o: localunification.c /usr/include/stdc-predef.h \
  ../include/cco_factoring.h ../include/ccl_factor.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
- ../include/cco_proofproc.h ../include/apr.h /usr/include/time.h \
- /usr/include/x86_64-linux-gnu/bits/time.h \
+ ../include/cco_proofproc.h ../include/cco_scheduling.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h ../include/apr.h \
+ /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
@@ -3951,8 +3958,9 @@ tableauproc.o: tableauproc.c /usr/include/stdc-predef.h tableauproc.h \
  ../include/cco_factoring.h ../include/ccl_factor.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
- ../include/cco_proofproc.h ../include/apr.h /usr/include/time.h \
- /usr/include/x86_64-linux-gnu/bits/time.h \
+ ../include/cco_proofproc.h ../include/cco_scheduling.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h ../include/apr.h \
+ /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
