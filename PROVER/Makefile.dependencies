@@ -3063,8 +3063,9 @@ eprover.o: eprover.c /usr/include/stdc-predef.h ../include/clb_defines.h \
  ../include/ccl_context_sr.h ../include/cco_factoring.h \
  ../include/ccl_factor.h ../include/cco_eqnresolving.h \
  ../include/ccl_eqnresolution.h ../include/cco_paramodulation.h \
- ../include/cco_interpreted.h ../include/cco_proofproc.h ../include/apr.h \
- /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
+ ../include/cco_interpreted.h ../include/cco_proofproc.h \
+ ../include/cco_proc_ctrl.h ../include/apr.h /usr/include/time.h \
+ /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \

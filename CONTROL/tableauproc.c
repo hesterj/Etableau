@@ -1,4 +1,6 @@
 #include "tableauproc.h"
+#define _GNU_SOURCE
+#include <fcntl.h>
 
 /*  Global Variables
 */
@@ -267,8 +269,9 @@ int Etableau(TableauControl_p tableaucontrol,
 	fprintf(GlobalOut, "# There are %ld tableaux, should be ready to fork.\n", PStackGetSP(new_tableaux));
 	assert(TableauSetEmpty(distinct_tableaux_set));
 	
+	EPCtrlSet_p process_set = EPCtrlSetAlloc();
+	
 	PStack_p buckets = PStackAlloc();
-	PStack_p workers = PStackAlloc();
 	for (int i=0; i < num_cores_available; i++)
 	{
 		PStackPushP(buckets, TableauSetAlloc());
@@ -285,6 +288,12 @@ int Etableau(TableauControl_p tableaucontrol,
 	
 	for (int i=0; i < num_cores_available; i++)
 	{
+		int pipefd[2];
+		EPCtrl_p proc = EPCtrlAlloc((char*) &i);
+		if (pipe(pipefd) == -1)
+		{
+			Error("# Pipe error", 1);
+		}
 		pid_t worker = fork();
 		if (worker == 0) // child process
 		{
@@ -292,6 +301,10 @@ int Etableau(TableauControl_p tableaucontrol,
 			TableauSetMoveClauses(distinct_tableaux_set, process_starting_tableaux);
 			int starting_depth = 2;
 			// should be good to go...
+			proc->pipe = fdopen(pipefd[1], "w");
+			GlobalOut = proc->pipe;
+			close(pipefd[0]);
+			tableaucontrol->process_control = proc;
 			EtableauProofSearch(tableaucontrol, 
 									  proofstate, 
 									  proofcontrol, 
@@ -304,22 +317,24 @@ int Etableau(TableauControl_p tableaucontrol,
 		}
 		else if (worker > 0) // parent
 		{
-			PStackPushInt(workers, (long) worker);
+			proc->pipe = fdopen(pipefd[0], "r");
+			close(pipefd[1]);
+			proc->pid = worker;
+			proc->fileno = worker; // Since the problem is transmitted through memory, the fileno is the pid
+			EPCtrlSetAddProc(process_set, proc);
 		}
 		else Error("Fork error", 1);
 	}
 	
 	// Wait for the children to exit...
-	EtableauWait(num_cores_available, workers, &status_reported);
-	
-	PStackFree(workers);
+	EtableauWait(num_cores_available, process_set, &status_reported);
 	while (!PStackEmpty(buckets))
 	{
 		TableauSet_p trash = PStackPopP(buckets);
 		TableauSetFree(trash);
 	}
 	PStackFree(buckets);
-	
+	////////////////////////////////
 	exit_point:
 	assert(TableauSetEmpty(distinct_tableaux_set));
 	printf("# Freeing tableaux trash\n");
@@ -817,16 +832,7 @@ void EtableauProofSearch(TableauControl_p tableaucontrol,
 	exit(RESOURCE_OUT);
 }
 
-void KillTheWorkers(PStack_p workers)
-{
-	while (!PStackEmpty(workers))
-	{
-		pid_t remaining_child = (pid_t) PStackPopInt(workers);
-		kill(remaining_child, SIGTERM);
-	}
-}
-
-void EtableauWait(int num_cores_available, PStack_p workers, bool *status_reported)
+void EtableauWait(int num_cores_available, EPCtrlSet_p process_set, bool *status_reported)
 {
 	int num_children_exited = 0;
 	while (num_children_exited < num_cores_available)
@@ -845,8 +851,25 @@ void EtableauWait(int num_cores_available, PStack_p workers, bool *status_report
 		if (return_status == PROOF_FOUND)
 		{
 			// kill all the children and move towards exit
+			EPCtrl_p successful_process = EPCtrlSetFindProc(process_set, exited_child);
+			if (successful_process)
+			{
+				fprintf(GlobalOut, "# Child has found a proof.\n");
+				fflush(GlobalOut);
+				char readbuf[EPCTRL_BUFSIZE];
+				int fd_in = fileno(successful_process->pipe);
+				char c;
+				read(fd_in, readbuf, EPCTRL_BUFSIZE);
+				fprintf(GlobalOut, "%s\n", readbuf);
+				fflush(GlobalOut);
+			}
+			else
+			{
+				Error("# A child reported success but could not be found...", 1);
+			}
+			EPCtrlSetFree(process_set, false);
 			*status_reported = true;
-			KillTheWorkers(workers);
+			//KillTheWorkers(workers);
 			break;
 		}
 		else if (return_status == RESOURCE_OUT)
@@ -856,7 +879,8 @@ void EtableauWait(int num_cores_available, PStack_p workers, bool *status_report
 		else
 		{
 			fprintf(GlobalOut, "# Received strange output from child: %d\n", return_status);
-			KillTheWorkers(workers);
+			EPCtrlSetFree(process_set, false);
+			//KillTheWorkers(workers);
 			Error("Unknown status from child", 1);
 		}
 		num_children_exited++;

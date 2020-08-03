@@ -177,8 +177,8 @@ apr.o: apr.c /usr/include/stdc-predef.h ../include/apr.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
  ../include/cco_proofproc.h ../include/cco_scheduling.h \
- /usr/include/x86_64-linux-gnu/sys/wait.h /usr/include/time.h \
- /usr/include/x86_64-linux-gnu/bits/time.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h ../include/cco_proc_ctrl.h \
+ /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
@@ -2728,8 +2728,8 @@ clausetableaux.o: clausetableaux.c /usr/include/stdc-predef.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
  ../include/cco_proofproc.h ../include/cco_scheduling.h \
- /usr/include/x86_64-linux-gnu/sys/wait.h ../include/apr.h \
- ../include/clausetableaux.h /usr/include/time.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h ../include/cco_proc_ctrl.h \
+ ../include/apr.h ../include/clausetableaux.h /usr/include/time.h \
  /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
@@ -2933,8 +2933,9 @@ closure.o: closure.c /usr/include/stdc-predef.h ../include/closure.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
  ../include/cco_proofproc.h ../include/cco_scheduling.h \
- /usr/include/x86_64-linux-gnu/sys/wait.h ../include/apr.h \
- /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h ../include/cco_proc_ctrl.h \
+ ../include/apr.h /usr/include/time.h \
+ /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
@@ -3138,8 +3139,9 @@ etableau.o: etableau.c /usr/include/stdc-predef.h ../include/etableau.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
  ../include/cco_proofproc.h ../include/cco_scheduling.h \
- /usr/include/x86_64-linux-gnu/sys/wait.h ../include/apr.h \
- /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h ../include/cco_proc_ctrl.h \
+ ../include/apr.h /usr/include/time.h \
+ /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
@@ -3344,8 +3346,9 @@ extension.o: extension.c /usr/include/stdc-predef.h extension.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
  ../include/cco_proofproc.h ../include/cco_scheduling.h \
- /usr/include/x86_64-linux-gnu/sys/wait.h ../include/apr.h \
- /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h ../include/cco_proc_ctrl.h \
+ ../include/apr.h /usr/include/time.h \
+ /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
@@ -3549,8 +3552,9 @@ foldingup.o: foldingup.c /usr/include/stdc-predef.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
  ../include/cco_proofproc.h ../include/cco_scheduling.h \
- /usr/include/x86_64-linux-gnu/sys/wait.h ../include/apr.h \
- /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h ../include/cco_proc_ctrl.h \
+ ../include/apr.h /usr/include/time.h \
+ /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
@@ -3753,8 +3757,9 @@ localunification.o: localunification.c /usr/include/stdc-predef.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
  ../include/cco_proofproc.h ../include/cco_scheduling.h \
- /usr/include/x86_64-linux-gnu/sys/wait.h ../include/apr.h \
- /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h ../include/cco_proc_ctrl.h \
+ ../include/apr.h /usr/include/time.h \
+ /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
@@ -3959,8 +3964,9 @@ tableauproc.o: tableauproc.c /usr/include/stdc-predef.h tableauproc.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
  ../include/cco_proofproc.h ../include/cco_scheduling.h \
- /usr/include/x86_64-linux-gnu/sys/wait.h ../include/apr.h \
- /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h ../include/cco_proc_ctrl.h \
+ ../include/apr.h /usr/include/time.h \
+ /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
@@ -3984,4 +3990,6 @@ tableauproc.o: tableauproc.c /usr/include/stdc-predef.h tableauproc.h \
  /usr/include/x86_64-linux-gnu/sys/sysinfo.h /usr/include/linux/kernel.h \
  /usr/include/linux/sysinfo.h /usr/include/linux/types.h \
  /usr/include/x86_64-linux-gnu/asm/types.h \
- /usr/include/asm-generic/types.h /usr/include/asm-generic/int-ll64.h
+ /usr/include/asm-generic/types.h /usr/include/asm-generic/int-ll64.h \
+ /usr/include/fcntl.h /usr/include/x86_64-linux-gnu/bits/fcntl.h \
+ /usr/include/x86_64-linux-gnu/bits/fcntl-linux.h

@@ -14,6 +14,7 @@
 #include <ccl_satinterface.h>
 #include <cco_proofproc.h>
 #include <cco_scheduling.h>
+#include <cco_proc_ctrl.h>
 #include <apr.h>
 #include <time.h>
 #include <arpa/inet.h>
@@ -178,6 +179,7 @@ typedef struct tableaucontrol_cell
 	bool satisfiable;
 	TableauStack_p tableaux_trash;
 	char *clausification_buffer;
+	EPCtrl_p process_control;
 }TableauControlCell, *TableauControl_p;
 
 #define TableauControlCellAlloc()    (TableauControlCell*)SizeMalloc(sizeof(TableauControlCell))

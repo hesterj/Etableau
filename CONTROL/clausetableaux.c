@@ -1163,6 +1163,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->proofcontrol = proofcontrol;
 	handle->tableaux_trash = PStackAlloc();
 	handle->clausification_buffer = NULL;
+	handle->process_control = NULL;
 	return handle;
 }
 

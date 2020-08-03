@@ -31,8 +31,7 @@ bool TFormulasShareVariables(Sig_p sig, TFormula_p a, TFormula_p b);
 long ClauseSetMoveUnits(ClauseSet_p set, ClauseSet_p units);
 long ClauseSetCopyUnits(TB_p bank, ClauseSet_p set, ClauseSet_p units);
 long ClauseSetFreeUnits(ClauseSet_p set);
-void KillTheWorkers(PStack_p workers);
-void EtableauWait(int num_cores_available, PStack_p workers, bool *status_reported);
+void EtableauWait(int num_cores_available, EPCtrlSet_p process_set, bool *status_reported);
 
 int Etableau(TableauControl_p tableaucontrol, 
 									ProofState_p proofstate, 
