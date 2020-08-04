@@ -48,7 +48,6 @@ void process_branch(ProofState_p proofstate,
 		ClauseTableau_p branch = branches[i];
 		assert(branches[i]);
 		SilentTimeOut = true;
-		//int branch_status = ECloseBranch(proofstate, proofcontrol, branch);
 		int branch_status = ECloseBranchProcessBranchFirst(proofstate, proofcontrol, branch);
 		//~ #ifndef DNDEBUG
 		//~ fprintf(GlobalOut, "# FORK FINAL REPORT %ld processed clauses, branch_status %d, branch %p\n", ProofStateProcCardinality(proofstate), branch_status, branch);
@@ -185,41 +184,41 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 	Clause_p success = NULL;
 	assert(proofstate);
 	assert(proofcontrol);
-	//long proc_limit = 500;
-	
-	// Do not deep saturate branches on very small tableaux
-	//if (GetTotalCPUTime() < (double) 10) max_proc = 50;
+	long selected_number_of_clauses_to_process = max_proc;
 	
 	// Process more clauses on tableaux with fewer open branches
-	if (branch->open_branches->members == 1 && max_proc != LONG_MAX && max_proc != 50)
+	switch (branch->open_branches->members)
 	{
-		max_proc = 10000;
+		case 1:
+		{
+			selected_number_of_clauses_to_process = 10000;
+			break;
+		}
+		case 2: 
+		{
+			selected_number_of_clauses_to_process = 1000;
+			break;
+		}
+		default: 
+		{
+			selected_number_of_clauses_to_process = 100;
+			break;
+		}
 	}
-	else if (branch->open_branches->members == 2 && max_proc != LONG_MAX && max_proc != 50)
-	{
-		max_proc = 1000;
-	}
-	else if (max_proc != LONG_MAX && max_proc != 50)
-	{
-		max_proc = 100;
-	}
+	
+	// Large number of clauses to process, for last ditch attempts
+	if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
 	
 	EtableauInsertBranchClausesIntoUnprocessed(proofstate, proofcontrol, branch);
 	
-	//fprintf(GlobalOut, "# Beginning deep saturation check (%ld) d:%d\n", max_proc, branch->depth);
 	proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver
-	success = Saturate(proofstate, proofcontrol, max_proc,
+	success = Saturate(proofstate, proofcontrol, selected_number_of_clauses_to_process,
 							 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
 							 LLONG_MAX, LONG_MAX);
-	//fprintf(GlobalOut, "# Deep saturation check done\n");
 	if (success)
 	{
-		//fprintf(GlobalOut, "# Saturate returned empty clause %p on branch %p with fewer than %ld processed.\n", success, branch, max_proc);
-		//ProofStateStatisticsPrint(GlobalOut, proofstate);
 		return PROOF_FOUND;
 	}
-	
-	//~ fprintf(GlobalOut, "# Surrendering\n");
 	return RESOURCE_OUT;
 }
 
@@ -347,6 +346,25 @@ int process_saturation_output(TableauControl_p tableau_control,
 		}
 	}
 	return successful_count;
+}
+
+int ECloseBranch(ProofState_p proofstate, 
+					  ProofControl_p proofcontrol,
+					  TableauControl_p tableaucontrol, 
+					  ClauseTableau_p branch)
+{
+	int status = process_branch_nofork(proofstate, 
+												  proofcontrol, 
+												  branch, 
+												  tableaucontrol, 
+												  10000);
+	if (status == PROOF_FOUND)
+	{
+		branch->open = false;
+		TableauSetExtractEntry(branch);
+		return PROOF_FOUND;
+	}
+	return RESOURCE_OUT;
 }
 
 int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_control, BranchSaturation_p jobs)

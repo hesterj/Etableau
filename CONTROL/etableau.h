@@ -24,14 +24,17 @@ BranchSaturation_p BranchSaturationAlloc(ProofState_p proofstate,
 													  ClauseTableau_p master,
 													  long max_proc);
 
-int ECloseBranch(ProofState_p proofstate, ProofControl_p proofcontrol, 
-					  ClauseTableau_p branch);
+
 int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proofcontrol, 
 					  ClauseTableau_p branch);
 int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate, 
 													  ProofControl_p proofcontrol, 
 													  ClauseTableau_p branch, 
 													  long max_proc);
+int ECloseBranch(ProofState_p proofstate, 
+					  ProofControl_p proofcontrol,
+					  TableauControl_p tableaucontrol, 
+					  ClauseTableau_p branch);
 int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, BranchSaturation_p jobs);
 int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_control, BranchSaturation_p jobs);
 

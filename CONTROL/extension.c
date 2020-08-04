@@ -225,7 +225,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 		SubstDelete(subst);
 		return NULL;
 	}
-	else // the extension is regular- add it to the new tabeleax to be processed later
+	else // the extension is regular- add it to the new tableaux to be processed later
 	{
 		PStackPushP(new_tableaux, parent->master);
 	}
@@ -239,9 +239,18 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	
 	FoldUpCloseCycle(parent->master);
 	
+	//~ for (int i=0; i<number_of_children; i++)
+	//~ {
+		//~ ClauseTableau_p child_branch = parent->children[i];
+		//~ if (child_branch->open && BranchIsLocal(child_branch))
+		//~ {
+			//~ ECloseBranch(tableau_control->proofstate, tableau_control->proofcontrol, tableau_control, child_branch);
+		//~ }
+	//~ }
+	
 	// The parent may have been completely closed and extracted
 	// from the collection of open branches during the foldup close
-	// cycle.
+	// cycle, or during E saturation proof search on a local branch.
 	
 	if (parent->open_branches->members == 0)
 	{
@@ -252,15 +261,8 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 		return parent->master;
 	}
 	
-	// We have tried to close the remaining branches with closure rule- try superposition
-	// on the remaining local branches.
 	assert(parent->master->state);
 	assert(parent->master->control);
-	
-	// The parent may have been completely closed and extracted
-	// from the collection of open branches during the foldup close
-	// cycle.
-	
 	assert(number_of_children == parent->arity);
 	assert(parent->arity == number_of_children);
 	assert(new_leaf_clauses_set->members == 0);

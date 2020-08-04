@@ -132,7 +132,7 @@ void EPCtrlCleanup(EPCtrl_p ctrl, bool delete_file)
    if(ctrl->pid)
    {
       kill(ctrl->pid, SIGTERM);
-      printf("# Sent a term signal to process %d\n", ctrl->pid);
+      printf("# Sent SIGTERM to process %d\n", ctrl->pid);
       ctrl->pid = 0;
    }
    if(ctrl->pipe)
