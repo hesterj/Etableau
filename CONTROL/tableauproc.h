@@ -31,7 +31,8 @@ bool TFormulasShareVariables(Sig_p sig, TFormula_p a, TFormula_p b);
 long ClauseSetMoveUnits(ClauseSet_p set, ClauseSet_p units);
 long ClauseSetCopyUnits(TB_p bank, ClauseSet_p set, ClauseSet_p units);
 long ClauseSetFreeUnits(ClauseSet_p set);
-void EtableauWait(int num_cores_available, EPCtrlSet_p process_set, bool *status_reported);
+bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set);
+int TableauControlGetCores(TableauControl_p tableaucontrol);
 
 int Etableau(TableauControl_p tableaucontrol, 
 									ProofState_p proofstate, 
@@ -39,7 +40,16 @@ int Etableau(TableauControl_p tableaucontrol,
 									TB_p bank, ClauseSet_p active, 
 									int max_depth, 
 									int tableauequality);
-void EtableauProofSearch(TableauControl_p tableaucontrol,
+bool EtableauProofSearch(TableauControl_p tableaucontrol,
+									  ProofState_p proofstate,
+									  ProofControl_p proofcontrol,
+									  TableauSet_p distinct_tableaux_set,
+									  ClauseSet_p extension_candidates,
+									  ClauseSet_p active,
+									  int starting_depth,
+									  int max_depth,
+									  PStack_p new_tableaux);
+bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 									  ProofState_p proofstate,
 									  ProofControl_p proofcontrol,
 									  TableauSet_p distinct_tableaux_set,

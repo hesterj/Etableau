@@ -41,6 +41,7 @@ typedef struct clausetableau
 	short mark_int;   // The number of steps up a node node was closed by.  0 if not closed by extension/closure
 	short folded_up;  // If the node has been folded up, this is the number of steps up it went
 	long id;  		   // If a clause was split on a node, this is the id of the clause used to split.
+	long previously_saturated;  // If  branch has already been saturated this amount or more, don't do it!
 	long max_var;     // f_code of the maximal variable in the tableau
 	//DStr_p info;    // Contains the substitution used to close this node
 	PStack_p local_variables; // The variables of the tableau that are local to the branch.
@@ -175,7 +176,7 @@ typedef struct tableaucontrol_cell
 	ClauseSet_p unprocessed;
 	TB_p terms;
 	bool branch_saturation_enabled; // Is branch saturation enabled?
-	bool multiprocessing_active;  // Have we reached enough tableaux to break the problem in to forks?
+	int multiprocessing_active;  // Have we reached enough tableaux to break the problem in to forks?
 	bool satisfiable;
 	TableauStack_p tableaux_trash;
 	char *clausification_buffer;
@@ -190,7 +191,8 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 												 char *problem_name, 
 												 ProofState_p proofstate, 
 												 ProofControl_p proofcontrol,
-												 bool branch_saturation_enabled);
+												 bool branch_saturation_enabled,
+												 int num_cores_to_use);
 void TableauControlFree(TableauControl_p trash);
 
 #endif

@@ -205,7 +205,7 @@ int Etableau(TableauControl_p tableaucontrol,
 											int tableauequality)
 {
 	if(geteuid() == 0) Error("# Please do not run Etableau as root.", 1);
-	bool status_reported = false;
+	bool proof_found = false;
 	problemType = PROBLEM_FO;
 	FunCode max_var = ClauseSetGetMaxVar(active);
 	tableaucontrol->unprocessed = ClauseSetCopy(bank, proofstate->unprocessed);
@@ -236,106 +236,33 @@ int Etableau(TableauControl_p tableaucontrol,
 	ClauseSetInsertSet(extension_candidates, start_rule_candidates);
 	ClauseSetFree(start_rule_candidates);
 	
-	int num_cores_available = get_nprocs();
-	assert(num_cores_available);
-	fprintf(GlobalOut, "# Number of cores available: %d\n", num_cores_available);
 	TableauStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extension rules.
 	
-	//  Create enough tableaux so that we can fork
-	assert(proofstate);
-	assert(proofcontrol);
-	assert(extension_candidates);
-	assert(new_tableaux);
-	assert(!ClauseSetEmpty(extension_candidates));
-	ClauseTableau_p resulting_tab = NULL;
-	int desired_number_of_starting_tableaux = num_cores_available;
-	resulting_tab = ConnectionTableauProofSearchPopulate(tableaucontrol, 
-																		 proofstate, 
-																		 proofcontrol, 
-																		 distinct_tableaux_set,
-																		 extension_candidates, 
-																		 3,
-																		 new_tableaux,
-																		 desired_number_of_starting_tableaux);
-	if (resulting_tab)
+	if (tableaucontrol->multiprocessing_active) // multiprocess proof search
 	{
-		fprintf(GlobalOut, "# Found closed tableau during pool population.\n");
-		EtableauStatusReport(tableaucontrol, active, resulting_tab);
-		status_reported = true;
-		goto exit_point;
+		proof_found = EtableauMultiprocess(tableaucontrol, 
+								  proofstate, 
+								  proofcontrol, 
+								  distinct_tableaux_set,
+								  extension_candidates,
+								  active, 
+								  3, // starting depth
+								  max_depth,
+								  new_tableaux);
 	}
-	///////////////////////////  Actually fork
-	assert(PStackGetSP(new_tableaux) > desired_number_of_starting_tableaux);
-	fprintf(GlobalOut, "# There are %ld tableaux, should be ready to fork.\n", PStackGetSP(new_tableaux));
-	assert(TableauSetEmpty(distinct_tableaux_set));
-	
-	EPCtrlSet_p process_set = EPCtrlSetAlloc();
-	
-	PStack_p buckets = PStackAlloc();
-	for (int i=0; i < num_cores_available; i++)
+	else // single core with this process
 	{
-		PStackPushP(buckets, TableauSetAlloc());
+		proof_found = EtableauProofSearch(tableaucontrol, 
+						  proofstate, 
+						  proofcontrol, 
+						  distinct_tableaux_set,
+						  extension_candidates,
+						  active, 
+						  3, // starting depth
+						  max_depth,
+						  new_tableaux);
 	}
-	int tableaux_distributor = 0;
-	while (!PStackEmpty(new_tableaux))
-	{
-		tableaux_distributor = tableaux_distributor % num_cores_available;
-		ClauseTableau_p tab = PStackPopP(new_tableaux);
-		TableauSet_p process_bucket = PStackElementP(buckets, tableaux_distributor);
-		TableauSetInsert(process_bucket, tab);
-		tableaux_distributor++;
-	}
-	
-	for (int i=0; i < num_cores_available; i++)
-	{
-		int pipefd[2];
-		EPCtrl_p proc = EPCtrlAlloc((char*) &i);
-		if (pipe(pipefd) == -1)
-		{
-			Error("# Pipe error", 1);
-		}
-		pid_t worker = fork();
-		if (worker == 0) // child process
-		{
-			TableauSet_p process_starting_tableaux = PStackElementP(buckets, i);
-			TableauSetMoveClauses(distinct_tableaux_set, process_starting_tableaux);
-			int starting_depth = 2;
-			// should be good to go...
-			proc->pipe = fdopen(pipefd[1], "w");
-			GlobalOut = proc->pipe;
-			close(pipefd[0]);
-			tableaucontrol->process_control = proc;
-			EtableauProofSearch(tableaucontrol, 
-									  proofstate, 
-									  proofcontrol, 
-									  distinct_tableaux_set,
-									  extension_candidates,
-									  active, 
-									  starting_depth,
-									  max_depth,
-									  new_tableaux);
-		}
-		else if (worker > 0) // parent
-		{
-			proc->pipe = fdopen(pipefd[0], "r");
-			close(pipefd[1]);
-			proc->pid = worker;
-			proc->fileno = worker; // Since the problem is transmitted through memory, the fileno is the pid
-			EPCtrlSetAddProc(process_set, proc);
-		}
-		else Error("Fork error", 1);
-	}
-	
-	// Wait for the children to exit...
-	EtableauWait(num_cores_available, process_set, &status_reported);
-	while (!PStackEmpty(buckets))
-	{
-		TableauSet_p trash = PStackPopP(buckets);
-		TableauSetFree(trash);
-	}
-	PStackFree(buckets);
-	////////////////////////////////
-	exit_point:
+
 	assert(TableauSetEmpty(distinct_tableaux_set));
 	printf("# Freeing tableaux trash\n");
 	TableauStackFreeTableaux(tableaucontrol->tableaux_trash);
@@ -350,16 +277,15 @@ int Etableau(TableauControl_p tableaucontrol,
 	
 	// Memory is cleaned up...
 	
-   if (resulting_tab) // success
+   if (proof_found) // success
    {
 		printf("# Proof search success for %s!\n", tableaucontrol->problem_name);
 		//ClauseTableauPrintDOTGraph(resulting_tab);
 		return 1;
 	}
 	// failure
-	if (status_reported == false)
+	if (proof_found == false)
 	{
-		fprintf(GlobalOut, "# ConnectionTableauProofSearch returns NULL. Failure.\n");
 		fprintf(GlobalOut, "# SZS status ResourceOut for %s\n", tableaucontrol->problem_name);
 	}
 	return 0;
@@ -790,7 +716,7 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
 	return distinct_tableaux_set;
 }
 
-void EtableauProofSearch(TableauControl_p tableaucontrol,
+bool EtableauProofSearch(TableauControl_p tableaucontrol,
 									  ProofState_p proofstate,
 									  ProofControl_p proofcontrol,
 									  TableauSet_p distinct_tableaux_set,
@@ -800,7 +726,7 @@ void EtableauProofSearch(TableauControl_p tableaucontrol,
 									  int max_depth,
 									  PStack_p new_tableaux)
 {
-	int current_depth = starting_depth;
+	OutputLevel = 0;
 	ClauseTableau_p resulting_tab = NULL;
 	for (int current_depth = 2; current_depth < max_depth; current_depth++)
 	{
@@ -818,7 +744,8 @@ void EtableauProofSearch(TableauControl_p tableaucontrol,
 		if (resulting_tab)  // We successfully found a closed tableau- handle it and report results
 		{
 			EtableauStatusReport(tableaucontrol, active, resulting_tab);
-			exit(PROOF_FOUND);  // 0 indicates success
+			if (tableaucontrol->multiprocessing_active) exit(PROOF_FOUND);
+			return true;		
 		}
 		fprintf(GlobalOut, "# Moving %ld tableaux to active set...\n", PStackGetSP(new_tableaux));
 		while (!PStackEmpty(new_tableaux))
@@ -829,11 +756,13 @@ void EtableauProofSearch(TableauControl_p tableaucontrol,
 		fprintf(GlobalOut, "# Increasing maximum depth to %d\n", current_depth + 1);
 	}
 	fprintf(GlobalOut, "# Ran out of tableaux... %d\n", RESOURCE_OUT);
-	exit(RESOURCE_OUT);
+	if (tableaucontrol->multiprocessing_active) exit(RESOURCE_OUT);
+	return false;
 }
 
-void EtableauWait(int num_cores_available, EPCtrlSet_p process_set, bool *status_reported)
+bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 {
+	bool proof_found = false;
 	int num_children_exited = 0;
 	while (num_children_exited < num_cores_available)
 	{
@@ -854,11 +783,11 @@ void EtableauWait(int num_cores_available, EPCtrlSet_p process_set, bool *status
 			EPCtrl_p successful_process = EPCtrlSetFindProc(process_set, exited_child);
 			if (successful_process)
 			{
+				proof_found = true;
 				fprintf(GlobalOut, "# Child has found a proof.\n");
 				fflush(GlobalOut);
 				char readbuf[EPCTRL_BUFSIZE];
 				int fd_in = fileno(successful_process->pipe);
-				char c;
 				read(fd_in, readbuf, EPCTRL_BUFSIZE);
 				fprintf(GlobalOut, "%s\n", readbuf);
 				fflush(GlobalOut);
@@ -868,7 +797,6 @@ void EtableauWait(int num_cores_available, EPCtrlSet_p process_set, bool *status
 				Error("# A child reported success but could not be found...", 1);
 			}
 			EPCtrlSetFree(process_set, false);
-			*status_reported = true;
 			//KillTheWorkers(workers);
 			break;
 		}
@@ -885,4 +813,125 @@ void EtableauWait(int num_cores_available, EPCtrlSet_p process_set, bool *status
 		}
 		num_children_exited++;
 	}
+	return proof_found;
+}
+
+bool EtableauMultiprocess(TableauControl_p tableaucontrol,
+									  ProofState_p proofstate,
+									  ProofControl_p proofcontrol,
+									  TableauSet_p distinct_tableaux_set,
+									  ClauseSet_p extension_candidates,
+									  ClauseSet_p active,
+									  int starting_depth,
+									  int max_depth,
+									  PStack_p new_tableaux)
+{
+	OutputLevel = 0;
+	bool proof_found = false;
+	int num_cores_available = TableauControlGetCores(tableaucontrol);
+	assert(num_cores_available);
+	fprintf(GlobalOut, "# Number of cores available: %d\n", num_cores_available);
+	//  Create enough tableaux so that we can fork
+	assert(proofstate);
+	assert(proofcontrol);
+	assert(extension_candidates);
+	assert(new_tableaux);
+	assert(!ClauseSetEmpty(extension_candidates));
+	ClauseTableau_p resulting_tab = NULL;
+	int desired_number_of_starting_tableaux = num_cores_available;
+	resulting_tab = ConnectionTableauProofSearchPopulate(tableaucontrol, 
+																		 proofstate, 
+																		 proofcontrol, 
+																		 distinct_tableaux_set,
+																		 extension_candidates, 
+																		 3,
+																		 new_tableaux,
+																		 desired_number_of_starting_tableaux);
+	if (resulting_tab)
+	{
+		fprintf(GlobalOut, "# Found closed tableau during pool population.\n");
+		EtableauStatusReport(tableaucontrol, active, resulting_tab);
+		return true;
+	}
+	///////////////////////////  Actually fork
+	assert(PStackGetSP(new_tableaux) > desired_number_of_starting_tableaux);
+	fprintf(GlobalOut, "# There are %ld tableaux, should be ready to fork.\n", PStackGetSP(new_tableaux));
+	assert(TableauSetEmpty(distinct_tableaux_set));
+	
+	EPCtrlSet_p process_set = EPCtrlSetAlloc();
+	
+	PStack_p buckets = PStackAlloc();
+	for (int i=0; i < num_cores_available; i++)
+	{
+		PStackPushP(buckets, TableauSetAlloc());
+	}
+	int tableaux_distributor = 0;
+	while (!PStackEmpty(new_tableaux))
+	{
+		tableaux_distributor = tableaux_distributor % num_cores_available;
+		ClauseTableau_p tab = PStackPopP(new_tableaux);
+		TableauSet_p process_bucket = PStackElementP(buckets, tableaux_distributor);
+		TableauSetInsert(process_bucket, tab);
+		tableaux_distributor++;
+	}
+	
+	for (int i=0; i < num_cores_available; i++)
+	{
+		int pipefd[2];
+		EPCtrl_p proc = EPCtrlAlloc((char*) &i);
+		if (pipe(pipefd) == -1)
+		{
+			Error("# Pipe error", 1);
+		}
+		pid_t worker = fork();
+		if (worker == 0) // child process
+		{
+			TableauSet_p process_starting_tableaux = PStackElementP(buckets, i);
+			TableauSetMoveClauses(distinct_tableaux_set, process_starting_tableaux);
+			int starting_depth = 2;
+			// should be good to go...
+			proc->pipe = fdopen(pipefd[1], "w");
+			GlobalOut = proc->pipe;
+			close(pipefd[0]);
+			tableaucontrol->process_control = proc;
+			EtableauProofSearch(tableaucontrol, 
+									  proofstate, 
+									  proofcontrol, 
+									  distinct_tableaux_set,
+									  extension_candidates,
+									  active, 
+									  starting_depth,
+									  max_depth,
+									  new_tableaux);
+		}
+		else if (worker > 0) // parent
+		{
+			proc->pipe = fdopen(pipefd[0], "r");
+			close(pipefd[1]);
+			proc->pid = worker;
+			proc->fileno = worker; // Since the problem is transmitted through memory, the fileno is the pid
+			EPCtrlSetAddProc(process_set, proc);
+		}
+		else Error("Fork error", 1);
+	}
+	
+	// Wait for the children to exit...
+	proof_found = EtableauWait(num_cores_available, process_set);
+	while (!PStackEmpty(buckets))
+	{
+		TableauSet_p trash = PStackPopP(buckets);
+		TableauSetFree(trash);
+	}
+	PStackFree(buckets);
+	return proof_found;
+}
+
+int TableauControlGetCores(TableauControl_p tableaucontrol)
+{
+	int num_cores = tableaucontrol->multiprocessing_active;
+	if (num_cores == 1)
+	{
+		num_cores = get_nprocs();
+	}
+	return num_cores;
 }

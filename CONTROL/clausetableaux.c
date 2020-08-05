@@ -17,6 +17,7 @@ ClauseTableau_p ClauseTableauAlloc()
 	handle->position = 0;
 	handle->arity = 0;
 	handle->unit_axioms = NULL;
+	handle->previously_saturated = 0;
 	//handle->mark = NULL;
 	handle->mark_int = 0;
 	handle->folded_up = 0;
@@ -63,6 +64,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	PStackPushP(handle->derivation, tab);
 	handle->tmp_label = NULL;
 	handle->arity = tab->arity;
+	handle->previously_saturated = tab->previously_saturated;
 	//~ char *info = DStrCopy(tab->info);
 	//~ handle->info = DStrAlloc();
 	//~ DStrAppendStr(handle->info, info);
@@ -152,6 +154,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	handle->open_branches = parent->open_branches;
 	handle->control = parent->control;
 	handle->set = NULL;
+	handle->previously_saturated = tab->previously_saturated;
 	handle->id = tab->id;
 	handle->step = tab->step;
 	handle->max_step = tab->max_step;
@@ -239,6 +242,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->max_step = 0;
 	handle->depth = parent->depth + 1;
 	handle->position = position;
+	handle->previously_saturated = 0;
 	handle->unit_axioms = NULL;
 	handle->open_branches = parent->open_branches;
 	handle->label = label;
@@ -1147,7 +1151,8 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 												 char *problem_name, 
 												 ProofState_p proofstate, 
 												 ProofControl_p proofcontrol,
-												 bool branch_saturation_enabled)
+												 bool branch_saturation_enabled,
+												 int num_cores_to_use)
 {
 	TableauControl_p handle = TableauControlCellAlloc();
 	handle->terms = NULL; // The termbank for this tableau control..
@@ -1155,7 +1160,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->closed_tableau = NULL;
 	handle->branch_saturation_enabled = branch_saturation_enabled;
 	handle->satisfiable = false;
-	handle->multiprocessing_active = false;
+	handle->multiprocessing_active = num_cores_to_use;
 	handle->unprocessed = NULL;
 	handle->problem_name = problem_name;
 	handle->neg_conjectures = neg_conjectures;

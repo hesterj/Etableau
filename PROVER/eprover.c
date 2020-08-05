@@ -104,8 +104,8 @@ ProblemType problemType  = PROBLEM_NOT_INIT;
 
 int TableauOptions = 0; // John
 int TableauDepth = 2;
-int TableauBatch = 1;
 int TableauEquality = 0;
+int TableauCores = 0;
 bool TableauSaturation = false;
 
 /*---------------------------------------------------------------------*/
@@ -553,7 +553,12 @@ int main(int argc, char* argv[])
 
 	if (TableauOptions == 1)
 	{
-		TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures, argv[argc-1], proofstate, proofcontrol, TableauSaturation);
+		TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures, 
+																				argv[argc-1], // the problem file
+																				proofstate, 
+																				proofcontrol, 
+																				TableauSaturation,
+																				TableauCores);
 		//TB_p tableau_terms = TBAlloc(proofstate->terms->sig);
 		printf("# Number of axioms: %ld Number of unprocessed: %ld\n", proofstate->axioms->members, 
 																						 proofstate->unprocessed->members);
@@ -567,36 +572,35 @@ int main(int argc, char* argv[])
 			source = &proofstate->axioms;
 		}
 		printf("# Tableaux proof search.\n");
-		if (TableauBatch == 1)
+		
+		FILE *clausification_stream;
+		char *buf;
+		size_t len;
+		clausification_stream = open_memstream (&buf, &len);
+		if (clausification_stream == NULL)
 		{
-			FILE *clausification_stream;
-			char *buf;
-			size_t len;
-			clausification_stream = open_memstream (&buf, &len);
-			if (clausification_stream == NULL)
-			{
-				fprintf(GlobalOut, "# Clausification stream error.\n");
-			}
-			ClauseSetPushClauses(proofstate->extract_roots, *source);
-			DerivationComputeAndPrint(clausification_stream,
-									  sat_status,
-									  proofstate->extract_roots,
-									  proofstate->signature,
-									  POEtableau,
-									  false);
-			PStackReset(proofstate->extract_roots);
-			fclose(clausification_stream);
-			tableaucontrol->clausification_buffer = buf;
-			// This is the entry point for tableaux proof search
-			Etableau(tableaucontrol, 
-						proofstate, 
-						proofcontrol, 
-						proofstate->terms, 
-						new_axioms, 
-						TableauDepth, 
-						TableauEquality);
-			free(buf); // Do not free buf until the search is done
+			fprintf(GlobalOut, "# Clausification stream error.\n");
 		}
+		ClauseSetPushClauses(proofstate->extract_roots, *source);
+		DerivationComputeAndPrint(clausification_stream,
+								  sat_status,
+								  proofstate->extract_roots,
+								  proofstate->signature,
+								  POEtableau,
+								  false);
+		PStackReset(proofstate->extract_roots);
+		fclose(clausification_stream);
+		tableaucontrol->clausification_buffer = buf;
+		// This is the entry point for tableaux proof search
+		Etableau(tableaucontrol, 
+					proofstate, 
+					proofcontrol, 
+					proofstate->terms, 
+					new_axioms, 
+					TableauDepth, 
+					TableauEquality);
+		free(buf); // Do not free buf until the search is done
+			
 		printf("# Exiting...\n");
 		ClauseSetFree(new_axioms);
 		TableauControlFree(tableaucontrol);
@@ -937,6 +941,9 @@ CLState_p process_options(int argc, char* argv[])
    {
       switch(handle->option_code)
       {
+		case OPT_TABLEAU_CORES:
+			TableauCores = CLStateGetIntArg(handle, arg);
+			break;
 		case OPT_TABLEAU_SATURATION:
 			if (strcmp(arg, "1") == 0)
 			{
@@ -974,9 +981,6 @@ CLState_p process_options(int argc, char* argv[])
 			}
 		case OPT_TABLEAU_DEPTH:
 				TableauDepth = CLStateGetIntArg(handle, arg);
-				break;
-		case OPT_TABLEAU_BATCH:
-				TableauBatch = CLStateGetIntArg(handle, arg);
 				break;
       case OPT_VERBOSE:
             Verbose = CLStateGetIntArg(handle, arg);

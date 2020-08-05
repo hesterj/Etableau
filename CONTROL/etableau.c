@@ -71,6 +71,39 @@ int process_branch_nofork(ProofState_p proofstate,
 						  TableauControl_p tableau_control,
 						  long max_proc)
 {
+	long selected_number_of_clauses_to_process = max_proc;
+	long previously_saturated = branch->previously_saturated; 
+	
+	// Process more clauses on tableaux with fewer open branches
+	switch (branch->open_branches->members)
+	{
+		case 1:
+		{
+			selected_number_of_clauses_to_process = 10000;
+			break;
+		}
+		case 2: 
+		{
+			selected_number_of_clauses_to_process = 1000;
+			break;
+		}
+		default: 
+		{
+			selected_number_of_clauses_to_process = 100;
+			break;
+		}
+	}
+	
+	// Do not duplicate work.
+	if (previously_saturated >= selected_number_of_clauses_to_process)
+	{
+		fprintf(GlobalOut, "# Duplicate work avoided.\n");
+		return RESOURCE_OUT;
+	}
+	
+	// Large number of clauses to process, for last ditch attempts
+	if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
+	
 	SilentTimeOut = true;
 	proofcontrol->heuristic_parms.prefer_initial_clauses = true;
 	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
@@ -79,7 +112,7 @@ int process_branch_nofork(ProofState_p proofstate,
 	int branch_status = ECloseBranchProcessBranchFirstSerial(proofstate, 
 																				proofcontrol, 
 																				branch, 
-																				max_proc);
+																				selected_number_of_clauses_to_process);
 	EtableauProofStateResetClauseSets(proofstate);
 	ClauseSetFree(unprocessed);
 	return branch_status;
@@ -184,35 +217,11 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 	Clause_p success = NULL;
 	assert(proofstate);
 	assert(proofcontrol);
-	long selected_number_of_clauses_to_process = max_proc;
-	
-	// Process more clauses on tableaux with fewer open branches
-	switch (branch->open_branches->members)
-	{
-		case 1:
-		{
-			selected_number_of_clauses_to_process = 10000;
-			break;
-		}
-		case 2: 
-		{
-			selected_number_of_clauses_to_process = 1000;
-			break;
-		}
-		default: 
-		{
-			selected_number_of_clauses_to_process = 100;
-			break;
-		}
-	}
-	
-	// Large number of clauses to process, for last ditch attempts
-	if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
 	
 	EtableauInsertBranchClausesIntoUnprocessed(proofstate, proofcontrol, branch);
 	
 	proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver
-	success = Saturate(proofstate, proofcontrol, selected_number_of_clauses_to_process,
+	success = Saturate(proofstate, proofcontrol, max_proc,
 							 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
 							 LLONG_MAX, LONG_MAX);
 	if (success)
@@ -347,6 +356,10 @@ int process_saturation_output(TableauControl_p tableau_control,
 	}
 	return successful_count;
 }
+
+/*  ONLY call this function on a branch if it is local!
+ *  Otherwise the prover becomes unsound!
+*/
 
 int ECloseBranch(ProofState_p proofstate, 
 					  ProofControl_p proofcontrol,

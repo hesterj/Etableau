@@ -189,9 +189,9 @@ typedef enum
    OPT_APP_ENCODE,
    OPT_TABLEAU,
    OPT_TABLEAU_DEPTH,
-   OPT_TABLEAU_BATCH,
    OPT_TABLEAU_EQUALITY,
    OPT_TABLEAU_SATURATION,
+   OPT_TABLEAU_CORES,
    OPT_DUMMY
 }OptionCodes;
 
@@ -1431,7 +1431,6 @@ OptCell opts[] =
 		 ReqArg, NULL,
 		 "0: Do not attempt creation of any tableaux."
 		 "1: Build a tableau at start of proof search."
-		 "2: Build tableaux during proof search.  This is unsupported and likely does not work."
 	 },
 	 {
 		 OPT_TABLEAU_DEPTH,
@@ -1440,14 +1439,6 @@ OptCell opts[] =
 		 "Specify an integer."
 		 "This is the max depth of tableaux used in proof search."
 		 "Default is 10."
-	 },
-	 {
-		 OPT_TABLEAU_BATCH,
-		 '\0', "tableau-batch",
-		 OptArg, "1",
-		 "Specify an integer."
-		 "This is an antiquated option.  The default is 1, so don't change it."
-		 "The default 1 causes proof search in batch mode, which works better and uses more memory."
 	 },
 	 {
 		 OPT_TABLEAU_EQUALITY,
@@ -1463,8 +1454,17 @@ OptCell opts[] =
 		 '\0', "tableau-saturation",
 		 OptArg, "0",
 		 "Specify an integer."
-		 "The defualt 0 means that no tableau saturation will be done."
+		 "The default 0 means that no tableau saturation will be done."
 		 "If this is enabled (1), local branches of tableaux may be saturated with the superposition calculus."
+	 },
+	 {
+		 OPT_TABLEAU_CORES,
+		 '\0', "tableau-cores",
+		 OptArg, "0",
+		 "Specify an integer."
+		 "The defualt 0 means that a single core will be used by Etableau."
+		 "1 will use all available cores.  Otherwise, the specified number of cores will be used."
+		 "Specifically, the prover will create n processes.  Do not use more processes than there are cores."
 	 },
 
    {OPT_NOOPT,
