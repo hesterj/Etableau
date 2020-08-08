@@ -688,17 +688,20 @@ Clause_p ClauseApplySubst(Clause_p clause,  TB_p bank, Subst_p subst)
 
 Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
 {
+	assert(tableau);
+	assert(tableau->master);
+	assert(tableau->master->terms);
+	assert(tableau->master->terms->vars);
    PTree_p variable_tree = NULL;
    PStack_p variables;
    PStackPointer p;
    Subst_p subst;
    Term_p old_var, fresh_var;
    Clause_p handle;
-   VarBank_p variable_bank;
+   VarBank_p variable_bank = tableau->master->terms->vars;
    
    assert(clause);
    
-   variable_bank = tableau->master->terms->vars;
    variables = PStackAlloc();
    //VarBankSetVCountsToUsed(variable_bank);
    subst = SubstAlloc();

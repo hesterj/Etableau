@@ -235,6 +235,7 @@ int Etableau(TableauControl_p tableaucontrol,
 	ClauseSetFreeUnits(start_rule_candidates);
 	ClauseSetInsertSet(extension_candidates, start_rule_candidates);
 	ClauseSetFree(start_rule_candidates);
+	fprintf(GlobalOut, "# %ld start rule tableaux created.\n", distinct_tableaux_set->members);
 	
 	TableauStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extension rules.
 	
@@ -310,75 +311,6 @@ ClauseTableau_p ConnectionTableauProofSearchAtDepth(TableauControl_p tableaucont
 																	 TableauSet_p distinct_tableaux_set,
 																	 ClauseSet_p extension_candidates,
 																	 int max_depth,
-																	 TableauStack_p new_tableaux)
-{
-	assert(distinct_tableaux_set);
-	ClauseTableau_p active_tableau = NULL;
-	ClauseTableau_p closed_tableau = NULL;
-	TableauStack_p max_depth_tableaux = PStackAlloc();
-	TableauStack_p newly_created_tableaux = PStackAlloc();
-	
-	while (!TableauSetEmpty(distinct_tableaux_set))
-	{
-		//fprintf(GlobalOut, "# %ld\n", i);
-		active_tableau = tableau_select(tableaucontrol, distinct_tableaux_set);
-		assert(active_tableau);
-		assert(active_tableau->label);
-		assert(active_tableau->master == active_tableau);
-		assert(active_tableau->open_branches);
-		TableauSetExtractEntry(active_tableau);
-		ClauseTableau_ref selected_ref = &active_tableau;
-		
-		// At this point, there could be tableaux to be extended on at this depth in newly_created_tableaux
-		do  // Attempt to create extension tableaux until they are all at max depth or a closed tableau is found
-		{
-			closed_tableau = ConnectionCalculusExtendOpenBranches(*selected_ref, 
-																				newly_created_tableaux, 
-																				tableaucontrol,
-																				NULL,
-																				extension_candidates,
-																				max_depth, max_depth_tableaux);
-			if (closed_tableau)
-			{
-				assert(tableaucontrol->closed_tableau);
-				PStackPushStack(new_tableaux, newly_created_tableaux);
-				TableauSetDrainToStack(tableaucontrol->tableaux_trash, distinct_tableaux_set);
-				assert(TableauSetEmpty(distinct_tableaux_set));
-				goto return_point;
-			}
-			else if (PStackEmpty(newly_created_tableaux)) break;
-			ClauseTableau_p new = PStackPopP(newly_created_tableaux);
-			selected_ref = &new;
-		} while (true);
-		PStackReset(newly_created_tableaux);
-	}
-	return_point:
-	PStackPushStack(new_tableaux, max_depth_tableaux);
-	PStackFree(max_depth_tableaux);
-	PStackFree(newly_created_tableaux);
-	// Went through all possible tableaux at this depth...
-	return closed_tableau;
-}
-
-
-/*-----------------------------------------------------------------------
-//
-// Function: ConnectionTableauProofSearchPopulate(...)
-//
-//   As ConnectionTableauProofSearchAtDepth, but used to populate
-//   the collection of tableaux so that there are enough to split
-//   into multiple processes.  
-//
-// Side Effects    :  Calls Saturate, so many.
-//
-/----------------------------------------------------------------------*/
-
-ClauseTableau_p ConnectionTableauProofSearchPopulate(TableauControl_p tableaucontrol,
-																	 ProofState_p proofstate, 
-																	 ProofControl_p proofcontrol, 
-																	 TableauSet_p distinct_tableaux_set,
-																	 ClauseSet_p extension_candidates,
-																	 int max_depth,
 																	 TableauStack_p new_tableaux,
 																	 int desired_num_tableaux)
 {
@@ -390,7 +322,7 @@ ClauseTableau_p ConnectionTableauProofSearchPopulate(TableauControl_p tableaucon
 	
 	while (!TableauSetEmpty(distinct_tableaux_set))
 	{
-		//fprintf(GlobalOut, "# %ld\n", i);
+		fprintf(GlobalOut, "# %ld\n", distinct_tableaux_set->members);
 		active_tableau = tableau_select(tableaucontrol, distinct_tableaux_set);
 		assert(active_tableau);
 		assert(active_tableau->label);
@@ -418,6 +350,7 @@ ClauseTableau_p ConnectionTableauProofSearchPopulate(TableauControl_p tableaucon
 				assert(TableauSetEmpty(distinct_tableaux_set));
 				goto return_point;
 			}
+#ifdef ETAB_POPULATE
 			else if (num_tableaux > desired_num_tableaux)
 			{
 				//  There can be tableaux in the distinct tableaux set, newly created tableaux, or max_depth_tableaux
@@ -426,6 +359,7 @@ ClauseTableau_p ConnectionTableauProofSearchPopulate(TableauControl_p tableaucon
 				assert(PStackGetSP(new_tableaux) >= desired_num_tableaux);
 				goto return_point;
 			}
+#endif
 			else if (PStackEmpty(newly_created_tableaux)) break;
 			ClauseTableau_p new = PStackPopP(newly_created_tableaux);
 			selected_ref = &new;
@@ -460,15 +394,19 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 																							ClauseSet_p extension_candidates,
 																							int max_depth, TableauStack_p max_depth_tableaux)
 {
+	assert(active_tableau);
+	assert(active_tableau->open_branches);
 	TableauStack_p tab_tmp_store = PStackAlloc();
 	ClauseTableau_p closed_tableau = NULL;
 	int number_of_extensions = 0;
 	int num_branches_at_max_depth = 0;
+	fprintf(GlobalOut, "d: %d\n", active_tableau->depth);
 	
 	TableauSet_p open_branches = active_tableau->open_branches;
 	ClauseTableau_p open_branch = active_tableau->open_branches->anchor->succ;
 	while (open_branch != active_tableau->open_branches->anchor) // iterate over the open branches of the current tableau
 	{
+		fprintf(GlobalOut, "! %d %ld\n", open_branch->depth, open_branches->members);
 		if (open_branch->depth > max_depth)
 		{
 			open_branch = open_branch->succ;
@@ -736,7 +674,8 @@ bool EtableauProofSearch(TableauControl_p tableaucontrol,
 																			 distinct_tableaux_set,
 																			 extension_candidates, 
 																			 current_depth,
-																			 new_tableaux);
+																			 new_tableaux,
+																			 0);
 		if (PStackEmpty(new_tableaux) && !resulting_tab && tableaucontrol->branch_saturation_enabled)
 		{
 			resulting_tab = EtableauHailMary(tableaucontrol);
@@ -788,7 +727,11 @@ bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 				fflush(GlobalOut);
 				char readbuf[EPCTRL_BUFSIZE];
 				int fd_in = fileno(successful_process->pipe);
-				read(fd_in, readbuf, EPCTRL_BUFSIZE);
+				int err = read(fd_in, readbuf, EPCTRL_BUFSIZE);
+				if (err == -1)
+				{
+					Error("Read error", 1);
+				}
 				fprintf(GlobalOut, "%s\n", readbuf);
 				fflush(GlobalOut);
 			}
@@ -837,9 +780,9 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 	assert(extension_candidates);
 	assert(new_tableaux);
 	assert(!ClauseSetEmpty(extension_candidates));
-	ClauseTableau_p resulting_tab = NULL;
 	int desired_number_of_starting_tableaux = num_cores_available;
-	resulting_tab = ConnectionTableauProofSearchPopulate(tableaucontrol, 
+#define ETAB_POPULATE
+	ClauseTableau_p resulting_tab = ConnectionTableauProofSearchAtDepth(tableaucontrol, 
 																		 proofstate, 
 																		 proofcontrol, 
 																		 distinct_tableaux_set,
@@ -847,6 +790,7 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 																		 3,
 																		 new_tableaux,
 																		 desired_number_of_starting_tableaux);
+#undef ETAB_POPULATE
 	if (resulting_tab)
 	{
 		fprintf(GlobalOut, "# Found closed tableau during pool population.\n");

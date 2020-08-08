@@ -233,53 +233,53 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 
 int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, BranchSaturation_p jobs)
 {
-	ProofState_p proofstate = jobs->proofstate;
-	ProofControl_p proofcontrol = jobs->proofcontrol;
-	ClauseTableau_p master = jobs->master;
-	TableauSet_p open_branches = master->open_branches;
+	Error("Function is disabled to prevent warnings", 1);
+	//~ ProofState_p proofstate = jobs->proofstate;
+	//~ ProofControl_p proofcontrol = jobs->proofcontrol;
+	//~ ClauseTableau_p master = jobs->master;
+	//~ TableauSet_p open_branches = master->open_branches;
 	
-	int num_open_branches = (int) open_branches->members;
+	//~ int num_open_branches = (int) open_branches->members;
 	
-	// Collect the local branches in an array
-	pid_t pool[num_open_branches];  // Uninitialized array
-	int return_status[num_open_branches]; // Uninitialized array
-	ClauseTableau_p branches[num_open_branches]; // Uninitialized array
-	// Initialize the arrays: We are only interested in local branches
-	ClauseTableau_p handle = open_branches->anchor->succ;
-	int num_local_branches = 0;
-	for (int i=0; i<num_open_branches; i++)
-	{
-		assert(handle != master->open_branches->anchor);
-		//VarBankSetVCountsToUsed(proofstate->freshvars);
-		if (BranchIsLocal(handle))
-		{
-			num_local_branches++;
-			branches[i] = handle;
-			pool[i] = 0;
-			return_status[i] = RESOURCE_OUT;
-		}
-		else 
-		{
-			branches[i] = NULL;
-			pool[i] = -1;
-			return_status[i] = RESOURCE_OUT;
-		}
-		handle = handle->succ;
-	}
-	
-	#pragma omp task
-	{
-		for (int i=0; i<num_open_branches; i++)
-		{
-			if (branches[i]) // Branch is local, so we will try to close it
-			{
-				process_branch(proofstate, proofcontrol, pool, return_status, branches, i);
-			}
-		}
-		#pragma omp critical
-		process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
-	}
-	fflush(GlobalOut);
+	//~ // Collect the local branches in an array
+	//~ pid_t pool[num_open_branches];  // Uninitialized array
+	//~ int return_status[num_open_branches]; // Uninitialized array
+	//~ ClauseTableau_p branches[num_open_branches]; // Uninitialized array
+	//~ // Initialize the arrays: We are only interested in local branches
+	//~ ClauseTableau_p handle = open_branches->anchor->succ;
+	//~ int num_local_branches = 0;
+	//~ for (int i=0; i<num_open_branches; i++)
+	//~ {
+		//~ assert(handle != master->open_branches->anchor);
+		//~ //VarBankSetVCountsToUsed(proofstate->freshvars);
+		//~ if (BranchIsLocal(handle))
+		//~ {
+			//~ num_local_branches++;
+			//~ branches[i] = handle;
+			//~ pool[i] = 0;
+			//~ return_status[i] = RESOURCE_OUT;
+		//~ }
+		//~ else 
+		//~ {
+			//~ branches[i] = NULL;
+			//~ pool[i] = -1;
+			//~ return_status[i] = RESOURCE_OUT;
+		//~ }
+		//~ handle = handle->succ;
+	//~ }
+	//~ #pragma omp task
+	//~ {
+		//~ for (int i=0; i<num_open_branches; i++)
+		//~ {
+			//~ if (branches[i]) // Branch is local, so we will try to close it
+			//~ {
+				//~ process_branch(proofstate, proofcontrol, pool, return_status, branches, i);
+			//~ }
+		//~ }
+		//~ #pragma omp critical
+		//~ process_saturation_output(tableau_control, pool, return_status, branches, num_open_branches);
+	//~ }
+	//~ fflush(GlobalOut);
 	// Exit and return to tableaux proof search
 	return 0;
 }
