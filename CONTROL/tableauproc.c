@@ -322,21 +322,21 @@ ClauseTableau_p ConnectionTableauProofSearchAtDepth(TableauControl_p tableaucont
 	
 	while (!TableauSetEmpty(distinct_tableaux_set))
 	{
-		fprintf(GlobalOut, "# %ld\n", distinct_tableaux_set->members);
+		//fprintf(GlobalOut, "# %ld\n", distinct_tableaux_set->members);
 		active_tableau = tableau_select(tableaucontrol, distinct_tableaux_set);
 		assert(active_tableau);
 		assert(active_tableau->label);
 		assert(active_tableau->master == active_tableau);
 		assert(active_tableau->open_branches);
 		TableauSetExtractEntry(active_tableau);
-		ClauseTableau_ref selected_ref = &active_tableau;
 		
 		// At this point, there could be tableaux to be extended on at this depth in newly_created_tableaux
-		do  // Attempt to create extension tableaux until they are all at max depth or a closed tableau is found
+		// Attempt to create extension tableaux until they are all at max depth or a closed tableau is found
+		while (true)
 		{
 			int num_tableaux = (int) distinct_tableaux_set->members + (int) PStackGetSP(newly_created_tableaux);
 			num_tableaux += (int) PStackGetSP(max_depth_tableaux);
-			closed_tableau = ConnectionCalculusExtendOpenBranches(*selected_ref, 
+			closed_tableau = ConnectionCalculusExtendOpenBranches(active_tableau, 
 																				newly_created_tableaux, 
 																				tableaucontrol,
 																				NULL,
@@ -347,24 +347,19 @@ ClauseTableau_p ConnectionTableauProofSearchAtDepth(TableauControl_p tableaucont
 				assert(tableaucontrol->closed_tableau);
 				PStackPushStack(new_tableaux, newly_created_tableaux);
 				TableauSetDrainToStack(tableaucontrol->tableaux_trash, distinct_tableaux_set);
-				assert(TableauSetEmpty(distinct_tableaux_set));
 				goto return_point;
 			}
-#ifdef ETAB_POPULATE
-			else if (num_tableaux > desired_num_tableaux)
+			else if (desired_num_tableaux && num_tableaux > desired_num_tableaux)
 			{
 				//  There can be tableaux in the distinct tableaux set, newly created tableaux, or max_depth_tableaux
+				fprintf(GlobalOut, "# Populating...\n");
 				TableauSetDrainToStack(new_tableaux, distinct_tableaux_set);
 				PStackPushStack(new_tableaux, newly_created_tableaux);
-				assert(PStackGetSP(new_tableaux) >= desired_num_tableaux);
 				goto return_point;
 			}
-#endif
 			else if (PStackEmpty(newly_created_tableaux)) break;
-			ClauseTableau_p new = PStackPopP(newly_created_tableaux);
-			selected_ref = &new;
-		} while (true);
-		PStackReset(newly_created_tableaux);
+			active_tableau = PStackPopP(newly_created_tableaux);
+		}
 	}
 	return_point:
 	PStackPushStack(new_tableaux, max_depth_tableaux);
@@ -400,13 +395,13 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 	ClauseTableau_p closed_tableau = NULL;
 	int number_of_extensions = 0;
 	int num_branches_at_max_depth = 0;
-	fprintf(GlobalOut, "d: %d\n", active_tableau->depth);
+	//fprintf(GlobalOut, "d: %d\n", active_tableau->depth);
 	
 	TableauSet_p open_branches = active_tableau->open_branches;
 	ClauseTableau_p open_branch = active_tableau->open_branches->anchor->succ;
 	while (open_branch != active_tableau->open_branches->anchor) // iterate over the open branches of the current tableau
 	{
-		fprintf(GlobalOut, "! %d %ld\n", open_branch->depth, open_branches->members);
+		//fprintf(GlobalOut, "! %d %ld\n", open_branch->depth, open_branches->members);
 		if (open_branch->depth > max_depth)
 		{
 			open_branch = open_branch->succ;

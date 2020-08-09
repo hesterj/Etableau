@@ -227,6 +227,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	}
 	else // the extension is regular- add it to the new tableaux to be processed later
 	{
+		assert(parent->master);
 		PStackPushP(new_tableaux, parent->master);
 	}
 	
