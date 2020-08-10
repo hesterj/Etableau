@@ -47,7 +47,7 @@ void process_branch(ProofState_p proofstate,
 	{
 		ClauseTableau_p branch = branches[i];
 		assert(branches[i]);
-		SilentTimeOut = true;
+		//SilentTimeOut = true;
 		int branch_status = ECloseBranchProcessBranchFirst(proofstate, proofcontrol, branch);
 		//~ #ifndef DNDEBUG
 		//~ fprintf(GlobalOut, "# FORK FINAL REPORT %ld processed clauses, branch_status %d, branch %p\n", ProofStateProcCardinality(proofstate), branch_status, branch);
@@ -104,7 +104,7 @@ int process_branch_nofork(ProofState_p proofstate,
 	// Large number of clauses to process, for last ditch attempts
 	if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
 	
-	SilentTimeOut = true;
+	//SilentTimeOut = true;
 	proofcontrol->heuristic_parms.prefer_initial_clauses = true;
 	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
 	EtableauProofStateResetClauseSets(proofstate);

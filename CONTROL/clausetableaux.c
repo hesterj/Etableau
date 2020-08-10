@@ -30,7 +30,7 @@ ClauseTableau_p ClauseTableauAlloc()
 	handle->saturation_closed = false;
 	handle->id = 0;
 	handle->max_var = 0;
-	//handle->info = DStrAlloc();
+	handle->info = DStrAlloc();
 	handle->active_branch = NULL;
 	handle->pred = NULL;
 	handle->control = NULL;
@@ -65,9 +65,12 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	handle->tmp_label = NULL;
 	handle->arity = tab->arity;
 	handle->previously_saturated = tab->previously_saturated;
-	//~ char *info = DStrCopy(tab->info);
-	//~ handle->info = DStrAlloc();
-	//~ DStrAppendStr(handle->info, info);
+	
+	char *info = DStrCopy(tab->info);
+	handle->info = DStrAlloc();
+	DStrAppendStr(handle->info, info);
+	FREE(info);
+	
 	handle->depth = tab->depth;
 	handle->position = tab->position;
 	assert(handle->depth == 0);
@@ -148,9 +151,12 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
 	handle->derivation = NULL;
 	handle->unit_axioms = NULL;
-	//~ char *info = DStrCopy(tab->info);
-	//~ handle->info = DStrAlloc();
-	//~ DStrAppendStr(handle->info, info);
+	
+	char *info = DStrCopy(tab->info);
+	handle->info = DStrAlloc();
+	DStrAppendStr(handle->info, info);
+	FREE(info);
+	
 	handle->open_branches = parent->open_branches;
 	handle->control = parent->control;
 	handle->set = NULL;
@@ -256,7 +262,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->mark_int = 0;
 	handle->folded_up = 0;
 	handle->folding_labels = NULL;
-	//handle->info = DStrAlloc();
+	handle->info = DStrAlloc();
 	handle->active_branch = NULL;
 	handle->pred = NULL;
 	handle->succ = NULL;
@@ -310,7 +316,7 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	{
 		TableauSetFree(trash->open_branches);
 	}
-	//DStrFree(trash->info);
+	DStrFree(trash->info);
 	ClauseTableauCellFree(trash);
 }
 
