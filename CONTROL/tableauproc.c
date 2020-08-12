@@ -908,7 +908,11 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 			proc->fileno = worker; // Since the problem is transmitted through memory, the fileno is the pid
 			EPCtrlSetAddProc(process_set, proc);
 		}
-		else Error("Fork error", 1);
+		else 
+		{
+			fprintf(GlobalOut, "# Fork error!\n"); // Really important...
+			Error("Fork error", 1);
+		}
 	}
 	
 	// Wait for the children to exit...
