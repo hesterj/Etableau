@@ -737,18 +737,17 @@ bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 					Error("# A child reported success but could not be found...", 1);
 				}
 				EPCtrlSetFree(process_set, false);
-				//KillTheWorkers(workers);
-				break;
+				return proof_found;
 			}
 			case SATISFIABLE:
 			{
-				fprintf(GlobalOut, "# Satisfiable branch?\n");
-				break;
+				EPCtrlSetFree(process_set, false);
+				Error("# A branch is satisfiable- this is highly unlikely", 1);
 			}
 			case OUT_OF_MEMORY:
 			{
-				fprintf(GlobalOut, "# A child has run out of memory.\n");
-				break;
+				EPCtrlSetFree(process_set, false);
+				Error("# A child has run out of memory", 1);
 			}
 			case SYNTAX_ERROR:
 			{
@@ -882,6 +881,7 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 		if (worker == 0) // child process
 		{
 			SilentTimeOut = true;
+			fprintf(GlobalOut, "# Created new process...\n");
 			TableauSet_p process_starting_tableaux = PStackElementP(buckets, i);
 			TableauSetMoveClauses(distinct_tableaux_set, process_starting_tableaux);
 			int starting_depth = 2;

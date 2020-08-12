@@ -138,7 +138,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	ClauseTableau_p old_tableau_master = extension->parent->master;
 	old_tableau_master->active_branch = extension->parent;
 	ClauseTableau_p tableau_copy = ClauseTableauMasterCopy(old_tableau_master);  //there may be a subst active
-	
+	Sig_p sig = tableau_copy->terms->sig;
 	assert(extension->parent->id == 0);
 	assert(old_tableau_master->parent == NULL);
 	assert(tableau_copy->open_branches);
@@ -231,7 +231,8 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 		PStackPushP(new_tableaux, parent->master);
 	}
 	
-	// The copying is done, we can delete the subst
+	// The copying is done, we can delete the subst and print it to the info
+	SubstDStrPrint(parent->info, subst, sig, DEREF_NEVER);
 	SubstDelete(subst);
 	// Protect the unit axioms from the dirty substitution by copying them now...
 	parent->master->unit_axioms = ClauseSetCopy(parent->master->terms, old_tableau_master->unit_axioms);

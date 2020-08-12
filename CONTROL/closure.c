@@ -12,6 +12,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 
 	if ((subst = ClauseContradictsBranch(tab, tab->label)))
 	{
+		SubstDStrPrint(tab->info, subst, tab->terms->sig, DEREF_NEVER);
 		if (PStackGetSP(subst) == 0)  // Only subst needed was identity
 		{
 			SubstDelete(subst);
