@@ -825,7 +825,7 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 	bool proof_found = false;
 	int num_cores_available = TableauControlGetCores(tableaucontrol);
 	assert(num_cores_available);
-	fprintf(GlobalOut, "# Using %d worker processes.\n", num_cores_available);
+	fprintf(GlobalOut, "# Desiring %d worker processes.\n", num_cores_available);
 	//  Create enough tableaux so that we can fork
 	assert(proofstate);
 	assert(proofcontrol);
@@ -877,11 +877,12 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 		{
 			Error("# Pipe error", 1);
 		}
+		fflush(GlobalOut);
 		pid_t worker = fork();
 		if (worker == 0) // child process
 		{
 			SilentTimeOut = true;
-			fprintf(GlobalOut, "# Created new process...\n");
+			fprintf(GlobalOut, "# Hello from worker %d...\n", i);
 			fflush(GlobalOut);
 			TableauSet_p process_starting_tableaux = PStackElementP(buckets, i);
 			TableauSetMoveClauses(distinct_tableaux_set, process_starting_tableaux);
