@@ -747,7 +747,7 @@ bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 			case OUT_OF_MEMORY:
 			{
 				EPCtrlSetFree(process_set, false);
-				Error("# A child has run out of memory", 1);
+				return false;
 			}
 			case SYNTAX_ERROR:
 			{
@@ -772,7 +772,7 @@ bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 			case CPU_LIMIT_ERROR:
 			{
 				EPCtrlSetFree(process_set, false);
-				Error("# CPU limit error", 1);
+				return false;
 			}
 			case RESOURCE_OUT:
 			{
@@ -882,6 +882,7 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 		{
 			SilentTimeOut = true;
 			fprintf(GlobalOut, "# Created new process...\n");
+			fflush(GlobalOut);
 			TableauSet_p process_starting_tableaux = PStackElementP(buckets, i);
 			TableauSetMoveClauses(distinct_tableaux_set, process_starting_tableaux);
 			int starting_depth = 2;

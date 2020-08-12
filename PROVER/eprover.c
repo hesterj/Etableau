@@ -560,7 +560,7 @@ int main(int argc, char* argv[])
 																				TableauSaturation,
 																				TableauCores);
 		//TB_p tableau_terms = TBAlloc(proofstate->terms->sig);
-		printf("# Number of axioms: %ld Number of unprocessed: %ld\n", proofstate->axioms->members, 
+		fprintf(GlobalOut, "# Number of axioms: %ld Number of unprocessed: %ld\n", proofstate->axioms->members, 
 																						 proofstate->unprocessed->members);
 		ClauseSet_p new_axioms = ClauseSetCopy(proofstate->terms, proofstate->unprocessed);
 		ClauseSet_p *source = &proofstate->unprocessed;
@@ -571,7 +571,7 @@ int main(int argc, char* argv[])
 			new_axioms = ClauseSetCopy(proofstate->terms, proofstate->axioms);
 			source = &proofstate->axioms;
 		}
-		printf("# Tableaux proof search.\n");
+		fprintf(GlobalOut, "# Tableaux proof search.\n");
 		
 		FILE *clausification_stream;
 		char *buf;

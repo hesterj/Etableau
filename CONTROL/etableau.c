@@ -61,6 +61,7 @@ void process_branch(ProofState_p proofstate,
 	}
 	else 
 	{
+		fprintf(GlobalOut, "# Fork failure\n");
 		Error("Fork failure", 1);
 	}
 }
