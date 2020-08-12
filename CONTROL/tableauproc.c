@@ -826,7 +826,7 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 	bool proof_found = false;
 	int num_cores_available = TableauControlGetCores(tableaucontrol);
 	assert(num_cores_available);
-	fprintf(GlobalOut, "# Number of cores available: %d\n", num_cores_available);
+	fprintf(GlobalOut, "# Using %d worker processes.\n", num_cores_available);
 	//  Create enough tableaux so that we can fork
 	assert(proofstate);
 	assert(proofcontrol);
@@ -881,6 +881,7 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 		pid_t worker = fork();
 		if (worker == 0) // child process
 		{
+			SilentTimeOut = true;
 			TableauSet_p process_starting_tableaux = PStackElementP(buckets, i);
 			TableauSetMoveClauses(distinct_tableaux_set, process_starting_tableaux);
 			int starting_depth = 2;
@@ -925,6 +926,7 @@ int TableauControlGetCores(TableauControl_p tableaucontrol)
 {
 	int num_cores = tableaucontrol->multiprocessing_active;
 	int nprocs = get_nprocs();
+	fprintf(GlobalOut, "# %d cores available to the main process.\n", nprocs);
 	if (num_cores > nprocs)
 	{
 		Error("# Requested more cores than are available to the program...", 1);
