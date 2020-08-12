@@ -711,43 +711,101 @@ bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 		{
 			Error("Child did not exit normally", 1);
 		}
-		if (return_status == PROOF_FOUND)
+		switch(return_status)
 		{
-			// kill all the children and move towards exit
-			EPCtrl_p successful_process = EPCtrlSetFindProc(process_set, exited_child);
-			if (successful_process)
+			case PROOF_FOUND:
 			{
-				proof_found = true;
-				fprintf(GlobalOut, "# Child has found a proof.\n");
-				fflush(GlobalOut);
-				char readbuf[EPCTRL_BUFSIZE];
-				int fd_in = fileno(successful_process->pipe);
-				int err = read(fd_in, readbuf, EPCTRL_BUFSIZE);
-				if (err == -1)
+				// kill all the children and move towards exit
+				EPCtrl_p successful_process = EPCtrlSetFindProc(process_set, exited_child);
+				if (successful_process)
 				{
-					Error("Read error", 1);
+					proof_found = true;
+					fprintf(GlobalOut, "# Child has found a proof.\n");
+					fflush(GlobalOut);
+					char readbuf[EPCTRL_BUFSIZE];
+					int fd_in = fileno(successful_process->pipe);
+					int err = read(fd_in, readbuf, EPCTRL_BUFSIZE);
+					if (err == -1)
+					{
+						Error("Read error", 1);
+					}
+					fprintf(GlobalOut, "%s\n", readbuf);
+					fflush(GlobalOut);
 				}
-				fprintf(GlobalOut, "%s\n", readbuf);
-				fflush(GlobalOut);
+				else
+				{
+					Error("# A child reported success but could not be found...", 1);
+				}
+				EPCtrlSetFree(process_set, false);
+				//KillTheWorkers(workers);
+				break;
 			}
-			else
+			case SATISFIABLE:
 			{
-				Error("# A child reported success but could not be found...", 1);
+				fprintf(GlobalOut, "# Satisfiable branch?\n");
+				break;
 			}
-			EPCtrlSetFree(process_set, false);
-			//KillTheWorkers(workers);
-			break;
-		}
-		else if (return_status == RESOURCE_OUT)
-		{
-			fprintf(GlobalOut, "# A child has run out of tableaux to operate on.\n");
-		}
-		else
-		{
-			fprintf(GlobalOut, "# Received strange output from child: %d\n", return_status);
-			EPCtrlSetFree(process_set, false);
-			//KillTheWorkers(workers);
-			Error("Unknown status from child", 1);
+			case OUT_OF_MEMORY:
+			{
+				fprintf(GlobalOut, "# A child has run out of memory.\n");
+				break;
+			}
+			case SYNTAX_ERROR:
+			{
+				EPCtrlSetFree(process_set, false);
+				Error("# Syntax error", 1);
+			}
+			case USAGE_ERROR:
+			{
+				EPCtrlSetFree(process_set, false);
+				Error("# Usage error", 1);
+			}
+			case FILE_ERROR:
+			{
+				EPCtrlSetFree(process_set, false);
+				Error("# File error", 1);
+			}
+			case SYS_ERROR:
+			{
+				EPCtrlSetFree(process_set, false);
+				Error("# Sys error", 1);
+			}
+			case CPU_LIMIT_ERROR:
+			{
+				EPCtrlSetFree(process_set, false);
+				Error("# CPU limit error", 1);
+			}
+			case RESOURCE_OUT:
+			{
+				fprintf(GlobalOut, "# A child has run out of resources, likely tableaux.  Allowing others to continue.\n");
+				break;
+			}
+			case INCOMPLETE_PROOFSTATE:
+			{
+				EPCtrlSetFree(process_set, false);
+				Error("# Incomplete proofstate error", 1);
+			}
+			case OTHER_ERROR:
+			{
+				EPCtrlSetFree(process_set, false);
+				Error("# Other error", 1);
+			}
+			case INPUT_SEMANTIC_ERROR:
+			{
+				EPCtrlSetFree(process_set, false);
+				Error("# Input semantic error", 1);
+			}
+			case INTERFACE_ERROR:
+			{
+				EPCtrlSetFree(process_set, false);
+				Error("# Interface error", 1);
+			}
+			default:
+			{
+				fprintf(GlobalOut, "# Received strange output from child: %d\n", return_status);
+				EPCtrlSetFree(process_set, false);
+				Error("# Unknown status from child", 1);
+			}
 		}
 		num_children_exited++;
 	}
@@ -776,7 +834,6 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 	assert(new_tableaux);
 	assert(!ClauseSetEmpty(extension_candidates));
 	int desired_number_of_starting_tableaux = num_cores_available;
-#define ETAB_POPULATE
 	ClauseTableau_p resulting_tab = ConnectionTableauProofSearchAtDepth(tableaucontrol, 
 																		 proofstate, 
 																		 proofcontrol, 
@@ -785,7 +842,6 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 																		 3,
 																		 new_tableaux,
 																		 desired_number_of_starting_tableaux);
-#undef ETAB_POPULATE
 	if (resulting_tab)
 	{
 		fprintf(GlobalOut, "# Found closed tableau during pool population.\n");
@@ -868,9 +924,14 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 int TableauControlGetCores(TableauControl_p tableaucontrol)
 {
 	int num_cores = tableaucontrol->multiprocessing_active;
+	int nprocs = get_nprocs();
+	if (num_cores > nprocs)
+	{
+		Error("# Requested more cores than are available to the program...", 1);
+	}
 	if (num_cores == 1)
 	{
-		num_cores = get_nprocs();
+		return nprocs;
 	}
 	return num_cores;
 }
