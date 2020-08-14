@@ -13,6 +13,10 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 	if ((subst = ClauseContradictsBranch(tab, tab->label)))
 	{
 		SubstDStrPrint(tab->info, subst, tab->terms->sig, DEREF_NEVER);
+		DStrAppendStr(tab->info, " Reduction step with clause ");
+		DStrAppendInt(tab->info, tab->id);
+		DStrAppendStr(tab->info, " ");
+		ClauseTableauRegisterStep(tab);
 		if (PStackGetSP(subst) == 0)  // Only subst needed was identity
 		{
 			SubstDelete(subst);
@@ -78,14 +82,14 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	assert(tab->label);
 	Subst_p subst = NULL;
 	Clause_p temporary_label;
-	bool original_label_replaced = false;
 	
 	//long num_local_variables = 0;
 	long num_local_variables = UpdateLocalVariables(tab);
 	if (num_local_variables)
 	{
-		original_label_replaced = true;
 		original_clause = ReplaceLocalVariablesWithFresh(tab, original_clause, tab->local_variables);
+		ClauseFree(tab->label);
+		tab->label = original_clause;
 	}
 	//num_local_variables = 0;
 	
@@ -100,6 +104,7 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		if ((subst = ClauseContradictsClause(tab, original_clause, tmp_unit_handle)))
 		{
 			tab->mark_int = 0; // Closing by a unit simulates an extension step
+			tab->id = ClauseGetIdent(unit_handle);
 			// Marking the root would case some leaves to be folded up too high in one step, unsound.
 			ClauseFree(tmp_unit_handle);
 			goto return_point;
@@ -112,7 +117,7 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	// Check against the tableau AND its edges
 	ClauseTableau_p temporary_tab = tab->parent;
 	int distance_up = 1;
-	while (temporary_tab)
+	while (temporary_tab != tab->master)
 	{
 		if (num_local_variables == 0)
 		{
@@ -121,14 +126,13 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		else
 		{
 			temporary_label = ReplaceLocalVariablesWithFresh(tab->master, temporary_tab->label, tab->local_variables);
+			ClauseFree(temporary_tab->label);
+			temporary_tab->label = temporary_label;
 		}
 		if ((subst = ClauseContradictsClause(tab, temporary_label, original_clause)))
 		{
 			tab->mark_int = distance_up;
-			if (num_local_variables)
-			{
-				ClauseFree(temporary_label);
-			}
+			tab->id = ClauseGetIdent(temporary_tab->label);
 			goto return_point;
 		}
 		if (temporary_tab->folding_labels)
@@ -136,6 +140,7 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 			if ((subst = ClauseContradictsSet(temporary_tab, original_clause, temporary_tab->folding_labels, tab)))
 			{
 				//tab->mark_int = distance_up;
+				DStrAppendStr(tab->info, " Fold. ");
 				if (tab->depth == distance_up)
 				{
 					tab->mark_int = distance_up;
@@ -144,33 +149,17 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 				{
 					tab->mark_int = distance_up - 1; // Etableau reduction
 				}
-				if (num_local_variables)
-				{
-					ClauseFree(temporary_label);
-				}
 				goto return_point;
 			}
-		}
-		if (num_local_variables)
-		{
-			ClauseFree(temporary_label);
 		}
 		distance_up += 1;
 		temporary_tab = temporary_tab->parent;
 	}
 	
-	if (original_label_replaced)
-	{
-		ClauseFree(original_clause);
-	}
 	return NULL;
 	
 	Error("Code flow reached inaccessible area!", 1);
 	return_point: // Only accessed if a contradiction was found
-	if (original_label_replaced)
-	{
-		ClauseFree(original_clause);
-	}
 	
 	//fprintf(GlobalOut, "  Done with success.\n");
 	return subst;
@@ -182,24 +171,33 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set, ClauseTableau_p open_branch)
 {
 	assert(set->anchor);
-	//~ //bool local_vars = false;
-	// This IF statement has been disabled!!!
-	if (NULL && (open_branch->local_variables) && (PStackGetSP(open_branch->local_variables) > 0))
+	if ((open_branch->local_variables) && (PStackGetSP(open_branch->local_variables) > 0))
 	{
-		fprintf(GlobalOut, "# Not allowed!!!\n");
 		Clause_p handle = set->anchor->succ;
 		Subst_p subst = NULL;
-		while (handle != set->anchor)
+		PStack_p refreshed_clauses = PStackAlloc();
+		while ((handle = ClauseSetExtractFirst(set)))
 		{
 			Clause_p handle_clause = ReplaceLocalVariablesWithFresh(tab->master, handle, open_branch->local_variables);
+			PStackPushP(refreshed_clauses, handle_clause);
 			if ((subst = ClauseContradictsClause(tab, leaf, handle_clause)))
 			{
-				ClauseFree(handle_clause);
+				while (!PStackEmpty(refreshed_clauses))
+				{
+					Clause_p fresh = PStackPopP(refreshed_clauses);
+					ClauseSetInsert(set, fresh);
+				}
+				PStackFree(refreshed_clauses);
 				return subst;
 			}
-			ClauseFree(handle_clause);
-			handle = handle->succ;
+			handle = set->anchor->succ;
 		}
+		while (!PStackEmpty(refreshed_clauses))
+		{
+			Clause_p fresh = PStackPopP(refreshed_clauses);
+			ClauseSetInsert(set, fresh);
+		}
+		PStackFree(refreshed_clauses);
 	}
 	else // no local variables- easy situation
 	{
@@ -209,6 +207,7 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 		{
 			if ((subst = ClauseContradictsClause(tab, leaf, handle)))
 			{
+				open_branch->id = ClauseGetIdent(handle);
 				return subst;
 			}
 			handle = handle->succ;

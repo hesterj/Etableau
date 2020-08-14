@@ -163,7 +163,6 @@ Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause,
 	Clause_p new_clause = NULL;
 	assert(PStackGetSP(local_variables));
 	VarBank_p variable_bank = master->terms->vars;
-	//printf("Old clause: ");ClausePrint(GlobalOut, clause, true);printf("\n");
 	Subst_p subst = SubstAlloc();
 	for (PStackPointer p = 0; p < PStackGetSP(local_variables); p++)
 	{
@@ -171,21 +170,12 @@ Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause,
 		assert(old_var);
 		assert(old_var->f_code < 0);
 		master->max_var -= 2;
-		//Term_p fresh_var = VarBankVarAssertAlloc(variable_bank, master->max_var, old_var->type);
-		//VarBankSetVCountsToUsed(variable_bank);
 		Term_p fresh_var = VarBankGetFreshVar(variable_bank, old_var->type);
 		assert(fresh_var != old_var);
-		//~ Term_p fresh_var = old_var;
-		//~ while (old_var == fresh_var)
-		//~ {
-			//~ master->max_var -= 2;
-			//~ fresh_var = VarBankVarAssertAlloc(variable_bank, master->max_var, old_var->type);
-		//~ }
 		assert(old_var->f_code != fresh_var->f_code);
 		SubstAddBinding(subst, old_var, fresh_var);
 	}
 	new_clause = ClauseCopyOpt(clause);
-	//printf("New clause with binding: ");ClausePrint(GlobalOut, new_clause, true);printf("\n");
 	SubstDelete(subst);
 	return new_clause;
 }

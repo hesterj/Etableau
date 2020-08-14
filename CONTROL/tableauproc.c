@@ -536,6 +536,7 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 	}
 	fprintf(GlobalOut, "# Begin printing tableau\n");
 	ClauseTableauPrint(resulting_tab);
+	ClauseTableauTPTPPrint(resulting_tab);
 	fprintf(GlobalOut, "# End printing tableau\n");
 	fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
 	fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
@@ -709,6 +710,8 @@ bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 		}
 		else 
 		{
+			EPCtrlSetFree(process_set, false);
+			fflush(GlobalOut);
 			Error("Child did not exit normally", 1);
 		}
 		switch(return_status)

@@ -85,6 +85,8 @@ int ClauseTableauDifference(ClauseTableau_p higher, ClauseTableau_p lower);
 
 void ClauseTableauScoreActive(ClauseTableau_p tab);
 void ClauseTableauPrint(ClauseTableau_p tab);
+void ClauseTableauCollectSteps(ClauseTableau_p tab, PStack_p steps);
+void ClauseTableauTPTPPrint(ClauseTableau_p tab);
 void ClauseTableauPrint2(ClauseTableau_p tab);
 
 void HCBClauseSetEvaluate(HCB_p hcb, ClauseSet_p clauses);
@@ -109,6 +111,8 @@ int ClauseTableauAssertCheck(ClauseTableau_p tab);
 
 bool ClauseTableauBranchContainsLiteral(ClauseTableau_p branch, Eqn_p literal);
 bool ClauseTableauIsLeafRegular(ClauseTableau_p tab);
+
+void ClauseTableauRegisterStep(ClauseTableau_p tab);
 
 void ClauseTableauPrintDOTGraphToFile(FILE* file, ClauseTableau_p tab);
 void ClauseTableauPrintDOTGraph(ClauseTableau_p tab);

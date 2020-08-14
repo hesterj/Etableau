@@ -409,7 +409,8 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 				handle->open = false;
 				handle->saturation_closed = true;
 				handle->mark_int = 0;
-				//DStrAppendStr(closed_branch->info, "Saturation closed");
+				ClauseTableauRegisterStep(handle);
+				DStrAppendStr(handle->info, " Saturation closed");
 				successful_count++;
 				handle = open_branches->anchor->succ;
 			}

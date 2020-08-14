@@ -244,7 +244,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	assert(parent);
 	assert(label);
 	parent->arity += 1;
-	handle->step = 0;
+	handle->step = -1;
 	handle->max_step = 0;
 	handle->depth = parent->depth + 1;
 	handle->position = position;
@@ -601,7 +601,8 @@ void ClauseTableauPrintBranch(ClauseTableau_p branch)
 	{
 		assert(depth_check->label);
 		assert(depth_check->id >= 0);
-		fprintf(GlobalOut, "# %d,%d,%ld,%d ", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
+		fprintf(GlobalOut, "# %d,%d,%ld,%d, step: %d ", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int, depth_check->step);
+		fprintf(GlobalOut, "%s", DStrView(depth_check->info));
 		if (depth_check->head_lit)
 		{
 			fprintf(GlobalOut, " x");
@@ -773,6 +774,7 @@ ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 	assert(tab->label);
 	
 	tab->id = ClauseGetIdent(tab->label);
+	DStrAppendStr(tab->info, " Start rule");
 	
 	assert(arity > 0);
 	
@@ -1218,4 +1220,50 @@ void ClauseTableauPrintDerivation(FILE* out, ClauseTableau_p final_tableau, Tabl
 		DStrFree(str);
 		sleep(1);
 	}
+}
+
+void ClauseTableauRegisterStep(ClauseTableau_p tab)
+{
+	tab->master->max_step++;
+	tab->step = tab->master->max_step;
+}
+
+int TableauStepCmp(const void* tab1_intorp, const void* tab2_intorp)
+{
+	const IntOrP* step1 = (const IntOrP*) tab1_intorp;
+	const IntOrP* step2 = (const IntOrP*) tab2_intorp;
+	
+	ClauseTableau_p tab1 = step1->p_val;
+	ClauseTableau_p tab2 = step2->p_val;
+	if (tab1->step < tab2->step) return -1;
+	else if (tab1->step > tab2->step) return 1;
+	return 0;
+}
+
+void ClauseTableauCollectSteps(ClauseTableau_p tab, PStack_p steps)
+{
+	if (tab->step >= 0)
+	{
+		PStackPushP(steps, tab);
+	}
+	for (int i=0; i<tab->arity; i++)
+	{
+		ClauseTableauCollectSteps(tab->children[i], steps);
+	}
+}
+
+void ClauseTableauTPTPPrint(ClauseTableau_p tab)
+{
+	PStack_p steps = PStackAlloc();
+	ClauseTableauCollectSteps(tab, steps);
+	fprintf(GlobalOut, "# Found %ld steps\n", PStackGetSP(steps));
+	PStackSort(steps, TableauStepCmp);
+	for (long i=0; i< PStackGetSP(steps); i++)
+	{
+		ClauseTableau_p node = PStackElementP(steps, i);
+		fprintf(GlobalOut, "# %d ", (int) node->step);
+		ClausePrint(GlobalOut, node->label, true);
+		fprintf(GlobalOut, " %s\n", DStrView(node->info));
+	}
+	PStackFree(steps);
 }
