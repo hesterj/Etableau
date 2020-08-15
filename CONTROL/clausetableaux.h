@@ -100,8 +100,6 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau);  // Major me
 
 ClauseSet_p EqualityAxioms(TB_p bank);
 
-long ClauseGetIdent(Clause_p clause);
-
 Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b);
 Subst_p ClauseContradictsClauseSubst(Clause_p a, Clause_p b, Subst_p subst);
 

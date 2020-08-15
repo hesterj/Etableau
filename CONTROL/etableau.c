@@ -115,6 +115,7 @@ int process_branch_nofork(ProofState_p proofstate,
 																				branch, 
 																				selected_number_of_clauses_to_process);
 	EtableauProofStateResetClauseSets(proofstate);
+	TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
 	ClauseSetFree(unprocessed);
 	return branch_status;
 }
@@ -405,6 +406,7 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 																	max_proc);
 			if (branch_status == PROOF_FOUND)
 			{
+				ClauseTableau_p new_handle = handle->succ;
 				TableauSetExtractEntry(handle);
 				handle->open = false;
 				handle->saturation_closed = true;
@@ -412,7 +414,8 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 				ClauseTableauRegisterStep(handle);
 				DStrAppendStr(handle->info, " Saturation closed");
 				successful_count++;
-				handle = open_branches->anchor->succ;
+				handle = new_handle;
+				continue;
 			}
 		}
 		handle = handle->succ;
@@ -495,13 +498,71 @@ void EtableauInsertBranchClausesIntoUnprocessed(ProofState_p state,
       ClausePushDerivation(tmpclause, DCCnfQuote, handle, NULL);
       ClauseSetInsert(state->archive, handle);
       handle = tmpclause;
+      //ClauseCanonize(handle);
       HCBClauseEvaluate(control->hcb, handle);
       ClauseDelProp(handle, CPIsOriented);
+      ClauseDelProp(handle, CPLimitedRW);
       ClauseSetProp(handle, CPInitial);
       DocClauseQuoteDefault(6, handle, "move_eval");
       EvalListChangePriority(handle->evaluations, -PrioLargestReasonable);
       ClauseSetInsert(state->unprocessed, handle);
       node = node->parent;
+   }
+}
+
+/*-----------------------------------------------------------------------
+//
+// Function: TermTreeDeleteRWLinks()
+//
+//   Delete all the rewrite links of terms in the tree.
+//
+//   John Hester
+// Global Variables: -
+//
+// Side Effects    : -
+//
+/----------------------------------------------------------------------*/
+
+void TermTreeDeleteRWLinks(Term_p root)
+{
+   PStack_p stack = PStackAlloc();
+
+   PStackPushP(stack, root);
+
+   while(!PStackEmpty(stack))
+   {
+      root = PStackPopP(stack);
+      if(root)
+      {
+    TermDeleteRWLink(root);
+    PStackPushP(stack, root->lson);
+    PStackPushP(stack, root->rson);
+      }
+   }
+   PStackFree(stack);
+}
+
+/*-----------------------------------------------------------------------
+//
+// Function: TermCellStoreDeleteRWLinks()
+//
+//   Free the trees in a term cell storage.
+//
+// Global Variables: -
+//
+// Side Effects    : Memory operations
+//
+//  John Hester
+//
+/----------------------------------------------------------------------*/
+
+void TermCellStoreDeleteRWLinks(TermCellStore_p store)
+{
+   int i;
+
+   for(i=0; i<TERM_STORE_HASH_SIZE; i++)
+   {
+		TermTreeDeleteRWLinks(store->store[i]);
    }
 }
 

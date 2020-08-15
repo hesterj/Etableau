@@ -1148,16 +1148,6 @@ bool ClauseTableauBranchContainsLiteral(ClauseTableau_p branch, Eqn_p literal)
 	return false;
 }
 
-long ClauseGetIdent(Clause_p clause)
-{
-	long ident = clause->ident;
-	if (ident<0)
-	{
-		ident = ident - LONG_MIN;
-	}
-	return ident;
-}
-
 TableauControl_p TableauControlAlloc(long neg_conjectures, 
 												 char *problem_name, 
 												 ProofState_p proofstate, 

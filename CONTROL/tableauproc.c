@@ -319,7 +319,9 @@ ClauseTableau_p ConnectionTableauProofSearchAtDepth(TableauControl_p tableaucont
 	ClauseTableau_p closed_tableau = NULL;
 	TableauStack_p max_depth_tableaux = PStackAlloc();
 	TableauStack_p newly_created_tableaux = PStackAlloc();
+	int num_tableaux = 0;
 	
+	restart:
 	while (!TableauSetEmpty(distinct_tableaux_set))
 	{
 		//fprintf(GlobalOut, "# %ld\n", distinct_tableaux_set->members);
@@ -334,7 +336,7 @@ ClauseTableau_p ConnectionTableauProofSearchAtDepth(TableauControl_p tableaucont
 		// Attempt to create extension tableaux until they are all at max depth or a closed tableau is found
 		while (true)
 		{
-			int num_tableaux = (int) distinct_tableaux_set->members + (int) PStackGetSP(newly_created_tableaux);
+			num_tableaux = (int) distinct_tableaux_set->members + (int) PStackGetSP(newly_created_tableaux);
 			num_tableaux += (int) PStackGetSP(max_depth_tableaux);
 			closed_tableau = ConnectionCalculusExtendOpenBranches(active_tableau, 
 																				newly_created_tableaux, 
@@ -349,7 +351,7 @@ ClauseTableau_p ConnectionTableauProofSearchAtDepth(TableauControl_p tableaucont
 				TableauSetDrainToStack(tableaucontrol->tableaux_trash, distinct_tableaux_set);
 				goto return_point;
 			}
-			else if (desired_num_tableaux && num_tableaux > desired_num_tableaux)
+			else if (desired_num_tableaux && num_tableaux >= desired_num_tableaux)
 			{
 				//  There can be tableaux in the distinct tableaux set, newly created tableaux, or max_depth_tableaux
 				fprintf(GlobalOut, "# Populating...\n");
@@ -360,6 +362,12 @@ ClauseTableau_p ConnectionTableauProofSearchAtDepth(TableauControl_p tableaucont
 			else if (PStackEmpty(newly_created_tableaux)) break;
 			active_tableau = PStackPopP(newly_created_tableaux);
 		}
+	}
+	if (desired_num_tableaux && num_tableaux < desired_num_tableaux)
+	{
+		max_depth++;  // rare situation, couldn't create enough tableaux at depth
+		TableauStackDrainToSet(distinct_tableaux_set, max_depth_tableaux);
+		goto restart;
 	}
 	return_point:
 	PStackPushStack(new_tableaux, max_depth_tableaux);
@@ -660,7 +668,7 @@ bool EtableauProofSearch(TableauControl_p tableaucontrol,
 									  int max_depth,
 									  PStack_p new_tableaux)
 {
-	OutputLevel = 0;
+	//OutputLevel = 0;
 	ClauseTableau_p resulting_tab = NULL;
 	for (int current_depth = 2; current_depth < max_depth; current_depth++)
 	{
@@ -703,6 +711,7 @@ bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 	{
 		int exit_status = -1;
 		int return_status = -1;
+		fprintf(stdout, "# Waiting...\n");
 		pid_t exited_child = wait(&exit_status);
 		if (WIFEXITED(exit_status))
 		{
@@ -723,8 +732,8 @@ bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 				if (successful_process)
 				{
 					proof_found = true;
-					fprintf(GlobalOut, "# Child has found a proof.\n");
-					fflush(GlobalOut);
+					fprintf(stdout, "# Child has found a proof.\n");
+					fflush(stdout);
 					char readbuf[EPCTRL_BUFSIZE];
 					int fd_in = fileno(successful_process->pipe);
 					int err = read(fd_in, readbuf, EPCTRL_BUFSIZE);
@@ -828,7 +837,6 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 	bool proof_found = false;
 	int num_cores_available = TableauControlGetCores(tableaucontrol);
 	assert(num_cores_available);
-	fprintf(GlobalOut, "# Desiring %d worker processes.\n", num_cores_available);
 	//  Create enough tableaux so that we can fork
 	assert(proofstate);
 	assert(proofcontrol);
@@ -836,6 +844,7 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 	assert(new_tableaux);
 	assert(!ClauseSetEmpty(extension_candidates));
 	int desired_number_of_starting_tableaux = num_cores_available;
+	fprintf(GlobalOut, "# Desiring %d worker processes and at least %d tableaux.\n", num_cores_available, desired_number_of_starting_tableaux);
 	ClauseTableau_p resulting_tab = ConnectionTableauProofSearchAtDepth(tableaucontrol, 
 																		 proofstate, 
 																		 proofcontrol, 
@@ -851,8 +860,11 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 		return true;
 	}
 	///////////////////////////  Actually fork
-	assert(PStackGetSP(new_tableaux) > desired_number_of_starting_tableaux);
 	fprintf(GlobalOut, "# There are %ld tableaux, should be ready to fork.\n", PStackGetSP(new_tableaux));
+	if (PStackGetSP(new_tableaux) < desired_number_of_starting_tableaux)
+	{
+		Error("# Trying to fork with too few tableaux...", 1);
+	}
 	assert(TableauSetEmpty(distinct_tableaux_set));
 	
 	EPCtrlSet_p process_set = EPCtrlSetAlloc();
