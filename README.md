@@ -22,3 +22,5 @@ Etableau is installed and licensed in the same way as Eprover.  Usage is also th
 ```
 
 If a successful proof (closed tableau) is not found up to --tableau-depth, search will abort.  If the option --tableau is not set to 1, Eprover will operate normally.
+
+Etableau can also efficiently use multiprocessing.  In order to take advantage of this, add the option ```--tableau-cores=6```, for instance.  If this is set to 0, Etableau will use a single core, and if set to 1 it will use all available cores.

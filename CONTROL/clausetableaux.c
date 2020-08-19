@@ -13,6 +13,7 @@ int clausesetallocs_counter = 1;
 ClauseTableau_p ClauseTableauAlloc()
 {
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
+	handle->tableau_variables = NULL;
 	handle->depth = 0;
 	handle->position = 0;
 	handle->arity = 0;
@@ -25,7 +26,6 @@ ClauseTableau_p ClauseTableauAlloc()
 	handle->max_step = 0;
 	handle->folding_labels = NULL;
 	handle->set = NULL;
-	handle->derivation = PStackAlloc();
 	handle->head_lit = false;
 	handle->saturation_closed = false;
 	handle->id = 0;
@@ -40,11 +40,9 @@ ClauseTableau_p ClauseTableauAlloc()
 	handle->open_branches = NULL;
 	handle->children = NULL;
 	handle->label = NULL;
-	handle->tmp_label = NULL;
 	handle->master = handle;
 	handle->parent = NULL;
 	handle->open = true;
-	
 	
 	return handle;
 }
@@ -58,11 +56,9 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 {
 	assert(tab->master == tab);  // Masters have themselves as master
 	TB_p bank = tab->terms;
-	
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
-	handle->derivation = PStackCopy(tab->derivation);
-	PStackPushP(handle->derivation, tab);
-	handle->tmp_label = NULL;
+	
+	handle->tableau_variables = NULL;
 	handle->arity = tab->arity;
 	handle->previously_saturated = tab->previously_saturated;
 	
@@ -149,7 +145,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	assert(parent);
 	TB_p bank = tab->terms; //Copy tableau tab
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
-	handle->derivation = NULL;
+	handle->tableau_variables = NULL;
 	handle->unit_axioms = NULL;
 	
 	char *info = DStrCopy(tab->info);
@@ -181,7 +177,6 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	handle->state = parent->state;
 	handle->open = tab->open;
 	handle->arity = tab->arity;
-	handle->tmp_label = NULL;
 	handle->local_variables = NULL;
 	if (tab->folding_labels)
 	{
@@ -240,7 +235,7 @@ void ClauseTableauInitialize(ClauseTableau_p handle, ProofState_p initial)
 ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p label, int position)
 {
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
-	handle->derivation = NULL;
+	handle->tableau_variables = NULL;
 	assert(parent);
 	assert(label);
 	parent->arity += 1;
@@ -252,7 +247,6 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->unit_axioms = NULL;
 	handle->open_branches = parent->open_branches;
 	handle->label = label;
-	handle->tmp_label = NULL;
 	handle->id = 0;
 	handle->head_lit = false;
 	handle->local_variables = NULL;
@@ -283,9 +277,10 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 
 void ClauseTableauFree(ClauseTableau_p trash)
 {
-	if (trash->depth == 0)
+	if (trash->depth == 0 && trash->tableau_variables)
 	{
-		PStackFree(trash->derivation);
+		//PStackFree(trash->derivation);
+		PTreeFree(trash->tableau_variables);
 	}
 	if (trash->label)
 	{
@@ -725,11 +720,10 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
 	   //~ printf("tableau max var: %ld\n", tableau->master->max_var);
 	   //~ printf("old var: %ld\n", old_var->f_code);
 	   //printf("# Old_var->type in ClauseFlatCopyFresh: %ld\n", old_var->type->f_code);
-	   tableau->master->max_var -= 2;
-	   //fresh_var = VarBankVarAssertAlloc(variable_bank, tableau->master->max_var, old_var->type);
-	   fresh_var = VarBankGetFreshVar(variable_bank, old_var->type);
-	   //~ printf("old var: %ld\n", old_var->f_code);
-	   //~ printf("fresh var: %ld\n", fresh_var->f_code);
+	   //tableau->master->max_var -= 2;
+	   //fresh_var = VarBankVarAssertAlloc(variable_bank, tableau->master->max_var, old_var->type); // oldest
+	   //fresh_var = VarBankGetFreshVar(variable_bank, old_var->type); // old
+	   fresh_var = ClauseTableauGetFreshVar(tableau->master, old_var); // new
 	   assert(fresh_var != old_var);
 	   assert(fresh_var->f_code != old_var->f_code);
 	   if (fresh_var->f_code == old_var->f_code)
@@ -742,8 +736,6 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
 	   //SubstPrint(GlobalOut, subst, tableau->terms->sig, DEREF_NEVER);
 	   //printf("\n");
    }
-   
-	//printf("max_var %ld\n", tableau->master->max_var);
    
    handle = ClauseCopyOpt(clause);
    
@@ -1256,4 +1248,36 @@ void ClauseTableauTPTPPrint(ClauseTableau_p tab)
 		fprintf(GlobalOut, " %s\n", DStrView(node->info));
 	}
 	PStackFree(steps);
+}
+
+/*  Return the smallest variable that does not occur in the tableau,
+ *  according to the tableau_variables tree.  Adds the variable to the
+ *  tree when it is found.
+*/
+
+Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var)
+{
+	assert(tab == tab->master);
+	FunCode var_funcode = tab->max_var -2;
+	bool fresh_found = false;
+	while (!fresh_found)
+	{
+		Term_p potential_fresh = VarBankFCodeFind(tab->master->terms->vars, var_funcode);
+		if (UNLIKELY(!potential_fresh)) //hasn't been created yet
+		{
+			potential_fresh = VarBankVarAssertAlloc(tab->master->terms->vars, var_funcode, old_var->type);
+		}
+		PTree_p found = PTreeFind(&(tab->tableau_variables), potential_fresh);
+		if (!found)
+		{
+			assert(TermIsVar(potential_fresh));
+			bool inserted = PTreeStore(&(tab->tableau_variables), potential_fresh);
+			assert(inserted);
+			assert(PTreeFind(&(tab->tableau_variables), potential_fresh));
+			return potential_fresh;
+		}
+		var_funcode -= 2;
+	}
+	Error("# Could not find a fresh variable...", 1);
+	return NULL;
 }

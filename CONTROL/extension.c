@@ -299,6 +299,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	if (split_clause_ident == open_branch->parent->id) return 0; // Don't split the same clause twice
 	
 	//  SplitClauseFresh here is a major performance offender.
+	ClauseTableauUpdateVariables(open_branch->master);
 	ClauseSet_p new_leaf_clauses = SplitClauseFresh(open_branch->terms, open_branch->master, selected);
 	assert(new_leaf_clauses->members);
 	Clause_p open_branch_label = open_branch->label;
@@ -358,6 +359,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 					return extensions_done;
 				}
 				// Etableau branch saturation methods here!
+				//else if (tableau_control->branch_saturation_enabled && GetTotalCPUTime() > 30)
 				else if (tableau_control->branch_saturation_enabled)
 				{
 					BranchSaturation_p branch_sat = BranchSaturationAlloc(tableau_control->proofstate, 

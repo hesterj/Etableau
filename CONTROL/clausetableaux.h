@@ -46,10 +46,10 @@ typedef struct clausetableau
 	DStr_p info;    // Contains the substitution used to close this node
 	PStack_p local_variables; // The variables of the tableau that are local to the branch.
 	
-	TableauStack_p derivation;
+	 // Only present at root.  Contains variables that are present in the tableau.
+	PTree_p tableau_variables;
 	
 	Clause_p label; // The clause at this node
-	Clause_p tmp_label; // For creating temporary copies of clauses, i/e in closure
 	ClauseSet_p unit_axioms; // Only present at the master node
 	ClauseSet_p folding_labels; // These are clauses that have been folded up to this node.
 	
@@ -160,6 +160,8 @@ void ClauseTableauCollectLeaves(ClauseTableau_p tab, TableauSet_p leaves);
 void ClauseTableauCollectLeavesStack(ClauseTableau_p tab, PStack_p leaves);
 
 bool TableauDominatesNode(ClauseTableau_p tab, ClauseTableau_p node);
+
+Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var);
 
 /*  Tableau control struct
  * 

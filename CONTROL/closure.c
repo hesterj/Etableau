@@ -46,6 +46,7 @@ int AttemptClosureRuleOnAllOpenBranches(ClauseTableau_p tableau)
 {
 	int num_branches_closed = 0;
 	ClauseTableau_p open_branch = tableau->open_branches->anchor->succ;
+	ClauseTableauUpdateVariables(tableau->master);
 	while (open_branch != tableau->open_branches->anchor)
 	{
 		if (ClauseTableauBranchClosureRuleWrapper(open_branch))
@@ -54,6 +55,7 @@ int AttemptClosureRuleOnAllOpenBranches(ClauseTableau_p tableau)
 			open_branch->open = false;
 			open_branch = open_branch->succ;
 			TableauSetExtractEntry(open_branch->pred);
+			ClauseTableauUpdateVariables(tableau->master);
 			if (open_branch == tableau->open_branches->anchor)
 			{
 				open_branch = open_branch->succ;

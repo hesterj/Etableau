@@ -299,7 +299,6 @@ int Etableau(TableauControl_p tableaucontrol,
 //   Try to extend on all the open branches of tableaux from distinct_tableaux_set.
 //   After an extension is done, the resulting tableaux can be extended on again 
 //   if there are potential new branches that do not exceed the depth limit.
-//   This method can be compared to "Saturate" of Eprover.
 //
 // Side Effects    :  Calls Saturate, so many.
 //
@@ -442,7 +441,8 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 	}
 	else  // Extended or not, active should have no references to it elsewhere and has been worked on so can be discarded
 	{
-		PStackPushP(tableaucontrol->tableaux_trash, active_tableau);
+		//PStackPushP(tableaucontrol->tableaux_trash, active_tableau);
+		ClauseTableauFree(active_tableau->master);
 	}
 	
 	return_point:
@@ -500,8 +500,6 @@ ClauseTableau_p EtableauHailMary(TableauControl_p tableaucontrol)
 void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, ClauseTableau_p resulting_tab)
 {
 	assert(resulting_tab);
-	assert(resulting_tab->derivation);
-	assert(PStackGetSP(resulting_tab->derivation));
 	assert(resulting_tab == tableaucontrol->closed_tableau);
 	
 	long neg_conjectures = tableaucontrol->neg_conjectures;

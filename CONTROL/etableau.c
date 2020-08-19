@@ -102,6 +102,8 @@ int process_branch_nofork(ProofState_p proofstate,
 		return RESOURCE_OUT;
 	}
 	
+	fprintf(stdout, "# Saturation (%ld) on branch %p.\n", selected_number_of_clauses_to_process, branch);
+	
 	// Large number of clauses to process, for last ditch attempts
 	if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
 	

@@ -141,9 +141,10 @@ Clause_p ReplaceLocalVariablesWithFreshSubst(ClauseTableau_p master, Clause_p cl
 		Term_p old_var = PStackElementP(local_variables, p);
 		assert(old_var);
 		assert(old_var->f_code < 0);
-		master->max_var -= 2;
+		//master->max_var -= 2;
 		//Term_p fresh_var = VarBankVarAssertAlloc(variable_bank, master->max_var, old_var->type);
-		Term_p fresh_var = VarBankGetFreshVar(master->state->freshvars, old_var->type);
+		//Term_p fresh_var = VarBankGetFreshVar(master->state->freshvars, old_var->type);
+		Term_p fresh_var = ClauseTableauGetFreshVar(master->master, old_var);
 		assert(old_var != fresh_var);
 		assert(old_var->f_code != fresh_var->f_code);
 		SubstAddBinding(subst, old_var, fresh_var);
@@ -169,8 +170,9 @@ Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause,
 		Term_p old_var = PStackElementP(local_variables, p);
 		assert(old_var);
 		assert(old_var->f_code < 0);
-		master->max_var -= 2;
-		Term_p fresh_var = VarBankGetFreshVar(variable_bank, old_var->type);
+		// master->max_var -= 2;
+		// Term_p fresh_var = VarBankGetFreshVar(variable_bank, old_var->type); // old
+		Term_p fresh_var = ClauseTableauGetFreshVar(master->master, old_var);
 		assert(fresh_var != old_var);
 		assert(old_var->f_code != fresh_var->f_code);
 		SubstAddBinding(subst, old_var, fresh_var);
@@ -225,4 +227,26 @@ bool AllBranchesAreLocal(ClauseTableau_p master)
 	}
 	printf("# All branches are local!\n");
 	return true;
+}
+
+void ClauseTableauCollectVariables(ClauseTableau_p tab, PTree_p *variables)
+{
+	ClauseTableau_p branch = tab->open_branches->anchor->succ;
+	while (branch != tab->open_branches->anchor)
+	{
+		CollectVariablesOfBranch(branch, variables, true);
+		branch = branch->succ;
+	}
+}
+
+void ClauseTableauUpdateVariables(ClauseTableau_p tab)
+{
+	assert(tab);
+	PTree_p tableau_variables = NULL;
+	if (tab->tableau_variables)
+	{
+		PTreeFree(tab->tableau_variables);
+	}
+	ClauseTableauCollectVariables(tab, &tableau_variables);
+	tab->tableau_variables = tableau_variables;
 }
