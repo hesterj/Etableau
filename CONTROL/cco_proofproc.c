@@ -1622,8 +1622,8 @@ Clause_p ProcessSpecificClause(ProofState_p state, ProofControl_p control,
    }
    assert(clause);
 
-   //ClauseSetExtractEntry(clause);
-   //ClauseRemoveEvaluations(clause);
+   ClauseSetExtractEntry(clause);
+   ClauseRemoveEvaluations(clause);
    
    // Orphans have been excluded during selection now
 
