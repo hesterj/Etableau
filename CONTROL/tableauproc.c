@@ -13,11 +13,28 @@ long dive_depth = 10;
 */
 
 ClauseTableau_p tableau_select(TableauControl_p tableaucontrol, TableauSet_p set);
+ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth);
 
 
 /*  Function Definitions
 */
 
+ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth)
+{
+	int deepest_depth = 0;
+	ClauseTableau_p deepest = NULL;
+	ClauseTableau_p branch = open_branches->anchor->succ;
+	while (branch != open_branches->anchor)
+	{
+		if (branch->depth > deepest_depth && branch->depth <= max_depth)
+		{
+			deepest_depth = branch->depth;
+			deepest = branch;
+		}
+		branch = branch->succ;
+	}
+	return deepest;
+}
 
 /*-----------------------------------------------------------------------
 //
@@ -337,7 +354,13 @@ ClauseTableau_p ConnectionTableauProofSearchAtDepth(TableauControl_p tableaucont
 		{
 			num_tableaux = (int) distinct_tableaux_set->members + (int) PStackGetSP(newly_created_tableaux);
 			num_tableaux += (int) PStackGetSP(max_depth_tableaux);
-			closed_tableau = ConnectionCalculusExtendOpenBranches(active_tableau, 
+			//~ closed_tableau = ConnectionCalculusExtendOpenBranches(active_tableau, 
+																				//~ newly_created_tableaux, 
+																				//~ tableaucontrol,
+																				//~ NULL,
+																				//~ extension_candidates,
+																				//~ max_depth, max_depth_tableaux);
+			closed_tableau = ConnectionCalculusExtendSelectedBranch(active_tableau, 
 																				newly_created_tableaux, 
 																				tableaucontrol,
 																				NULL,
@@ -444,6 +467,64 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 		//PStackPushP(tableaucontrol->tableaux_trash, active_tableau);
 		ClauseTableauFree(active_tableau->master);
 	}
+	
+	return_point:
+	PStackPushStack(newly_created_tableaux, tab_tmp_store);
+	PStackFree(tab_tmp_store);
+	return closed_tableau;
+}
+
+/*-----------------------------------------------------------------------
+//
+// Function: ConnectionCalculusExtendSelectedBranches(...)
+//
+//   As ConnectionCalculusExtendOpenBranches, but rather than extending
+//   on all open branches, only on the selected. 
+//
+// Side Effects    :  Calls Saturate, so many.
+//
+/----------------------------------------------------------------------*/
+
+ClauseTableau_p ConnectionCalculusExtendSelectedBranch(ClauseTableau_p active_tableau, TableauStack_p newly_created_tableaux,
+																							TableauControl_p tableaucontrol,
+																							TableauSet_p distinct_tableaux,
+																							ClauseSet_p extension_candidates,
+																							int max_depth, TableauStack_p max_depth_tableaux)
+{
+	assert(active_tableau);
+	assert(active_tableau->open_branches);
+	ClauseTableau_p closed_tableau = NULL;
+	int number_of_extensions = 0;
+	//fprintf(GlobalOut, "d: %d\n", active_tableau->depth);
+	
+	TableauSet_p open_branches = active_tableau->open_branches;
+	ClauseTableau_p open_branch = branch_select(open_branches, max_depth);
+	
+	if (open_branch == NULL) // All max depth branches
+	{
+		PStackPushP(max_depth_tableaux, active_tableau);
+		return NULL;
+	}
+	
+	TableauStack_p tab_tmp_store = PStackAlloc();
+	Clause_p selected = extension_candidates->anchor->succ;
+	while (selected != extension_candidates->anchor) // iterate over the clauses we can split on the branch
+	{
+		number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranch(tableaucontrol,
+																								open_branch,
+																								NULL,
+																								selected,
+																								tab_tmp_store);
+		if (tableaucontrol->closed_tableau)
+		{
+			closed_tableau = tableaucontrol->closed_tableau;
+			fprintf(GlobalOut, "# Success\n");
+			goto return_point;
+		}
+		selected = selected->succ;
+	}
+	
+	ClauseTableauFree(active_tableau->master);
 	
 	return_point:
 	PStackPushStack(newly_created_tableaux, tab_tmp_store);

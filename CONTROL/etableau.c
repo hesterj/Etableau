@@ -472,10 +472,12 @@ void EtableauProofStateResetClauseSets(ProofState_p state)
 //
 //   Move all label clauses on branch into state->unprocessed.
 //   Modified from ProofStateResetProcessedSet
+//   As the clauses are put into state->unprocessed, process them
+//   This is a "cargo cult" approach to ensure they are processed properly
 //
 // Global Variables: -
 //
-// Side Effects    : -
+// Side Effects    : Many, processes clauses
 //
 /----------------------------------------------------------------------*/
 

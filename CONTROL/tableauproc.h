@@ -73,6 +73,13 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 																	  ClauseSet_p extension_candidates,
 																	  int max_depth, 
 																	  TableauStack_p max_depth_tableaux);
+ClauseTableau_p ConnectionCalculusExtendSelectedBranch(ClauseTableau_p active_tableau, 
+																			TableauStack_p newly_created_tableaux,
+																			TableauControl_p tableaucontrol,
+																			TableauSet_p distinct_tableaux,
+																			ClauseSet_p extension_candidates,
+																			int max_depth, 
+																			TableauStack_p max_depth_tableaux);
 ClauseTableau_p EtableauHailMary(TableauControl_p tableaucontrol);
 void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, ClauseTableau_p resulting_tab);
 ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate, ClauseSet_p active);
