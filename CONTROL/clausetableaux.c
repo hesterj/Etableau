@@ -515,6 +515,7 @@ ClauseSet_p ClauseSetApplySubstitution(TB_p bank, ClauseSet_p set, Subst_p subst
 
 void ClauseTableauPrint(ClauseTableau_p tab)
 {
+	fprintf(GlobalOut, "# BEGIN PRINTING TABLEAU\n");
 	PStack_p leaves = PStackAlloc();
 	ClauseTableauCollectLeavesStack(tab, leaves);
 	for (PStackPointer p = 0; p<PStackGetSP(leaves); p++)
@@ -523,6 +524,7 @@ void ClauseTableauPrint(ClauseTableau_p tab)
 		ClauseTableauPrintBranch(handle);printf("\n");
 	}
 	PStackFree(leaves);
+	fprintf(GlobalOut, "# END PRINTING TABLEAU\n");
 }
 
 void ClauseTableauPrint2(ClauseTableau_p tab)

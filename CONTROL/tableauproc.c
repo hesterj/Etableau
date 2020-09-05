@@ -253,6 +253,9 @@ int Etableau(TableauControl_p tableaucontrol,
 	ClauseSetInsertSet(extension_candidates, start_rule_candidates);
 	ClauseSetFree(start_rule_candidates);
 	fprintf(GlobalOut, "# %ld start rule tableaux created.\n", distinct_tableaux_set->members);
+	fprintf(GlobalOut, "# %ld extension rule candidate clauses\n", extension_candidates->members);
+	ClauseSetPrint(GlobalOut, extension_candidates, true);
+	printf("\n");
 	
 	TableauStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extension rules.
 	
@@ -510,11 +513,13 @@ ClauseTableau_p ConnectionCalculusExtendSelectedBranch(ClauseTableau_p active_ta
 	Clause_p selected = extension_candidates->anchor->succ;
 	while (selected != extension_candidates->anchor) // iterate over the clauses we can split on the branch
 	{
+		//ClauseTableauPrint(open_branch->master);
 		number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranch(tableaucontrol,
 																								open_branch,
 																								NULL,
 																								selected,
 																								tab_tmp_store);
+		//printf("did %d extensions, there are %ld in the tab_tmp_store\n", number_of_extensions, PStackGetSP(tab_tmp_store));
 		if (tableaucontrol->closed_tableau)
 		{
 			closed_tableau = tableaucontrol->closed_tableau;
@@ -528,6 +533,8 @@ ClauseTableau_p ConnectionCalculusExtendSelectedBranch(ClauseTableau_p active_ta
 	
 	return_point:
 	PStackPushStack(newly_created_tableaux, tab_tmp_store);
+	//~ printf("newly created tableaux: %ld\n", PStackGetSP(newly_created_tableaux));
+	//~ printf("max depth tableaux: %ld\n", PStackGetSP(max_depth_tableaux));
 	PStackFree(tab_tmp_store);
 	return closed_tableau;
 }
@@ -730,6 +737,7 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
 		beginning_tableau->max_var = max_var;
 		beginning_tableau = TableauStartRule(beginning_tableau, start_label);
 		TableauSetInsert(distinct_tableaux_set, beginning_tableau->master);
+		//ClauseTableauUpdateVariables(beginning_tableau->master); //unnecessary, is done before any uni attempts
 		start_label = start_label->succ;
 	}
 	
