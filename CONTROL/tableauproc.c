@@ -235,7 +235,8 @@ int Etableau(TableauControl_p tableaucontrol,
 		ClauseSetFree(equality_axioms);
 	}
 	ClauseSet_p start_rule_candidates = EtableauGetStartRuleCandidates(proofstate, extension_candidates);
-	fprintf(GlobalOut, "# There are %ld start rule candidates.\n", start_rule_candidates->members);
+	fprintf(GlobalOut, "# There are %ld start rule candidates:\n", start_rule_candidates->members);
+	ClauseSetPrint(GlobalOut, start_rule_candidates, true);
 	
 	ClauseSet_p unit_axioms = ClauseSetAlloc();
 	ClauseSetMoveUnits(extension_candidates, unit_axioms);
@@ -351,24 +352,26 @@ ClauseTableau_p ConnectionTableauProofSearchAtDepth(TableauControl_p tableaucont
 		assert(active_tableau->open_branches);
 		TableauSetExtractEntry(active_tableau);
 		
+		//ClauseTableauPrint(active_tableau);
 		// At this point, there could be tableaux to be extended on at this depth in newly_created_tableaux
 		// Attempt to create extension tableaux until they are all at max depth or a closed tableau is found
 		while (true)
 		{
 			num_tableaux = (int) distinct_tableaux_set->members + (int) PStackGetSP(newly_created_tableaux);
 			num_tableaux += (int) PStackGetSP(max_depth_tableaux);
-			//~ closed_tableau = ConnectionCalculusExtendOpenBranches(active_tableau, 
-																				//~ newly_created_tableaux, 
-																				//~ tableaucontrol,
-																				//~ NULL,
-																				//~ extension_candidates,
-																				//~ max_depth, max_depth_tableaux);
-			closed_tableau = ConnectionCalculusExtendSelectedBranch(active_tableau, 
+			//fprintf(GlobalOut, "# Num tableaux: %ld\n", num_tableaux);
+			closed_tableau = ConnectionCalculusExtendOpenBranches(active_tableau, 
 																				newly_created_tableaux, 
 																				tableaucontrol,
 																				NULL,
 																				extension_candidates,
 																				max_depth, max_depth_tableaux);
+			//~ closed_tableau = ConnectionCalculusExtendSelectedBranch(active_tableau, 
+																				//~ newly_created_tableaux, 
+																				//~ tableaucontrol,
+																				//~ NULL,
+																				//~ extension_candidates,
+																				//~ max_depth, max_depth_tableaux);
 			if (closed_tableau)
 			{
 				assert(tableaucontrol->closed_tableau);
@@ -514,11 +517,16 @@ ClauseTableau_p ConnectionCalculusExtendSelectedBranch(ClauseTableau_p active_ta
 	while (selected != extension_candidates->anchor) // iterate over the clauses we can split on the branch
 	{
 		//ClauseTableauPrint(open_branch->master);
-		number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranch(tableaucontrol,
+		int new_extensions = ClauseTableauExtensionRuleAttemptOnBranch(tableaucontrol,
 																								open_branch,
 																								NULL,
 																								selected,
 																								tab_tmp_store);
+		//~ if (new_extensions == 0)
+		//~ {
+			//~ fprintf(GlobalOut, "# Could not extend on a branch...\n");
+		//~ }
+		number_of_extensions += new_extensions;
 		//printf("did %d extensions, there are %ld in the tab_tmp_store\n", number_of_extensions, PStackGetSP(tab_tmp_store));
 		if (tableaucontrol->closed_tableau)
 		{
@@ -533,8 +541,8 @@ ClauseTableau_p ConnectionCalculusExtendSelectedBranch(ClauseTableau_p active_ta
 	
 	return_point:
 	PStackPushStack(newly_created_tableaux, tab_tmp_store);
-	//~ printf("newly created tableaux: %ld\n", PStackGetSP(newly_created_tableaux));
-	//~ printf("max depth tableaux: %ld\n", PStackGetSP(max_depth_tableaux));
+	//printf("newly created tableaux: %ld\n", PStackGetSP(newly_created_tableaux));
+	//printf("max depth tableaux: %ld\n", PStackGetSP(max_depth_tableaux));
 	PStackFree(tab_tmp_store);
 	return closed_tableau;
 }
@@ -556,6 +564,10 @@ ClauseTableau_p EtableauHailMary(TableauControl_p tableaucontrol)
 	// If no new tableaux were created, we will do a "hail mary" saturation attempt on the remaining branches
 	// of some tableau...
 	fprintf(GlobalOut, "# No tableaux could be created.  Saturating branches.\n");
+	if (PStackEmpty(tableaucontrol->tableaux_trash))
+	{
+		Error("# Could not find a tableau to saturate in the trash... Exiting", RESOURCE_OUT);
+	}
 	ClauseTableau_p some_tableau = PStackElementP(tableaucontrol->tableaux_trash, 0);
 	assert(some_tableau);
 	assert(some_tableau->master == some_tableau);
