@@ -236,7 +236,7 @@ int Etableau(TableauControl_p tableaucontrol,
 	}
 	ClauseSet_p start_rule_candidates = EtableauGetStartRuleCandidates(proofstate, extension_candidates);
 	fprintf(GlobalOut, "# There are %ld start rule candidates:\n", start_rule_candidates->members);
-	ClauseSetPrint(GlobalOut, start_rule_candidates, true);
+	//ClauseSetPrint(GlobalOut, start_rule_candidates, true);
 	
 	ClauseSet_p unit_axioms = ClauseSetAlloc();
 	ClauseSetMoveUnits(extension_candidates, unit_axioms);
@@ -255,7 +255,7 @@ int Etableau(TableauControl_p tableaucontrol,
 	ClauseSetFree(start_rule_candidates);
 	fprintf(GlobalOut, "# %ld start rule tableaux created.\n", distinct_tableaux_set->members);
 	fprintf(GlobalOut, "# %ld extension rule candidate clauses\n", extension_candidates->members);
-	ClauseSetPrint(GlobalOut, extension_candidates, true);
+	//ClauseSetPrint(GlobalOut, extension_candidates, true);
 	printf("\n");
 	
 	TableauStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extension rules.
@@ -627,7 +627,7 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 	}
 	
 	fprintf(GlobalOut, "# SZS output start CNFRefutation for %s\n", tableaucontrol->problem_name);
-	if (tableaucontrol->clausification_buffer)
+	if (false && tableaucontrol->clausification_buffer) // Disabled for sanity
 	{
 		fprintf(GlobalOut, "# Begin clausification derivation\n");
 		fprintf(GlobalOut, "%s\n", tableaucontrol->clausification_buffer);
@@ -638,7 +638,7 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 	}
 	else
 	{
-		Error("No record of clausification?", 1);
+		fprintf(GlobalOut, "# Clausification printing disabled or no record found\n");
 	}
 	fprintf(GlobalOut, "# Begin printing tableau\n");
 	ClauseTableauPrint(resulting_tab);
