@@ -24,6 +24,7 @@
 #include <extension.h>
 #include <math.h>
 #include <sys/sysinfo.h>
+#include <apr.h>
 
 WFormula_p ProofStateGetConjecture(ProofState_p state);
 

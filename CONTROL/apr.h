@@ -96,6 +96,13 @@ int APRCreateInterClauseEdges(APRControl_p control,
 										PStack_p relevant, 
 										PStackPointer t1_iter, 
 										int distance);
+										
+static inline void APRVerify();
+
+static inline void APRVerify()
+{
+	fprintf(GlobalOut, "# APR header successfully linked.\n");
+}
 
 
 

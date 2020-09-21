@@ -99,6 +99,7 @@ Clause_p ClauseFlatCopyFresh(Clause_p clause, ClauseTableau_p tableau);
 Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau);  // Major memory hog
 
 ClauseSet_p EqualityAxioms(TB_p bank);
+PList_p ClauseSetToPList(ClauseSet_p set);
 
 Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b);
 Subst_p ClauseContradictsClauseSubst(Clause_p a, Clause_p b, Subst_p subst);

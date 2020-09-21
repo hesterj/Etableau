@@ -783,12 +783,18 @@ PStack_p APRRelevanceList(APRControl_p control, PList_p list, int relevance)
 /*
  *  Return a stack of clauses from set that are within relevance
  *  distance of clauses from list
- * 
+ *  
+ *  list is the "set of support" for constructing the relevance graph.
  * Side effects:  Adds equality axioms to the APR graph if equality is detected.
  *  
 */
 
-PStack_p APRRelevanceNeighborhood(Sig_p sig, ClauseSet_p set, PList_p list, int relevance, bool equality, bool print_graph)
+PStack_p APRRelevanceNeighborhood(Sig_p sig, 
+											 ClauseSet_p set, 
+											 PList_p list, 
+											 int relevance, 
+											 bool equality, 
+											 bool print_graph)
 {
 	APRControl_p control = APRControlAlloc(sig, set->anchor->succ->literals->bank);
 	ClauseSet_p equality_axioms = NULL;

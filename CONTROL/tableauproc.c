@@ -222,9 +222,11 @@ int Etableau(TableauControl_p tableaucontrol,
 											int tableauequality)
 {
 	if(geteuid() == 0) Error("# Please do not run Etableau as root.", 1);
+	APRVerify();
 	bool proof_found = false;
 	problemType = PROBLEM_FO;
 	FunCode max_var = ClauseSetGetMaxVar(active);
+	
 	tableaucontrol->unprocessed = ClauseSetCopy(bank, proofstate->unprocessed);
 	fprintf(GlobalOut, "# %ld beginning clauses after preprocessing and clausification\n", active->members);
 	ClauseSet_p extension_candidates = ClauseSetCopy(bank, active);
@@ -250,6 +252,25 @@ int Etableau(TableauControl_p tableaucontrol,
 																					  unit_axioms,
 																					  start_rule_candidates);
 																					  
+	
+	// Alternating path relevance experimentation zone
+	int relevance_distance = 2;
+	PList_p start_rule_candidates_list = ClauseSetToPList(start_rule_candidates);
+	fprintf(GlobalOut, "# Attempting APR relevance on extension candidates\n");
+	PStack_p apr_relevant_extension_candidates = APRRelevanceNeighborhood(bank->sig, 
+												 extension_candidates, 
+												 start_rule_candidates_list, 
+												 relevance_distance, 
+												 false, 
+												 false);
+	fprintf(GlobalOut, "# Experimental: Number of extension candidates within %d relevance of conjecture: %ld of %ld\n", 
+																				 relevance_distance,
+																				 PStackGetSP(apr_relevant_extension_candidates),
+																				 extension_candidates->members);
+	PListFree(start_rule_candidates_list);
+	PStackFree(apr_relevant_extension_candidates);
+	// End APR zone
+	
 	ClauseSetFreeUnits(start_rule_candidates);
 	ClauseSetInsertSet(extension_candidates, start_rule_candidates);
 	ClauseSetFree(start_rule_candidates);

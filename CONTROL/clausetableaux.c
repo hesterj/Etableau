@@ -1283,3 +1283,15 @@ Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var)
 	Error("# Could not find a fresh variable...", 1);
 	return NULL;
 }
+
+PList_p ClauseSetToPList(ClauseSet_p set)
+{
+	PList_p list = PListAlloc();
+	Clause_p handle = set->anchor->succ;
+	while (handle != set->anchor)
+	{
+		PListStoreP(list, handle);
+		handle = handle->succ;
+	}
+	return list;
+}
