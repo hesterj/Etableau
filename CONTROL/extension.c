@@ -35,7 +35,12 @@ ClauseSet_p ClauseStackToClauseSet(ClauseStack_p stack)
 	ClauseSet_p clauses = ClauseSetAlloc();
 	for (PStackPointer i=0; i<number_of_clauses; i++)
 	{
-		ClauseSetInsert(clauses, PStackElementP(stack, i));
+		Clause_p clause = PStackElementP(stack, i);
+		if (clause->set)
+		{
+			ClauseSetExtractEntry(clause);
+		}
+		ClauseSetInsert(clauses, clause);
 	}
 	return clauses;
 }

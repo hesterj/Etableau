@@ -90,7 +90,6 @@ void APRControlFree(APRControl_p trash)
 
 PStack_p APRBuildGraphConjectures(APRControl_p control, ClauseSet_p clauses, PList_p conjectures, int distance)
 {
-	//APRControl_p control = APRControlAlloc();
 	
 	/* Make the nonequality nodes, put them in appropriate buckets,
 	* and add a map taking each clause ident in set to its bucket
@@ -597,8 +596,7 @@ bool APRGraphAddNodes(APRControl_p control, Clause_p clause, bool equality)
 	IntMapAssign(map, handle_ident, clause_bucket);
 	//IntMapAssign(original_clause_map, handle_ident, clause);
 	PStack_p clause_literals = EqnListToStack(clause->literals); // Original
-	//ClauseSetInsert(control->fresh_clauses, fresh_clause); //
-	//PStack_p clause_literals = EqnListToStack(fresh_clause->literals); //
+	
 	for (PStackPointer p = 0; p < PStackGetSP(clause_literals); p++)
 	{
 		Eqn_p literal = PStackElementP(clause_literals, p);
@@ -831,6 +829,7 @@ PStack_p APRRelevanceNeighborhood(Sig_p sig,
 	{
 		APRGraphCreateDOTClauses(control);
 	}
+	
 	for (PStackPointer p=0 ; p<PStackGetSP(relevant); p++)
 	{
 		Clause_p relevant_clause = PStackElementP(relevant, p);
