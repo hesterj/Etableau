@@ -96,9 +96,9 @@ int process_branch_nofork(ProofState_p proofstate,
 	}
 	
 	// Do not duplicate work.
-	if (previously_saturated >= selected_number_of_clauses_to_process)
+	//if (previously_saturated >= selected_number_of_clauses_to_process)
+	if (previously_saturated > 0)
 	{
-		fprintf(GlobalOut, "# Duplicate work avoided.\n");
 		return RESOURCE_OUT;
 	}
 	
@@ -106,7 +106,7 @@ int process_branch_nofork(ProofState_p proofstate,
 	if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
 	
 	//SilentTimeOut = true;
-	proofcontrol->heuristic_parms.prefer_initial_clauses = true;
+	//proofcontrol->heuristic_parms.prefer_initial_clauses = true;
 	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
 	EtableauProofStateResetClauseSets(proofstate);
 	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
