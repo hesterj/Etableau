@@ -254,26 +254,33 @@ int Etableau(TableauControl_p tableaucontrol,
 																					  
 	
 	// Alternating path relevance experimentation zone
-	int relevance_distance = 3;
-	PList_p start_rule_candidates_list = ClauseSetToPList(start_rule_candidates);
-	fprintf(GlobalOut, "# Attempting APR relevance on extension candidates\n");
-	PStack_p apr_relevant_extension_candidates = APRRelevanceNeighborhood(bank->sig, 
-												 extension_candidates, 
-												 start_rule_candidates_list, 
-												 relevance_distance, 
-												 false, 
-												 false);
-	ClauseSet_p irrelevant_extension_candidates = ClauseSetAlloc();
-	fprintf(GlobalOut, "# Experimental: Number of extension candidates within %d relevance of conjecture: %ld of %ld\n", 
-																				 relevance_distance,
-																				 PStackGetSP(apr_relevant_extension_candidates),
-																				 extension_candidates->members);
-	ClauseSetInsertSet(irrelevant_extension_candidates, extension_candidates);
-	ClauseSetFree(extension_candidates);
-	extension_candidates = ClauseStackToClauseSet(apr_relevant_extension_candidates);
-	PListFree(start_rule_candidates_list);
-	PStackFree(apr_relevant_extension_candidates);
-	ClauseSetFree(irrelevant_extension_candidates);
+	if (!ClauseSetEmpty(extension_candidates))
+	{
+		int relevance_distance = 3;
+		PList_p start_rule_candidates_list = ClauseSetToPList(start_rule_candidates);
+		fprintf(GlobalOut, "# Attempting APR relevance on extension candidates\n");
+		PStack_p apr_relevant_extension_candidates = APRRelevanceNeighborhood(bank->sig, 
+													 extension_candidates, 
+													 start_rule_candidates_list, 
+													 relevance_distance, 
+													 false, 
+													 false);
+		ClauseSet_p irrelevant_extension_candidates = ClauseSetAlloc();
+		fprintf(GlobalOut, "# Experimental: Number of extension candidates within %d relevance of conjecture: %ld of %ld\n", 
+																					 relevance_distance,
+																					 PStackGetSP(apr_relevant_extension_candidates),
+																					 extension_candidates->members);
+		ClauseSetInsertSet(irrelevant_extension_candidates, extension_candidates);
+		ClauseSetFree(extension_candidates);
+		extension_candidates = ClauseStackToClauseSet(apr_relevant_extension_candidates);
+		PListFree(start_rule_candidates_list);
+		PStackFree(apr_relevant_extension_candidates);
+		ClauseSetFree(irrelevant_extension_candidates);
+	}
+	else 
+	{
+		fprintf(GlobalOut, "# No non-conjecture extension candidates for APR relevance\n");
+	}
 	// End APR zone
 	
 	ClauseSetFreeUnits(start_rule_candidates);
@@ -592,6 +599,7 @@ ClauseTableau_p EtableauHailMary(TableauControl_p tableaucontrol)
 	fprintf(GlobalOut, "# No tableaux could be created.  Saturating branches.\n");
 	if (PStackEmpty(tableaucontrol->tableaux_trash))
 	{
+		fprintf(GlobalOut, "# SZS status Unknown\n");
 		Error("# Could not find a tableau to saturate in the trash... Exiting", RESOURCE_OUT);
 	}
 	ClauseTableau_p some_tableau = PStackElementP(tableaucontrol->tableaux_trash, 0);

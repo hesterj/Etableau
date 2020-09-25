@@ -794,6 +794,12 @@ PStack_p APRRelevanceNeighborhood(Sig_p sig,
 											 bool equality, 
 											 bool print_graph)
 {
+	assert(set);
+	assert(set->anchor);
+	assert(!ClauseSetEmpty(set));
+	assert(set->anchor->succ);
+	assert(set->anchor->succ->literals);
+	assert(set->anchor->succ->literals->bank);
 	APRControl_p control = APRControlAlloc(sig, set->anchor->succ->literals->bank);
 	ClauseSet_p equality_axioms = NULL;
 	control->equality = equality;
