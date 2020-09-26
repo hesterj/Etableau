@@ -31,7 +31,7 @@
 #include <cte_simpletypes.h>
 #include <cco_scheduling.h>
 #include <e_version.h>
-#include <tableauproc.h>
+#include <etab_tableauproc.h>
 
 
 /*---------------------------------------------------------------------*/

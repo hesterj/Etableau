@@ -3235,10 +3235,11 @@ eprover.o: eprover.c /usr/include/stdc-predef.h ../include/clb_defines.h \
  ../include/che_levweight.h ../include/che_treeweight.h \
  ../include/che_prefixweight.h ../include/che_strucweight.h \
  ../include/che_diversityweight.h ../include/che_litselection.h \
- ../include/e_version.h ../include/e_gitcommit.h ../include/tableauproc.h \
- ../include/extension.h ../include/etableau.h ../include/foldingup.h \
- ../include/closure.h ../include/localunification.h \
- ../include/clausetableaux.h ../include/che_heuristics.h \
+ ../include/e_version.h ../include/e_gitcommit.h \
+ ../include/etab_tableauproc.h ../include/etab_extension.h \
+ ../include/etab_etableau.h ../include/etab_foldingup.h \
+ ../include/etab_closure.h ../include/etab_localunification.h \
+ ../include/etab_clausetableaux.h ../include/che_heuristics.h \
  ../include/che_proofcontrol.h ../include/ccl_rewrite.h \
  ../include/che_hcbadmin.h ../include/che_axiomscan.h \
  ../include/che_to_autoselect.h ../include/cco_clausesplitting.h \
@@ -3247,7 +3248,7 @@ eprover.o: eprover.c /usr/include/stdc-predef.h ../include/clb_defines.h \
  ../include/ccl_factor.h ../include/cco_eqnresolving.h \
  ../include/ccl_eqnresolution.h ../include/cco_paramodulation.h \
  ../include/cco_interpreted.h ../include/cco_proofproc.h \
- ../include/cco_proc_ctrl.h ../include/apr.h /usr/include/time.h \
+ ../include/cco_proc_ctrl.h ../include/etab_apr.h /usr/include/time.h \
  /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
