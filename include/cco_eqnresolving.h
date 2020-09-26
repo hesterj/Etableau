@@ -1,1 +1,0 @@
-../CONTROL/cco_eqnresolving.h
