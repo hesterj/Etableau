@@ -79,7 +79,7 @@ void __attribute__ ((noinline)) PStackGrow(PStack_p stack)
 //
 //   Remove element number i from the stack. If it is not the top
 //   element, the top element gets swapped in.
-//
+//0
 // Global Variables:
 //
 // Side Effects    :
@@ -284,30 +284,6 @@ void PStackPrintInt(FILE* out, char* format, PStack_p stack)
    for(i=0; i<PStackGetSP(stack); i++)
    {
       fprintf(out, format, PStackElementInt(stack, i));
-   }
-}
-
-/*-----------------------------------------------------------------------
-//
-// Function: PStackPrintP()
-//
-//   Print a stack (interpreted as pointers) using the format
-//   given.
-//
-// Global Variables: -
-//
-// Side Effects    : Output
-//
-/----------------------------------------------------------------------*/
-
-void PStackPrintP(FILE* out, char* format, PStack_p stack)
-{
-   PStackPointer i;
-
-   for(i=0; i<PStackGetSP(stack); i++)
-   {
-		assert(PStackElementP(stack, i));
-      fprintf(out, format, PStackElementP(stack, i));
    }
 }
 

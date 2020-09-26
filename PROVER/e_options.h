@@ -192,6 +192,7 @@ typedef enum
    OPT_TABLEAU_EQUALITY,
    OPT_TABLEAU_SATURATION,
    OPT_TABLEAU_CORES,
+   OPT_TABLEAU_APR_DISTANCE,
    OPT_DUMMY
 }OptionCodes;
 
@@ -1465,6 +1466,14 @@ OptCell opts[] =
 		 "The defualt 0 means that a single core will be used by Etableau."
 		 "1 will use all available cores.  Otherwise, the specified number of cores will be used."
 		 "Specifically, the prover will create n processes.  Do not use more processes than there are cores."
+	 },
+	 {
+		 OPT_TABLEAU_APR_DISTANCE,
+		 '\0', "apr",
+		 OptArg, "0",
+		 "Specify an integer."
+		 "The defualt 0 means that no alternating path relevance filtering will be done."
+		 "Otherwise, the argument determines the radius of the relevance neighborhood."
 	 },
 
    {OPT_NOOPT,

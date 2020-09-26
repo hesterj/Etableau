@@ -555,7 +555,6 @@ void TermTreeDeleteRWLinks(Term_p root)
 //
 // Side Effects    : Memory operations
 //
-//  John Hester
 //
 /----------------------------------------------------------------------*/
 

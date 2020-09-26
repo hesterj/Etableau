@@ -67,7 +67,7 @@ static Term_p term_top_unfold_def(TB_p bank, Term_p term, ClausePos_p demod)
       return term;
    }
    subst = SubstAlloc();
-   tmp = SubstMatchComplete(lside, term, subst); 
+   tmp = SubstMatchComplete(lside, term, subst);
    UNUSED(tmp); assert(tmp); /* Match must exist because demod is demod! */
    rside = ClausePosGetOtherSide(demod);
    res = TBInsertInstantiated(bank, rside);
@@ -267,14 +267,14 @@ bool ClauseSetUnfoldEqDef(ClauseSet_p set, ClausePos_p demod)
 
 long ClauseSetUnfoldAllEqDefs(ClauseSet_p set, ClauseSet_p passive,
                               ClauseSet_p archive,
-                              int min_arity, int eqdef_incrlimit)
+                              int min_arity, long eqdef_incrlimit)
 {
    ClausePos_p demod;
    long res = false;
    Clause_p start = NULL;
 
    while((demod = ClauseSetFindEqDefinition(set, min_arity, start))
-          && problemType == PROBLEM_FO) // disable unfoldings in HO for the moment 
+          && problemType == PROBLEM_FO) // disable unfoldings in HO for the moment
    {
       start = demod->clause->succ;
       if((TermStandardWeight(ClausePosGetOtherSide(demod))-
@@ -311,15 +311,36 @@ long ClauseSetUnfoldAllEqDefs(ClauseSet_p set, ClauseSet_p passive,
 /----------------------------------------------------------------------*/
 
 long ClauseSetPreprocess(ClauseSet_p set, ClauseSet_p passive,
-                         ClauseSet_p archive, TB_p tmp_terms,
-                         int eqdef_incrlimit, long eqdef_maxclauses)
+                         ClauseSet_p archive, TB_p tmp_terms)
 {
-   long res, tmp;
+   long res;
 
    ClauseSetRemoveSuperfluousLiterals(set);
    res = ClauseSetFilterTautologies(set, tmp_terms);
    ClauseSetCanonize(set);
-   if((eqdef_incrlimit==INT_MIN) || (set->members > eqdef_maxclauses))
+
+   return res;
+}
+
+/*-----------------------------------------------------------------------
+//
+// Function: ClauseSetUnfoldEqDefNormalize()
+//
+//    Unfold definitions and renormalize clause set.
+//
+// Global Variables: -
+//
+// Side Effects    : Changes set and term bank.
+//
+/----------------------------------------------------------------------*/
+
+long ClauseSetUnfoldEqDefNormalize(ClauseSet_p set, ClauseSet_p passive,
+                                   ClauseSet_p archive, TB_p tmp_terms,
+                                   long eqdef_incrlimit, long eqdef_maxclauses)
+{
+   long res = 0, tmp;
+
+   if((eqdef_incrlimit==LONG_MIN) || (set->members > eqdef_maxclauses))
    {
       return res;
    }
@@ -329,10 +350,10 @@ long ClauseSetPreprocess(ClauseSet_p set, ClauseSet_p passive,
       res += ClauseSetFilterTautologies(set, tmp_terms);
       ClauseSetCanonize(set);
    }
-   /* No further ClauseSetCanonize() here - no changes since the one
-      above. */
    return res;
 }
+
+
 
 
 /*---------------------------------------------------------------------*/

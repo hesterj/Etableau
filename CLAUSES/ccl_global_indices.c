@@ -93,29 +93,25 @@ void GlobalIndicesInit(GlobalIndices_p indices,
 
    indices->sig = sig;
    indexfun = GetFPIndexFunction(rw_bw_index_type);
-   //strcpy(indices->rw_bw_index_type, rw_bw_index_type);
-   memmove(indices->rw_bw_index_type, rw_bw_index_type, strlen(rw_bw_index_type)+1);
+   strcpy(indices->rw_bw_index_type, rw_bw_index_type);
    if(indexfun)
    {
       indices->bw_rw_index = FPIndexAlloc(indexfun, sig, SubtermBWTreeFreeWrapper);
    }
    indexfun = GetFPIndexFunction(pm_from_index_type);
-   //strcpy(indices->pm_from_index_type, pm_from_index_type);
-   memmove(indices->pm_from_index_type, pm_from_index_type, strlen(pm_from_index_type)+1);
+   strcpy(indices->pm_from_index_type, pm_from_index_type);
    if(indexfun)
    {
       indices->pm_from_index = FPIndexAlloc(indexfun, sig, SubtermOLTreeFreeWrapper);
    }
    indexfun = GetFPIndexFunction(pm_into_index_type);
-   //strcpy(indices->pm_into_index_type, pm_into_index_type);
-   memmove(indices->pm_into_index_type, pm_into_index_type, strlen(pm_into_index_type)+1);
+   strcpy(indices->pm_into_index_type, pm_into_index_type);
    if(indexfun)
    {
       indices->pm_into_index = FPIndexAlloc(indexfun, sig, SubtermOLTreeFreeWrapper);
    }
    indexfun = GetFPIndexFunction(pm_into_index_type);
-   //strcpy(indices->pm_negp_index_type, pm_into_index_type);
-   memmove(indices->pm_negp_index_type, pm_into_index_type, strlen(pm_into_index_type)+1);
+   strcpy(indices->pm_negp_index_type, pm_into_index_type);
    if(indexfun)
    {
       indices->pm_negp_index = FPIndexAlloc(indexfun, sig, SubtermOLTreeFreeWrapper);

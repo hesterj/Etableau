@@ -101,6 +101,9 @@ cle_annotations.o: cle_annotations.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathinline.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/stdbool.h \
+ /usr/include/inttypes.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
+ /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/sys/time.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
@@ -217,6 +220,9 @@ cle_annoterms.o: cle_annoterms.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathinline.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/stdbool.h \
+ /usr/include/inttypes.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
+ /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/sys/time.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
@@ -232,27 +238,24 @@ cle_annoterms.o: cle_annoterms.c /usr/include/stdc-predef.h \
  /usr/include/ctype.h ../include/cle_clauseenc.h \
  ../include/cle_patterns.h ../include/ccl_clauses.h \
  ../include/clb_fixdarrays.h ../include/ccl_neweval.h \
- ../include/clb_ptrees.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
- /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
- ../include/clb_sysdate.h ../include/ccl_eqnlist.h ../include/ccl_eqn.h \
- ../include/cte_acterms.h ../include/clb_objtrees.h \
- ../include/cte_termfunc.h ../include/cte_termvars.h \
- ../include/cte_termtypes.h ../include/clb_partial_orderings.h \
- ../include/cte_signature.h ../include/clb_properties.h \
- ../include/cte_functypes.h ../include/clb_simple_stuff.h \
- ../include/clb_error.h ../include/cte_simpletypes.h \
- ../include/cio_scanner.h ../include/cte_typebanks.h \
- ../include/cte_match_mgu_1-1.h ../include/clb_os_wrapper.h \
- ../include/cte_subst.h ../include/clb_pqueue.h \
- ../include/cte_termbanks.h ../include/cte_varsets.h \
- ../include/cte_termcellstore.h ../include/cte_termtrees.h \
- ../include/cte_replace.h ../include/cte_termcpos.h \
- ../include/cte_termpos.h ../include/cto_orderings.h ../include/cto_lpo.h \
- ../include/cto_ocb.h ../include/cto_lpo_debug.h ../include/cto_kbo.h \
- ../include/cte_varhash.h ../include/cto_kbolin.h \
- ../include/cte_termweightext.h ../include/cte_termtypes.h \
- ../include/ccl_clauseinfo.h
+ ../include/clb_ptrees.h ../include/clb_sysdate.h \
+ ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
+ ../include/clb_objtrees.h ../include/cte_termfunc.h \
+ ../include/cte_termvars.h ../include/cte_termtypes.h \
+ ../include/clb_partial_orderings.h ../include/cte_signature.h \
+ ../include/clb_properties.h ../include/cte_functypes.h \
+ ../include/clb_simple_stuff.h ../include/clb_error.h \
+ ../include/cte_simpletypes.h ../include/cio_scanner.h \
+ ../include/cte_typebanks.h ../include/cte_match_mgu_1-1.h \
+ ../include/clb_os_wrapper.h ../include/cte_subst.h \
+ ../include/clb_pqueue.h ../include/cte_termbanks.h \
+ ../include/cte_varsets.h ../include/cte_termcellstore.h \
+ ../include/cte_termtrees.h ../include/cte_replace.h \
+ ../include/cte_termcpos.h ../include/cte_termpos.h \
+ ../include/cto_orderings.h ../include/cto_lpo.h ../include/cto_ocb.h \
+ ../include/cto_lpo_debug.h ../include/cto_kbo.h ../include/cte_varhash.h \
+ ../include/cto_kbolin.h ../include/cte_termweightext.h \
+ ../include/cte_termtypes.h ../include/ccl_clauseinfo.h
 cle_classification.o: cle_classification.c /usr/include/stdc-predef.h \
  cle_classification.h ../include/cle_tsm.h \
  ../include/cle_indexfunctions.h ../include/clb_simple_stuff.h \
@@ -357,14 +360,14 @@ cle_classification.o: cle_classification.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathinline.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/stdbool.h \
+ /usr/include/inttypes.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
+ /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/sys/time.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_objtrees.h ../include/clb_ptrees.h \
- /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h /usr/include/stdint.h \
- /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/clb_verbose.h ../include/clb_error.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
@@ -500,28 +503,28 @@ cle_clauseenc.o: cle_clauseenc.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathinline.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/stdbool.h \
+ /usr/include/inttypes.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
+ /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/sys/time.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/ccl_neweval.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- ../include/clb_ptrees.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
- /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
- ../include/clb_sysdate.h ../include/ccl_eqnlist.h ../include/ccl_eqn.h \
- ../include/cte_acterms.h ../include/clb_objtrees.h \
- ../include/cte_termfunc.h ../include/clb_numtrees.h \
- ../include/clb_dstrings.h ../include/clb_memory.h \
- ../include/cte_termvars.h ../include/clb_pdarrays.h \
- ../include/cte_termtypes.h ../include/clb_partial_orderings.h \
- ../include/cte_signature.h ../include/clb_stringtrees.h \
- ../include/clb_properties.h ../include/cte_functypes.h \
- ../include/clb_simple_stuff.h ../include/clb_error.h \
- ../include/cio_basicparser.h ../include/clb_ddarrays.h \
- ../include/cio_scanner.h ../include/cio_streams.h \
- ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
- /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/clb_ptrees.h ../include/clb_sysdate.h \
+ ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
+ ../include/clb_objtrees.h ../include/cte_termfunc.h \
+ ../include/clb_numtrees.h ../include/clb_dstrings.h \
+ ../include/clb_memory.h ../include/cte_termvars.h \
+ ../include/clb_pdarrays.h ../include/cte_termtypes.h \
+ ../include/clb_partial_orderings.h ../include/cte_signature.h \
+ ../include/clb_stringtrees.h ../include/clb_properties.h \
+ ../include/cte_functypes.h ../include/clb_simple_stuff.h \
+ ../include/clb_error.h ../include/cio_basicparser.h \
+ ../include/clb_ddarrays.h ../include/cio_scanner.h \
+ ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
+ ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h /usr/include/ctype.h \
  ../include/cte_simpletypes.h ../include/cio_scanner.h \
  ../include/cte_typebanks.h ../include/cte_match_mgu_1-1.h \
@@ -636,6 +639,9 @@ cle_examplerep.o: cle_examplerep.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathinline.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/stdbool.h \
+ /usr/include/inttypes.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
+ /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/sys/time.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
@@ -653,21 +659,18 @@ cle_examplerep.o: cle_examplerep.c /usr/include/stdc-predef.h \
  ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h /usr/include/ctype.h \
  ../include/cte_varsets.h ../include/clb_objtrees.h \
- ../include/clb_ptrees.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
- /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
- ../include/cte_termvars.h ../include/clb_pdarrays.h \
- ../include/cte_termtypes.h ../include/clb_partial_orderings.h \
- ../include/cte_signature.h ../include/clb_properties.h \
- ../include/cte_functypes.h ../include/cte_simpletypes.h \
- ../include/cio_scanner.h ../include/cte_typebanks.h \
- ../include/clb_sysdate.h ../include/cte_termfunc.h \
- ../include/cte_termcellstore.h ../include/cte_termtrees.h \
- ../include/ccl_clauses.h ../include/clb_fixdarrays.h \
- ../include/ccl_neweval.h ../include/ccl_eqnlist.h ../include/ccl_eqn.h \
- ../include/cte_acterms.h ../include/cte_match_mgu_1-1.h \
- ../include/clb_os_wrapper.h ../include/cte_subst.h \
- ../include/clb_pqueue.h ../include/cte_replace.h \
+ ../include/clb_ptrees.h ../include/cte_termvars.h \
+ ../include/clb_pdarrays.h ../include/cte_termtypes.h \
+ ../include/clb_partial_orderings.h ../include/cte_signature.h \
+ ../include/clb_properties.h ../include/cte_functypes.h \
+ ../include/cte_simpletypes.h ../include/cio_scanner.h \
+ ../include/cte_typebanks.h ../include/clb_sysdate.h \
+ ../include/cte_termfunc.h ../include/cte_termcellstore.h \
+ ../include/cte_termtrees.h ../include/ccl_clauses.h \
+ ../include/clb_fixdarrays.h ../include/ccl_neweval.h \
+ ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
+ ../include/cte_match_mgu_1-1.h ../include/clb_os_wrapper.h \
+ ../include/cte_subst.h ../include/clb_pqueue.h ../include/cte_replace.h \
  ../include/cte_termcpos.h ../include/cto_orderings.h \
  ../include/cto_lpo.h ../include/cto_ocb.h ../include/cto_lpo_debug.h \
  ../include/cto_kbo.h ../include/cte_varhash.h ../include/cto_kbolin.h \
@@ -782,6 +785,9 @@ cle_flatannoterms.o: cle_flatannoterms.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathinline.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/stdbool.h \
+ /usr/include/inttypes.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
+ /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/sys/time.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
@@ -798,27 +804,24 @@ cle_flatannoterms.o: cle_flatannoterms.c /usr/include/stdc-predef.h \
  /usr/include/ctype.h ../include/cle_clauseenc.h \
  ../include/cle_patterns.h ../include/ccl_clauses.h \
  ../include/clb_fixdarrays.h ../include/ccl_neweval.h \
- ../include/clb_ptrees.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
- /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
- ../include/clb_sysdate.h ../include/ccl_eqnlist.h ../include/ccl_eqn.h \
- ../include/cte_acterms.h ../include/clb_objtrees.h \
- ../include/cte_termfunc.h ../include/cte_termvars.h \
- ../include/cte_termtypes.h ../include/clb_partial_orderings.h \
- ../include/cte_signature.h ../include/clb_properties.h \
- ../include/cte_functypes.h ../include/clb_simple_stuff.h \
- ../include/clb_error.h ../include/cte_simpletypes.h \
- ../include/cio_scanner.h ../include/cte_typebanks.h \
- ../include/cte_match_mgu_1-1.h ../include/clb_os_wrapper.h \
- ../include/cte_subst.h ../include/clb_pqueue.h \
- ../include/cte_termbanks.h ../include/cte_varsets.h \
- ../include/cte_termcellstore.h ../include/cte_termtrees.h \
- ../include/cte_replace.h ../include/cte_termcpos.h \
- ../include/cte_termpos.h ../include/cto_orderings.h ../include/cto_lpo.h \
- ../include/cto_ocb.h ../include/cto_lpo_debug.h ../include/cto_kbo.h \
- ../include/cte_varhash.h ../include/cto_kbolin.h \
- ../include/cte_termweightext.h ../include/cte_termtypes.h \
- ../include/ccl_clauseinfo.h
+ ../include/clb_ptrees.h ../include/clb_sysdate.h \
+ ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
+ ../include/clb_objtrees.h ../include/cte_termfunc.h \
+ ../include/cte_termvars.h ../include/cte_termtypes.h \
+ ../include/clb_partial_orderings.h ../include/cte_signature.h \
+ ../include/clb_properties.h ../include/cte_functypes.h \
+ ../include/clb_simple_stuff.h ../include/clb_error.h \
+ ../include/cte_simpletypes.h ../include/cio_scanner.h \
+ ../include/cte_typebanks.h ../include/cte_match_mgu_1-1.h \
+ ../include/clb_os_wrapper.h ../include/cte_subst.h \
+ ../include/clb_pqueue.h ../include/cte_termbanks.h \
+ ../include/cte_varsets.h ../include/cte_termcellstore.h \
+ ../include/cte_termtrees.h ../include/cte_replace.h \
+ ../include/cte_termcpos.h ../include/cte_termpos.h \
+ ../include/cto_orderings.h ../include/cto_lpo.h ../include/cto_ocb.h \
+ ../include/cto_lpo_debug.h ../include/cto_kbo.h ../include/cte_varhash.h \
+ ../include/cto_kbolin.h ../include/cte_termweightext.h \
+ ../include/cte_termtypes.h ../include/ccl_clauseinfo.h
 cle_indexfunctions.o: cle_indexfunctions.c /usr/include/stdc-predef.h \
  cle_indexfunctions.h ../include/clb_simple_stuff.h /usr/include/string.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
@@ -921,14 +924,14 @@ cle_indexfunctions.o: cle_indexfunctions.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathinline.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/stdbool.h \
+ /usr/include/inttypes.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
+ /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/sys/time.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_objtrees.h ../include/clb_ptrees.h \
- /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h /usr/include/stdint.h \
- /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/clb_verbose.h ../include/clb_error.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
@@ -1061,6 +1064,9 @@ cle_kbdesc.o: cle_kbdesc.c /usr/include/stdc-predef.h cle_kbdesc.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathinline.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/stdbool.h \
+ /usr/include/inttypes.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
+ /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/sys/time.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
@@ -1078,21 +1084,18 @@ cle_kbdesc.o: cle_kbdesc.c /usr/include/stdc-predef.h cle_kbdesc.h \
  ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h /usr/include/ctype.h \
  ../include/cte_varsets.h ../include/clb_objtrees.h \
- ../include/clb_ptrees.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
- /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
- ../include/cte_termvars.h ../include/clb_pdarrays.h \
- ../include/cte_termtypes.h ../include/clb_partial_orderings.h \
- ../include/cte_signature.h ../include/clb_properties.h \
- ../include/cte_functypes.h ../include/cte_simpletypes.h \
- ../include/cio_scanner.h ../include/cte_typebanks.h \
- ../include/clb_sysdate.h ../include/cte_termfunc.h \
- ../include/cte_termcellstore.h ../include/cte_termtrees.h \
- ../include/ccl_clauses.h ../include/clb_fixdarrays.h \
- ../include/ccl_neweval.h ../include/ccl_eqnlist.h ../include/ccl_eqn.h \
- ../include/cte_acterms.h ../include/cte_match_mgu_1-1.h \
- ../include/clb_os_wrapper.h ../include/cte_subst.h \
- ../include/clb_pqueue.h ../include/cte_replace.h \
+ ../include/clb_ptrees.h ../include/cte_termvars.h \
+ ../include/clb_pdarrays.h ../include/cte_termtypes.h \
+ ../include/clb_partial_orderings.h ../include/cte_signature.h \
+ ../include/clb_properties.h ../include/cte_functypes.h \
+ ../include/cte_simpletypes.h ../include/cio_scanner.h \
+ ../include/cte_typebanks.h ../include/clb_sysdate.h \
+ ../include/cte_termfunc.h ../include/cte_termcellstore.h \
+ ../include/cte_termtrees.h ../include/ccl_clauses.h \
+ ../include/clb_fixdarrays.h ../include/ccl_neweval.h \
+ ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
+ ../include/cte_match_mgu_1-1.h ../include/clb_os_wrapper.h \
+ ../include/cte_subst.h ../include/clb_pqueue.h ../include/cte_replace.h \
  ../include/cte_termcpos.h ../include/cto_orderings.h \
  ../include/cto_lpo.h ../include/cto_ocb.h ../include/cto_lpo_debug.h \
  ../include/cto_kbo.h ../include/cte_varhash.h ../include/cto_kbolin.h \
@@ -1207,6 +1210,9 @@ cle_kbinsert.o: cle_kbinsert.c /usr/include/stdc-predef.h cle_kbinsert.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathinline.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/stdbool.h \
+ /usr/include/inttypes.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
+ /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/sys/time.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
@@ -1224,21 +1230,18 @@ cle_kbinsert.o: cle_kbinsert.c /usr/include/stdc-predef.h cle_kbinsert.h \
  ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h /usr/include/ctype.h \
  ../include/cte_varsets.h ../include/clb_objtrees.h \
- ../include/clb_ptrees.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
- /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
- ../include/cte_termvars.h ../include/clb_pdarrays.h \
- ../include/cte_termtypes.h ../include/clb_partial_orderings.h \
- ../include/cte_signature.h ../include/clb_properties.h \
- ../include/cte_functypes.h ../include/cte_simpletypes.h \
- ../include/cio_scanner.h ../include/cte_typebanks.h \
- ../include/clb_sysdate.h ../include/cte_termfunc.h \
- ../include/cte_termcellstore.h ../include/cte_termtrees.h \
- ../include/ccl_clauses.h ../include/clb_fixdarrays.h \
- ../include/ccl_neweval.h ../include/ccl_eqnlist.h ../include/ccl_eqn.h \
- ../include/cte_acterms.h ../include/cte_match_mgu_1-1.h \
- ../include/clb_os_wrapper.h ../include/cte_subst.h \
- ../include/clb_pqueue.h ../include/cte_replace.h \
+ ../include/clb_ptrees.h ../include/cte_termvars.h \
+ ../include/clb_pdarrays.h ../include/cte_termtypes.h \
+ ../include/clb_partial_orderings.h ../include/cte_signature.h \
+ ../include/clb_properties.h ../include/cte_functypes.h \
+ ../include/cte_simpletypes.h ../include/cio_scanner.h \
+ ../include/cte_typebanks.h ../include/clb_sysdate.h \
+ ../include/cte_termfunc.h ../include/cte_termcellstore.h \
+ ../include/cte_termtrees.h ../include/ccl_clauses.h \
+ ../include/clb_fixdarrays.h ../include/ccl_neweval.h \
+ ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
+ ../include/cte_match_mgu_1-1.h ../include/clb_os_wrapper.h \
+ ../include/cte_subst.h ../include/clb_pqueue.h ../include/cte_replace.h \
  ../include/cte_termcpos.h ../include/cto_orderings.h \
  ../include/cto_lpo.h ../include/cto_ocb.h ../include/cto_lpo_debug.h \
  ../include/cto_kbo.h ../include/cte_varhash.h ../include/cto_kbolin.h \
@@ -1358,6 +1361,9 @@ cle_numfeatures.o: cle_numfeatures.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathinline.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/stdbool.h \
+ /usr/include/inttypes.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
+ /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/sys/time.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
@@ -1370,22 +1376,19 @@ cle_numfeatures.o: cle_numfeatures.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
- ../include/clb_ptrees.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
- /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
- ../include/cte_termvars.h ../include/clb_pdarrays.h \
- ../include/cte_termtypes.h ../include/clb_partial_orderings.h \
- ../include/cte_signature.h ../include/clb_properties.h \
- ../include/cte_functypes.h ../include/clb_simple_stuff.h \
- ../include/clb_error.h ../include/cte_simpletypes.h \
- ../include/cio_scanner.h ../include/cte_typebanks.h \
- ../include/clb_sysdate.h ../include/cte_termfunc.h \
- ../include/cte_termcellstore.h ../include/cte_termtrees.h \
- ../include/ccl_clauses.h ../include/clb_fixdarrays.h \
- ../include/ccl_neweval.h ../include/ccl_eqnlist.h ../include/ccl_eqn.h \
- ../include/cte_acterms.h ../include/cte_match_mgu_1-1.h \
- ../include/clb_os_wrapper.h ../include/cte_subst.h \
- ../include/clb_pqueue.h ../include/cte_replace.h \
+ ../include/clb_ptrees.h ../include/cte_termvars.h \
+ ../include/clb_pdarrays.h ../include/cte_termtypes.h \
+ ../include/clb_partial_orderings.h ../include/cte_signature.h \
+ ../include/clb_properties.h ../include/cte_functypes.h \
+ ../include/clb_simple_stuff.h ../include/clb_error.h \
+ ../include/cte_simpletypes.h ../include/cio_scanner.h \
+ ../include/cte_typebanks.h ../include/clb_sysdate.h \
+ ../include/cte_termfunc.h ../include/cte_termcellstore.h \
+ ../include/cte_termtrees.h ../include/ccl_clauses.h \
+ ../include/clb_fixdarrays.h ../include/ccl_neweval.h \
+ ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
+ ../include/cte_match_mgu_1-1.h ../include/clb_os_wrapper.h \
+ ../include/cte_subst.h ../include/clb_pqueue.h ../include/cte_replace.h \
  ../include/cte_termcpos.h ../include/cto_orderings.h \
  ../include/cto_lpo.h ../include/cto_ocb.h ../include/cto_lpo_debug.h \
  ../include/cto_kbo.h ../include/cte_varhash.h ../include/cto_kbolin.h \
@@ -1500,28 +1503,28 @@ cle_patterns.o: cle_patterns.c /usr/include/stdc-predef.h cle_patterns.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathinline.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/stdbool.h \
+ /usr/include/inttypes.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
+ /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/sys/time.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/ccl_neweval.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- ../include/clb_ptrees.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
- /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
- ../include/clb_sysdate.h ../include/ccl_eqnlist.h ../include/ccl_eqn.h \
- ../include/cte_acterms.h ../include/clb_objtrees.h \
- ../include/cte_termfunc.h ../include/clb_numtrees.h \
- ../include/clb_dstrings.h ../include/clb_memory.h \
- ../include/cte_termvars.h ../include/clb_pdarrays.h \
- ../include/cte_termtypes.h ../include/clb_partial_orderings.h \
- ../include/cte_signature.h ../include/clb_stringtrees.h \
- ../include/clb_properties.h ../include/cte_functypes.h \
- ../include/clb_simple_stuff.h ../include/clb_error.h \
- ../include/cio_basicparser.h ../include/clb_ddarrays.h \
- ../include/cio_scanner.h ../include/cio_streams.h \
- ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
- /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/clb_ptrees.h ../include/clb_sysdate.h \
+ ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
+ ../include/clb_objtrees.h ../include/cte_termfunc.h \
+ ../include/clb_numtrees.h ../include/clb_dstrings.h \
+ ../include/clb_memory.h ../include/cte_termvars.h \
+ ../include/clb_pdarrays.h ../include/cte_termtypes.h \
+ ../include/clb_partial_orderings.h ../include/cte_signature.h \
+ ../include/clb_stringtrees.h ../include/clb_properties.h \
+ ../include/cte_functypes.h ../include/clb_simple_stuff.h \
+ ../include/clb_error.h ../include/cio_basicparser.h \
+ ../include/clb_ddarrays.h ../include/cio_scanner.h \
+ ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
+ ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h /usr/include/ctype.h \
  ../include/cte_simpletypes.h ../include/cio_scanner.h \
  ../include/cte_typebanks.h ../include/cte_match_mgu_1-1.h \
@@ -1638,6 +1641,9 @@ cle_termtops.o: cle_termtops.c /usr/include/stdc-predef.h cle_termtops.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathinline.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/stdbool.h \
+ /usr/include/inttypes.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
+ /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/sys/time.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
@@ -1650,22 +1656,20 @@ cle_termtops.o: cle_termtops.c /usr/include/stdc-predef.h cle_termtops.h \
  /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
- ../include/clb_ptrees.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
- /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
- ../include/cte_termvars.h ../include/clb_pdarrays.h \
- ../include/cte_termtypes.h ../include/clb_partial_orderings.h \
- ../include/cte_signature.h ../include/clb_properties.h \
- ../include/cte_functypes.h ../include/clb_simple_stuff.h \
- ../include/clb_error.h ../include/cte_simpletypes.h \
- ../include/cio_scanner.h ../include/cte_typebanks.h \
- ../include/clb_sysdate.h ../include/cte_termfunc.h \
- ../include/cte_termcellstore.h ../include/cte_termtrees.h \
- ../include/cle_patterns.h ../include/ccl_clauses.h \
- ../include/clb_fixdarrays.h ../include/ccl_neweval.h \
- ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
- ../include/cte_match_mgu_1-1.h ../include/clb_os_wrapper.h \
- ../include/cte_subst.h ../include/clb_pqueue.h ../include/cte_replace.h \
+ ../include/clb_ptrees.h ../include/cte_termvars.h \
+ ../include/clb_pdarrays.h ../include/cte_termtypes.h \
+ ../include/clb_partial_orderings.h ../include/cte_signature.h \
+ ../include/clb_properties.h ../include/cte_functypes.h \
+ ../include/clb_simple_stuff.h ../include/clb_error.h \
+ ../include/cte_simpletypes.h ../include/cio_scanner.h \
+ ../include/cte_typebanks.h ../include/clb_sysdate.h \
+ ../include/cte_termfunc.h ../include/cte_termcellstore.h \
+ ../include/cte_termtrees.h ../include/cle_patterns.h \
+ ../include/ccl_clauses.h ../include/clb_fixdarrays.h \
+ ../include/ccl_neweval.h ../include/ccl_eqnlist.h ../include/ccl_eqn.h \
+ ../include/cte_acterms.h ../include/cte_match_mgu_1-1.h \
+ ../include/clb_os_wrapper.h ../include/cte_subst.h \
+ ../include/clb_pqueue.h ../include/cte_replace.h \
  ../include/cte_termcpos.h ../include/cte_termpos.h \
  ../include/cto_orderings.h ../include/cto_lpo.h ../include/cto_ocb.h \
  ../include/cto_lpo_debug.h ../include/cto_kbo.h ../include/cte_varhash.h \
@@ -1774,14 +1778,14 @@ cle_tsm.o: cle_tsm.c /usr/include/stdc-predef.h cle_tsm.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathinline.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/stdbool.h \
+ /usr/include/inttypes.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
+ /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/sys/time.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_objtrees.h ../include/clb_ptrees.h \
- /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h /usr/include/stdint.h \
- /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/clb_verbose.h ../include/clb_error.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
@@ -1916,6 +1920,9 @@ cle_tsmio.o: cle_tsmio.c /usr/include/stdc-predef.h cle_tsmio.h \
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
  /usr/include/x86_64-linux-gnu/bits/mathinline.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/stdbool.h \
+ /usr/include/inttypes.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
+ /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  /usr/include/x86_64-linux-gnu/sys/time.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
@@ -1933,21 +1940,18 @@ cle_tsmio.o: cle_tsmio.c /usr/include/stdc-predef.h cle_tsmio.h \
  ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h /usr/include/ctype.h \
  ../include/cte_varsets.h ../include/clb_objtrees.h \
- ../include/clb_ptrees.h /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h \
- /usr/include/stdint.h /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
- ../include/cte_termvars.h ../include/clb_pdarrays.h \
- ../include/cte_termtypes.h ../include/clb_partial_orderings.h \
- ../include/cte_signature.h ../include/clb_properties.h \
- ../include/cte_functypes.h ../include/cte_simpletypes.h \
- ../include/cio_scanner.h ../include/cte_typebanks.h \
- ../include/clb_sysdate.h ../include/cte_termfunc.h \
- ../include/cte_termcellstore.h ../include/cte_termtrees.h \
- ../include/ccl_clauses.h ../include/clb_fixdarrays.h \
- ../include/ccl_neweval.h ../include/ccl_eqnlist.h ../include/ccl_eqn.h \
- ../include/cte_acterms.h ../include/cte_match_mgu_1-1.h \
- ../include/clb_os_wrapper.h ../include/cte_subst.h \
- ../include/clb_pqueue.h ../include/cte_replace.h \
+ ../include/clb_ptrees.h ../include/cte_termvars.h \
+ ../include/clb_pdarrays.h ../include/cte_termtypes.h \
+ ../include/clb_partial_orderings.h ../include/cte_signature.h \
+ ../include/clb_properties.h ../include/cte_functypes.h \
+ ../include/cte_simpletypes.h ../include/cio_scanner.h \
+ ../include/cte_typebanks.h ../include/clb_sysdate.h \
+ ../include/cte_termfunc.h ../include/cte_termcellstore.h \
+ ../include/cte_termtrees.h ../include/ccl_clauses.h \
+ ../include/clb_fixdarrays.h ../include/ccl_neweval.h \
+ ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
+ ../include/cte_match_mgu_1-1.h ../include/clb_os_wrapper.h \
+ ../include/cte_subst.h ../include/clb_pqueue.h ../include/cte_replace.h \
  ../include/cte_termcpos.h ../include/cto_orderings.h \
  ../include/cto_lpo.h ../include/cto_ocb.h ../include/cto_lpo_debug.h \
  ../include/cto_kbo.h ../include/cte_varhash.h ../include/cto_kbolin.h \

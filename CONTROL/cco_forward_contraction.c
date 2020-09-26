@@ -188,7 +188,7 @@ bool ForwardModifyClause(ProofState_p state,
    bool done = false;
    bool limited_rw;
    bool condensed;
-   
+
    /* Despite the name, this is used in both forward- and backward
       rewriting. In backward-rewriting, we may need to go over the
       clause twice - with the weaker rewrite relation for processed
@@ -204,7 +204,6 @@ bool ForwardModifyClause(ProofState_p state,
 
       limited_rw = ClauseQueryProp(clause, CPLimitedRW);
       removed_lits = ClauseRemoveSuperfluousLiterals(clause);
-      
       if(removed_lits)
       {
          DocClauseModificationDefault(clause, inf_minimize, NULL);

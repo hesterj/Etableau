@@ -53,18 +53,20 @@ typedef enum
                          * conjecture symbols large */
    PByInvFreqConjMax,   /* Make conjecture symbols maximal, otherwise
                            use invfreq */
-   PByInvFreqConjMin,   /* Make conjecture symbols mminimal, otherwise
+   PByInvFreqConjMin,   /* Make conjecture symbols minimal, otherwise
                            use invfreq */
    PByInvFreqConstMin,  /* Make rarely occuring symbols small, except for
                            constants */
    PByInvFreqHack,      /* Make constants minimal, frequent unary
                            symbols maximal, otherwise as
                            PByInvFrequency */
+#ifdef ENABLE_LFHO
    PByTypeFreq,        /*  By frequency of type function symbol corresponds
                            to */
    PByInvTypeFreq,     /*  Same as prev, only inverse*/
    PByCombFreq,        /*  Based on sybmol type frequency + symbol frequency */
    PByInvCombFreq,     /*  Inverse of the previous */
+#endif
    PArrayOpt,           /* Special hack for theory of array with
                            conceptually typed symbols recognized by
                            name. */
@@ -114,6 +116,7 @@ typedef enum
                              between ranks is cardinality of set of
                              symbols in rank */
    WInvModFreqRankMax0,   /* As above, but first maximal unary is 0 */
+#ifdef ENABLE_LFHO
    WTypeFrequencyRank,    /* Similar to above, however, they work not by
                              value of symbol, but by its type */
    WTypeFrequencyCount,
@@ -124,6 +127,7 @@ typedef enum
    WCombFrequencyCount,
    WInvCombFrequencyRank,
    WInvCombFrequencyCount,
+#endif
    WConstantWeight,       /* All weights 1 */
    WMinMethod = WSelectMaximal,
    WMaxMethod = WConstantWeight /* Update as required! */
@@ -143,6 +147,8 @@ typedef struct order_parms_cell
    int               axiom_only_mod;
    int               skolem_mod;
    int               defpred_mod;
+   /* Set KBO varweight to minimal constant weight (if not already so) */
+   bool              force_kbo_var_weight;
    /* Ground unbound RHS variables when rewriting */
    bool              rewrite_strong_rhs_inst;
    /* User-provided ordering parameters. Only pointers, not copies */
@@ -190,6 +196,7 @@ TOWeightGenMethod TOTranslateWeightGenMethod(char* name);
    SizeFree(junk, sizeof(OrderParmsCell))
 
 void OrderParmsInitialize(OrderParms_p handle);
+void OrderParmsPrint(FILE* out, OrderParms_p handle);
 
 
 #endif

@@ -1312,20 +1312,16 @@ void SigDeclareType(Sig_p sig, FunCode f, Type_p type)
       {
          if(SigIsFixedType(sig, f))
          {
-				if (fun->type->arity == type->arity && fun->type->f_code == type->f_code)
-				{
-					// Should be ok
-				}
-				else
-				{
-					fprintf(stderr, "# Type conflict for %s between ",
-						SigFindName(sig, f));
-					TypePrintTSTP(stderr, sig->type_bank, fun->type);
-					fprintf(stderr, " and ");
-					TypePrintTSTP(stderr, sig->type_bank, type);
-					fprintf(stderr, "\n");
-					Error("type error", INPUT_SEMANTIC_ERROR);
-				}
+            if(Verbose>=3)
+            {
+               fprintf(stderr, "# Type conflict for %s between ",
+                       SigFindName(sig, f));
+               TypePrintTSTP(stderr, sig->type_bank, fun->type);
+               fprintf(stderr, " and ");
+               TypePrintTSTP(stderr, sig->type_bank, type);
+               fprintf(stderr, "\n");
+            }
+            Error("type error", INPUT_SEMANTIC_ERROR);
          }
          else
          {

@@ -68,12 +68,7 @@ void     ProofStateResetProcessedSet(ProofState_p state,
                                      ClauseSet_p set);
 void     ProofStateResetProcessed(ProofState_p state,
                                   ProofControl_p control);
-Clause_p ProcessAnyClause(ProofState_p state, ProofControl_p control,
-                       long answer_limit);
 Clause_p ProcessClause(ProofState_p state, ProofControl_p control,
-                       long answer_limit);
-Clause_p ProcessSpecificClause(ProofState_p state, ProofControl_p control,
-							  Clause_p clause,
                        long answer_limit);
 Clause_p Saturate(ProofState_p state, ProofControl_p control, long
                   step_limit, long proc_limit, long unproc_limit, long
@@ -81,7 +76,9 @@ Clause_p Saturate(ProofState_p state, ProofControl_p control, long
                   long answer_limit);
 Clause_p SATCheck(ProofState_p state, ProofControl_p control);
 
-
+Clause_p ProcessSpecificClause(ProofState_p state, ProofControl_p control,
+							  Clause_p clause,
+                       long answer_limit);
 
 #endif
 

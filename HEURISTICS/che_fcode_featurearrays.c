@@ -105,14 +105,10 @@ FCodeFeatureArray_p FCodeFeatureArrayAlloc(Sig_p sig, ClauseSet_p axioms)
    FCodeFeatureArray_p handle;
    FunCode i;
    long  array_size      = sizeof(long)*(sig->f_count+1);
-   //~ long *rank_array      = SizeMalloc(array_size);
-   //~ long *dist_array      = SizeMalloc(array_size);
-   //~ long *conjdist_array  = SizeMalloc(array_size);
-   //~ long *axiomdist_array = SizeMalloc(array_size);
-   long *rank_array      = calloc(sizeof(long), sig->f_count+1);
-   long *dist_array      = calloc(sizeof(long), sig->f_count+1);
-   long *conjdist_array  = calloc(sizeof(long), sig->f_count+1);
-   long *axiomdist_array = calloc(sizeof(long), sig->f_count+1);
+   long *rank_array      = SizeMalloc(array_size);
+   long *dist_array      = SizeMalloc(array_size);
+   long *conjdist_array  = SizeMalloc(array_size);
+   long *axiomdist_array = SizeMalloc(array_size);
    long  rank = 0;
 
    handle = FCodeFeatureArrayCellAlloc();

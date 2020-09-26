@@ -467,10 +467,7 @@ long TermTreeNodes(Term_p root)
 }
 
 
-
 AVL_TRAVERSE_DEFINITION(TermTree, Term_p)
-
-
 
 
 /*---------------------------------------------------------------------*/

@@ -163,6 +163,8 @@ void ClauseTableauCollectLeavesStack(ClauseTableau_p tab, PStack_p leaves);
 bool TableauDominatesNode(ClauseTableau_p tab, ClauseTableau_p node);
 
 Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var);
+long ClauseGetIdent(Clause_p clause);
+long          SubstDStrPrint(DStr_p str, Subst_p subst, Sig_p sig, DerefType deref);
 
 /*  Tableau control struct
  * 

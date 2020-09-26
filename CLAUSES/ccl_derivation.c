@@ -2263,32 +2263,6 @@ void DerivationPrint(FILE* out, Derivation_p derivation, char* frame)
    fprintf(out, "# SZS output end %s\n", frame);
 }
 
-void DerivationPrintNoFrame(FILE* out, Derivation_p derivation)
-{
-   PStackPointer sp;
-   Derived_p     node;
-
-   assert(derivation->ordered);
-
-   for(sp=PStackGetSP(derivation->ordered_deriv)-1; sp>=0; sp--)
-   {
-      node = PStackElementP(derivation->ordered_deriv, sp);
-      switch(DocOutputFormat)
-      {
-      case pcl_format:
-            DerivedPCLPrint(out, derivation->sig, node);
-            break;
-      case tstp_format:
-            DerivedTSTPPrint(out, derivation->sig, node);
-            break;
-      default:
-            fprintf(out, "# Output format not implemented.");
-            break;
-      }
-      fprintf(out, "\n");
-   }
-}
-
 
 
 /*-----------------------------------------------------------------------
@@ -2352,40 +2326,36 @@ void DerivationPrintConditional(FILE* out, char* status, Derivation_p derivation
                                 Sig_p sig, ProofOutput print_derivation,
                                 bool print_analysis)
 {
-	if (print_derivation == POEtableau)
-	{
-		DerivationPrintNoFrame(out, derivation);
-	}
-   else if(print_derivation == POList)
+   if(print_derivation == POList)
    {
-      DerivationPrint(out, derivation, status);
+      DerivationPrint(GlobalOut, derivation, status);
    }
    else if(print_derivation >= POGraph1)
    {
-      DerivationDotPrint(out, derivation, print_derivation);
+      DerivationDotPrint(GlobalOut, derivation, print_derivation);
    }
    DerivationAnalyse(derivation);
    if(print_analysis)
    {
-      fprintf(out, "# Proof object total steps             : %lu\n",
+      fprintf(GlobalOut, "# Proof object total steps             : %lu\n",
               derivation->clause_step_count+derivation->formula_step_count);
-      fprintf(out, "# Proof object clause steps            : %lu\n",
+      fprintf(GlobalOut, "# Proof object clause steps            : %lu\n",
               derivation->clause_step_count);
-      fprintf(out, "# Proof object formula steps           : %lu\n",
+      fprintf(GlobalOut, "# Proof object formula steps           : %lu\n",
               derivation->formula_step_count);
-      fprintf(out, "# Proof object conjectures             : %lu\n",
+      fprintf(GlobalOut, "# Proof object conjectures             : %lu\n",
               derivation->clause_conjecture_count+derivation->formula_conjecture_count);
-      fprintf(out, "# Proof object clause conjectures      : %lu\n",
+      fprintf(GlobalOut, "# Proof object clause conjectures      : %lu\n",
               derivation->clause_conjecture_count);
-      fprintf(out, "# Proof object formula conjectures     : %lu\n",
+      fprintf(GlobalOut, "# Proof object formula conjectures     : %lu\n",
               derivation->formula_conjecture_count);
-      fprintf(out, "# Proof object initial clauses used    : %lu\n",
+      fprintf(GlobalOut, "# Proof object initial clauses used    : %lu\n",
               derivation->initial_clause_count);
-      fprintf(out, "# Proof object initial formulas used   : %lu\n",
+      fprintf(GlobalOut, "# Proof object initial formulas used   : %lu\n",
               derivation->initial_formula_count);
-      fprintf(out, "# Proof object generating inferences   : %lu\n",
+      fprintf(GlobalOut, "# Proof object generating inferences   : %lu\n",
               derivation->generating_inf_count);
-      fprintf(out, "# Proof object simplifying inferences  : %lu\n",
+      fprintf(GlobalOut, "# Proof object simplifying inferences  : %lu\n",
               derivation->simplifying_inf_count);
    }
 }

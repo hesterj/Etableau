@@ -787,8 +787,7 @@ Clause_p ClauseSetFindBest(ClauseSet_p set, int idx)
 void ClauseSetPrint(FILE* out, ClauseSet_p set, bool fullterms)
 {
    Clause_p handle;
-	assert(set);
-	assert(set->anchor);
+
    for(handle = set->anchor->succ; handle!=set->anchor; handle =
           handle->succ)
    {

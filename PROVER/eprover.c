@@ -23,7 +23,7 @@
 #include <cio_commandline.h>
 #include <cio_output.h>
 #include <ccl_relevance.h>
-//#include <cco_proofproc.h>
+#include <cco_proofproc.h>
 #include <cco_sine.h>
 #include <cio_signals.h>
 #include <ccl_unfold_defs.h>
@@ -38,7 +38,7 @@
 /*                  Data types                                         */
 /*---------------------------------------------------------------------*/
 
-#define NAME         "etableau"
+#define NAME         "eprover"
 
 PERF_CTR_DEFINE(SatTimer);
 
@@ -62,8 +62,6 @@ bool              print_sat = false,
    print_version = false,
    outinfo = false,
    error_on_empty = false,
-   no_preproc = false,
-   no_eq_unfold = false,
    pcl_full_terms = true,
    indexed_subsumption = true,
    prune_only = false,
@@ -85,15 +83,13 @@ long              step_limit = LONG_MAX,
    unproc_limit = LONG_MAX,
    total_limit = LONG_MAX,
    generated_limit = LONG_MAX,
-   eqdef_maxclauses = DEFAULT_EQDEF_MAXCLAUSES,
    relevance_prune_level = 0,
    miniscope_limit = 1048576;
 long long tb_insert_limit = LLONG_MAX;
 
-int eqdef_incrlimit = DEFAULT_EQDEF_INCRLIMIT,
-   force_deriv_output = 0;
-char              *outdesc = DEFAULT_OUTPUT_DESCRIPTOR,
-   *filterdesc = DEFAULT_FILTER_DESCRIPTOR;
+int force_deriv_output = 0;
+char  *outdesc = DEFAULT_OUTPUT_DESCRIPTOR,
+      *filterdesc = DEFAULT_FILTER_DESCRIPTOR;
 PStack_p          wfcb_definitions, hcb_definitions;
 char              *sine=NULL;
 pid_t              pid = 0;
@@ -102,11 +98,12 @@ FunctionProperties free_symb_prop = FPIgnoreProps;
 
 ProblemType problemType  = PROBLEM_NOT_INIT;
 
-int TableauOptions = 0; // John
+int TableauOptions = 0; // Etableau stuff
 int TableauDepth = 2;
 int TableauEquality = 0;
 int TableauCores = 0;
 bool TableauSaturation = false;
+int AprDistance = 0;
 
 /*---------------------------------------------------------------------*/
 /*                      Forward Declarations                           */
@@ -184,8 +181,6 @@ ProofState_p parse_spec(CLState_p state,
    if(error_on_empty_local && (parsed_ax_no == 0))
    {
 #ifdef PRINT_SOMEERRORS_STDOUT
-
-
       fprintf(GlobalOut, "# Error: Input file contains no clauses or formulas\n");
       TSTPOUT(GlobalOut, "InputError");
 #endif
@@ -387,8 +382,6 @@ int main(int argc, char* argv[])
    Derivation_p deriv;
 
    assert(argv[0]);
-   
-   //printf("# Problem name: %s\n", argv[argc-1]);
 
 #ifdef STACK_SIZE
    INCREASE_STACK_SIZE;
@@ -420,7 +413,8 @@ int main(int argc, char* argv[])
                            &parsed_ax_no);
 
    relevancy_pruned += ProofStateSinE(proofstate, sine);
-   relevancy_pruned += ProofStatePreprocess(proofstate, relevance_prune_level);
+   relevancy_pruned += ProofStateRelevancyProcess(proofstate,
+                                                  relevance_prune_level);
 
    if(app_encode)
    {
@@ -482,28 +476,37 @@ int main(int argc, char* argv[])
    {
       VERBOUT("CNFization done\n");
    }
+   //HeuristicParmsPrint(stdout, h_parms);
 
    raw_clause_no = proofstate->axioms->members;
    ProofStateLoadWatchlist(proofstate, watchlist_filename, parse_format);
 
-   if(!no_preproc)
+   ClauseSetArchiveCopy(proofstate->ax_archive, proofstate->axioms);
+   if(!h_parms->no_preproc)
    {
-      ClauseSetArchiveCopy(proofstate->ax_archive, proofstate->axioms);
-      if(proofstate->watchlist)
-      {
-         ClauseSetArchiveCopy(proofstate->ax_archive, proofstate->watchlist);
-      }
+      //if(proofstate->watchlist)
+      //{
+      //   ClauseSetArchiveCopy(proofstate->ax_archive, proofstate->watchlist);
+      //}
       preproc_removed = ClauseSetPreprocess(proofstate->axioms,
                                             proofstate->watchlist,
                                             proofstate->archive,
-                                            proofstate->tmp_terms,
-                                            eqdef_incrlimit,
-                                            eqdef_maxclauses);
+                                            proofstate->tmp_terms);
    }
 
    proofcontrol = ProofControlAlloc();
    ProofControlInit(proofstate, proofcontrol, h_parms,
                     fvi_parms, wfcb_definitions, hcb_definitions);
+   //HeuristicParmsPrint(stdout, h_parms);
+
+   // Unfold definitions and re-normalize
+   preproc_removed += ClauseSetUnfoldEqDefNormalize(proofstate->axioms,
+                                                    proofstate->watchlist,
+                                                    proofstate->archive,
+                                                    proofstate->tmp_terms,
+                                                    h_parms->eqdef_incrlimit,
+                                                    h_parms->eqdef_maxclauses);
+
    PCLFullTerms = pcl_full_terms; /* Preprocessing always uses full
                                      terms, so we set the flag for
                                      the main proof search only now! */
@@ -548,75 +551,12 @@ int main(int argc, char* argv[])
    assert(problemType != PROBLEM_HO || proofcontrol->ocb->type == KBO6);
 #endif
 
-	//~ fprintf(GlobalOut, "# Printing axioms for debugging purposes\n");
-	//~ ClauseSetPrint(GlobalOut, proofstate->axioms, true);
-
-	if (TableauOptions == 1)
-	{
-		TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures, 
-																				argv[argc-1], // the problem file
-																				proofstate, 
-																				proofcontrol, 
-																				TableauSaturation,
-																				TableauCores);
-		//TB_p tableau_terms = TBAlloc(proofstate->terms->sig);
-		fprintf(GlobalOut, "# Number of axioms: %ld Number of unprocessed: %ld\n", proofstate->axioms->members, 
-																						 proofstate->unprocessed->members);
-		ClauseSet_p new_axioms = ClauseSetCopy(proofstate->terms, proofstate->unprocessed);
-		ClauseSet_p *source = &proofstate->unprocessed;
-		if (ClauseSetEmpty(new_axioms))
-		{
-			ClauseSetFree(new_axioms);
-			fprintf(GlobalOut, "# No unprocessed, using axioms.\n");
-			new_axioms = ClauseSetCopy(proofstate->terms, proofstate->axioms);
-			source = &proofstate->axioms;
-		}
-		fprintf(GlobalOut, "# Tableaux proof search.\n");
-		
-		FILE *clausification_stream;
-		char *buf;
-		size_t len;
-		clausification_stream = open_memstream (&buf, &len);
-		if (clausification_stream == NULL)
-		{
-			fprintf(GlobalOut, "# Clausification stream error.\n");
-		}
-		ClauseSetPushClauses(proofstate->extract_roots, *source);
-		DerivationComputeAndPrint(clausification_stream,
-								  sat_status,
-								  proofstate->extract_roots,
-								  proofstate->signature,
-								  POEtableau,
-								  false);
-		PStackReset(proofstate->extract_roots);
-		fclose(clausification_stream);
-		tableaucontrol->clausification_buffer = buf;
-		// This is the entry point for tableaux proof search
-		Etableau(tableaucontrol, 
-					proofstate, 
-					proofcontrol, 
-					proofstate->terms, 
-					new_axioms, 
-					TableauDepth, 
-					TableauEquality);
-		free(buf); // Do not free buf until the search is done
-			
-		printf("# Exiting...\n");
-		ClauseSetFree(new_axioms);
-		TableauControlFree(tableaucontrol);
-		goto cleanuptableau;
-	}
-	
-	printf("# Warning: Approaching standard saturation\n");
-	// Main E saturation method
-   if(!success  && !TableauOptions)  
+   if(!success)
    {
       success = Saturate(proofstate, proofcontrol, step_limit,
                          proc_limit, unproc_limit, total_limit,
                          generated_limit, tb_insert_limit, answer_limit);
    }
-   //
-   
    PERF_CTR_EXIT(SatTimer);
 
    if(SigHasUnimplementedInterpretedSymbols(proofstate->signature))
@@ -625,7 +565,7 @@ int main(int argc, char* argv[])
    }
 
    out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
-   if(filter_sat && !TableauOptions)
+   if(filter_sat)
    {
       filter_success = ProofStateFilterUnprocessed(proofstate,
                                                    proofcontrol,
@@ -646,7 +586,7 @@ int main(int argc, char* argv[])
       }
       fprintf(GlobalOut, "\n# Proof found!\n");
 
-      if(print_full_deriv && !TableauOptions)
+      if(print_full_deriv)
       {
          ClauseSetPushClauses(proofstate->extract_roots,
                               proofstate->processed_pos_rules);
@@ -677,7 +617,7 @@ int main(int argc, char* argv[])
       }
 
 
-      if(PrintProofObject && !TableauOptions)
+      if(PrintProofObject)
       {
          DerivationPrintConditional(GlobalOut,
                                    "CNFRefutation",
@@ -796,7 +736,7 @@ int main(int argc, char* argv[])
 
    }
    /* ClauseSetDerivationStackStatistics(proofstate->unprocessed); */
-   if(print_sat && !TableauOptions)
+   if(print_sat)
    {
       if(proofstate->non_redundant_deleted)
       {
@@ -825,7 +765,6 @@ int main(int argc, char* argv[])
                      relevancy_pruned,
                      raw_clause_no,
                      preproc_removed);
-cleanuptableau:
 #ifndef FAST_EXIT
 #ifdef FULL_MEM_STATS
    fprintf(GlobalOut,
@@ -941,6 +880,9 @@ CLState_p process_options(int argc, char* argv[])
    {
       switch(handle->option_code)
       {
+		case OPT_TABLEAU_APR_DISTANCE:
+			AprDistance  = CLStateGetIntArg(handle, arg);
+			break;
 		case OPT_TABLEAU_CORES:
 			TableauCores = CLStateGetIntArg(handle, arg);
 			break;
@@ -1212,16 +1154,16 @@ CLState_p process_options(int argc, char* argv[])
             strategy_scheduling = true;
             break;
       case OPT_NO_PREPROCESSING:
-            no_preproc = true;
+            h_parms->no_preproc = true;
             break;
       case OPT_EQ_UNFOLD_LIMIT:
-            eqdef_incrlimit = CLStateGetIntArg(handle, arg);
+            h_parms->eqdef_incrlimit = CLStateGetIntArg(handle, arg);
             break;
       case OPT_EQ_UNFOLD_MAXCLAUSES:
-            eqdef_maxclauses = CLStateGetIntArg(handle, arg);
+            h_parms->eqdef_maxclauses = CLStateGetIntArg(handle, arg);
             break;
       case OPT_NO_EQ_UNFOLD:
-            eqdef_incrlimit = INT_MIN;
+            h_parms->eqdef_incrlimit = LONG_MIN;
             break;
       case OPT_SINE:
             sine = arg;

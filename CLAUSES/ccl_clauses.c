@@ -2494,16 +2494,6 @@ bool ClauseQueryLiteral(Clause_p clause, bool (*query_fun)(Eqn_p))
    return false;
 }
 
-long ClauseGetIdent(Clause_p clause)
-{
-	long ident = clause->ident;
-	if (ident<0)
-	{
-		ident = ident - LONG_MIN;
-	}
-	return ident;
-}
-
 /*---------------------------------------------------------------------*/
 /*                        End of File                                  */
 /*---------------------------------------------------------------------*/
