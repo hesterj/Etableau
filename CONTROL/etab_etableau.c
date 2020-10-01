@@ -74,7 +74,7 @@ int process_branch_nofork(ProofState_p proofstate,
 {
 	long selected_number_of_clauses_to_process = max_proc;
 	long previously_saturated = branch->previously_saturated; 
-	
+
 	// Process more clauses on tableaux with fewer open branches
 	switch (branch->open_branches->members)
 	{
@@ -83,28 +83,28 @@ int process_branch_nofork(ProofState_p proofstate,
 			selected_number_of_clauses_to_process = 10000;
 			break;
 		}
-		case 2: 
+		case 2:
 		{
 			selected_number_of_clauses_to_process = 1000;
 			break;
 		}
-		default: 
+		default:
 		{
 			selected_number_of_clauses_to_process = 100;
 			break;
 		}
 	}
-	
+
 	// Do not duplicate work.
 	//if (previously_saturated >= selected_number_of_clauses_to_process)
-	if (previously_saturated > 0)
+	if (previously_saturated > selected_number_of_clauses_to_process)
 	{
 		return RESOURCE_OUT;
 	}
-	
+
 	// Large number of clauses to process, for last ditch attempts
 	if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
-	
+
 	//SilentTimeOut = true;
 	//proofcontrol->heuristic_parms.prefer_initial_clauses = true;
 	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);

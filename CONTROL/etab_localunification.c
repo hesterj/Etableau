@@ -163,7 +163,7 @@ Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause,
 {
 	Clause_p new_clause = NULL;
 	assert(PStackGetSP(local_variables));
-	VarBank_p variable_bank = master->terms->vars;
+	//VarBank_p variable_bank = master->terms->vars;
 	Subst_p subst = SubstAlloc();
 	for (PStackPointer p = 0; p < PStackGetSP(local_variables); p++)
 	{

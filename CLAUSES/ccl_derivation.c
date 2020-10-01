@@ -2326,7 +2326,12 @@ void DerivationPrintConditional(FILE* out, char* status, Derivation_p derivation
                                 Sig_p sig, ProofOutput print_derivation,
                                 bool print_analysis)
 {
-   if(print_derivation == POList)
+
+	if (print_derivation == POEtableau)
+    {
+      DerivationPrintNoFrame(out, derivation);
+    }
+  else if(print_derivation == POList)
    {
       DerivationPrint(GlobalOut, derivation, status);
    }
@@ -2385,6 +2390,31 @@ void DerivationComputeAndPrint(FILE* out, char* status, PStack_p root_clauses,
    DerivationFree(derivation);
 }
 
+void DerivationPrintNoFrame(FILE* out, Derivation_p derivation)
+{
+   PStackPointer sp;
+   Derived_p     node;
+
+   assert(derivation->ordered);
+
+   for(sp=PStackGetSP(derivation->ordered_deriv)-1; sp>=0; sp--)
+   {
+      node = PStackElementP(derivation->ordered_deriv, sp);
+      switch(DocOutputFormat)
+      {
+      case pcl_format:
+            DerivedPCLPrint(out, derivation->sig, node);
+            break;
+      case tstp_format:
+            DerivedTSTPPrint(out, derivation->sig, node);
+            break;
+      default:
+            fprintf(out, "# Output format not implemented.");
+            break;
+      }
+      fprintf(out, "\n");
+   }
+}
 
 
 

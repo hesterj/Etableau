@@ -53,4 +53,6 @@ ehthumbs.db
 Thumbs.db
 ./vscode/*
 ./vscode*
-
+GPATH
+GRTAGS
+GTAGS

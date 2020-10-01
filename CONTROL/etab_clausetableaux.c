@@ -702,7 +702,7 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
    Subst_p subst;
    Term_p old_var, fresh_var;
    Clause_p handle;
-   VarBank_p variable_bank = tableau->master->terms->vars;
+   // VarBank_p variable_bank = tableau->master->terms->vars;
    
    assert(clause);
    
@@ -1273,8 +1273,7 @@ Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var)
 		if (!found)
 		{
 			assert(TermIsVar(potential_fresh));
-			bool inserted = PTreeStore(&(tab->tableau_variables), potential_fresh);
-			assert(inserted);
+			PTreeStore(&(tab->tableau_variables), potential_fresh);
 			assert(PTreeFind(&(tab->tableau_variables), potential_fresh));
 			return potential_fresh;
 		}

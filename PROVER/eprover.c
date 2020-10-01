@@ -551,6 +551,64 @@ int main(int argc, char* argv[])
    assert(problemType != PROBLEM_HO || proofcontrol->ocb->type == KBO6);
 #endif
 
+
+	if (TableauOptions == 1)
+	{
+		TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures, 
+																				argv[argc-1], // the problem file
+																				proofstate, 
+																				proofcontrol, 
+																				TableauSaturation,
+																				TableauCores);
+		//TB_p tableau_terms = TBAlloc(proofstate->terms->sig);
+		fprintf(GlobalOut, "# Number of axioms: %ld Number of unprocessed: %ld\n", proofstate->axioms->members, 
+																						 proofstate->unprocessed->members);
+		ClauseSet_p new_axioms = ClauseSetCopy(proofstate->terms, proofstate->unprocessed);
+		ClauseSet_p *source = &proofstate->unprocessed;
+		if (ClauseSetEmpty(new_axioms))
+		{
+			ClauseSetFree(new_axioms);
+			fprintf(GlobalOut, "# No unprocessed, using axioms.\n");
+			new_axioms = ClauseSetCopy(proofstate->terms, proofstate->axioms);
+			source = &proofstate->axioms;
+		}
+		fprintf(GlobalOut, "# Tableaux proof search.\n");
+		
+		FILE *clausification_stream;
+		char *buf;
+		size_t len;
+		clausification_stream = open_memstream (&buf, &len);
+		if (clausification_stream == NULL)
+		{
+			fprintf(GlobalOut, "# Clausification stream error.\n");
+		}
+		ClauseSetPushClauses(proofstate->extract_roots, *source);
+		DerivationComputeAndPrint(clausification_stream,
+								  sat_status,
+								  proofstate->extract_roots,
+								  proofstate->signature,
+								  POEtableau,
+								  false);
+		PStackReset(proofstate->extract_roots);
+		fclose(clausification_stream);
+		tableaucontrol->clausification_buffer = buf;
+		// This is the entry point for tableaux proof search
+		Etableau(tableaucontrol, 
+					proofstate, 
+					proofcontrol, 
+					proofstate->terms, 
+					new_axioms, 
+					TableauDepth, 
+					TableauEquality);
+		free(buf); // Do not free buf until the search is done
+			
+		printf("# Exiting...\n");
+		ClauseSetFree(new_axioms);
+		TableauControlFree(tableaucontrol);
+		goto cleanuptableau;
+	}
+	
+	printf("# Warning: Approaching standard saturation\n");
    if(!success)
    {
       success = Saturate(proofstate, proofcontrol, step_limit,
@@ -765,6 +823,8 @@ int main(int argc, char* argv[])
                      relevancy_pruned,
                      raw_clause_no,
                      preproc_removed);
+
+ cleanuptableau:
 #ifndef FAST_EXIT
 #ifdef FULL_MEM_STATS
    fprintf(GlobalOut,

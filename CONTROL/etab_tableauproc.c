@@ -40,8 +40,8 @@ ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth)
 //
 // Function: tableau_select()
 //
-//   This function will hopefully emulate hcb_select at some point.  
-//   Returns an arbitrary tableaux, but they could be ordered by 
+//   This function will hopefully emulate hcb_select at some point.
+//   Returns an arbitrary tableaux, but they could be ordered by
 //   the number of open branches or a more sophisticated method at some point.
 //
 // Global Variables: -
@@ -184,7 +184,7 @@ long ClauseSetFreeUnits(ClauseSet_p set)
 
 /*-----------------------------------------------------------------------
 //  Identify a single negated conjecture to form the tableau branches.
-//  If there is no conjecture return NULL.  
+//  If there is no conjecture return NULL.
 //  Returns the first conjecture found, if there are multiple they will not affect the tableau.
 /----------------------------------------------------------------------*/
 
@@ -213,12 +213,12 @@ WFormula_p ProofStateGetConjecture(ProofState_p state)
 //
 /----------------------------------------------------------------------*/
 
-int Etableau(TableauControl_p tableaucontrol, 
-											ProofState_p proofstate, 
-											ProofControl_p proofcontrol, 
-											TB_p bank, 
-											ClauseSet_p active, 
-											int max_depth, 
+int Etableau(TableauControl_p tableaucontrol,
+											ProofState_p proofstate,
+											ProofControl_p proofcontrol,
+											TB_p bank,
+											ClauseSet_p active,
+											int max_depth,
 											int tableauequality)
 {
 	if(geteuid() == 0) Error("# Please do not run Etableau as root.", 1);
@@ -226,7 +226,7 @@ int Etableau(TableauControl_p tableaucontrol,
 	bool proof_found = false;
 	problemType = PROBLEM_FO;
 	FunCode max_var = ClauseSetGetMaxVar(active);
-	
+
 	tableaucontrol->unprocessed = ClauseSetCopy(bank, proofstate->unprocessed);
 	fprintf(GlobalOut, "# %ld beginning clauses after preprocessing and clausification\n", active->members);
 	ClauseSet_p extension_candidates = ClauseSetCopy(bank, active);
@@ -239,34 +239,33 @@ int Etableau(TableauControl_p tableaucontrol,
 	ClauseSet_p start_rule_candidates = EtableauGetStartRuleCandidates(proofstate, extension_candidates);
 	fprintf(GlobalOut, "# There are %ld start rule candidates:\n", start_rule_candidates->members);
 	//ClauseSetPrint(GlobalOut, start_rule_candidates, true);
-	
+
 	ClauseSet_p unit_axioms = ClauseSetAlloc();
 	ClauseSetMoveUnits(extension_candidates, unit_axioms);
 	ClauseSetCopyUnits(bank, start_rule_candidates, unit_axioms);
    assert(max_depth);
-	
+
 	TableauSet_p distinct_tableaux_set = EtableauCreateStartRules(proofstate,
 																					  proofcontrol,
 																					  bank,
 																					  max_var,
 																					  unit_axioms,
 																					  start_rule_candidates);
-																					  
-	
+
 	// Alternating path relevance experimentation zone
 	if (!ClauseSetEmpty(extension_candidates))
 	{
 		int relevance_distance = 3;
 		PList_p start_rule_candidates_list = ClauseSetToPList(start_rule_candidates);
 		fprintf(GlobalOut, "# Attempting APR relevance on extension candidates\n");
-		PStack_p apr_relevant_extension_candidates = APRRelevanceNeighborhood(bank->sig, 
-													 extension_candidates, 
-													 start_rule_candidates_list, 
-													 relevance_distance, 
-													 false, 
+		PStack_p apr_relevant_extension_candidates = APRRelevanceNeighborhood(bank->sig,
+													 extension_candidates,
+													 start_rule_candidates_list,
+													 relevance_distance,
+													 false,
 													 false);
 		ClauseSet_p irrelevant_extension_candidates = ClauseSetAlloc();
-		fprintf(GlobalOut, "# Experimental: Number of extension candidates within %d relevance of conjecture: %ld of %ld\n", 
+		fprintf(GlobalOut, "# Experimental: Number of extension candidates within %d relevance of conjecture: %ld of %ld\n",
 																					 relevance_distance,
 																					 PStackGetSP(apr_relevant_extension_candidates),
 																					 extension_candidates->members);
@@ -277,12 +276,12 @@ int Etableau(TableauControl_p tableaucontrol,
 		PStackFree(apr_relevant_extension_candidates);
 		ClauseSetFree(irrelevant_extension_candidates);
 	}
-	else 
+	else
 	{
 		fprintf(GlobalOut, "# No non-conjecture extension candidates for APR relevance\n");
 	}
 	// End APR zone
-	
+
 	ClauseSetFreeUnits(start_rule_candidates);
 	ClauseSetInsertSet(extension_candidates, start_rule_candidates);
 	ClauseSetFree(start_rule_candidates);
@@ -752,9 +751,9 @@ ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate, ClauseSet_p 
 //
 /----------------------------------------------------------------------*/
 
-TableauSet_p EtableauCreateStartRules(ProofState_p proofstate, 
-												  ProofControl_p proofcontrol, 
-												  TB_p bank, 
+TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
+												  ProofControl_p proofcontrol,
+												  TB_p bank,
 												  FunCode max_var,
 												  ClauseSet_p unit_axioms,
 												  ClauseSet_p start_rule_candidates)
@@ -763,7 +762,7 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
    initial_tab->open_branches = TableauSetAlloc();
    TableauSet_p open_branches = initial_tab->open_branches;
    TableauSetInsert(open_branches, initial_tab);
-   
+
    VarBankSetVCountsToUsed(bank->vars);
    VarBankSetVCountsToUsed(proofstate->freshvars);
    initial_tab->terms = bank;
@@ -771,7 +770,7 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
    initial_tab->state = proofstate;
    initial_tab->control = proofcontrol;
    initial_tab->unit_axioms = NULL;
-   
+
 	ClauseTableau_p beginning_tableau = NULL;
 	TableauSet_p distinct_tableaux_set = TableauSetAlloc();
 	// Create a tableau for each axiom using the start rule
@@ -786,7 +785,7 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
 		//ClauseTableauUpdateVariables(beginning_tableau->master); //unnecessary, is done before any uni attempts
 		start_label = start_label->succ;
 	}
-	
+
 	ClauseTableauFree(initial_tab);
 	return distinct_tableaux_set;
 }
