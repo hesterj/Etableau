@@ -351,19 +351,19 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 																		   head_clause, 
 																		   new_leaf_clauses, 
 																		   open_branch);
-			ClauseTableau_p maybe_extended = ClauseTableauExtensionRule(tableau_control,
+			ClauseTableau_p extended = ClauseTableauExtensionRule(tableau_control,
 																							distinct_tableaux, 
 																							extension_candidate, 
 																							new_tableaux);
 			TableauExtensionFree(extension_candidate);
-			if (maybe_extended) // extension may not happen due to regularity
+			if (extended) // extension may not happen due to regularity
 			{
 				fflush(GlobalOut);
 				extensions_done++;
-				if (maybe_extended->open_branches->members == 0) //success
+				if (extended->open_branches->members == 0) //success
 				{
 					assert(maybe_extended->master->label);
-					tableau_control->closed_tableau = maybe_extended->master;
+					tableau_control->closed_tableau = extended->master;
 					ClauseSetFree(new_leaf_clauses);
 					return extensions_done;
 				}
@@ -373,19 +373,29 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 				{
 					BranchSaturation_p branch_sat = BranchSaturationAlloc(tableau_control->proofstate, 
 																									 tableau_control->proofcontrol, 
-																									 maybe_extended->master,
+																									 extended->master,
 																									 10000);
 					// Trying to keep one object in extensions and saturations
 					AttemptToCloseBranchesWithSuperpositionSerial(tableau_control, branch_sat);
 					BranchSaturationFree(branch_sat);
-					if (maybe_extended->open_branches->members == 0)
+					if (extended->open_branches->members == 0)
 					{
 						//~ // fprintf(GlobalOut, "# Closed tableau found!\n");
 						assert(maybe_extended->master->label);
-						tableau_control->closed_tableau = maybe_extended->master;
+						tableau_control->closed_tableau = extended->master;
 						ClauseSetFree(new_leaf_clauses);
 						return extensions_done;
 					}
+					else
+					{
+						ClauseSetFree(new_leaf_clauses);
+						return extensions_done;
+					}
+				}
+				else
+				{
+					ClauseSetFree(new_leaf_clauses);
+					return extensions_done;
 				}
 			}
 		}

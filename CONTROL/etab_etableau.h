@@ -38,8 +38,14 @@ int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, Br
 int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_control, BranchSaturation_p jobs);
 
 void EtableauProofStateResetClauseSets(ProofState_p state);
-void EtableauInsertBranchClausesIntoUnprocessed(ProofState_p state,
+int EtableauInsertBranchClausesIntoUnprocessed(ProofState_p state,
                                  ProofControl_p control,
                                  ClauseTableau_p branch);
 void TermTreeDeleteRWLinks(Term_p root);
 void TermCellStoreDeleteRWLinks(TermCellStore_p store);
+
+
+int ProcessSpecificClauseWrapper(ProofState_p state, ProofControl_p control, Clause_p clause);
+
+
+int ProcessSpecificClauseSetWrapper(ProofState_p state, ProofControl_p control, ClauseSet_p set);

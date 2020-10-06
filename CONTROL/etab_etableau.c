@@ -220,8 +220,11 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 	assert(proofstate);
 	assert(proofcontrol);
 	
-	EtableauInsertBranchClausesIntoUnprocessed(proofstate, proofcontrol, branch);
-	
+	int early_return_status = EtableauInsertBranchClausesIntoUnprocessed(proofstate, proofcontrol, branch);
+	if (early_return_status == PROOF_FOUND) // Maybe a contradiction can be found via superposition within the branch...
+	{
+		return PROOF_FOUND;	
+	}
 	proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver
 	success = Saturate(proofstate, proofcontrol, max_proc,
 							 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
@@ -481,38 +484,68 @@ void EtableauProofStateResetClauseSets(ProofState_p state)
 //
 /----------------------------------------------------------------------*/
 
-void EtableauInsertBranchClausesIntoUnprocessed(ProofState_p state,
+int EtableauInsertBranchClausesIntoUnprocessed(ProofState_p state,
                                  ProofControl_p control,
                                  ClauseTableau_p branch)
 {
-   Clause_p handle = NULL;
-   Clause_p tmpclause = NULL;
-   
-   ClauseTableau_p node = branch;
-
-   while (node != node->master)
-   {
-		handle = ClauseCopyOpt(node->label);
-		assert(!ClauseQueryProp(handle, CPIsGlobalIndexed));
-		assert(!ProofObjectRecordsGCSelection);
-		
-      tmpclause = ClauseFlatCopy(handle);
-      ClausePushDerivation(tmpclause, DCCnfQuote, handle, NULL);
-      ClauseSetInsert(state->archive, handle);
-      handle = tmpclause;
-      //ClauseCanonize(handle);
-      HCBClauseEvaluate(control->hcb, handle);
-      ClauseDelProp(handle, CPIsOriented);
-      ClauseDelProp(handle, CPLimitedRW);
-      ClauseSetProp(handle, CPInitial);
-      DocClauseQuoteDefault(6, handle, "move_eval");
-      EvalListChangePriority(handle->evaluations, -PrioLargestReasonable);
-      ClauseSetInsert(state->unprocessed, handle);
-      ProcessSpecificClause(state, control, handle, LONG_MAX);
-      node = node->parent;
-   }
+	ClauseTableau_p branch_handle = branch;	
+	while (branch_handle)
+	{
+		Clause_p label = branch_handle->label;
+		int status = ProcessSpecificClauseWrapper(state, control, label);
+		if (status == PROOF_FOUND)
+		{
+			return PROOF_FOUND;	
+		}
+		if (branch_handle->folding_labels)
+		{
+			int folding_status = ProcessSpecificClauseSetWrapper(state, control, branch_handle->folding_labels);
+			if (folding_status == PROOF_FOUND)
+			{
+				return PROOF_FOUND;
+			}
+		}
+		branch_handle = branch_handle->parent;
+	}
+	return RESOURCE_OUT;
 }
 
+int ProcessSpecificClauseWrapper(ProofState_p state, ProofControl_p control, Clause_p clause)
+{
+	Clause_p handle = ClauseCopyOpt(clause);
+	Clause_p tmpclause = ClauseFlatCopy(handle);
+	ClausePushDerivation(tmpclause, DCCnfQuote, handle, NULL);
+	ClauseSetInsert(state->archive, handle);
+	handle = tmpclause;
+	HCBClauseEvaluate(control->hcb, handle);
+	ClauseDelProp(handle, CPIsOriented);
+	ClauseDelProp(handle, CPLimitedRW);
+	ClauseSetProp(handle, CPInitial);
+	DocClauseQuoteDefault(6, handle, "move_eval");
+	EvalListChangePriority(handle->evaluations, -PrioLargestReasonable);
+	ClauseSetInsert(state->unprocessed, handle);
+	Clause_p success = ProcessSpecificClause(state, control, handle, LONG_MAX);
+	if (success)
+	{
+		return PROOF_FOUND;	
+	}
+	return RESOURCE_OUT;
+}
+
+int ProcessSpecificClauseSetWrapper(ProofState_p state, ProofControl_p control, ClauseSet_p set)
+{
+	Clause_p handle = set->anchor->succ;
+	while (handle != set->anchor)
+	{
+		int status = ProcessSpecificClauseWrapper(state, control, handle);
+		if (status == PROOF_FOUND)
+		{
+			return PROOF_FOUND;	
+		}
+		handle = handle->succ;
+	}
+	return RESOURCE_OUT;
+}
 /*-----------------------------------------------------------------------
 //
 // Function: TermTreeDeleteRWLinks()
