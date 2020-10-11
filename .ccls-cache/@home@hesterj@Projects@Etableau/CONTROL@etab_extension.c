@@ -138,6 +138,28 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 														 TableauExtension_p extension, 
 														 PStack_p new_tableaux)
 {
+	TB_p bank = extension->parent->terms;
+	Clause_p head_literal_clause = NULL;
+	ClauseSet_p new_leaf_clauses_set = ClauseSetAlloc(); // Copy the clauses of the extension
+	Subst_p subst = extension->subst;
+	for (Clause_p handle = extension->other_clauses->anchor->succ;
+					  handle != extension->other_clauses->anchor;
+					  handle = handle->succ)
+	{
+		if (ClauseTableauBranchContainsLiteral(extension->parent, handle->literals))
+		{
+			ClauseSetFree(new_leaf_clauses_set);
+			SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
+			return NULL;  // REGULARITY CHECKING!
+		}
+		Clause_p subst_applied = ClauseCopy(handle, bank);
+		ClauseSetInsert(new_leaf_clauses_set, subst_applied);
+		if (extension->head_clause == handle)
+		{
+			head_literal_clause = subst_applied;
+		}
+	}
+	long number_of_children = new_leaf_clauses_set->members;
 	// Create a copy of the master tableau of the extension rule's tableau.
 	// Insert the newly created master tableau in to the distinct_tableaux. 
 	ClauseTableau_p old_tableau_master = extension->parent->master;
@@ -151,8 +173,6 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	assert(tableau_copy->active_branch);
 	assert(tableau_copy->master == tableau_copy);
 	assert(extension->selected);
-	Subst_p subst = extension->subst;
-	assert(subst);
 	// Do the extension rule on the active branch of the newly created tableau
 	
 	ClauseTableau_p parent = tableau_copy->active_branch;
@@ -160,22 +180,6 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	
 	parent->id = ClauseGetIdent(extension->selected);
 	
-	Clause_p head_literal_clause = NULL;
-	TB_p bank = parent->terms;
-	bool regular = true;
-	ClauseSet_p new_leaf_clauses_set = ClauseSetAlloc(); // Copy the clauses of the extension
-	for (Clause_p handle = extension->other_clauses->anchor->succ;
-					  handle != extension->other_clauses->anchor;
-					  handle = handle->succ)
-	{
-		Clause_p subst_applied = ClauseCopy(handle, bank);
-		ClauseSetInsert(new_leaf_clauses_set, subst_applied);
-		if (extension->head_clause == handle)
-		{
-			head_literal_clause = subst_applied;
-		}
-	}
-	long number_of_children = new_leaf_clauses_set->members;
 	
 	assert(head_literal_clause);
 	assert(number_of_children == extension->other_clauses->members);
@@ -187,10 +191,10 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	for (long p=0; p < number_of_children; p++)
 	{
 		leaf_clause = ClauseSetExtractFirst(new_leaf_clauses_set);
-		if (regular && ClauseTableauBranchContainsLiteral(parent, leaf_clause->literals))
-		{
-			regular = false;  // REGULARITY CHECKING!
-		}
+		//if (regular && ClauseTableauBranchContainsLiteral(parent, leaf_clause->literals))
+		//{
+			//regular = false;  // REGULARITY CHECKING!
+		//}
 		assert(leaf_clause);
 		parent->children[p] = ClauseTableauChildLabelAlloc(parent, leaf_clause, p);
 		if (leaf_clause == head_literal_clause)
@@ -218,19 +222,19 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	//  If this tableau is irregular, we have to undo all of the work.
 	//  This can probably be detected earlier to save
 	//  unnecessary allocations and work.
-	if (!regular)
-	{
-		assert(new_leaf_clauses_set->members == 0);
-		ClauseSetFree(new_leaf_clauses_set);
-		ClauseTableauFree(parent->master);
-		SubstDelete(subst);
-		return NULL;
-	}
-	else // the extension is regular- add it to the new tableaux to be processed later
-	{
+	//if (!regular)
+	//{
+		//assert(new_leaf_clauses_set->members == 0);
+		//ClauseSetFree(new_leaf_clauses_set);
+		//ClauseTableauFree(parent->master);
+		//SubstDelete(subst);
+		//return NULL;
+	//}
+	//else // the extension is regular- add it to the new tableaux to be processed later
+	//{
 		assert(parent->master);
 		PStackPushP(new_tableaux, parent->master);
-	}
+	//}
 	
 	// The copying is done, we can delete the subst and print it to the info
 	DStrAppendStr(parent->info, " Expansion with clause ");
