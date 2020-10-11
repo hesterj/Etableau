@@ -142,6 +142,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	Clause_p head_literal_clause = NULL;
 	ClauseSet_p new_leaf_clauses_set = ClauseSetAlloc(); // Copy the clauses of the extension
 	Subst_p subst = extension->subst;
+	// failure caching check here?
 	for (Clause_p handle = extension->other_clauses->anchor->succ;
 					  handle != extension->other_clauses->anchor;
 					  handle = handle->succ)

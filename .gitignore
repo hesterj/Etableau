@@ -1,4 +1,5 @@
 Makefile.vars
+.ccls-cache
 Makefile.dependencies
 include/
 EXTERNAL/CSSCPA_filter
