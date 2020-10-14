@@ -201,5 +201,5 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 												 bool branch_saturation_enabled,
 												 int num_cores_to_use);
 void TableauControlFree(TableauControl_p trash);
-
+//void c_smoketest();
 #endif

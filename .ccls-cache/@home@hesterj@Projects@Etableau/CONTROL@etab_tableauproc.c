@@ -1,6 +1,7 @@
 #include "etab_tableauproc.h"
 #define _GNU_SOURCE
 #include <fcntl.h>
+#include <cpp_interface.h>
 
 /*  Global Variables
 */
@@ -223,6 +224,7 @@ int Etableau(TableauControl_p tableaucontrol,
 {
 	if(geteuid() == 0) Error("# Please do not run Etableau as root.", 1);
 	APRVerify();
+	c_smoketest();
 	bool proof_found = false;
 	problemType = PROBLEM_FO;
 	FunCode max_var = ClauseSetGetMaxVar(active);

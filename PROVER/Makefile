@@ -41,7 +41,7 @@ include ../Makefile.services
 EPROVER = eprover.o ../lib/CONTROL.a ../lib/HEURISTICS.a\
             ../lib/LEARN.a\
             ../lib/CLAUSES.a ../lib/ORDERINGS.a ../lib/TERMS.a\
-            ../lib/INOUT.a ../lib/BASICS.a  ../lib/CONTRIB.a
+            ../lib/INOUT.a ../lib/BASICS.a  ../lib/CONTRIB.a ../lib/CPP.a
 
 eprover: $(EPROVER)
 	$(LD) -o eprover $(EPROVER) $(LIBS)
