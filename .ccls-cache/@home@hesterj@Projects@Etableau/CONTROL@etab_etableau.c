@@ -402,11 +402,13 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 		if (BranchIsLocal(handle))
 		{
 			num_local_branches++;
+			//fprintf(GlobalOut, "# Saturating branch...\n");
 			int branch_status = process_branch_nofork(proofstate, 
 																	proofcontrol, 
 																	handle, 
 																	tableau_control, 
 																	max_proc);
+			//fprintf(GlobalOut, "# Done.\n");
 			if (branch_status == PROOF_FOUND)
 			{
 				ClauseTableau_p new_handle = handle->succ;

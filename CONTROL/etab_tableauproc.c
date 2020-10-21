@@ -414,6 +414,7 @@ ClauseTableau_p ConnectionTableauProofSearchAtDepth(TableauControl_p tableaucont
 																				//~ NULL,
 																				//~ extension_candidates,
 																				//~ max_depth, max_depth_tableaux);
+			//fprintf(GlobalOut, "# Number of tableaux: %d\n", num_tableaux);
 			if (closed_tableau)
 			{
 				assert(tableaucontrol->closed_tableau);
@@ -490,6 +491,7 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 		Clause_p selected = extension_candidates->anchor->succ;
 		while (selected != extension_candidates->anchor) // iterate over the clauses we can split on the branch
 		{
+			//fprintf(GlobalOut, "# Attempting extension... %d\n", number_of_extensions);
 			number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranch(tableaucontrol,
 																									open_branch,
 																									NULL,
@@ -517,6 +519,7 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 	}
 	
 	return_point:
+	//fprintf(GlobalOut, "# Returning to extending on another tableau.\n");
 	PStackPushStack(newly_created_tableaux, tab_tmp_store);
 	PStackFree(tab_tmp_store);
 	return closed_tableau;

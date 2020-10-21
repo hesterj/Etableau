@@ -515,7 +515,8 @@ ClauseSet_p ClauseSetApplySubstitution(TB_p bank, ClauseSet_p set, Subst_p subst
 
 void ClauseTableauPrint(ClauseTableau_p tab)
 {
-	fprintf(GlobalOut, "# BEGIN PRINTING TABLEAU\n");
+	assert(tab);
+	if (tab == NULL) Error("# Error:  Attempting to print NULL tableau", 1);
 	PStack_p leaves = PStackAlloc();
 	ClauseTableauCollectLeavesStack(tab, leaves);
 	for (PStackPointer p = 0; p<PStackGetSP(leaves); p++)
@@ -524,7 +525,6 @@ void ClauseTableauPrint(ClauseTableau_p tab)
 		ClauseTableauPrintBranch(handle);printf("\n");
 	}
 	PStackFree(leaves);
-	fprintf(GlobalOut, "# END PRINTING TABLEAU\n");
 }
 
 void ClauseTableauPrint2(ClauseTableau_p tab)
@@ -1355,4 +1355,10 @@ long SubstDStrPrint(DStr_p str, Subst_p subst, Sig_p sig, DerefType deref)
 	DStrAppendStr(str, buf);
 	free(buf);
    return (long)limit;
+}
+
+// Now for stuff about representing clauses and branches as stack of integers 
+ClauseRep_p ClauseGetRepresentation(Clause_p clause)
+{
+	Eqn_p literals = clause->literals;	
 }
