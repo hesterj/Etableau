@@ -15,7 +15,7 @@ long dive_depth = 10;
 
 ClauseTableau_p tableau_select(TableauControl_p tableaucontrol, TableauSet_p set);
 ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth);
-
+extern void c_smoketest();
 
 /*  Function Definitions
 */
@@ -320,10 +320,7 @@ int Etableau(TableauControl_p tableaucontrol,
 	}
 
 	assert(TableauSetEmpty(distinct_tableaux_set));
-	printf("# Freeing tableaux trash\n");
 	TableauStackFreeTableaux(tableaucontrol->tableaux_trash);
-	printf("\n# Freeing distinct tableaux\n");
-	printf("\n# Freeing new tableaux\n");
 	TableauStackFreeTableaux(new_tableaux);
 	PStackFree(new_tableaux);
 	TableauSetFree(distinct_tableaux_set);
@@ -335,14 +332,14 @@ int Etableau(TableauControl_p tableaucontrol,
 	
    if (proof_found) // success
    {
-		printf("# Proof search success for %s!\n", tableaucontrol->problem_name);
+		//printf("# Proof search success for %s!\n", tableaucontrol->problem_name);
 		//ClauseTableauPrintDOTGraph(resulting_tab);
 		return 1;
 	}
 	// failure
 	if (proof_found == false)
 	{
-		fprintf(GlobalOut, "# SZS status ResourceOut for %s\n", tableaucontrol->problem_name);
+		//fprintf(GlobalOut, "# SZS status ResourceOut for %s\n", tableaucontrol->problem_name);
 	}
 	return 0;
 }
@@ -732,6 +729,7 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 {
 	assert(resulting_tab);
 	assert(resulting_tab == tableaucontrol->closed_tableau);
+	fflush(GlobalOut);
 	
 	long neg_conjectures = tableaucontrol->neg_conjectures;
 	if (!tableaucontrol->satisfiable)
@@ -777,6 +775,7 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 	fprintf(GlobalOut, "# End printing tableau\n");
 	fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
 	fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
+	fflush(GlobalOut);
 	return;
 }
 
@@ -1146,6 +1145,7 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 									  starting_depth,
 									  max_depth,
 									  new_tableaux);
+			fprintf(GlobalOut, "# Worker has escaped from proof search area.\n");
 		}
 		else if (worker > 0) // parent
 		{

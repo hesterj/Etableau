@@ -602,7 +602,6 @@ int main(int argc, char* argv[])
 					TableauEquality);
 		free(buf); // Do not free buf until the search is done
 			
-		printf("# Exiting...\n");
 		ClauseSetFree(new_axioms);
 		TableauControlFree(tableaucontrol);
 		goto cleanuptableau;

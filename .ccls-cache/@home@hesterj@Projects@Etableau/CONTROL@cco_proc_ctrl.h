@@ -52,7 +52,7 @@ typedef struct e_pctrl_cell
    DStr_p       output;
 }EPCtrlCell, *EPCtrl_p;
 
-#define EPCTRL_BUFSIZE 200
+#define EPCTRL_BUFSIZE 65536
 #define MAX_CORES 8
 
 
