@@ -583,6 +583,8 @@ bool eqn_parse_real(Scanner_p in, TB_p bank, Term_p *lref,
 Eqn_p EqnAlloc(Term_p lterm, Term_p rterm, TB_p bank,  bool positive)
 {
    Eqn_p handle = EqnCellAlloc();
+   assert(lterm);
+   assert(rterm);
 
    /* printf("Handle = %p\n", handle); */
 
@@ -608,6 +610,7 @@ Eqn_p EqnAlloc(Term_p lterm, Term_p rterm, TB_p bank,  bool positive)
 #endif
       if(!TermIsVar(lterm) && !TermIsAppliedVar(lterm))
       {
+         assert(lterm->f_code <= bank->sig->f_count);
          SigDeclareIsPredicate(bank->sig, lterm->f_code);
       }
 

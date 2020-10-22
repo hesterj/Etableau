@@ -195,6 +195,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	if (tab->label)
 	{
 		//handle->label = ClauseCopy(tab->label, handle->terms);
+		assert(tab->label);
 		handle->label = ClauseCopyOpt(tab->label);
 		assert(handle->label);
 	}
@@ -458,6 +459,14 @@ Subst_p ClauseContradictsClauseSubst(Clause_p a, Clause_p b, Subst_p subst)
 	
 	if ((success = EqnUnify(a_eqn, b_eqn, subst)))
 	{
+		//for (PStackPointer p = 0; p < PStackGetSP(subst); p++)
+		//{
+			//Term_p var = PStackElementP(subst, p); 
+			//Type_p var_type = var->type;
+			//Term_p binding = var->binding;
+			//Type_p bind_type = binding->type;
+			//assert(var_type == bind_type);
+		//}
 		return subst;
 	}
 	

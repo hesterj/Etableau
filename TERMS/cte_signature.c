@@ -415,6 +415,10 @@ void SigFixType(Sig_p sig, FunCode f_code)
 bool SigIsPolymorphic(Sig_p sig, FunCode f_code)
 {
    assert(f_code > 0);
+   if (f_code > sig->f_count)
+      {
+         printf("%d %d\n", f_code, sig->f_count);
+      }
    assert(f_code <= sig->f_count);
 
    return FuncQueryProp(&(sig->f_info[f_code]), FPTypePoly);
@@ -1312,15 +1316,12 @@ void SigDeclareType(Sig_p sig, FunCode f, Type_p type)
       {
          if(SigIsFixedType(sig, f))
          {
-            if(Verbose>=3)
-            {
-               fprintf(stderr, "# Type conflict for %s between ",
-                       SigFindName(sig, f));
-               TypePrintTSTP(stderr, sig->type_bank, fun->type);
-               fprintf(stderr, " and ");
-               TypePrintTSTP(stderr, sig->type_bank, type);
-               fprintf(stderr, "\n");
-            }
+            fprintf(stderr, "# Type conflict for %s between ",
+            SigFindName(sig, f));
+            TypePrintTSTP(stderr, sig->type_bank, fun->type);
+            fprintf(stderr, " and ");
+            TypePrintTSTP(stderr, sig->type_bank, type);
+            fprintf(stderr, "\n");
             Error("type error", INPUT_SEMANTIC_ERROR);
          }
          else
