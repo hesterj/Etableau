@@ -69,14 +69,14 @@ int process_branch_nofork(ProofState_p proofstate,
 	// Do not duplicate work.
 	if (previously_saturated >= selected_number_of_clauses_to_process)
 	{
-		fprintf(stdout, "# Do not replicate work...\n");
+		//fprintf(stdout, "# Do not replicate work...\n");
 		return RESOURCE_OUT;
 	}
 	else
 	{
-		fprintf(stdout, "# Saturating branch...\n");		
-		ClauseTableauPrintBranch(branch);
-		fprintf(stdout, "# Done printing branch\n");
+		//fprintf(stdout, "# Saturating branch...\n");
+		//ClauseTableauPrintBranch(branch);
+		//fprintf(stdout, "# Done printing branch\n");
 	}
 
 	// Large number of clauses to process, for last ditch attempts
@@ -121,6 +121,7 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 	{
 		return PROOF_FOUND;
 	}
+    //GCCollect(proofstate->terms->gc);
 	return RESOURCE_OUT;
 }
 
@@ -153,7 +154,7 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 			//fprintf(GlobalOut, "# Done.\n");
 			if (branch_status == PROOF_FOUND)
 			{
-				fprintf(stdout, "# Proof found on branch. %ld remain.\n", handle->set->members - 1);
+				//fprintf(stdout, "# Proof found on branch. %ld remain.\n", handle->set->members - 1);
 				TableauSetExtractEntry(handle);
 				handle->open = false;
 				handle->saturation_closed = true;
@@ -162,6 +163,7 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 				DStrAppendStr(handle->info, " Saturation closed");
 				successful_count++;
 				handle = open_branches->anchor->succ;
+				//return 1;
 				continue;
 			}
 		}
@@ -232,7 +234,11 @@ int EtableauInsertBranchClausesIntoUnprocessed(ProofState_p state,
                                  ProofControl_p control,
                                  ClauseTableau_p branch)
 {
-	ClauseTableau_p branch_handle = branch;	
+	ClauseTableau_p branch_handle = branch;
+	if (branch->master == branch)
+	{
+		return RESOURCE_OUT;
+	}
 	while (branch_handle)
 	{
 		Clause_p label = branch_handle->label;
@@ -256,11 +262,11 @@ int EtableauInsertBranchClausesIntoUnprocessed(ProofState_p state,
 
 int ProcessSpecificClauseWrapper(ProofState_p state, ProofControl_p control, Clause_p clause)
 {
-	Clause_p handle = ClauseCopyOpt(clause);
-	Clause_p tmpclause = ClauseFlatCopy(handle);
-	ClausePushDerivation(tmpclause, DCCnfQuote, handle, NULL);
-	ClauseSetInsert(state->archive, handle);
-	handle = tmpclause;
+	Clause_p handle = ClauseCopy(clause, state->terms);
+	//Clause_p tmpclause = ClauseFlatCopy(handle);
+	//ClausePushDerivation(tmpclause, DCCnfQuote, handle, NULL);
+	//ClauseSetInsert(state->archive, handle);
+	//handle = tmpclause;
 	HCBClauseEvaluate(control->hcb, handle);
 	ClauseDelProp(handle, CPIsOriented);
 	ClauseDelProp(handle, CPLimitedRW);
@@ -296,7 +302,6 @@ int ProcessSpecificClauseSetWrapper(ProofState_p state, ProofControl_p control, 
 //
 //   Delete all the rewrite links of terms in the tree.
 //
-//   John Hester
 // Global Variables: -
 //
 // Side Effects    : -

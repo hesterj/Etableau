@@ -177,7 +177,7 @@ Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause,
 		assert(old_var->f_code != fresh_var->f_code);
 		SubstAddBinding(subst, old_var, fresh_var);
 	}
-	new_clause = ClauseCopyOpt(clause);
+	new_clause = ClauseCopy(clause, master->terms);
 	SubstDelete(subst);
 	return new_clause;
 }

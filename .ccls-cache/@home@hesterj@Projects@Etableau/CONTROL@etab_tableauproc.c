@@ -225,6 +225,10 @@ int Etableau(TableauControl_p tableaucontrol,
 	if(geteuid() == 0) Error("# Please do not run Etableau as root.", 1);
 	APRVerify();
 	c_smoketest();
+	//for (long i=1; i< bank->sig->f_count; i++)
+	//{
+		//SigFixType(bank->sig, i);
+	//}
 	bool proof_found = false;
 	problemType = PROBLEM_FO;
 	FunCode max_var = ClauseSetGetMaxVar(active);
@@ -248,11 +252,29 @@ int Etableau(TableauControl_p tableaucontrol,
    assert(max_depth);
 
 	TableauSet_p distinct_tableaux_set = EtableauCreateStartRules(proofstate,
-																					  proofcontrol,
-																					  bank,
-																					  max_var,
-																					  unit_axioms,
-																					  start_rule_candidates);
+																  proofcontrol,
+																  bank,
+																  max_var,
+																  unit_axioms,
+																  start_rule_candidates,
+																  tableaucontrol);
+
+	// Do a branch saturation on the original problem before diving in to the tableaux proofsearch
+	assert(distinct_tableaux_set->members > 0);
+	ClauseTableau_p initial_example = distinct_tableaux_set->anchor->succ->master;
+	BranchSaturation_p branch_sat = BranchSaturationAlloc(tableaucontrol->proofstate,
+														  tableaucontrol->proofcontrol,
+														  initial_example,
+														  10000);
+	// Trying to keep one object in extensions and saturations
+	AttemptToCloseBranchesWithSuperpositionSerial(tableaucontrol, branch_sat);
+	BranchSaturationFree(branch_sat);
+	if (tableaucontrol->closed_tableau)
+	{
+		proof_found = true;
+		tableaucontrol->closed_tableau = initial_example;
+		EtableauStatusReport(tableaucontrol, active, tableaucontrol->closed_tableau);
+	}
 
 	// Alternating path relevance experimentation zone
 	//if (!ClauseSetEmpty(extension_candidates))
@@ -294,7 +316,7 @@ int Etableau(TableauControl_p tableaucontrol,
 	
 	TableauStack_p new_tableaux = PStackAlloc();  // The collection of new tableaux made by extension rules.
 	
-	if (tableaucontrol->multiprocessing_active) // multiprocess proof search
+	if (!proof_found && tableaucontrol->multiprocessing_active) // multiprocess proof search
 	{
 		proof_found = EtableauMultiprocess(tableaucontrol, 
 								  proofstate, 
@@ -306,7 +328,7 @@ int Etableau(TableauControl_p tableaucontrol,
 								  max_depth,
 								  new_tableaux);
 	}
-	else // single core with this process
+	else if (!proof_found)// single core with this process
 	{
 		proof_found = EtableauProofSearch(tableaucontrol, 
 						  proofstate, 
@@ -319,7 +341,13 @@ int Etableau(TableauControl_p tableaucontrol,
 						  new_tableaux);
 	}
 
-	assert(TableauSetEmpty(distinct_tableaux_set));
+	while (!TableauSetEmpty(distinct_tableaux_set))
+	{
+		ClauseTableau_p handle = distinct_tableaux_set->anchor->succ;
+		assert(handle);
+		TableauSetExtractEntry(handle);
+		ClauseTableauFree(handle);
+	}
 	TableauStackFreeTableaux(tableaucontrol->tableaux_trash);
 	TableauStackFreeTableaux(new_tableaux);
 	PStackFree(new_tableaux);
@@ -853,7 +881,8 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
 												  TB_p bank,
 												  FunCode max_var,
 												  ClauseSet_p unit_axioms,
-												  ClauseSet_p start_rule_candidates)
+												  ClauseSet_p start_rule_candidates, TableauControl_p tableaucontrol)
+
 {
    ClauseTableau_p initial_tab = ClauseTableauAlloc();
    initial_tab->open_branches = TableauSetAlloc();
@@ -867,6 +896,13 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
    initial_tab->state = proofstate;
    initial_tab->control = proofcontrol;
    initial_tab->unit_axioms = NULL;
+	BranchSaturation_p branch_sat = BranchSaturationAlloc(tableaucontrol->proofstate,
+														  tableaucontrol->proofcontrol,
+														  initial_tab,
+														  10000);
+	// Trying to keep one object in extensions and saturations
+	AttemptToCloseBranchesWithSuperpositionSerial(tableaucontrol, branch_sat);
+	BranchSaturationFree(branch_sat);
 
 	ClauseTableau_p beginning_tableau = NULL;
 	TableauSet_p distinct_tableaux_set = TableauSetAlloc();

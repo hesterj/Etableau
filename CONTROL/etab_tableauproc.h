@@ -93,7 +93,8 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
                                       TB_p bank, 
                                       FunCode max_var,
                                       ClauseSet_p unit_axioms,
-                                      ClauseSet_p start_rule_candidates);
+                                      ClauseSet_p start_rule_candidates,
+                                      TableauControl_p tableaucontrol);
     
 
 #endif

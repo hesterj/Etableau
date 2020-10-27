@@ -103,7 +103,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	if (tab->label)
 	{
 		//handle->label = ClauseCopy(tab->label, bank);
-		handle->label = ClauseCopyOpt(tab->label);
+		handle->label = ClauseCopy(tab->label, bank);
 		assert(handle->label);
 	}
 	else 
@@ -196,7 +196,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	{
 		//handle->label = ClauseCopy(tab->label, handle->terms);
 		assert(tab->label);
-		handle->label = ClauseCopyOpt(tab->label);
+		handle->label = ClauseCopy(tab->label, bank);
 		assert(handle->label);
 	}
 	else
@@ -401,7 +401,7 @@ void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 	assert(tab->label);
 	assert(subst);
 	
-	Clause_p new_label = ClauseCopyOpt(tab->label);
+	Clause_p new_label = ClauseCopy(tab->label, tab->terms);
 	ClauseFree(tab->label);
 	assert(new_label);
 	tab->label = new_label;
@@ -482,7 +482,7 @@ ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set)
 	{
 		assert(handle);
 		//temp = ClauseCopy(handle,bank);
-		temp = ClauseCopyOpt(handle);
+		temp = ClauseCopy(handle, bank);
 		ClauseSetInsert(new, temp);
 	}
 	return new;
@@ -512,7 +512,7 @@ ClauseSet_p ClauseSetApplySubstitution(TB_p bank, ClauseSet_p set, Subst_p subst
 	
 	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
 	{
-		temp = ClauseCopyOpt(handle);
+		temp = ClauseCopy(handle, bank);
 		ClauseSetInsert(new, temp);
 	}
 	return new;
@@ -607,32 +607,32 @@ void ClauseTableauPrintBranch(ClauseTableau_p branch)
 	{
 		assert(depth_check->label);
 		assert(depth_check->id >= 0);
-		fprintf(GlobalOut, "# %d,%d,%ld,%d, step: %d ", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int, depth_check->step);
-		fprintf(GlobalOut, "%s", DStrView(depth_check->info));
+		fprintf(stdout, "# %d,%d,%ld,%d, step: %d ", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int, depth_check->step);
+		fprintf(stdout, "%s", DStrView(depth_check->info));
 		if (depth_check->head_lit)
 		{
-			fprintf(GlobalOut, " x");
+			fprintf(stdout, " x");
 		}
 		if (!depth_check->open)
 		{
-			fprintf(GlobalOut, " c");
+			fprintf(stdout, " c");
 		}
 		if (depth_check->saturation_closed)
 		{
-			fprintf(GlobalOut, " s");
+			fprintf(stdout, " s");
 		}
-		fprintf(GlobalOut, "\n");
-		ClausePrint(GlobalOut, depth_check->label, true);
+		fprintf(stdout, "\n");
+		ClausePrint(stdout, depth_check->label, true);
 		
-		fprintf(GlobalOut, "\n");
+		fprintf(stdout, "\n");
 		depth_check = depth_check->parent;
 	}
 	assert (depth_check->depth == 0);
 	assert (depth_check->label);
 	
-	fprintf(GlobalOut, "# %d,%d,%ld,%d \n", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
-	ClausePrint(GlobalOut, depth_check->label, true);
-	fprintf(GlobalOut, "\n");
+	fprintf(stdout, "# %d,%d,%ld,%d \n", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
+	ClausePrint(stdout, depth_check->label, true);
+	fprintf(stdout, "\n");
 	//printf("\033[0m");
 }
 
@@ -680,7 +680,7 @@ Clause_p ClauseApplySubst(Clause_p clause,  TB_p bank, Subst_p subst)
    Clause_p new_clause;
    Term_p variable_in_clause __attribute__((unused));
    assert(clause);
-   new_clause = ClauseCopyOpt(clause);
+   new_clause = ClauseCopy(clause, bank);
    return new_clause;
 }
 
@@ -728,12 +728,6 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
    for (p = 0; p < PStackGetSP(variables); p++)
    {
 	   old_var = PStackElementP(variables, p);
-	   //~ printf("tableau max var: %ld\n", tableau->master->max_var);
-	   //~ printf("old var: %ld\n", old_var->f_code);
-	   //printf("# Old_var->type in ClauseFlatCopyFresh: %ld\n", old_var->type->f_code);
-	   //tableau->master->max_var -= 2;
-	   //fresh_var = VarBankVarAssertAlloc(variable_bank, tableau->master->max_var, old_var->type); // oldest
-	   //fresh_var = VarBankGetFreshVar(variable_bank, old_var->type); // old
 	   fresh_var = ClauseTableauGetFreshVar(tableau->master, old_var); // new
 	   assert(fresh_var != old_var);
 	   assert(fresh_var->f_code != old_var->f_code);
@@ -748,7 +742,7 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
 	   //printf("\n");
    }
    
-   handle = ClauseCopyOpt(clause);
+   handle = ClauseCopy(clause, tableau->terms);
    
    SubstDelete(subst);
    PStackFree(variables);
@@ -773,7 +767,7 @@ ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 	//TableauSetExtractEntry(tab); // no longer open
 	assert(!(tab->set));
 	assert(tab->open_branches->members == 0);
-	tab->label = ClauseCopyOpt(start);
+	tab->label = ClauseCopy(start, tab->terms);
 	assert(tab->label);
 	
 	tab->id = ClauseGetIdent(tab->label);
@@ -1270,13 +1264,17 @@ Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var)
 {
 	assert(tab == tab->master);
 	FunCode var_funcode = tab->max_var -2;
+	assert(var_funcode%2 == 0);
 	bool fresh_found = false;
+	VarBank_p varbank = tab->terms->vars;
+	//int v_count = PDArrayElementInt(varbank->v_counts, old_var->type->type_uid);
 	while (!fresh_found)
 	{
-		Term_p potential_fresh = VarBankFCodeFind(tab->master->terms->vars, var_funcode);
+		//printf("# %ld\n", var_funcode);
+		Term_p potential_fresh = VarBankFCodeFind(varbank, var_funcode);
 		if (UNLIKELY(!potential_fresh)) //hasn't been created yet
 		{
-			potential_fresh = VarBankVarAssertAlloc(tab->master->terms->vars, var_funcode, old_var->type);
+			potential_fresh = VarBankVarAssertAlloc(varbank, var_funcode, old_var->type);
 		}
 		PTree_p found = PTreeFind(&(tab->tableau_variables), potential_fresh);
 		if (!found)
@@ -1284,6 +1282,8 @@ Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var)
 			assert(TermIsVar(potential_fresh));
 			PTreeStore(&(tab->tableau_variables), potential_fresh);
 			assert(PTreeFind(&(tab->tableau_variables), potential_fresh));
+			//v_count++;
+			//PDArrayAssignInt(varbank->v_counts, old_var->type->type_uid, v_count);
 			return potential_fresh;
 		}
 		var_funcode -= 2;

@@ -875,7 +875,7 @@ static Clause_p cleanup_unprocessed_clauses(ProofState_p state,
       {
          state->state_is_complete = false;
       }
-      GCCollect(state->terms->gc);
+      GCCollect(state->terms->gc);  // Disabled by John!
       current_storage = ProofStateStorage(state);
    }
    return unsatisfiable;
@@ -1570,7 +1570,7 @@ Clause_p ProcessClause(ProofState_p state, ProofControl_p control,
    ClauseFree(tmp_copy);
    if(TermCellStoreNodes(&(state->tmp_terms->term_store))>TMPBANK_GC_LIMIT)
    {
-      TBGCSweep(state->tmp_terms);
+      TBGCSweep(state->tmp_terms); // Disabled by John!
    }
 #ifdef PRINT_SHARING
    print_sharing_factor(state);
@@ -1825,7 +1825,7 @@ Clause_p ProcessSpecificClause(ProofState_p state, ProofControl_p control,
    ClauseFree(tmp_copy);
    if(TermCellStoreNodes(&(state->tmp_terms->term_store))>TMPBANK_GC_LIMIT)
    {
-      TBGCSweep(state->tmp_terms);
+      TBGCSweep(state->tmp_terms); // Disabled by John!
    }
 #ifdef PRINT_SHARING
    print_sharing_factor(state);
