@@ -662,8 +662,8 @@ void EqnFree(Eqn_p junk)
    TBDelete(junk->bank, junk->lterm);
    TermReleaseRef(&(junk->rterm));
    TBDelete(junk->bank, junk->rterm); */
-   assert(TermIsShared(junk->lterm)); // added assertions to check whether
-   assert(TermIsShared(junk->rterm)); // previous comment is true
+   //assert(TermIsShared(junk->lterm)); // added assertions to check whether
+   //assert(TermIsShared(junk->rterm)); // previous comment is true
    EqnCellFree(junk);
 }
 

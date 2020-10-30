@@ -10,9 +10,10 @@ int clausesetallocs_counter = 1;
  * 
 */
 
-ClauseTableau_p ClauseTableauAlloc()
+ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
 {
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
+	handle->tableaucontrol = tableaucontrol;
 	handle->tableau_variables = NULL;
 	handle->depth = 0;
 	handle->position = 0;
@@ -57,7 +58,8 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	assert(tab->master == tab);  // Masters have themselves as master
 	TB_p bank = tab->terms;
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
-	
+
+	handle->tableaucontrol = tab->tableaucontrol;
 	handle->tableau_variables = NULL;
 	handle->arity = tab->arity;
 	handle->previously_saturated = tab->previously_saturated;
@@ -145,6 +147,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	assert(parent);
 	TB_p bank = tab->terms; //Copy tableau tab
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
+	handle->tableaucontrol = NULL;
 	handle->tableau_variables = NULL;
 	handle->unit_axioms = NULL;
 	
@@ -236,6 +239,7 @@ void ClauseTableauInitialize(ClauseTableau_p handle, ProofState_p initial)
 ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p label, int position)
 {
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
+	handle->tableaucontrol = NULL;
 	handle->tableau_variables = NULL;
 	assert(parent);
 	assert(label);
@@ -1160,6 +1164,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->satisfiable = false;
 	handle->multiprocessing_active = num_cores_to_use;
 	handle->unprocessed = NULL;
+	handle->label_storage = ClauseSetAlloc();
 	handle->problem_name = problem_name;
 	handle->neg_conjectures = neg_conjectures;
 	handle->proofstate = proofstate;
@@ -1172,6 +1177,8 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 
 void TableauControlFree(TableauControl_p trash)
 {
+	assert(ClauseSetEmpty(trash->label_storage));
+	ClauseSetFree(trash->label_storage);
 	PStackFree(trash->tableaux_trash);
 	TableauControlCellFree(trash);
 }
@@ -1369,5 +1376,6 @@ long SubstDStrPrint(DStr_p str, Subst_p subst, Sig_p sig, DerefType deref)
 // Now for stuff about representing clauses and branches as stack of integers 
 ClauseRep_p ClauseGetRepresentation(Clause_p clause)
 {
-	Eqn_p literals = clause->literals;	
+	Eqn_p literals = clause->literals;
+	return NULL;
 }

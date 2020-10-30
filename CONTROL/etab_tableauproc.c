@@ -884,7 +884,7 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
 												  ClauseSet_p start_rule_candidates, TableauControl_p tableaucontrol)
 
 {
-   ClauseTableau_p initial_tab = ClauseTableauAlloc();
+   ClauseTableau_p initial_tab = ClauseTableauAlloc(tableaucontrol);
    initial_tab->open_branches = TableauSetAlloc();
    TableauSet_p open_branches = initial_tab->open_branches;
    TableauSetInsert(open_branches, initial_tab);

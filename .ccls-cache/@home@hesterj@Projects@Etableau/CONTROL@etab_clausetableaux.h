@@ -1,7 +1,5 @@
 #ifndef CLAUSETABLEAUX
-
 #define CLAUSETABLEAUX
-
 #include <clb_os_wrapper.h>
 #include <cio_signals.h>
 #include <ccl_fcvindexing.h>
@@ -25,11 +23,13 @@ typedef PStack_p TableauStack_p;
 typedef PStack_p BranchIntRep_p;
 typedef PStack_p ClauseRep_p;
 typedef PList_p TableauList_p;
+struct tableaucontrol_cell;
 
 typedef struct clausetableau 
 {
 	ProofState_p state;
 	ProofControl_p control;
+	struct tableaucontrol_cell* tableaucontrol;
 	TB_p          terms;
 	Sig_p         signature;
 	bool open;
@@ -72,7 +72,7 @@ typedef struct clausetableau
 #define ClauseTableauCellFree(junk) SizeFree(junk, sizeof(ClauseTableau))
 #define ClauseTableauArgArrayAlloc(arity) ((ClauseTableau_p*)SizeMalloc((arity)*sizeof(ClauseTableau_p)))
 #define ClauseTableauArgArrayFree(junk, arity) SizeFree((junk),(arity)*sizeof(ClauseTableau_p))
-ClauseTableau_p ClauseTableauAlloc();
+ClauseTableau_p ClauseTableauAlloc(struct tableaucontrol_cell* tableaucontrol);
 void ClauseTableauInitialize(ClauseTableau_p handle, ProofState_p state);
 void ClauseTableauFree(ClauseTableau_p trash);
 ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab);
@@ -183,6 +183,7 @@ typedef struct tableaucontrol_cell
 	PStack_p new_tableaux;
 	ClauseTableau_p closed_tableau;
 	ClauseSet_p unprocessed;
+	ClauseSet_p label_storage; // This is to ensure that terms occurring in the tableau are not free'd by the gc
 	TB_p terms;
 	bool branch_saturation_enabled; // Is branch saturation enabled?
 	int multiprocessing_active;  // Have we reached enough tableaux to break the problem in to forks?

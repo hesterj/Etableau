@@ -2067,6 +2067,7 @@ long TermCollectVariables(Term_p term, PTree_p *tree)
       {
          for(i=0; i<term->arity; i++)
          {
+            assert(term->args[i]);
             PStackPushP(stack,term->args[i]);
          }
       }

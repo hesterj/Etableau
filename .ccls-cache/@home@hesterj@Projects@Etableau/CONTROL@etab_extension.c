@@ -344,12 +344,13 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 																		   new_leaf_clauses, 
 																		   open_branch);
 			ClauseTableau_p extended = ClauseTableauExtensionRule(tableau_control,
-																							distinct_tableaux, 
-																							extension_candidate, 
-																							new_tableaux);
+																  distinct_tableaux,
+																  extension_candidate,
+																  new_tableaux);
 			TableauExtensionFree(extension_candidate);
 			if (extended) // extension may not happen due to regularity
 			{
+				printf("# %p\n", extended->master->tableaucontrol);
 				fflush(GlobalOut);
 				extensions_done++;
 				if (extended->open_branches->members == 0) //success
