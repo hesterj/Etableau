@@ -234,8 +234,11 @@ int Etableau(TableauControl_p tableaucontrol,
 	FunCode max_var = ClauseSetGetMaxVar(active);
 
 	tableaucontrol->unprocessed = ClauseSetCopy(bank, proofstate->unprocessed);
+	GCAdmin_p gc = proofstate->gc_terms;
+	GCRegisterClauseSet(gc, tableaucontrol->unprocessed);
 	fprintf(GlobalOut, "# %ld beginning clauses after preprocessing and clausification\n", active->members);
 	ClauseSet_p extension_candidates = ClauseSetCopy(bank, active);
+	GCRegisterClauseSet(gc, extension_candidates);
   	if (tableauequality)
 	{
 		ClauseSet_p equality_axioms = EqualityAxioms(bank);
@@ -249,6 +252,7 @@ int Etableau(TableauControl_p tableaucontrol,
 	ClauseSet_p unit_axioms = ClauseSetAlloc();
 	ClauseSetMoveUnits(extension_candidates, unit_axioms);
 	ClauseSetCopyUnits(bank, start_rule_candidates, unit_axioms);
+	GCRegisterClauseSet(gc, unit_axioms);
    assert(max_depth);
 
 	TableauSet_p distinct_tableaux_set = EtableauCreateStartRules(proofstate,
@@ -352,8 +356,11 @@ int Etableau(TableauControl_p tableaucontrol,
 	TableauStackFreeTableaux(new_tableaux);
 	PStackFree(new_tableaux);
 	TableauSetFree(distinct_tableaux_set);
+	GCDeregisterClauseSet(gc, extension_candidates);
 	ClauseSetFree(extension_candidates);
+	GCDeregisterClauseSet(gc, unit_axioms);
 	ClauseSetFree(unit_axioms);
+	GCDeregisterClauseSet(gc, tableaucontrol->unprocessed);
 	ClauseSetFree(tableaucontrol->unprocessed);
 	
 	// Memory is cleaned up...
@@ -495,6 +502,7 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 {
 	assert(active_tableau);
 	assert(active_tableau->open_branches);
+	assert(active_tableau->label->set);
 	TableauStack_p tab_tmp_store = PStackAlloc();
 	ClauseTableau_p closed_tableau = NULL;
 	int number_of_extensions = 0;

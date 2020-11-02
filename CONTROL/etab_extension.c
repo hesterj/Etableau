@@ -198,6 +198,8 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 		//}
 		assert(leaf_clause);
 		parent->children[p] = ClauseTableauChildLabelAlloc(parent, leaf_clause, p);
+		assert(parent->children[p]->label);
+		assert(parent->children[p]->label->set);
 		if (leaf_clause == head_literal_clause)
 		{
 			parent->children[p]->open = false; 
@@ -309,8 +311,11 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		open_branch_label = ReplaceLocalVariablesWithFresh(open_branch->master,
 																			open_branch_label,
 																			open_branch->local_variables);
+		ClauseSet_p label_storage = tableau_control->label_storage;
+		ClauseSetExtractEntry(open_branch->label);
 		ClauseFree(open_branch->label);
 		open_branch->label = open_branch_label;
+		ClauseSetInsert(label_storage, open_branch_label);
 	}
 	
 	Clause_p leaf_clause = new_leaf_clauses->anchor->succ;
@@ -322,6 +327,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		assert(open_branch->label);
 		assert(open_branch->arity == 0);
 		assert(open_branch_label);
+		assert(open_branch->label->set);
 		assert(leaf_clause);
 		assert(leaf_clause->literals);
 		assert(open_branch_label->literals);
@@ -350,7 +356,6 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			TableauExtensionFree(extension_candidate);
 			if (extended) // extension may not happen due to regularity
 			{
-				printf("# %p\n", extended->master->tableaucontrol);
 				fflush(GlobalOut);
 				extensions_done++;
 				if (extended->open_branches->members == 0) //success

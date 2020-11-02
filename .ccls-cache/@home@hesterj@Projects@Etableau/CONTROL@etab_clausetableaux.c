@@ -59,6 +59,8 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	TB_p bank = tab->terms;
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
 
+	GCAdmin_p gc = tab->state->gc_terms;
+	ClauseSet_p label_storage = tab->tableaucontrol->label_storage;
 	handle->tableaucontrol = tab->tableaucontrol;
 	handle->tableau_variables = NULL;
 	handle->arity = tab->arity;
@@ -86,6 +88,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	if (tab->folding_labels)
 	{
 		handle->folding_labels = ClauseSetCopy(bank, tab->folding_labels);
+		GCRegisterClauseSet(gc, handle->folding_labels);
 	}
 	else
 	{
@@ -107,6 +110,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 		//handle->label = ClauseCopy(tab->label, bank);
 		handle->label = ClauseCopy(tab->label, bank);
 		assert(handle->label);
+		ClauseSetInsert(label_storage, handle->label);
 	}
 	else 
 	{
@@ -150,6 +154,8 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	handle->tableaucontrol = NULL;
 	handle->tableau_variables = NULL;
 	handle->unit_axioms = NULL;
+	GCAdmin_p gc = tab->state->gc_terms;
+	ClauseSet_p label_storage = parent->master->tableaucontrol->label_storage;
 	
 	char *info = DStrCopy(tab->info);
 	handle->info = DStrAlloc();
@@ -184,6 +190,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	if (tab->folding_labels)
 	{
 		handle->folding_labels = ClauseSetCopy(bank, tab->folding_labels);
+		GCRegisterClauseSet(gc, handle->folding_labels);
 	}
 	else
 	{
@@ -201,6 +208,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 		assert(tab->label);
 		handle->label = ClauseCopy(tab->label, bank);
 		assert(handle->label);
+		ClauseSetInsert(label_storage, handle->label);
 	}
 	else
 	{
@@ -239,6 +247,9 @@ void ClauseTableauInitialize(ClauseTableau_p handle, ProofState_p initial)
 ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p label, int position)
 {
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
+	GCAdmin_p gc = parent->state->gc_terms;
+	ClauseSet_p label_storage = parent->master->tableaucontrol->label_storage;
+	ClauseSetInsert(label_storage, label); // For gc
 	handle->tableaucontrol = NULL;
 	handle->tableau_variables = NULL;
 	assert(parent);
@@ -282,6 +293,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 
 void ClauseTableauFree(ClauseTableau_p trash)
 {
+	GCAdmin_p gc = trash->state->gc_terms;
 	if (trash->depth == 0 && trash->tableau_variables)
 	{
 		//PStackFree(trash->derivation);
@@ -289,6 +301,8 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	}
 	if (trash->label)
 	{
+		assert(trash->label->set);
+		ClauseSetExtractEntry(trash->label);
 		ClauseFree(trash->label);
 		trash->label = NULL;
 	}
@@ -302,6 +316,7 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	}
 	if (trash->folding_labels)
 	{
+		GCDeregisterClauseSet(gc, trash->folding_labels);
 		ClauseSetFree(trash->folding_labels);
 	}
 	if (trash->children)
@@ -401,11 +416,13 @@ FunCode ClauseSetGetMaxVar(ClauseSet_p set)
 
 void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 {
-	
+	GCAdmin_p gc = tab->state->gc_terms;
 	assert(tab->label);
 	assert(subst);
-	
+	ClauseSet_p label_storage = tab->master->tableaucontrol->label_storage;
 	Clause_p new_label = ClauseCopy(tab->label, tab->terms);
+	ClauseSetExtractEntry(tab->label);
+	ClauseSetInsert(label_storage, new_label);
 	ClauseFree(tab->label);
 	assert(new_label);
 	tab->label = new_label;
@@ -413,7 +430,9 @@ void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 	if (tab->folding_labels)  // The edge labels that have been folded up if the pointer is non-NULL
 	{
 		ClauseSet_p new_edge = ClauseSetCopy(tab->terms, tab->folding_labels);
+		GCDeregisterClauseSet(gc, tab->folding_labels);
 		ClauseSetFree(tab->folding_labels);
+		GCRegisterClauseSet(gc, new_edge);
 		assert(new_edge);
 		tab->folding_labels = new_edge;
 	}
@@ -760,6 +779,7 @@ ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 	TB_p bank = tab->terms;
 	int arity = 0;
 	Clause_p new_clause;
+	ClauseSet_p tableau_label_storage = tab->tableaucontrol->label_storage;
 	assert(!(tab->label));
 	assert(!(tab->arity));
 	assert(start);
@@ -772,6 +792,7 @@ ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 	assert(!(tab->set));
 	assert(tab->open_branches->members == 0);
 	tab->label = ClauseCopy(start, tab->terms);
+	ClauseSetInsert(tableau_label_storage, tab->label);
 	assert(tab->label);
 	
 	tab->id = ClauseGetIdent(tab->label);
@@ -789,6 +810,7 @@ ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 		tab->children[i] = ClauseTableauChildLabelAlloc(tab, new_clause, i);
 		assert(tab->children[i]);
 		assert(tab->children[i]->label);
+		assert(tab->children[i]->label->set);
 		TableauSetInsert(tab->children[i]->open_branches, tab->children[i]);
 	}
 	EqnListFree(literals);

@@ -93,19 +93,30 @@ void GlobalIndicesInit(GlobalIndices_p indices,
 
    indices->sig = sig;
    indexfun = GetFPIndexFunction(rw_bw_index_type);
-   strcpy(indices->rw_bw_index_type, rw_bw_index_type);
+   if (indices->rw_bw_index_type != rw_bw_index_type)
+   {
+      strcpy(indices->rw_bw_index_type, rw_bw_index_type);
+   }
    if(indexfun)
    {
       indices->bw_rw_index = FPIndexAlloc(indexfun, sig, SubtermBWTreeFreeWrapper);
    }
    indexfun = GetFPIndexFunction(pm_from_index_type);
-   strcpy(indices->pm_from_index_type, pm_from_index_type);
+   //strcpy(indices->pm_from_index_type, pm_from_index_type);
+   if (indices->pm_from_index_type != pm_from_index_type)
+   {
+      strcpy(indices->pm_from_index_type, pm_from_index_type);
+   }
    if(indexfun)
    {
       indices->pm_from_index = FPIndexAlloc(indexfun, sig, SubtermOLTreeFreeWrapper);
    }
    indexfun = GetFPIndexFunction(pm_into_index_type);
-   strcpy(indices->pm_into_index_type, pm_into_index_type);
+   //strcpy(indices->pm_into_index_type, pm_into_index_type);
+   if (indices->pm_into_index_type != pm_into_index_type)
+   {
+      strcpy(indices->pm_into_index_type, pm_into_index_type);
+   }
    if(indexfun)
    {
       indices->pm_into_index = FPIndexAlloc(indexfun, sig, SubtermOLTreeFreeWrapper);

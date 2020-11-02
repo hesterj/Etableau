@@ -9,6 +9,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 	Subst_p subst;
 	assert(tab);
 	assert(tab->label);
+	assert(tab->label->set);
 
 	if ((subst = ClauseContradictsBranch(tab, tab->label)))
 	{
@@ -90,7 +91,9 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	if (num_local_variables)
 	{
 		original_clause = ReplaceLocalVariablesWithFresh(tab, original_clause, tab->local_variables);
+		ClauseSetExtractEntry(tab->label);
 		ClauseFree(tab->label);
+		ClauseSetInsert(tab->master->tableaucontrol->label_storage, original_clause);
 		tab->label = original_clause;
 	}
 	//num_local_variables = 0;
@@ -128,8 +131,10 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		else
 		{
 			temporary_label = ReplaceLocalVariablesWithFresh(tab->master, temporary_tab->label, tab->local_variables);
+			ClauseSetExtractEntry(temporary_tab->label);
 			ClauseFree(temporary_tab->label);
 			temporary_tab->label = temporary_label;
+			ClauseSetInsert(tab->master->tableaucontrol->label_storage, temporary_tab->label);
 		}
 		if ((subst = ClauseContradictsClause(tab, temporary_label, original_clause)))
 		{
