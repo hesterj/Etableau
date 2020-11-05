@@ -1115,7 +1115,11 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
 	assert(proofcontrol);
 	assert(extension_candidates);
 	assert(new_tableaux);
-	assert(!ClauseSetEmpty(extension_candidates));
+	if (ClauseSetEmpty(extension_candidates))
+	{
+		fprintf(GlobalOut, "# No extension candidates... Nothing to be done\n");
+		return proof_found;
+	}
 	int desired_number_of_starting_tableaux = num_cores_available;
 	fprintf(GlobalOut, "# Desiring %d worker processes and at least %d tableaux.\n", num_cores_available, desired_number_of_starting_tableaux);
 	ClauseTableau_p resulting_tab = ConnectionTableauProofSearchAtDepth(tableaucontrol, 
