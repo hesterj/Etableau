@@ -374,7 +374,7 @@ int Etableau(TableauControl_p tableaucontrol,
 	// failure
 	if (proof_found == false)
 	{
-		//fprintf(GlobalOut, "# SZS status ResourceOut for %s\n", tableaucontrol->problem_name);
+		TSTPOUT(GlobalOut, "ResourceOut");
 	}
 	return 0;
 }

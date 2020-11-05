@@ -1199,7 +1199,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 
 void TableauControlFree(TableauControl_p trash)
 {
-	assert(ClauseSetEmpty(trash->label_storage));
+	//assert(ClauseSetEmpty(trash->label_storage));
 	ClauseSetFree(trash->label_storage);
 	PStackFree(trash->tableaux_trash);
 	TableauControlCellFree(trash);
