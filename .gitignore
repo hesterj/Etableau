@@ -24,6 +24,7 @@ PROVER/epcllemma
 PROVER/eprover
 PROVER/termprops
 PROVER/tsm_classify
+PROVER/gprof2dot.py
 SIMPLE_APPS/ex_commandline
 SIMPLE_APPS/term2dag
 TEST/cl_test
