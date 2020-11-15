@@ -1,4 +1,5 @@
 #include <etab_foldingup.h>
+#include "etab_xgboost_interaction.h"
 
 typedef struct branch_saturation
 {
