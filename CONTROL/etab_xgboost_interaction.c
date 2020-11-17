@@ -54,33 +54,69 @@ DTree_p DTreeEqnRepresentation(Eqn_p eqn)
 
 }
 
-bool DTreesIdentical(DTree_p left, DTree_p right)
+// Return 0 if the two DTree_p are identical
+// This is intended to be a ComparisonFunctionType!
+// This function increments the right_p occurrences field, as the right one is the one being compared against in the splay tree
+
+int DTreesIdentical(const void *left_p, const void *right_p)
 {
-    if (left->key != right->key || left->arity != right->arity) return false;
+    DTree_p left = (DTree_p) left_p;
+    DTree_p right = (DTree_p) right_p;
+    if (left->key != right->key || left->arity != right->arity) return 1;
     int arity = left->arity;
-    bool children_identical = true;
+    int children_identical = 0;
     for (int i=0; i<arity; i++)
     {
         children_identical = DTreesIdentical(left->children[i], right->children[i]);
-        if (!children_identical) return false;
+        if (children_identical != 0) return 1;
     }
-    return true;
+    right->occurrences++;
+    return 0;
 }
 
-bool PTreeFindDTree(PTree_p splay_tree, DTree_p dtree)
+
+// This commented out function shouldn't be necessary due to the benefits of PObjTree_p
+
+//DTree_p PTreeFindDTree(PObjTree_p *splay_tree, DTree_p dtree)
+//{
+   //PStack_p iter = QuadTreeTraverseInit(*splay_tree);
+   //QuadTree_p  handle = NULL;
+//
+   //while((handle = QuadTreeTraverseNext(iter)))
+   //{
+       //if (DTreesIdentical(handle->p1, dtree))
+       //{
+           //QuadTreeTraverseExit(iter);
+           //return handle->p1;
+       //}
+   //}
+//
+   //QuadTreeTraverseExit(iter);
+   //return NULL;
+//}
+
+/*
+** This is the function that gets (an easy) feature representation of the branch.  Features are indexed by their address of the corresponding DTree_p.
+** The number of occurrences of a feature is the value of the occurence_function applied to the memory addresses of the branch's DTree_p occurrences.
+ */
+
+long DTreeBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_trees)
 {
-   PStack_p iter = PTreeTraverseInit(splay_tree);
-   PTree_p  handle = NULL;
+    while (branch != branch->master)
+    {
+        assert(ClauseLiteralNumber(branch->label) == 1);
+        Eqn_p label_eqn = branch->label->literals;
+        DTree_p dtree_representation = DTreeEqnRepresentation(label_eqn);
+        PObjTree_p objtree_cell = PTreeObjStore(tree_of_trees, dtree_representation, DTreesIdentical);
+        if (objtree_cell)
+        {
+            DTreeFree(dtree_representation);
+            DTree_p real_tree = (DTree_p) objtree_cell->key;
+            assert(real_tree->occurrences);
+            fprintf(GlobalOut, "%p %d\n", real_tree, real_tree->occurrences);
+        }
 
-   while((handle = PTreeTraverseNext(iter)))
-   {
-       if (DTreesIdentical(handle->key, dtree))
-       {
-           PTreeTraverseExit(iter);
-           return true;
-       }
-   }
-
-   PTreeTraverseExit(iter);
-   return false;
+        branch = branch->parent;
+    }
+    return 0;
 }

@@ -17,6 +17,8 @@
 #include <time.h>
 #include <arpa/inet.h>
 #include <clb_plist.h>
+#include <clb_quadtrees.h>
+#include <clb_objtrees.h>
 
 typedef PStack_p ClauseStack_p;
 typedef PStack_p TableauStack_p;

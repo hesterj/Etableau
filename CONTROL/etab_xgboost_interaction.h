@@ -1,7 +1,7 @@
 #ifndef ETAB_XGBOOST
 #define ETAB_XGBOOST
 
-#include <etab_foldingup.h>
+#include "etab_foldingup.h"
 
 /*
 ** The DTree is just that, a tree of integers, with potentially multiple children.
@@ -12,6 +12,7 @@ typedef struct dtree
 {
     long key;
     int arity;
+    int occurrences; // This is for keeping the track multiple occurrences of a pattern within a branch.  Shouldn't happen but good to be ready...
     struct dtree* *children;
 }DTree, *DTree_p;
 
@@ -23,7 +24,9 @@ typedef struct dtree
 DTree_p DTreeAlloc(long key, int arity);
 void DTreeFree(DTree_p trash);
 DTree_p DTreeRepresentation(Term_p term);
-bool PTreeFindDTree(PTree_p splay_tree, DTree_p dtree);
+int DTreesIdentical(const void *left, const void *right); // ComparisonFunctionType
+DTree_p PTreeFindDTree(QuadTree_p *splay_tree, DTree_p dtree);
 DTree_p DTreeEqnRepresentation(Eqn_p eqn);
 
+long DTreeBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_trees);
 #endif

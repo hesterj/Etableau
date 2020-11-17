@@ -415,10 +415,10 @@ void SigFixType(Sig_p sig, FunCode f_code)
 bool SigIsPolymorphic(Sig_p sig, FunCode f_code)
 {
    assert(f_code > 0);
-   if (f_code > sig->f_count)
-      {
-         printf("%d %d\n", f_code, sig->f_count);
-      }
+   //if (f_code > sig->f_count)
+      //{
+         //printf("%d %d\n", f_code, sig->f_count);
+      //}
    assert(f_code <= sig->f_count);
 
    return FuncQueryProp(&(sig->f_info[f_code]), FPTypePoly);
