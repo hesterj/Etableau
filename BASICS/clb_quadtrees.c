@@ -134,27 +134,6 @@ static QuadTree_p splay_tree(QuadTree_p tree, QuadKey_p key)
 /*---------------------------------------------------------------------*/
 
 
-/*-----------------------------------------------------------------------
-//
-// Function: DoubleKeyCmp()
-//
-//   Compare two pointer/integer pairs.
-//
-// Global Variables: -
-//
-// Side Effects    : -
-//
-/----------------------------------------------------------------------*/
-
-
-QuadKey_p PrepareKey(void *p1, int d1, void *p2, int d2)
-{
-   key->p1 = t2;
-   key->i1 = d2;
-   key->p2 = t1;
-   key->i2 = d1;
-   return true;
-}
 
 /*-----------------------------------------------------------------------
 //

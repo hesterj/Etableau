@@ -193,6 +193,7 @@ typedef struct tableaucontrol_cell
 	TableauStack_p tableaux_trash;
 	char *clausification_buffer;
 	EPCtrl_p process_control;
+	PObjTree_p feature_tree;
 }TableauControlCell, *TableauControl_p;
 
 #define TableauControlCellAlloc()    (TableauControlCell*)SizeMalloc(sizeof(TableauControlCell))

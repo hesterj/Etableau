@@ -56,7 +56,6 @@ DTree_p DTreeEqnRepresentation(Eqn_p eqn)
 
 // Return 0 if the two DTree_p are identical
 // This is intended to be a ComparisonFunctionType!
-// This function increments the right_p occurrences field, as the right one is the one being compared against in the splay tree
 
 int DTreesIdentical(const void *left_p, const void *right_p)
 {
@@ -70,7 +69,6 @@ int DTreesIdentical(const void *left_p, const void *right_p)
         children_identical = DTreesIdentical(left->children[i], right->children[i]);
         if (children_identical != 0) return 1;
     }
-    right->occurrences++;
     return 0;
 }
 
@@ -105,18 +103,37 @@ long DTreeBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_tree
     while (branch != branch->master)
     {
         assert(ClauseLiteralNumber(branch->label) == 1);
+        PObjTree_p new_cell = PTreeCellAlloc();
         Eqn_p label_eqn = branch->label->literals;
         DTree_p dtree_representation = DTreeEqnRepresentation(label_eqn);
-        PObjTree_p objtree_cell = PTreeObjStore(tree_of_trees, dtree_representation, DTreesIdentical);
-        if (objtree_cell)
+        new_cell->key = dtree_representation;
+        //PObjTree_p objtree_cell = PTreeObjStore(tree_of_trees, dtree_representation, DTreesIdentical);
+        PObjTree_p objtree_cell = PTreeObjInsert(tree_of_trees, new_cell, DTreesIdentical);
+        if (objtree_cell) // We found a cell with an identical ptree, so we can discard the one we just made and increment the number of occurrences of the one we found.
         {
+            PTreeCellFree(new_cell);
             DTreeFree(dtree_representation);
             DTree_p real_tree = (DTree_p) objtree_cell->key;
-            assert(real_tree->occurrences);
-            fprintf(GlobalOut, "%p %d\n", real_tree, real_tree->occurrences);
+            real_tree->occurrences++;
+            fprintf(GlobalOut, "%p: %d\n", real_tree, real_tree->occurrences);
+        }
+        else // The dtree we just made has been inserted into the tree of dtrees, and since it clearly occurs we increment the occurrences.
+        {
+            dtree_representation->occurrences++;
+            fprintf(GlobalOut, "%p: %d\n", dtree_representation, dtree_representation->occurrences++);
         }
 
         branch = branch->parent;
     }
     return 0;
+}
+
+void DTreeResetOccurrences(void *tree)
+{
+    DTree_p tree_casted = (DTree_p) tree;
+    tree_casted->occurrences = 0;
+}
+void ResetAllOccurrences(PObjTree_p *tree_of_trees)
+{
+    PTreeVisitInOrder(*tree_of_trees, DTreeResetOccurrences);
 }

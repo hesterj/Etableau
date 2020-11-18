@@ -1194,6 +1194,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->tableaux_trash = PStackAlloc();
 	handle->clausification_buffer = NULL;
 	handle->process_control = NULL;
+	handle->feature_tree = NULL;
 	return handle;
 }
 
@@ -1203,6 +1204,10 @@ void TableauControlFree(TableauControl_p trash)
 	ClauseSetFree(trash->label_storage);
 	PStackFree(trash->tableaux_trash);
 	TableauControlCellFree(trash);
+	if (trash->feature_tree)
+	{
+		PTreeFree(trash->feature_tree);
+	}
 }
 
 void ClauseTableauPrintDerivation(FILE* out, ClauseTableau_p final_tableau, TableauStack_p derivation)

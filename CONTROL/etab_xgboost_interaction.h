@@ -29,4 +29,7 @@ DTree_p PTreeFindDTree(QuadTree_p *splay_tree, DTree_p dtree);
 DTree_p DTreeEqnRepresentation(Eqn_p eqn);
 
 long DTreeBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_trees);
+void DTreeResetOccurrences(void *tree);
+void ResetAllOccurrences(PObjTree_p *tree_of_trees);
+
 #endif
