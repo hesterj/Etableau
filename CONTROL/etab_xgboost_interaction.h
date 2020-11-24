@@ -30,6 +30,7 @@ DTree_p DTreeEqnRepresentation(Eqn_p eqn);
 void FeatureTreePrint(FILE* out, PObjTree_p *tree_of_trees);
 
 long DTreeBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_trees);
+long EqnBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_eqns);
 void DTreeResetOccurrences(void *tree);
 void ResetAllOccurrences(PObjTree_p *tree_of_trees);
 

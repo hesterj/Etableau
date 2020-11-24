@@ -156,6 +156,53 @@ long DTreeBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_tree
     return 0;
 }
 
+long EqnBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_eqns)
+{
+    //fprintf(GlobalOut, "# getting branch representations\n");
+    //fprintf(GlobalOut, "# p: %p\n", *tree_of_trees);
+    while (branch != branch->master)
+    {
+        assert(ClauseLiteralNumber(branch->label) == 1);
+        PObjTree_p new_cell = PTreeCellAlloc();
+        Eqn_p label_eqn = branch->label->literals;
+        DTree_p dtree_representation = DTreeEqnRepresentation(label_eqn);
+        new_cell->key = dtree_representation;
+        //fprintf(GlobalOut, "# inserting... &%p %p\n", tree_of_trees, *tree_of_trees);
+        PObjTree_p objtree_cell = PTreeObjInsert(tree_of_eqns, new_cell, DTreesIdentical);
+        //fprintf(GlobalOut, "# done inserting\n");
+        if (objtree_cell) // We found a cell with an identical ptree, so we can discard the one we just made and increment the number of occurrences of the one we found.
+        {
+            PTreeCellFree(new_cell);
+            DTreeFree(dtree_representation);
+            DTree_p real_tree = (DTree_p) objtree_cell->key;
+            real_tree->occurrences++;
+            *tree_of_eqns = objtree_cell;  // The tree was splayed and objtree_cell is the new root.
+        }
+        else // The dtree we just made has been inserted into the tree of dtrees, and since it clearly occurs we increment the occurrences.
+        {
+            *tree_of_eqns = new_cell; // Since the new cell was inserted into the splay tree, we need to ensure we have a reference to the root.
+            dtree_representation->occurrences++;
+        }
+
+        branch = branch->parent;
+    }
+    //fprintf(GlobalOut, "# blablabla %ld\n", PTreeNodes(*tree_of_trees));
+    return 0;
+}
+
+bool EqnUnifyRenamingP(Eqn_p left, Eqn_p right)
+{
+    Subst_p subst = SubstAlloc();
+    bool unified = EqnUnify(left, right, subst);
+    if (!unified || !SubstIsRenaming(subst))
+    {
+        SubstDelete(subst);
+        return false;
+    }
+    SubstDelete(subst);
+    return true;
+}
+
 void DTreeResetOccurrences(void *tree)
 {
     DTree_p tree_casted = (DTree_p) tree;
