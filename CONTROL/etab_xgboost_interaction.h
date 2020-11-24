@@ -22,14 +22,17 @@ typedef struct dtree
 #define DTreeArgArrayAlloc(arity) ((DTree_p*)SizeMalloc((arity)*sizeof(DTree_p)))
 #define DTreeArgArrayFree(junk, arity) SizeFree((junk),(arity)*sizeof(DTree_p))
 DTree_p DTreeAlloc(long key, int arity);
-void DTreeFree(DTree_p trash);
+void DTreeFree(void *trash);
 DTree_p DTreeRepresentation(Term_p term);
 int DTreesIdentical(const void *left, const void *right); // ComparisonFunctionType
-DTree_p PTreeFindDTree(QuadTree_p *splay_tree, DTree_p dtree);
+//DTree_p PTreeFindDTree(QuadTree_p *splay_tree, DTree_p dtree);
 DTree_p DTreeEqnRepresentation(Eqn_p eqn);
+void FeatureTreePrint(FILE* out, PObjTree_p *tree_of_trees);
 
 long DTreeBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_trees);
 void DTreeResetOccurrences(void *tree);
 void ResetAllOccurrences(PObjTree_p *tree_of_trees);
 
+void DTreeStupidPrint(DTree_p root);
+void DTreeStupidPrintChildren(DTree_p root);
 #endif

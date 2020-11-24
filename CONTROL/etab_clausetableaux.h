@@ -25,6 +25,7 @@ typedef PStack_p TableauStack_p;
 typedef PStack_p BranchIntRep_p;
 typedef PStack_p ClauseRep_p;
 typedef PList_p TableauList_p;
+typedef PStack_p BacktrackStack_p;
 struct tableaucontrol_cell;
 
 typedef struct clausetableau 
@@ -52,6 +53,9 @@ typedef struct clausetableau
 	
 	 // Only present at root.  Contains variables that are present in the tableau.
 	PTree_p tableau_variables;
+
+	// A stack of previous steps.
+	BacktrackStack_p backtrack;
 	
 	Clause_p label; // The clause at this node
 	ClauseSet_p unit_axioms; // Only present at the master node
@@ -180,6 +184,7 @@ typedef struct tableaucontrol_cell
 	ProofState_p proofstate;
 	ProofControl_p proofcontrol;
 	int number_of_extensions;
+	long number_of_saturation_attempts;
 	long neg_conjectures;
 	char *problem_name;
 	PStack_p new_tableaux;

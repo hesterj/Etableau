@@ -13,15 +13,16 @@ DTree_p DTreeAlloc(long key, int arity)
     return handle;
 }
 
-void DTreeFree(DTree_p trash)
+void DTreeFree(void *trash_tree)
 {
+    DTree_p trash = (DTree_p) trash_tree;
     DTree_p *children = trash->children;
     int arity = trash->arity;
-    DTreeCellFree(trash);
     for (int i=0; i<arity; i++)
     {
         DTreeFree(children[i]);
     }
+    DTreeCellFree(trash);
     DTreeArgArrayFree(children, arity);
 }
 
@@ -92,6 +93,29 @@ int DTreesIdentical(const void *left_p, const void *right_p)
    //QuadTreeTraverseExit(iter);
    //return NULL;
 //}
+void DTreeStupidPrintChildren(DTree_p root)
+{
+    for (int i=0; i<root->arity; i++)
+    {
+        DTree_p child = root->children[i];
+        fprintf(GlobalOut, "%ld ", child->key);
+    }
+    fprintf(GlobalOut, "\n");
+    for (int i=0; i<root->arity; i++)
+    {
+        DTreeStupidPrintChildren(root->children[i]);
+    }
+
+}
+
+void DTreeStupidPrint(DTree_p root)
+{
+    fprintf(GlobalOut, "%ld\n", root->key);
+    for (int i=0; i<root->arity; i++)
+    {
+        DTreeStupidPrintChildren(root->children[i]);
+    }
+}
 
 /*
 ** This is the function that gets (an easy) feature representation of the branch.  Features are indexed by their address of the corresponding DTree_p.
@@ -100,6 +124,8 @@ int DTreesIdentical(const void *left_p, const void *right_p)
 
 long DTreeBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_trees)
 {
+    //fprintf(GlobalOut, "# getting branch representations\n");
+    //fprintf(GlobalOut, "# p: %p\n", *tree_of_trees);
     while (branch != branch->master)
     {
         assert(ClauseLiteralNumber(branch->label) == 1);
@@ -107,24 +133,26 @@ long DTreeBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_tree
         Eqn_p label_eqn = branch->label->literals;
         DTree_p dtree_representation = DTreeEqnRepresentation(label_eqn);
         new_cell->key = dtree_representation;
-        //PObjTree_p objtree_cell = PTreeObjStore(tree_of_trees, dtree_representation, DTreesIdentical);
+        //fprintf(GlobalOut, "# inserting... &%p %p\n", tree_of_trees, *tree_of_trees);
         PObjTree_p objtree_cell = PTreeObjInsert(tree_of_trees, new_cell, DTreesIdentical);
+        //fprintf(GlobalOut, "# done inserting\n");
         if (objtree_cell) // We found a cell with an identical ptree, so we can discard the one we just made and increment the number of occurrences of the one we found.
         {
             PTreeCellFree(new_cell);
             DTreeFree(dtree_representation);
             DTree_p real_tree = (DTree_p) objtree_cell->key;
             real_tree->occurrences++;
-            fprintf(GlobalOut, "%p: %d\n", real_tree, real_tree->occurrences);
+            *tree_of_trees = objtree_cell;  // The tree was splayed and objtree_cell is the new root.
         }
         else // The dtree we just made has been inserted into the tree of dtrees, and since it clearly occurs we increment the occurrences.
         {
+            *tree_of_trees = new_cell; // Since the new cell was inserted into the splay tree, we need to ensure we have a reference to the root.
             dtree_representation->occurrences++;
-            fprintf(GlobalOut, "%p: %d\n", dtree_representation, dtree_representation->occurrences++);
         }
 
         branch = branch->parent;
     }
+    //fprintf(GlobalOut, "# blablabla %ld\n", PTreeNodes(*tree_of_trees));
     return 0;
 }
 
@@ -137,3 +165,19 @@ void ResetAllOccurrences(PObjTree_p *tree_of_trees)
 {
     PTreeVisitInOrder(*tree_of_trees, DTreeResetOccurrences);
 }
+
+
+void FeatureTreePrint(FILE* out, PObjTree_p *tree_of_trees)
+{
+    PStack_p iter = PTreeTraverseInit(*tree_of_trees);
+    PObjTree_p handle = NULL;
+    while ((handle = PTreeTraverseNext(iter)))
+    {
+        DTree_p tree = (DTree_p) handle->key;
+        assert(tree);
+        fprintf(out, "# %p: %d\n", tree, tree->occurrences);
+        DTreeStupidPrint(tree);
+    }
+    PTreeTraverseExit(iter);
+}
+

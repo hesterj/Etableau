@@ -4,6 +4,8 @@ int clausesetallocs_counter = 1;
 
 // Functions for clausetableaux.h
 
+void DTreeFree(void *trash);
+
 /*  The open branches for each distinct tableau MUST be initialized on creation,
  *  not by this method.
  * 
@@ -1181,6 +1183,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	TableauControl_p handle = TableauControlCellAlloc();
 	handle->terms = NULL; // The termbank for this tableau control..
 	handle->number_of_extensions = 0;  // Total number of extensions done
+	handle->number_of_saturation_attempts = 0;
 	handle->closed_tableau = NULL;
 	handle->branch_saturation_enabled = branch_saturation_enabled;
 	handle->satisfiable = false;
@@ -1206,7 +1209,8 @@ void TableauControlFree(TableauControl_p trash)
 	TableauControlCellFree(trash);
 	if (trash->feature_tree)
 	{
-		PTreeFree(trash->feature_tree);
+		//PTreeFree(trash->feature_tree);
+		PObjTreeFree(trash->feature_tree, DTreeFree);
 	}
 }
 

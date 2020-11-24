@@ -1,3 +1,5 @@
+#ifndef ETABLEAU
+#define ETABLEAU
 #include <etab_foldingup.h>
 #include "etab_xgboost_interaction.h"
 
@@ -50,3 +52,4 @@ int ProcessSpecificClauseWrapper(ProofState_p state, ProofControl_p control, Cla
 
 
 int ProcessSpecificClauseSetWrapper(ProofState_p state, ProofControl_p control, ClauseSet_p set);
+#endif

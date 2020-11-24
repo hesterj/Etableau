@@ -352,6 +352,9 @@ int Etableau(TableauControl_p tableaucontrol,
 		TableauSetExtractEntry(handle);
 		ClauseTableauFree(handle);
 	}
+
+	FeatureTreePrint(GlobalOut, &tableaucontrol->feature_tree);
+
 	TableauStackFreeTableaux(tableaucontrol->tableaux_trash);
 	TableauStackFreeTableaux(new_tableaux);
 	PStackFree(new_tableaux);
