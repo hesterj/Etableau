@@ -212,6 +212,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 												 bool branch_saturation_enabled,
 												 int num_cores_to_use);
 void TableauControlFree(TableauControl_p trash);
+void EqnRepFree(void *eqn_p);
 
 //  Stuff for representing branches of a tableau as a stack of integers
 ClauseRep_p ClauseGetRepresentation(Clause_p clause);

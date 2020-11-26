@@ -1206,12 +1206,13 @@ void TableauControlFree(TableauControl_p trash)
 	//assert(ClauseSetEmpty(trash->label_storage));
 	ClauseSetFree(trash->label_storage);
 	PStackFree(trash->tableaux_trash);
-	TableauControlCellFree(trash);
+	fprintf(GlobalOut, "# Freeing feature tree\n");
 	if (trash->feature_tree)
 	{
 		//PTreeFree(trash->feature_tree);
-		PObjTreeFree(trash->feature_tree, DTreeFree);
+		PObjTreeFree(trash->feature_tree, EqnRepFree);
 	}
+	TableauControlCellFree(trash);
 }
 
 void ClauseTableauPrintDerivation(FILE* out, ClauseTableau_p final_tableau, TableauStack_p derivation)
@@ -1409,4 +1410,17 @@ ClauseRep_p ClauseGetRepresentation(Clause_p clause)
 {
 	Eqn_p literals = clause->literals;
 	return NULL;
+}
+
+void EqnRepFree(void *eqn_p)
+{
+    Eqn_p eqn = (Eqn_p) eqn_p;
+	assert(!TermCellQueryProp(eqn->lterm, TPIsShared));
+    TermFree(eqn->lterm);
+	if (eqn->rterm->f_code != SIG_TRUE_CODE)
+	{
+        assert(!TermCellQueryProp(eqn->rterm, TPIsShared));
+		TermFree(eqn->rterm);
+	}
+    EqnFree(eqn);
 }

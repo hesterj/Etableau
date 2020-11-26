@@ -36,4 +36,8 @@ void ResetAllOccurrences(PObjTree_p *tree_of_trees);
 
 void DTreeStupidPrint(DTree_p root);
 void DTreeStupidPrintChildren(DTree_p root);
+
+bool EqnUnifyRenamingP(Eqn_p left, Eqn_p right);
+int EqnUnifyRenamingPCmp(const void *left_p, const void *right_p);
+void EqnTreePrint(FILE* out, PObjTree_p *tree_of_eqns);
 #endif

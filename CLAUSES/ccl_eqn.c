@@ -595,6 +595,17 @@ Eqn_p EqnAlloc(Term_p lterm, Term_p rterm, TB_p bank,  bool positive)
    }
    if(rterm != bank->true_term)
    {
+      //fprintf(GlobalOut, "# lterm: ");
+      //TermPrint(GlobalOut, lterm, bank->sig, DEREF_ALWAYS);
+      //fprintf(GlobalOut, "\n# rterm: ");
+      //TermPrint(GlobalOut, rterm, bank->sig, DEREF_ALWAYS);
+      //fprintf(GlobalOut, " %ld\n", rterm->f_code);
+      //if (rterm->f_code == SIG_TRUE_CODE)
+      //{
+         //fprintf(GlobalOut, "# What the hell\n");
+         //TermPrint(GlobalOut, rterm, bank->sig, DEREF_ALWAYS);
+         //fprintf(GlobalOut, "\n");
+      //}
       assert(rterm->f_code!=SIG_TRUE_CODE);
       EqnSetProp(handle, EPIsEquLiteral);
    }
@@ -664,6 +675,8 @@ Eqn_p EqnAlloc(Term_p lterm, Term_p rterm, TB_p bank,  bool positive)
       }
    }
 #endif
+
+   handle->occurrences = 0;
 
    return handle;
 }

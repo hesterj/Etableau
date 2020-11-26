@@ -147,7 +147,9 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 			num_local_branches++;
 			//fprintf(GlobalOut, "# Saturating branch...\n");
 			//fprintf(GlobalOut, "# Tree address: %p Nodes: %ld Branch: %p\n", &tableau_control->feature_tree, PTreeNodes(tableau_control->feature_tree), handle);
-			DTreeBranchRepresentations(handle, &tableau_control->feature_tree);
+			//DTreeBranchRepresentations(handle, &tableau_control->feature_tree);
+			EqnBranchRepresentations(handle, &tableau_control->feature_tree);
+
 			tableau_control->number_of_saturation_attempts++;
 			//ResetAllOccurrences(&tableau_control->feature_tree);
 			int branch_status = process_branch_nofork(proofstate, 

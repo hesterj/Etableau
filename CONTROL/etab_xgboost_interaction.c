@@ -74,6 +74,15 @@ int DTreesIdentical(const void *left_p, const void *right_p)
 }
 
 
+int EqnUnifyRenamingPCmp(const void *left_p, const void *right_p)
+{
+    Eqn_p left = (Eqn_p) left_p;
+    Eqn_p right = (Eqn_p) right_p;
+    bool unifiable = EqnUnifyRenamingP(left, right);
+    if (unifiable) return 0;
+    return 1;
+}
+
 // This commented out function shouldn't be necessary due to the benefits of PObjTree_p
 
 //DTree_p PTreeFindDTree(PObjTree_p *splay_tree, DTree_p dtree)
@@ -158,37 +167,85 @@ long DTreeBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_tree
 
 long EqnBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_eqns)
 {
-    //fprintf(GlobalOut, "# getting branch representations\n");
-    //fprintf(GlobalOut, "# p: %p\n", *tree_of_trees);
+    TB_p bank = branch->terms;
+    VarBank_p vars = bank->vars;
+    TypeBank_p typebank = bank->sig->type_bank;
+    Type_p individual_type = typebank->i_type;
+
     while (branch != branch->master)
     {
         assert(ClauseLiteralNumber(branch->label) == 1);
-        PObjTree_p new_cell = PTreeCellAlloc();
+        PTree_p eqn_vars = NULL;
         Eqn_p label_eqn = branch->label->literals;
-        DTree_p dtree_representation = DTreeEqnRepresentation(label_eqn);
-        new_cell->key = dtree_representation;
-        //fprintf(GlobalOut, "# inserting... &%p %p\n", tree_of_trees, *tree_of_trees);
-        PObjTree_p objtree_cell = PTreeObjInsert(tree_of_eqns, new_cell, DTreesIdentical);
-        //fprintf(GlobalOut, "# done inserting\n");
-        if (objtree_cell) // We found a cell with an identical ptree, so we can discard the one we just made and increment the number of occurrences of the one we found.
+
+        long num_vars = EqnCollectVariables(label_eqn, &eqn_vars);
+
+        Subst_p variable_subst = SubstAlloc();
+        Term_p x1 = VarBankVarAssertAlloc(vars, -2, individual_type);
+        PStack_p traverse = PTreeTraverseInit(eqn_vars);
+        PTree_p variable_cell;
+        Term_p variable;
+        while ((variable_cell = PTreeTraverseNext(traverse)))
         {
+            variable = variable_cell->key;
+            SubstAddBinding(variable_subst, variable, x1);
+        }
+        PTreeTraverseExit(traverse);
+
+        Term_p unshared_lterm = TermCopy(label_eqn->lterm, vars, DEREF_ALWAYS);
+        assert(!TermCellQueryProp(unshared_lterm, TPIsShared));
+        Term_p unshared_rterm;
+        if (label_eqn->rterm->f_code == SIG_TRUE_CODE)
+        {
+            unshared_rterm = bank->true_term;
+        }
+        else
+        {
+            unshared_rterm = TermCopy(label_eqn->rterm, vars, DEREF_ALWAYS);
+            assert(!TermCellQueryProp(unshared_rterm, TPIsShared));
+        }
+        Eqn_p dummy_eqn = EqnAlloc(unshared_lterm, unshared_rterm, bank, label_eqn->pos);
+        SubstDelete(variable_subst);
+        //fprintf(GlobalOut, "# "); EqnPrint(GlobalOut, dummy_eqn, EqnIsNegative(dummy_eqn), true);fprintf(GlobalOut, "\n");
+
+        PObjTree_p new_cell = PTreeCellAlloc();
+        new_cell->key = dummy_eqn;
+        PObjTree_p objtree_cell = PTreeObjInsert(tree_of_eqns, new_cell, EqnUnifyRenamingPCmp);
+        if (objtree_cell) // We found a cell with an identical eqn, so we can discard the one we just made and increment the number of occurrences of the one we found.
+        {
+            //fprintf(GlobalOut, "# Found identical cell.\n");
+            TermFree(unshared_lterm);
+            if (unshared_rterm->f_code != SIG_TRUE_CODE)
+            {
+                TermFree(unshared_rterm);
+            }
+            EqnFree(dummy_eqn);
             PTreeCellFree(new_cell);
-            DTreeFree(dtree_representation);
-            DTree_p real_tree = (DTree_p) objtree_cell->key;
-            real_tree->occurrences++;
+            Eqn_p real_eqn = (Eqn_p) objtree_cell->key;
+            //fprintf(GlobalOut, "# objtree_cell: ");EqnPrint(GlobalOut, real_eqn, EqnIsNegative(real_eqn), true); fprintf(GlobalOut, "\n");
+            real_eqn->occurrences++;
             *tree_of_eqns = objtree_cell;  // The tree was splayed and objtree_cell is the new root.
         }
         else // The dtree we just made has been inserted into the tree of dtrees, and since it clearly occurs we increment the occurrences.
         {
+            assert(new_cell->key == dummy_eqn);
             *tree_of_eqns = new_cell; // Since the new cell was inserted into the splay tree, we need to ensure we have a reference to the root.
-            dtree_representation->occurrences++;
+            dummy_eqn->occurrences++;
         }
-
+        PTreeFree(eqn_vars);
         branch = branch->parent;
     }
-    //fprintf(GlobalOut, "# blablabla %ld\n", PTreeNodes(*tree_of_trees));
+    //fprintf(GlobalOut, "# Printing eqn tree:\n");
+    //EqnTreePrint(GlobalOut, tree_of_eqns);
+    //fprintf(GlobalOut, "# Done.\n");
     return 0;
 }
+
+/*
+** Return true if left and right are unifiable by a renaming of variables, false otherwise
+**
+**
+*/
 
 bool EqnUnifyRenamingP(Eqn_p left, Eqn_p right)
 {
@@ -224,6 +281,22 @@ void FeatureTreePrint(FILE* out, PObjTree_p *tree_of_trees)
         assert(tree);
         fprintf(out, "# %p: %d\n", tree, tree->occurrences);
         DTreeStupidPrint(tree);
+    }
+    PTreeTraverseExit(iter);
+}
+
+void EqnTreePrint(FILE* out, PObjTree_p *tree_of_eqns)
+{
+    PStack_p iter = PTreeTraverseInit(*tree_of_eqns);
+    PObjTree_p handle = NULL;
+    while ((handle = PTreeTraverseNext(iter)))
+    {
+        Eqn_p eqn = (Eqn_p) handle->key;
+        assert(eqn);
+        fprintf(GlobalOut, "# %p ", eqn);
+        EqnPrint(GlobalOut, eqn, EqnIsNegative(eqn), true);
+        fprintf(GlobalOut, " %d\n", eqn->occurrences);
+
     }
     PTreeTraverseExit(iter);
 }

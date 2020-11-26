@@ -353,7 +353,8 @@ int Etableau(TableauControl_p tableaucontrol,
 		ClauseTableauFree(handle);
 	}
 
-	FeatureTreePrint(GlobalOut, &tableaucontrol->feature_tree);
+	//FeatureTreePrint(GlobalOut, &tableaucontrol->feature_tree);
+	EqnTreePrint(GlobalOut, &tableaucontrol->feature_tree);
 
 	TableauStackFreeTableaux(tableaucontrol->tableaux_trash);
 	TableauStackFreeTableaux(new_tableaux);
