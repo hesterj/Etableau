@@ -1198,6 +1198,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->clausification_buffer = NULL;
 	handle->process_control = NULL;
 	handle->feature_tree = NULL;
+	handle->feature_list = PListAlloc();
 	return handle;
 }
 
@@ -1211,6 +1212,16 @@ void TableauControlFree(TableauControl_p trash)
 	{
 		//PTreeFree(trash->feature_tree);
 		PObjTreeFree(trash->feature_tree, EqnRepFree);
+	}
+	if (trash->feature_list)
+	{
+		while (!PListEmpty(trash->feature_list))
+		{
+			PList_p item = PListExtract(trash->feature_list->succ);
+			EqnRepFree(item->key.p_val);
+			PListCellFree(item);
+		}
+		PListFree(trash->feature_list);
 	}
 	TableauControlCellFree(trash);
 }

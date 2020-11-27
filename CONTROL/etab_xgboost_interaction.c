@@ -206,14 +206,12 @@ long EqnBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_eqns)
         }
         Eqn_p dummy_eqn = EqnAlloc(unshared_lterm, unshared_rterm, bank, label_eqn->pos);
         SubstDelete(variable_subst);
-        //fprintf(GlobalOut, "# "); EqnPrint(GlobalOut, dummy_eqn, EqnIsNegative(dummy_eqn), true);fprintf(GlobalOut, "\n");
 
         PObjTree_p new_cell = PTreeCellAlloc();
         new_cell->key = dummy_eqn;
         PObjTree_p objtree_cell = PTreeObjInsert(tree_of_eqns, new_cell, EqnUnifyRenamingPCmp);
         if (objtree_cell) // We found a cell with an identical eqn, so we can discard the one we just made and increment the number of occurrences of the one we found.
         {
-            //fprintf(GlobalOut, "# Found identical cell.\n");
             TermFree(unshared_lterm);
             if (unshared_rterm->f_code != SIG_TRUE_CODE)
             {
@@ -222,22 +220,16 @@ long EqnBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_eqns)
             EqnFree(dummy_eqn);
             PTreeCellFree(new_cell);
             Eqn_p real_eqn = (Eqn_p) objtree_cell->key;
-            //fprintf(GlobalOut, "# objtree_cell: ");EqnPrint(GlobalOut, real_eqn, EqnIsNegative(real_eqn), true); fprintf(GlobalOut, "\n");
             real_eqn->occurrences++;
-            *tree_of_eqns = objtree_cell;  // The tree was splayed and objtree_cell is the new root.
         }
         else // The dtree we just made has been inserted into the tree of dtrees, and since it clearly occurs we increment the occurrences.
         {
             assert(new_cell->key == dummy_eqn);
-            *tree_of_eqns = new_cell; // Since the new cell was inserted into the splay tree, we need to ensure we have a reference to the root.
             dummy_eqn->occurrences++;
         }
         PTreeFree(eqn_vars);
         branch = branch->parent;
     }
-    //fprintf(GlobalOut, "# Printing eqn tree:\n");
-    //EqnTreePrint(GlobalOut, tree_of_eqns);
-    //fprintf(GlobalOut, "# Done.\n");
     return 0;
 }
 
@@ -250,14 +242,22 @@ long EqnBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_eqns)
 bool EqnUnifyRenamingP(Eqn_p left, Eqn_p right)
 {
     Subst_p subst = SubstAlloc();
+    bool success = true;
     bool unified = EqnUnify(left, right, subst);
     if (!unified || !SubstIsRenaming(subst))
     {
-        SubstDelete(subst);
-        return false;
+        success = false;
     }
     SubstDelete(subst);
-    return true;
+    //if (left->lterm->f_code == right->lterm->f_code &&
+        //left->rterm->f_code == right->rterm->f_code)
+    //{
+        //fprintf(GlobalOut, "Attempting to unify:\n");
+        //EqnPrint(GlobalOut, left, EqnIsNegative(left), true); fprintf(GlobalOut, "\n");
+        //EqnPrint(GlobalOut, right, EqnIsNegative(right), true); fprintf(GlobalOut, "\n");
+        //fprintf(GlobalOut, "%d\n", success);
+    //}
+    return success;
 }
 
 void DTreeResetOccurrences(void *tree)
@@ -301,3 +301,99 @@ void EqnTreePrint(FILE* out, PObjTree_p *tree_of_eqns)
     PTreeTraverseExit(iter);
 }
 
+//  Another try...  Using PList instead of splay trees
+
+long EqnBranchRepresentationsList(ClauseTableau_p branch, PList_p list_of_eqns)
+{
+    TB_p bank = branch->terms;
+    VarBank_p vars = bank->vars;
+    TypeBank_p typebank = bank->sig->type_bank;
+    Type_p individual_type = typebank->i_type;
+
+    while (branch != branch->master)
+    {
+        assert(ClauseLiteralNumber(branch->label) == 1);
+        PTree_p eqn_vars = NULL;
+        Eqn_p label_eqn = branch->label->literals;
+
+        long num_vars = EqnCollectVariables(label_eqn, &eqn_vars);
+
+        Subst_p variable_subst = SubstAlloc();
+        Term_p x1 = VarBankVarAssertAlloc(vars, -2, individual_type);
+        PStack_p traverse = PTreeTraverseInit(eqn_vars);
+        PTree_p variable_cell;
+        Term_p variable;
+        while ((variable_cell = PTreeTraverseNext(traverse)))
+        {
+            variable = variable_cell->key;
+            SubstAddBinding(variable_subst, variable, x1);
+        }
+        PTreeTraverseExit(traverse);
+
+        Term_p unshared_lterm = TermCopy(label_eqn->lterm, vars, DEREF_ALWAYS);
+        assert(!TermCellQueryProp(unshared_lterm, TPIsShared));
+        Term_p unshared_rterm;
+        if (label_eqn->rterm->f_code == SIG_TRUE_CODE)
+        {
+            unshared_rterm = bank->true_term;
+        }
+        else
+        {
+            unshared_rterm = TermCopy(label_eqn->rterm, vars, DEREF_ALWAYS);
+            assert(!TermCellQueryProp(unshared_rterm, TPIsShared));
+        }
+        Eqn_p dummy_eqn = EqnAlloc(unshared_lterm, unshared_rterm, bank, label_eqn->pos);
+        SubstDelete(variable_subst);
+
+        // Check to see if an equivalent equation is stored in the list
+        Eqn_p found;
+        if ((found = EquivalentEquationInList(dummy_eqn, list_of_eqns)))
+        {
+            found->occurrences++;
+            TermFree(dummy_eqn->lterm);
+            if (dummy_eqn->rterm->f_code != SIG_TRUE_CODE)
+            {
+                TermFree(dummy_eqn->rterm);
+            }
+            EqnFree(dummy_eqn);
+        }
+        else
+        {
+            PListStoreP(list_of_eqns, dummy_eqn);
+            dummy_eqn->occurrences++;
+        }
+
+        PTreeFree(eqn_vars);
+        branch = branch->parent;
+    }
+    return 0;
+}
+
+Eqn_p EquivalentEquationInList(Eqn_p eqn, PList_p anchor)
+{
+    PList_p handle = anchor->succ;
+    while (handle != anchor)
+    {
+        Eqn_p handle_eqn = (Eqn_p) handle->key.p_val;
+        if (EqnUnifyRenamingP(handle_eqn, eqn))
+        {
+            return handle_eqn;
+        }
+        handle = handle->succ;
+    }
+    return NULL;
+}
+
+void EqnPListPrint(FILE* out, PList_p list_of_eqns)
+{
+    PList_p handle = list_of_eqns->succ;
+    while (handle != list_of_eqns)
+    {
+        Eqn_p eqn = (Eqn_p) handle->key.p_val;
+        assert(eqn);
+        fprintf(GlobalOut, "# %p ", eqn);
+        EqnPrint(GlobalOut, eqn, EqnIsNegative(eqn), true);
+        fprintf(GlobalOut, " %d\n", eqn->occurrences);
+        handle = handle->succ;
+    }
+}
