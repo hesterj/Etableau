@@ -118,6 +118,7 @@ links: remove_links
         for subdir in $(LIBS); do\
                 $(LN) ../$$subdir/$$subdir.a .;\
         done;
+#	@$(LN) /home/hesterj/Projects/xgboost/lib/libxgboost.so .;
 # @cd PROVER; $(LN) $(PICOSAT)/picosat
 
 

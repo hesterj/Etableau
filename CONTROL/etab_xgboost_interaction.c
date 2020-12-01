@@ -303,7 +303,7 @@ void EqnTreePrint(FILE* out, PObjTree_p *tree_of_eqns)
 
 //  Another try...  Using PList instead of splay trees
 
-long EqnBranchRepresentationsList(ClauseTableau_p branch, PList_p list_of_eqns)
+long EqnBranchRepresentationsList(ClauseTableau_p branch, PList_p list_of_eqns, int branch_status)
 {
     TB_p bank = branch->terms;
     VarBank_p vars = bank->vars;
@@ -356,11 +356,19 @@ long EqnBranchRepresentationsList(ClauseTableau_p branch, PList_p list_of_eqns)
                 TermFree(dummy_eqn->rterm);
             }
             EqnFree(dummy_eqn);
+            if (branch_status == PROOF_FOUND) // If the proof attempt on this branch was successful, increment the counter of successful proof searches
+            {
+                found->positive_occurrences++;
+            }
         }
         else
         {
             PListStoreP(list_of_eqns, dummy_eqn);
             dummy_eqn->occurrences++;
+            if (branch_status == PROOF_FOUND) // If the proof attempt on this branch was successful, increment the counter of successful proof searches
+            {
+                dummy_eqn->positive_occurrences++;
+            }
         }
 
         PTreeFree(eqn_vars);
@@ -386,6 +394,7 @@ Eqn_p EquivalentEquationInList(Eqn_p eqn, PList_p anchor)
 
 void EqnPListPrint(FILE* out, PList_p list_of_eqns)
 {
+    fprintf(GlobalOut, "# Printing feature list vector\n");
     PList_p handle = list_of_eqns->succ;
     while (handle != list_of_eqns)
     {
@@ -393,7 +402,15 @@ void EqnPListPrint(FILE* out, PList_p list_of_eqns)
         assert(eqn);
         fprintf(GlobalOut, "# %p ", eqn);
         EqnPrint(GlobalOut, eqn, EqnIsNegative(eqn), true);
-        fprintf(GlobalOut, " %d\n", eqn->occurrences);
+        fprintf(GlobalOut, " %d / %d\n", eqn->positive_occurrences, eqn->occurrences);
         handle = handle->succ;
     }
+}
+
+void XGBoostTest()
+{
+    BoosterHandle booster;
+    XGBoosterCreate(NULL, 0, &booster);
+    XGBoosterSetParam(booster, "seed", "0");
+    XGBoosterFree(booster);
 }

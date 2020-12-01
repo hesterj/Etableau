@@ -1184,6 +1184,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->terms = NULL; // The termbank for this tableau control..
 	handle->number_of_extensions = 0;  // Total number of extensions done
 	handle->number_of_saturation_attempts = 0;
+	handle->number_of_successful_saturation_attempts = 0;
 	handle->closed_tableau = NULL;
 	handle->branch_saturation_enabled = branch_saturation_enabled;
 	handle->satisfiable = false;

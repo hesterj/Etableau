@@ -149,7 +149,6 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 			//fprintf(GlobalOut, "# Tree address: %p Nodes: %ld Branch: %p\n", &tableau_control->feature_tree, PTreeNodes(tableau_control->feature_tree), handle);
 			//DTreeBranchRepresentations(handle, &tableau_control->feature_tree);
 			//EqnBranchRepresentations(handle, &tableau_control->feature_tree);
-			EqnBranchRepresentationsList(handle, tableau_control->feature_list);
 
 
 			tableau_control->number_of_saturation_attempts++;
@@ -160,6 +159,8 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 																	tableau_control, 
 																	max_proc);
 			//fprintf(GlobalOut, "# Done.\n");
+			EqnBranchRepresentationsList(handle, tableau_control->feature_list, branch_status);
+			XGBoostTest();
 			if (branch_status == PROOF_FOUND)
 			{
 				//fprintf(stdout, "# Proof found on branch. %ld remain.\n", handle->set->members - 1);
@@ -171,6 +172,7 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 				DStrAppendStr(handle->info, " Saturation closed ");
 				DStrAppendInt(handle->info, tableau_control->number_of_saturation_attempts);
 				successful_count++;
+				tableau_control->number_of_successful_saturation_attempts++;
 				handle = open_branches->anchor->succ;
 				//return 1;
 				continue;

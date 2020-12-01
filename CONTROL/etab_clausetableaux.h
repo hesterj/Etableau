@@ -185,6 +185,7 @@ typedef struct tableaucontrol_cell
 	ProofControl_p proofcontrol;
 	int number_of_extensions;
 	long number_of_saturation_attempts;
+	long number_of_successful_saturation_attempts;
 	long neg_conjectures;
 	char *problem_name;
 	PStack_p new_tableaux;

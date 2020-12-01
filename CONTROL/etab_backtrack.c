@@ -27,3 +27,14 @@ void BacktrackFree(Backtrack_p trash)
     TermFree(trash->bind); // variables are always shared, the bindings in a backtrack_p are unshared so have to be free'd
     BacktrackCellCellFree(trash);
 }
+
+bool BackTrackIsExtensionStep(Backtrack_p handle)
+{
+    if (handle->position->arity > 0) return true;
+    return false;
+}
+bool BackTrackIsClosureStep(Backtrack_p handle)
+{
+    if (handle->position->arity == 0) return true;
+    return false;
+}

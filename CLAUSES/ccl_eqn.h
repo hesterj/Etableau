@@ -79,7 +79,8 @@ typedef struct eqncell
 {
    EqnProperties  properties;/* Positive, maximal, equational */
    int            pos;
-   int            occurrences;
+   int            occurrences; // Etableau
+   int            positive_occurrences; // Etableau
    Term_p         lterm;
    Term_p         rterm;
    TB_p           bank;      /* Terms are from this bank */

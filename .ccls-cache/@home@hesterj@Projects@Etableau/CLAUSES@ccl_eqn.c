@@ -677,6 +677,7 @@ Eqn_p EqnAlloc(Term_p lterm, Term_p rterm, TB_p bank,  bool positive)
 #endif
 
    handle->occurrences = 0;
+   handle->positive_occurrences = 0;
 
    return handle;
 }

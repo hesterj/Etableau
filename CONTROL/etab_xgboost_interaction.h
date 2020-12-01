@@ -2,6 +2,7 @@
 #define ETAB_XGBOOST
 
 #include "etab_foldingup.h"
+#include </home/hesterj/Projects/xgboost/include/xgboost/c_api.h>
 
 /*
 ** The DTree is just that, a tree of integers, with potentially multiple children.
@@ -41,6 +42,8 @@ bool EqnUnifyRenamingP(Eqn_p left, Eqn_p right);
 int EqnUnifyRenamingPCmp(const void *left_p, const void *right_p);
 void EqnTreePrint(FILE* out, PObjTree_p *tree_of_eqns);
 void EqnPListPrint(FILE* out, PList_p list_of_eqns);
-long EqnBranchRepresentationsList(ClauseTableau_p branch, PList_p list_of_eqns);
+long EqnBranchRepresentationsList(ClauseTableau_p branch, PList_p list_of_eqns, int branch_status);
 Eqn_p EquivalentEquationInList(Eqn_p eqn, PList_p anchor);
+
+void XGBoostTest();
 #endif

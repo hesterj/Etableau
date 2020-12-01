@@ -356,6 +356,7 @@ int Etableau(TableauControl_p tableaucontrol,
 	//FeatureTreePrint(GlobalOut, &tableaucontrol->feature_tree);
 	//EqnTreePrint(GlobalOut, &tableaucontrol->feature_tree);
 	EqnPListPrint(GlobalOut, tableaucontrol->feature_list);
+	fprintf(GlobalOut, "# Number of successful branch saturation attempts: %ld / %ld\n", tableaucontrol->number_of_successful_saturation_attempts, tableaucontrol->number_of_saturation_attempts);
 
 	TableauStackFreeTableaux(tableaucontrol->tableaux_trash);
 	TableauStackFreeTableaux(new_tableaux);
