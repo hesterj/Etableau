@@ -307,30 +307,31 @@ long EqnBranchRepresentationsList(ClauseTableau_p branch, PList_p list_of_eqns, 
 {
     TB_p bank = branch->terms;
     VarBank_p vars = bank->vars;
-    TypeBank_p typebank = bank->sig->type_bank;
-    Type_p individual_type = typebank->i_type;
+    //TypeBank_p typebank = bank->sig->type_bank;
+    //Type_p individual_type = typebank->i_type;
 
     while (branch != branch->master)
     {
         assert(ClauseLiteralNumber(branch->label) == 1);
-        PTree_p eqn_vars = NULL;
         Eqn_p label_eqn = branch->label->literals;
 
-        long num_vars = EqnCollectVariables(label_eqn, &eqn_vars);
+        //PTree_p eqn_vars = NULL;
+        //long num_vars = EqnCollectVariables(label_eqn, &eqn_vars);
+        //Subst_p variable_subst = SubstAlloc();
+        //Term_p x1 = VarBankVarAssertAlloc(vars, -2, individual_type);
+        //PStack_p traverse = PTreeTraverseInit(eqn_vars);
+        //PTree_p variable_cell;
+        //Term_p variable;
+        //while ((variable_cell = PTreeTraverseNext(traverse)))
+        //{
+            //variable = variable_cell->key;
+            //SubstAddBinding(variable_subst, variable, x1);
+        //}
+        //PTreeTraverseExit(traverse);
+        //PTreeFree(eqn_vars);
 
-        Subst_p variable_subst = SubstAlloc();
-        Term_p x1 = VarBankVarAssertAlloc(vars, -2, individual_type);
-        PStack_p traverse = PTreeTraverseInit(eqn_vars);
-        PTree_p variable_cell;
-        Term_p variable;
-        while ((variable_cell = PTreeTraverseNext(traverse)))
-        {
-            variable = variable_cell->key;
-            SubstAddBinding(variable_subst, variable, x1);
-        }
-        PTreeTraverseExit(traverse);
-
-        Term_p unshared_lterm = TermCopy(label_eqn->lterm, vars, DEREF_ALWAYS);
+        Term_p unshared_lterm = TermCopyUnifyVars(vars, label_eqn->lterm);
+        //Term_p unshared_lterm = TermCopy(label_eqn->lterm, vars, DEREF_ALWAYS);
         assert(!TermCellQueryProp(unshared_lterm, TPIsShared));
         Term_p unshared_rterm;
         if (label_eqn->rterm->f_code == SIG_TRUE_CODE)
@@ -339,11 +340,12 @@ long EqnBranchRepresentationsList(ClauseTableau_p branch, PList_p list_of_eqns, 
         }
         else
         {
-            unshared_rterm = TermCopy(label_eqn->rterm, vars, DEREF_ALWAYS);
+            //unshared_rterm = TermCopy(label_eqn->rterm, vars, DEREF_ALWAYS);
+            unshared_rterm = TermCopyUnifyVars(vars, label_eqn->rterm);
             assert(!TermCellQueryProp(unshared_rterm, TPIsShared));
         }
         Eqn_p dummy_eqn = EqnAlloc(unshared_lterm, unshared_rterm, bank, label_eqn->pos);
-        SubstDelete(variable_subst);
+        //SubstDelete(variable_subst);
 
         // Check to see if an equivalent equation is stored in the list
         Eqn_p found;
@@ -371,7 +373,6 @@ long EqnBranchRepresentationsList(ClauseTableau_p branch, PList_p list_of_eqns, 
             }
         }
 
-        PTreeFree(eqn_vars);
         branch = branch->parent;
     }
     return 0;

@@ -55,7 +55,7 @@ typedef struct clausetableau
 	PTree_p tableau_variables;
 
 	// A stack of previous steps.
-	BacktrackStack_p backtrack;
+	BacktrackStack_p backtracks;
 	
 	Clause_p label; // The clause at this node
 	ClauseSet_p unit_axioms; // Only present at the master node

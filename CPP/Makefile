@@ -22,6 +22,7 @@ cppdepend: *.cpp *.h
 	echo 'About to compile C++ interface...'
 	$(CXX) -M -O3 -I../include *.cpp > Makefile.dependencies;
 
+
 depend: *.cpp *.h
 	$(info $(MAKEDEPENDPP))
 	$(MAKEDEPENDPP)

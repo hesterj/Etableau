@@ -21,6 +21,8 @@ LIB     = $(PROJECT).a
 all: $(LIB)
 
 depend: *.c *.h
+#	echo 'Makedepend:'
+#	echo $(MAKEDEPEND)
 	$(MAKEDEPEND)
 
 # Remove all automatically generated files

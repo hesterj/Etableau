@@ -46,6 +46,8 @@ ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
 	handle->master = handle;
 	handle->parent = NULL;
 	handle->open = true;
+
+	handle->backtracks = PStackAlloc();
 	
 	return handle;
 }
@@ -144,6 +146,9 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	{
 		handle->children = NULL;
 	}
+
+	handle->backtracks = PStackCopy(tab->backtracks);
+
 	return handle;
 }
 
@@ -234,6 +239,8 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	{
 		handle->children = NULL;
 	}
+
+	handle->backtracks = PStackCopy(tab->backtracks);
 	
 	return handle;
 }
@@ -287,6 +294,9 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->open = true;
 	handle->arity = 0;
 	handle->saturation_closed = false;
+
+	handle->backtracks = PStackAlloc();
+
 	return handle;
 }
 
@@ -334,6 +344,15 @@ void ClauseTableauFree(ClauseTableau_p trash)
 		TableauSetFree(trash->open_branches);
 	}
 	DStrFree(trash->info);
+
+	PStack_p trash_backtrack;
+	while (!PStackEmpty(trash->backtracks))
+	{
+		trash_backtrack = (PStack_p) PStackPopP(trash->backtracks);
+		PStackFree(trash_backtrack);
+	}
+	PStackFree(trash->backtracks);
+
 	ClauseTableauCellFree(trash);
 }
 
