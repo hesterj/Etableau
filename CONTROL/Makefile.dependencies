@@ -3229,7 +3229,11 @@ etab_clausetableaux.o: etab_clausetableaux.c /usr/include/stdc-predef.h \
  /usr/include/asm-generic/sockios.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
  /usr/include/x86_64-linux-gnu/bits/socket2.h \
- /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h
+ /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
+ etab_backtrack.h ../include/etab_etableau.h ../include/etab_foldingup.h \
+ ../include/etab_closure.h ../include/etab_localunification.h \
+ ../include/etab_xgboost_interaction.h ../include/etab_foldingup.h \
+ /home/hesterj/Projects/xgboost/include/xgboost/c_api.h
 etab_closure.o: etab_closure.c /usr/include/stdc-predef.h \
  ../include/etab_closure.h ../include/etab_localunification.h \
  ../include/etab_clausetableaux.h ../include/clb_os_wrapper.h \

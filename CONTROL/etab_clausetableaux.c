@@ -1,4 +1,5 @@
 #include "etab_clausetableaux.h"
+#include "etab_backtrack.h"
 
 int clausesetallocs_counter = 1;  
 
@@ -48,6 +49,7 @@ ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
 	handle->open = true;
 
 	handle->backtracks = PStackAlloc();
+	handle->failures = PStackAlloc();
 	
 	return handle;
 }
@@ -147,7 +149,8 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 		handle->children = NULL;
 	}
 
-	handle->backtracks = PStackCopy(tab->backtracks);
+	handle->backtracks = BacktrackStackCopy(tab->backtracks);
+	handle->backtracks = BacktrackStackCopy(tab->failures);
 
 	return handle;
 }
@@ -240,7 +243,8 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 		handle->children = NULL;
 	}
 
-	handle->backtracks = PStackCopy(tab->backtracks);
+	handle->backtracks = NULL;
+	handle->failures = NULL;
 	
 	return handle;
 }
@@ -295,7 +299,8 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->arity = 0;
 	handle->saturation_closed = false;
 
-	handle->backtracks = PStackAlloc();
+	handle->backtracks = NULL;
+	handle->failures = NULL;
 
 	return handle;
 }
@@ -345,14 +350,22 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	}
 	DStrFree(trash->info);
 
-	PStack_p trash_backtrack;
-	while (!PStackEmpty(trash->backtracks))
+	if (trash->depth == 0)
 	{
-		trash_backtrack = (PStack_p) PStackPopP(trash->backtracks);
-		PStackFree(trash_backtrack);
+		Backtrack_p trash_backtrack;
+		while (!PStackEmpty(trash->backtracks))
+		{
+			trash_backtrack = (Backtrack_p) PStackPopP(trash->backtracks);
+			BacktrackFree(trash_backtrack);
+		}
+		PStackFree(trash->backtracks);
+		while (!PStackEmpty(trash->failures))
+		{
+			trash_backtrack = (Backtrack_p) PStackPopP(trash->failures);
+			BacktrackFree(trash_backtrack);
+		}
+		PStackFree(trash->failures);
 	}
-	PStackFree(trash->backtracks);
-
 	ClauseTableauCellFree(trash);
 }
 
@@ -1454,4 +1467,15 @@ void EqnRepFree(void *eqn_p)
 		TermFree(eqn->rterm);
 	}
     EqnFree(eqn);
+}
+
+void ClauseStackFree(ClauseStack_p trash)
+{
+	while (!PStackEmpty(trash))
+	{
+		Clause_p trash_clause = (Clause_p) PStackPopP(trash);
+		ClauseFree(trash_clause);
+	}
+	PStackFree(trash);
+	return;
 }

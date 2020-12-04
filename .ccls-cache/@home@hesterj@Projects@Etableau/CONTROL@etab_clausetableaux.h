@@ -54,12 +54,16 @@ typedef struct clausetableau
 	 // Only present at root.  Contains variables that are present in the tableau.
 	PTree_p tableau_variables;
 
-	// A stack of previous steps.
-	BacktrackStack_p backtracks;
+	// A stacks of previous steps.
+	BacktrackStack_p backtracks;  // This is only present at the master node.  This is a stack of Backtrack_p, most recent action is at the top.
+	BacktrackStack_p failures; // This is only present at the master node.  This is a stack of Backtrack_p that have been backtracked, and so must be avoided.
+	// The failures can be interpreted as failure substitutions with an associated position in the tableau where the work was done.
 	
 	Clause_p label; // The clause at this node
+	ClauseStack_p old_labels; // Keep the old labels around in case there needs to be backtracking.
 	ClauseSet_p unit_axioms; // Only present at the master node
 	ClauseSet_p folding_labels; // These are clauses that have been folded up to this node.
+	ClauseStack_p old_folding_labels; // Keep the old folding labels around in case there needs to be backtracking.
 	
 	// Tableau set cell stuff...
 	struct tableau_set_cell* set; // if this node is in a set, it is the set of open branches
@@ -218,5 +222,7 @@ void EqnRepFree(void *eqn_p);
 
 //  Stuff for representing branches of a tableau as a stack of integers
 ClauseRep_p ClauseGetRepresentation(Clause_p clause);
+
+void ClauseStackFree(ClauseStack_p trash);
 
 #endif
