@@ -245,7 +245,8 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	DStrAppendStr(parent->info, " ");
 	SubstDStrPrint(parent->info, subst, sig, DEREF_NEVER);
 	ClauseTableauRegisterStep(parent);
-	SubstDelete(subst);
+	SubstDelete(subst); // Extremely important!
+
 	// Protect the unit axioms from the dirty substitution by copying them now...
 	parent->master->unit_axioms = ClauseSetCopy(parent->master->terms, old_tableau_master->unit_axioms);
 	

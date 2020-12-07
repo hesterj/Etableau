@@ -23,21 +23,21 @@ typedef struct backtrackcell
     // There are no branch saturations stored, as they do not affect the tableaux and are purely good.
 }BackTrackCell, *Backtrack_p;
 
-typedef struct bindingcell
-{                                               \
-    Term_p variable;
-    Term_p bind;
-}BindingCell, *Binding_p;
+//typedef struct bindingcell
+//{
+    //Term_p variable;
+    //Term_p bind;
+//}BindingCell, *Binding_p;
 
 
-#define BacktrackCellAlloc() (BackTrackCell*)SizeMalloc(sizeof(BackTrackCell));
-#define BacktrackCellCellFree(junk) SizeFree(junk, sizeof(BackTrackCell));
+#define BacktrackCellAlloc() (BackTrackCell*)SizeMalloc(sizeof(BackTrackCell))
+#define BacktrackCellCellFree(junk) SizeFree(junk, sizeof(BackTrackCell))
 //long SubstRecordBindings(Subst_p subst, BacktrackStack_p backtracks, VarBank_p varbank, ClauseTableau_p position);
 Backtrack_p BacktrackAlloc_UNUSED(Subst_p subst, VarBank_p varbank, ClauseTableau_p position);
 Backtrack_p BacktrackAlloc(ClauseTableau_p position);
 Backtrack_p BacktrackCopy(Backtrack_p original);
-#define BacktrackIsExtensionStep(bt) bt->is_extension_step;
-#define BacktrackisClosureStep(bt) !BacktrackIsExtensionStep(bt);
+#define BacktrackIsExtensionStep(bt) (bt->is_extension_step)
+#define BacktrackisClosureStep(bt) !BacktrackIsExtensionStep(bt)
 bool VerifyBacktrackIsExtensionStep(Backtrack_p handle);
 bool VerifyBacktrackIsClosureStep(Backtrack_p handle);
 void BacktrackFree(Backtrack_p trash);
@@ -47,8 +47,8 @@ void Backtrack(Backtrack_p bt);
 void RollBackEveryNode(ClauseTableau_p master);
 
 // Binding stuff, currently unused... Much easier to just keep copies of old clauses.
-#define BindingCellAlloc() (BindingCell*)SizeMalloc(sizeof(BindingCell));
-#define BindingCellFree(junk) SizeFree(junk, sizeof(BindingCell));
-Binding_p BindingAlloc(Term_p var, VarBank_p vars); // The variable is just that, the bind is what the variable is dereferenced to.
-void BindingFree(Binding_p trash); // The bind is unshared so must be free'd, variables are always shared
+//#define BindingCellAlloc() (BindingCell*)SizeMalloc(sizeof(BindingCell));
+//#define BindingCellFree(junk) SizeFree(junk, sizeof(BindingCell));
+//Binding_p BindingAlloc(Term_p var, VarBank_p vars); // The variable is just that, the bind is what the variable is dereferenced to.
+//void BindingFree(Binding_p trash); // The bind is unshared so must be free'd, variables are always shared
 #endif

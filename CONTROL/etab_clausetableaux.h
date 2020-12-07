@@ -21,6 +21,7 @@
 #include <clb_objtrees.h>
 
 typedef PStack_p ClauseStack_p;
+typedef PStack_p ClauseSetStack_p;
 typedef PStack_p TableauStack_p;
 typedef PStack_p BranchIntRep_p;
 typedef PStack_p ClauseRep_p;
@@ -63,7 +64,7 @@ typedef struct clausetableau
 	ClauseStack_p old_labels; // Keep the old labels around in case there needs to be backtracking.
 	ClauseSet_p unit_axioms; // Only present at the master node
 	ClauseSet_p folding_labels; // These are clauses that have been folded up to this node.
-	ClauseStack_p old_folding_labels; // Keep the old folding labels around in case there needs to be backtracking.
+	ClauseSetStack_p old_folding_labels; // Keep the old folding labels around in case there needs to be backtracking.
 	
 	// Tableau set cell stuff...
 	struct tableau_set_cell* set; // if this node is in a set, it is the set of open branches

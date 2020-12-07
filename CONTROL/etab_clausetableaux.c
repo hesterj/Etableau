@@ -48,6 +48,8 @@ ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
 	handle->parent = NULL;
 	handle->open = true;
 
+	handle->old_labels = PStackAlloc();
+	handle->old_folding_labels = PStackAlloc();
 	handle->backtracks = PStackAlloc();
 	handle->failures = PStackAlloc();
 	
@@ -65,6 +67,9 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	TB_p bank = tab->terms;
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
 
+	handle->old_labels = PStackAlloc();
+	handle->old_folding_labels = PStackAlloc();
+
 	GCAdmin_p gc = tab->state->gc_terms;
 	ClauseSet_p label_storage = tab->tableaucontrol->label_storage;
 	handle->tableaucontrol = tab->tableaucontrol;
@@ -79,8 +84,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	
 	handle->depth = tab->depth;
 	handle->position = tab->position;
-	assert(handle->depth == 0);
-	
+
 	// Do NOT copy the unit axioms because there may be a subst active!!
 	handle->unit_axioms = NULL;
 	handle->set = NULL;
@@ -90,11 +94,17 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	handle->step = tab->step;
 	handle->max_step = tab->max_step;
 	handle->folded_up = tab->folded_up;
-	assert(handle->folded_up == 0); // the master node should not be folded up
 	if (tab->folding_labels)
 	{
 		handle->folding_labels = ClauseSetCopy(bank, tab->folding_labels);
 		GCRegisterClauseSet(gc, handle->folding_labels);
+		for (PStackPointer p=0; p<PStackGetSP(tab->old_folding_labels); p++)
+		{
+			ClauseSet_p old_folding_edge = PStackElementP(tab->old_folding_labels, p);
+			ClauseSet_p new_copy = ClauseSetFlatCopy(bank, old_folding_edge);
+			PStackPushP(handle->old_folding_labels, new_copy);
+		}
+		PStackPushP(handle->old_folding_labels, ClauseSetFlatCopy(bank, tab->folding_labels));
 	}
 	else
 	{
@@ -113,10 +123,15 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	
 	if (tab->label)
 	{
-		//handle->label = ClauseCopy(tab->label, bank);
 		handle->label = ClauseCopy(tab->label, bank);
 		assert(handle->label);
 		ClauseSetInsert(label_storage, handle->label);
+		assert(handle->old_labels);
+		for (PStackPointer p=0; p<PStackGetSP(tab->old_labels); p++)
+		{
+			PStackPushP(handle->old_labels, ClauseFlatCopy((Clause_p) PStackElementP(tab->old_labels, p)));
+		}
+		PStackPushP(handle->old_labels, ClauseFlatCopy(tab->label));
 	}
 	else 
 	{
@@ -149,8 +164,11 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 		handle->children = NULL;
 	}
 
+	assert(tab->depth == 0);
+	assert(tab->backtracks);
+	assert(tab->failures);
 	handle->backtracks = BacktrackStackCopy(tab->backtracks);
-	handle->backtracks = BacktrackStackCopy(tab->failures);
+	handle->failures = BacktrackStackCopy(tab->failures);
 
 	return handle;
 }
@@ -161,6 +179,10 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	assert(parent);
 	TB_p bank = tab->terms; //Copy tableau tab
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
+
+	handle->old_labels = PStackAlloc();
+	handle->old_folding_labels = PStackAlloc();
+
 	handle->tableaucontrol = NULL;
 	handle->tableau_variables = NULL;
 	handle->unit_axioms = NULL;
@@ -201,6 +223,13 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	{
 		handle->folding_labels = ClauseSetCopy(bank, tab->folding_labels);
 		GCRegisterClauseSet(gc, handle->folding_labels);
+		for (PStackPointer p=0; p<PStackGetSP(tab->old_folding_labels); p++)
+		{
+			ClauseSet_p old_folding_edge = PStackElementP(tab->old_folding_labels, p);
+			ClauseSet_p new_copy = ClauseSetFlatCopy(bank, old_folding_edge);
+			PStackPushP(handle->old_folding_labels, new_copy);
+		}
+		PStackPushP(handle->old_folding_labels, ClauseSetFlatCopy(bank, tab->folding_labels));
 	}
 	else
 	{
@@ -219,6 +248,12 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 		handle->label = ClauseCopy(tab->label, bank);
 		assert(handle->label);
 		ClauseSetInsert(label_storage, handle->label);
+		assert(handle->old_labels);
+		for (PStackPointer p=0; p<PStackGetSP(tab->old_labels); p++)
+		{
+			PStackPushP(handle->old_labels, ClauseFlatCopy((Clause_p) PStackElementP(tab->old_labels, p)));
+		}
+		PStackPushP(handle->old_labels, ClauseFlatCopy(tab->label));
 	}
 	else
 	{
@@ -260,6 +295,10 @@ void ClauseTableauInitialize(ClauseTableau_p handle, ProofState_p initial)
 ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p label, int position)
 {
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
+
+	handle->old_labels = PStackAlloc();
+	handle->old_folding_labels = PStackAlloc();
+
 	GCAdmin_p gc = parent->state->gc_terms;
 	ClauseSet_p label_storage = parent->master->tableaucontrol->label_storage;
 	ClauseSetInsert(label_storage, label); // For gc
@@ -350,6 +389,7 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	}
 	DStrFree(trash->info);
 
+	// Free information about possible backtrack steps
 	if (trash->depth == 0)
 	{
 		Backtrack_p trash_backtrack;
@@ -366,6 +406,30 @@ void ClauseTableauFree(ClauseTableau_p trash)
 		}
 		PStackFree(trash->failures);
 	}
+
+	// Free old labels
+	while (!PStackEmpty(trash->old_labels))
+	{
+		//fprintf(GlobalOut, "%ld\n", PStackGetSP(trash->old_labels));
+		Clause_p old_trash_label = (Clause_p) PStackPopP(trash->old_labels);
+		assert(old_trash_label);
+		if (old_trash_label->set)
+		{
+			ClauseSetExtractEntry(old_trash_label);
+		}
+		ClauseFree(old_trash_label);
+	}
+	PStackFree(trash->old_labels);
+
+	//  Free old folding label sets
+	while (!PStackEmpty(trash->old_folding_labels))
+	{
+		ClauseSet_p old_trash_folds = (ClauseSet_p) PStackPopP(trash->old_folding_labels);
+		GCDeregisterClauseSet(gc, old_trash_folds);
+		ClauseSetFree(old_trash_folds);
+	}
+	PStackFree(trash->old_folding_labels);
+
 	ClauseTableauCellFree(trash);
 }
 
@@ -455,17 +519,19 @@ void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 	assert(subst);
 	ClauseSet_p label_storage = tab->master->tableaucontrol->label_storage;
 	Clause_p new_label = ClauseCopy(tab->label, tab->terms);
-	ClauseSetExtractEntry(tab->label);
+	//ClauseSetExtractEntry(tab->label);
+	//ClauseFree(tab->label);
+	PStackPushP(tab->old_labels, tab->label);  // Store old folding labels in case we need to backtrack
 	ClauseSetInsert(label_storage, new_label);
-	ClauseFree(tab->label);
 	assert(new_label);
 	tab->label = new_label;
 	
 	if (tab->folding_labels)  // The edge labels that have been folded up if the pointer is non-NULL
 	{
 		ClauseSet_p new_edge = ClauseSetCopy(tab->terms, tab->folding_labels);
-		GCDeregisterClauseSet(gc, tab->folding_labels);
-		ClauseSetFree(tab->folding_labels);
+		//GCDeregisterClauseSet(gc, tab->folding_labels);
+		//ClauseSetFree(tab->folding_labels);
+		PStackPushP(tab->old_folding_labels, tab->folding_labels); // Store old folding labels in case we need to backtrack
 		GCRegisterClauseSet(gc, new_edge);
 		assert(new_edge);
 		tab->folding_labels = new_edge;

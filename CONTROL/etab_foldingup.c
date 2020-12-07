@@ -217,11 +217,11 @@ int FoldUpAtNode(ClauseTableau_p node)
 		//printf("Attempted to fold up nonclosed node, returning 0 in FoldUpAtNode\n");
 		return 0;
 	}
-	if (child_saturation_closed == CHILD_CLOSED_BY_SATURATION)
-	{
-		//fprintf(GlobalOut, "# Do not fold up nodes with saturation closed children.\n");
-		return 0;
-	}
+	//if (child_saturation_closed == CHILD_CLOSED_BY_SATURATION)
+	//{
+		////fprintf(GlobalOut, "# Do not fold up nodes with saturation closed children.\n");
+		//return 0;
+	//}
 	
 	assert(ClauseLiteralNumber(node->label) == 1);
 	

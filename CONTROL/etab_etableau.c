@@ -159,8 +159,8 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 																	tableau_control, 
 																	max_proc);
 			//fprintf(GlobalOut, "# Done.\n");
-			EqnBranchRepresentationsList(handle, tableau_control->feature_list, branch_status);
-			XGBoostTest();
+			//EqnBranchRepresentationsList(handle, tableau_control->feature_list, branch_status);
+			//XGBoostTest();
 			if (branch_status == PROOF_FOUND)
 			{
 				//fprintf(stdout, "# Proof found on branch. %ld remain.\n", handle->set->members - 1);

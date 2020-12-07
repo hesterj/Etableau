@@ -19,11 +19,9 @@
 
 Backtrack_p BacktrackAlloc_UNUSED(Subst_p subst, VarBank_p varbank, ClauseTableau_p position)
 {
-    assert(variable);
-    assert(bind);
     assert(varbank);
     assert(position);
-    assert(TermIsVar(variable));
+    assert(subst);
     Backtrack_p backtrack = BacktrackCellAlloc();
     //backtrack->variable = variable;
     //backtrack->bind = TermCopy(bind, varbank, DEREF_ALWAYS);
@@ -58,7 +56,6 @@ Backtrack_p BacktrackAlloc(ClauseTableau_p position)
 void BacktrackFree(Backtrack_p trash)
 {
     assert(trash);
-    assert(!TermQueryProp(TPIsUnshared));
     PStackFree(trash->position);
     //TermFree(trash->bind); // variables are always shared, the bindings in a backtrack_p are unshared so have to be free'd
     BacktrackCellCellFree(trash);
@@ -100,23 +97,24 @@ bool VerifyBacktrackIsClosureStep(Backtrack_p handle)
     return false;
 }
 
-Binding_p BindingAlloc(Term_p var, VarBank_p vars) // The variable is just that, the bind is what the variable is dereferenced to.
-{
-    assert(var);
-    assert(TermIsVar(var));
-    Binding_p handle = BindingCellAlloc();
-    handle->variable = var;
-    handle->bind = TermCopy(var, vars, DEREF_ALWAYS); // What if the binding is to another variable?  This is troublesome...
-    return handle;
-}
-
-void BindingFree(Binding_p trash)
-{
-    TermFree(trash->bind);
-}
+//Binding_p BindingAlloc(Term_p var, VarBank_p vars) // The variable is just that, the bind is what the variable is dereferenced to.
+//{
+    //assert(var);
+    //assert(TermIsVar(var));
+    //Binding_p handle = BindingCellAlloc();
+    //handle->variable = var;
+    //handle->bind = TermCopy(var, vars, DEREF_ALWAYS); // What if the binding is to another variable?  This is troublesome...
+    //return handle;
+//}
+//
+//void BindingFree(Binding_p trash)
+//{
+    //TermFree(trash->bind);
+//}
 
 BacktrackStack_p BacktrackStackCopy(BacktrackStack_p stack)
 {
+    assert(stack);
     BacktrackStack_p new_stack = PStackAlloc();
     PStackPointer max = PStackGetSP(stack);
     for (PStackPointer p = 0; p < max; p++)
@@ -141,7 +139,7 @@ void Backtrack(Backtrack_p bt)
         {
             ClauseTableauFree(position->children[i]);
         }
-        ClauseTableauArgArrayFree(position->children, trash->arity);
+        ClauseTableauArgArrayFree(position->children, position->arity);
         position->children = NULL;
         position->arity = 0;
         // roll back every node of the tableau
