@@ -1,21 +1,20 @@
 #include "etab_backtrack.h"
 
 
-//long SubstRecordBindings(Subst_p subst, BacktrackStack_p backtracks, VarBank_p varbank, ClauseTableau_p position)
-//{
-    //assert(subst);
-    //assert(backtracks);
-    //assert(varbank);
-    //assert(position);
-    //PStackPointer substpointer = PStackGetSP(subst);
-    //for (PStackPointer p=0; p< substpointer; p++)
-    //{
-        //Term_p element = PStackElementP(subst, p);
-        //Backtrack_p bt = BacktrackAlloc(element, element, varbank, position);
-        //PStackPushP(backtracks, bt);
-    //}
-    //return substpointer;
-//}
+PStack_p SubstRecordBindings(Subst_p subst)
+{
+    assert(subst);
+    PStack_p bindings = PStackAlloc();
+    PStackPointer substpointer = PStackGetSP(subst);
+
+    for (PStackPointer p=0; p< substpointer; p++)
+    {
+        Term_p element = PStackElementP(subst, p);
+        Binding_p binding = BindingAlloc(element);
+        PStackPushP(bindings, binding);
+    }
+    return bindings;
+}
 
 Backtrack_p BacktrackAlloc_UNUSED(Subst_p subst, VarBank_p varbank, ClauseTableau_p position)
 {
@@ -36,7 +35,7 @@ Backtrack_p BacktrackAlloc_UNUSED(Subst_p subst, VarBank_p varbank, ClauseTablea
     return backtrack;
 }
 
-Backtrack_p BacktrackAlloc(ClauseTableau_p position)
+Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst)
 {
     Backtrack_p backtrack = BacktrackCellAlloc();
     if (position->arity == 0) backtrack->is_extension_step = false;
@@ -49,6 +48,7 @@ Backtrack_p BacktrackAlloc(ClauseTableau_p position)
         PStackPushInt(backtrack->position, (long) handle->position);
         handle = handle->master;
     }
+    backtrack->bindings = SubstRecordBindings(subst);
     return backtrack;
 
 }
@@ -57,6 +57,8 @@ void BacktrackFree(Backtrack_p trash)
 {
     assert(trash);
     PStackFree(trash->position);
+    BindingStackFree(trash->bindings);
+
     //TermFree(trash->bind); // variables are always shared, the bindings in a backtrack_p are unshared so have to be free'd
     BacktrackCellCellFree(trash);
 }
@@ -66,6 +68,7 @@ Backtrack_p BacktrackCopy(Backtrack_p original)
     Backtrack_p new = BacktrackCellAlloc();
     new->is_extension_step = original->is_extension_step;
     new->position = PStackCopy(original->position);
+    new->bindings = BindingStackCopy(original->bindings);
     return new;
 }
 
@@ -97,20 +100,28 @@ bool VerifyBacktrackIsClosureStep(Backtrack_p handle)
     return false;
 }
 
-//Binding_p BindingAlloc(Term_p var, VarBank_p vars) // The variable is just that, the bind is what the variable is dereferenced to.
-//{
-    //assert(var);
-    //assert(TermIsVar(var));
-    //Binding_p handle = BindingCellAlloc();
-    //handle->variable = var;
-    //handle->bind = TermCopy(var, vars, DEREF_ALWAYS); // What if the binding is to another variable?  This is troublesome...
-    //return handle;
-//}
-//
-//void BindingFree(Binding_p trash)
-//{
-    //TermFree(trash->bind);
-//}
+Binding_p BindingAlloc(Term_p var) // The variable is just that, the bind is what the variable is dereferenced to.
+{
+    assert(var);
+    assert(TermIsVar(var));
+    Binding_p handle = BindingCellAlloc();
+    handle->variable = var;
+    handle->bind = TermDerefAlways(var);
+    return handle;
+}
+
+void BindingFree(Binding_p trash)
+{
+    BindingCellFree(trash);
+}
+
+Binding_p BindingCopy(Binding_p old_bind)
+{
+    Binding_p new = BindingCellAlloc();
+    new->variable = old_bind->variable;
+    new->bind = old_bind->bind;
+    return new;
+}
 
 BacktrackStack_p BacktrackStackCopy(BacktrackStack_p stack)
 {
@@ -142,21 +153,64 @@ void Backtrack(Backtrack_p bt)
         ClauseTableauArgArrayFree(position->children, position->arity);
         position->children = NULL;
         position->arity = 0;
-        // roll back every node of the tableau
-        RollBackEveryNode(master);
-
     }
     else
     {
         // mark the position as open
         position->open = true;
-        // rock back every node of the tableau
-        RollBackEveryNode(master);
     }
+    // roll back every node of the tableau
+    RollBackEveryNode(master);
     return;
 }
 
-void RollBackEveryNode(ClauseTableau_p master)
+void RollBackEveryNode(ClauseTableau_p tab)
 {
+    PStackPointer p_labels = PStackGetSP(tab->old_labels);
+    PStackPointer p_folding = PStackGetSP(tab->old_folding_labels);
+    GCAdmin_p gc = tab->terms->gc;
+    if (p_labels == 0)
+    {
+        Error("# ERROR:  Attempted to roll back a node, but there was nothing to roll back to.", 10);
+    }
+    Clause_p new_label = (Clause_p) PStackPopP(tab->old_labels);
+    ClauseSetExtractEntry(tab->label);
+    ClauseFree(tab->label);
+    tab->label = new_label;
+    if (p_folding)
+    {
+        ClauseSet_p new_folding_labels = (ClauseSet_p) PStackPopP(tab->old_folding_labels);
+        GCDeregisterClauseSet(gc, tab->folding_labels);
+        ClauseSetFree(tab->folding_labels);
+        tab->folding_labels = new_folding_labels;
+    }
+    for (short i=0; i<tab->arity; i++)
+    {
+        RollBackEveryNode(tab->children[i]);
+    }
+
     return;
+}
+
+PStack_p BindingStackCopy(PStack_p binding_stack)
+{
+    PStack_p new_stack = PStackAlloc();
+    for (PStackPointer p=0; p< PStackGetSP(binding_stack); p++)
+    {
+        Binding_p binding_p = (Binding_p) PStackElementP(binding_stack, p);
+        Binding_p new = BindingCopy(binding_p);
+        PStackPushP(new_stack, new);
+    }
+    assert(PStackGetSP(new_stack) == PStackGetSP(binding_stack));
+    return new_stack;
+}
+
+void BindingStackFree(PStack_p trash)
+{
+    while (!PStackEmpty(trash))
+    {
+        Binding_p trash_bind = (Binding_p) PStackPopP(trash);
+        BindingFree(trash_bind);
+    }
+    PStackFree(trash);
 }

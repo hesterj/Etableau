@@ -41,7 +41,14 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 														 TableauSet_p distinct_tableaux, 
 														 TableauExtension_p extension, 
 														 TableauStack_p new_tableaux);
-										   
+
+ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableau_control,
+												 TableauSet_p distinct_tableaux,
+												 TableauExtension_p extension);
+ClauseTableau_p ClauseTableauExtensionRuleWrapper(TableauControl_p tableau_control,
+												  TableauSet_p distinct_tableaux,
+												  TableauExtension_p extension,
+												  PStack_p new_tableaux);
 TableauExtension_p TableauExtensionAlloc(Clause_p selected,
 										 Subst_p subst, 
 										 Clause_p head_clause, 

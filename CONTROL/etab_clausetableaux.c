@@ -257,7 +257,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	}
 	else
 	{
-		tab->label = NULL;
+		handle->label = NULL;
 	}
 	if ((handle->arity == 0) && (handle->open)) // If one of the open branches is found during copying, add it to the collection of open branches
 	{
@@ -651,6 +651,7 @@ void ClauseTableauPrint(ClauseTableau_p tab)
 	if (tab == NULL) Error("# Error:  Attempting to print NULL tableau", 1);
 	PStack_p leaves = PStackAlloc();
 	ClauseTableauCollectLeavesStack(tab, leaves);
+	fprintf(GlobalOut, "# There are %ld leaves\n", PStackGetSP(leaves));
 	for (PStackPointer p = 0; p<PStackGetSP(leaves); p++)
 	{
 		ClauseTableau_p handle = PStackElementP(leaves, p);
@@ -725,6 +726,7 @@ void ClauseTableauPrintBranch(ClauseTableau_p branch)
 {
 	ClauseTableau_p depth_check = branch;
 	assert(depth_check);
+	fprintf(GlobalOut, "# Depth: %d\n", depth_check->depth);
 	//printf("\033[1;33m");
 	while (depth_check->depth != 0)
 	{

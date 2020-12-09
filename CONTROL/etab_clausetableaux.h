@@ -20,13 +20,13 @@
 #include <clb_quadtrees.h>
 #include <clb_objtrees.h>
 
-typedef PStack_p ClauseStack_p;
-typedef PStack_p ClauseSetStack_p;
-typedef PStack_p TableauStack_p;
-typedef PStack_p BranchIntRep_p;
+typedef PStack_p ClauseStack_p; // Stack of Clause_p
+typedef PStack_p ClauseSetStack_p; // Stack of ClauseSet_p
+typedef PStack_p TableauStack_p; // Stack of ClauseTableau_p
 typedef PStack_p ClauseRep_p;
 typedef PList_p TableauList_p;
-typedef PStack_p BacktrackStack_p;
+typedef PStack_p BacktrackStack_p; // Stack of Backtrack_p
+typedef PStack_p BindingStack_p; // Stack of Binding_p
 struct tableaucontrol_cell;
 
 typedef struct clausetableau 
@@ -57,7 +57,7 @@ typedef struct clausetableau
 
 	// A stacks of previous steps.
 	BacktrackStack_p backtracks;  // This is only present at the master node.  This is a stack of Backtrack_p, most recent action is at the top.
-	BacktrackStack_p failures; // This is only present at the master node.  This is a stack of Backtrack_p that have been backtracked, and so must be avoided.
+	BacktrackStack_p failures; // This is present at the master node.  If a node is unable to be extended on, the most recent substitution is added to this.
 	// The failures can be interpreted as failure substitutions with an associated position in the tableau where the work was done.
 	
 	Clause_p label; // The clause at this node

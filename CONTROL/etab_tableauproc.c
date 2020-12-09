@@ -263,23 +263,32 @@ int Etableau(TableauControl_p tableaucontrol,
 																  start_rule_candidates,
 																  tableaucontrol);
 
-	// Do a branch saturation on the original problem before diving in to the tableaux proofsearch
-	assert(distinct_tableaux_set->members > 0);
 	ClauseTableau_p initial_example = distinct_tableaux_set->anchor->succ->master;
-	BranchSaturation_p branch_sat = BranchSaturationAlloc(tableaucontrol->proofstate,
-														  tableaucontrol->proofcontrol,
-														  initial_example,
-														  10000);
-	// Trying to keep one object in extensions and saturations
-	AttemptToCloseBranchesWithSuperpositionSerial(tableaucontrol, branch_sat);
-	BranchSaturationFree(branch_sat);
-	if (tableaucontrol->closed_tableau)
+	assert(distinct_tableaux_set->members > 0);
+	assert(initial_example);
+	assert(initial_example->label);
+	// Do a branch saturation on the original problem before diving in to the tableaux proofsearch
+	if (tableaucontrol->branch_saturation_enabled)
 	{
-		proof_found = true;
-		tableaucontrol->closed_tableau = initial_example;
-		EtableauStatusReport(tableaucontrol, active, tableaucontrol->closed_tableau);
+		fprintf(GlobalOut, "# Attempting initial tableau saturation\n");
+		BranchSaturation_p branch_sat = BranchSaturationAlloc(tableaucontrol->proofstate,
+															  tableaucontrol->proofcontrol,
+															  initial_example,
+															  10000);
+		// Trying to keep one object in extensions and saturations
+		AttemptToCloseBranchesWithSuperpositionSerial(tableaucontrol, branch_sat);
+		BranchSaturationFree(branch_sat);
+		if (tableaucontrol->closed_tableau)
+		{
+			proof_found = true;
+			tableaucontrol->closed_tableau = initial_example;
+			EtableauStatusReport(tableaucontrol, active, tableaucontrol->closed_tableau);
+		}
 	}
-
+	else
+	{
+		fprintf(GlobalOut, "# NOT attempting initial tableau saturation\n");
+	}
 	// Alternating path relevance experimentation zone
 	//if (!ClauseSetEmpty(extension_candidates))
 	//{
@@ -334,6 +343,7 @@ int Etableau(TableauControl_p tableaucontrol,
 	}
 	else if (!proof_found)// single core with this process
 	{
+		fprintf(GlobalOut, "# Single core proof search\n");
 		proof_found = EtableauProofSearch(tableaucontrol, 
 						  proofstate, 
 						  proofcontrol, 
@@ -532,10 +542,10 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 		{
 			//fprintf(GlobalOut, "# Attempting extension... %d\n", number_of_extensions);
 			number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranch(tableaucontrol,
-																									open_branch,
-																									NULL,
-																									selected,
-																									tab_tmp_store);
+																			  open_branch,
+																			  NULL,
+																			  selected,
+																			  tab_tmp_store);
 			if (tableaucontrol->closed_tableau)
 			{
 				closed_tableau = tableaucontrol->closed_tableau;
