@@ -234,6 +234,8 @@ int Etableau(TableauControl_p tableaucontrol,
 	FunCode max_var = ClauseSetGetMaxVar(active);
 
 	tableaucontrol->unprocessed = ClauseSetCopy(bank, proofstate->unprocessed);
+	ClauseSetFree(proofstate->unprocessed);
+	proofstate->unprocessed = ClauseSetAlloc();
 	GCAdmin_p gc = proofstate->gc_terms;
 	GCRegisterClauseSet(gc, tableaucontrol->unprocessed);
 	fprintf(GlobalOut, "# %ld beginning clauses after preprocessing and clausification\n", active->members);
@@ -920,13 +922,12 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
    initial_tab->state = proofstate;
    initial_tab->control = proofcontrol;
    initial_tab->unit_axioms = NULL;
-	BranchSaturation_p branch_sat = BranchSaturationAlloc(tableaucontrol->proofstate,
-														  tableaucontrol->proofcontrol,
-														  initial_tab,
-														  10000);
-	// Trying to keep one object in extensions and saturations
-	AttemptToCloseBranchesWithSuperpositionSerial(tableaucontrol, branch_sat);
-	BranchSaturationFree(branch_sat);
+	//BranchSaturation_p branch_sat = BranchSaturationAlloc(tableaucontrol->proofstate,
+														  //tableaucontrol->proofcontrol,
+														  //initial_tab,
+														  //10000);
+	//AttemptToCloseBranchesWithSuperpositionSerial(tableaucontrol, branch_sat);
+	//BranchSaturationFree(branch_sat);
 
 	ClauseTableau_p beginning_tableau = NULL;
 	TableauSet_p distinct_tableaux_set = TableauSetAlloc();

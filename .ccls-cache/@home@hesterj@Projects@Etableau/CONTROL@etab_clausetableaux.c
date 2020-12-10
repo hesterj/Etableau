@@ -752,8 +752,8 @@ void ClauseTableauPrintBranch(ClauseTableau_p branch)
 		fprintf(stdout, "\n");
 		depth_check = depth_check->parent;
 	}
-	assert (depth_check->depth == 0);
-	assert (depth_check->label);
+	assert(depth_check->depth == 0);
+	assert(depth_check->label);
 	
 	fprintf(stdout, "# %d,%d,%ld,%d \n", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
 	ClausePrint(stdout, depth_check->label, true);
@@ -1305,7 +1305,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 
 void TableauControlFree(TableauControl_p trash)
 {
-	//assert(ClauseSetEmpty(trash->label_storage));
+	assert(ClauseSetEmpty(trash->label_storage));
 	ClauseSetFree(trash->label_storage);
 	PStackFree(trash->tableaux_trash);
 	fprintf(GlobalOut, "# Freeing feature tree\n");

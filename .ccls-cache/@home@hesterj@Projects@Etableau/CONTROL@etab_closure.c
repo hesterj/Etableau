@@ -45,6 +45,9 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 
 int AttemptClosureRuleOnAllOpenBranches(ClauseTableau_p tableau)
 {
+	assert(tableau);
+	assert(tableau->master);
+	assert(tableau->master->label);
 	int num_branches_closed = 0;
 	ClauseTableau_p open_branch = tableau->open_branches->anchor->succ;
 	ClauseTableauUpdateVariables(tableau->master);

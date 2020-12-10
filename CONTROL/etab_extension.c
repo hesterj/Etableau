@@ -222,23 +222,9 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	{
 		TableauSetExtractEntry(parent);
 	}
-	//  If this tableau is irregular, we have to undo all of the work.
-	//  This can probably be detected earlier to save
-	//  unnecessary allocations and work.
-	//if (!regular)
-	//{
-		//assert(new_leaf_clauses_set->members == 0);
-		//ClauseSetFree(new_leaf_clauses_set);
-		//ClauseTableauFree(parent->master);
-		//SubstDelete(subst);
-		//return NULL;
-	//}
-	//else // the extension is regular- add it to the new tableaux to be processed later
-	//{
-		assert(parent->master);
-		PStackPushP(new_tableaux, parent->master);
-	//}
-	
+	assert(parent->master);
+	PStackPushP(new_tableaux, parent->master);
+
 	// The copying is done, we can delete the subst and print it to the info
 	DStrAppendStr(parent->info, " Expansion with clause ");
 	DStrAppendInt(parent->info, parent->id);
@@ -274,6 +260,7 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 	assert(parent->arity == number_of_children);
 	assert(new_leaf_clauses_set->members == 0);
 	assert(parent->master->open_branches);
+	assert(parent->master->label);
 	
 	// There is no need to apply the substitution to the tablaeu, it has already been done by copying labels.
 	// In fact, the substitution should be free'd before this function ever returns.

@@ -552,7 +552,7 @@ int main(int argc, char* argv[])
 #endif
 
 
-	if (TableauOptions == 1)
+	if (!success && TableauOptions == 1)
 	{
 		TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures, 
 																				argv[argc-1], // the problem file
