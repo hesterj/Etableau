@@ -13,8 +13,6 @@ long dive_depth = 10;
 /*  Forward Declarations
 */
 
-ClauseTableau_p tableau_select(TableauControl_p tableaucontrol, TableauSet_p set);
-ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth);
 extern void c_smoketest();
 
 /*  Function Definitions
@@ -98,7 +96,7 @@ long ClauseSetMoveUnits(ClauseSet_p set, ClauseSet_p units)
       else
       {
 			handle = handle->succ;
-		}
+	  }
    }
    return count;
 }
@@ -878,7 +876,7 @@ ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate, ClauseSet_p 
 	{
 		Clause_p conj_handle = handle->key.p_val;
 		ClauseSetExtractEntry(conj_handle);
-		ClauseSetProp(conj_handle, CPTypeConjecture);
+		//ClauseSetProp(conj_handle, CPTypeConjecture);
 		ClauseSetInsert(start_rule_candidates, conj_handle);
 	}
 		
@@ -922,12 +920,6 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
    initial_tab->state = proofstate;
    initial_tab->control = proofcontrol;
    initial_tab->unit_axioms = NULL;
-	//BranchSaturation_p branch_sat = BranchSaturationAlloc(tableaucontrol->proofstate,
-														  //tableaucontrol->proofcontrol,
-														  //initial_tab,
-														  //10000);
-	//AttemptToCloseBranchesWithSuperpositionSerial(tableaucontrol, branch_sat);
-	//BranchSaturationFree(branch_sat);
 
 	ClauseTableau_p beginning_tableau = NULL;
 	TableauSet_p distinct_tableaux_set = TableauSetAlloc();
@@ -936,7 +928,7 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
    while (start_label != start_rule_candidates->anchor)
    {
 		beginning_tableau = ClauseTableauMasterCopy(initial_tab);
-		beginning_tableau ->unit_axioms = ClauseSetCopy(initial_tab->terms, unit_axioms);
+		beginning_tableau->unit_axioms = ClauseSetCopy(initial_tab->terms, unit_axioms);
 		beginning_tableau->max_var = max_var;
 		beginning_tableau = TableauStartRule(beginning_tableau, start_label);
 		TableauSetInsert(distinct_tableaux_set, beginning_tableau->master);

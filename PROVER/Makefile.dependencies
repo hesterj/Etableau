@@ -3316,12 +3316,12 @@ eprover.o: eprover.c /usr/include/stdc-predef.h ../include/clb_defines.h \
  ../include/ccl_f_generality.h ../include/che_axfilter.h \
  ../include/che_rawspecfeatures.h ../include/cco_scheduling.h \
  /usr/include/x86_64-linux-gnu/sys/wait.h ../include/e_version.h \
- ../include/e_gitcommit.h ../include/etab_tableauproc.h \
- ../include/etab_extension.h ../include/etab_backtrack.h \
- ../include/etab_etableau.h ../include/etab_foldingup.h \
- ../include/etab_closure.h ../include/etab_localunification.h \
- ../include/etab_clausetableaux.h ../include/cco_proc_ctrl.h \
- ../include/etab_apr.h /usr/include/time.h \
+ ../include/e_gitcommit.h ../include/etab_newproc.h \
+ ../include/etab_tableauproc.h ../include/etab_extension.h \
+ ../include/etab_backtrack.h ../include/etab_etableau.h \
+ ../include/etab_foldingup.h ../include/etab_closure.h \
+ ../include/etab_localunification.h ../include/etab_clausetableaux.h \
+ ../include/cco_proc_ctrl.h ../include/etab_apr.h /usr/include/time.h \
  /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \

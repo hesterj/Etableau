@@ -95,6 +95,8 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
                                       ClauseSet_p unit_axioms,
                                       ClauseSet_p start_rule_candidates,
                                       TableauControl_p tableaucontrol);
-    
+
+ClauseTableau_p tableau_select(TableauControl_p tableaucontrol, TableauSet_p set);
+ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth);
 
 #endif

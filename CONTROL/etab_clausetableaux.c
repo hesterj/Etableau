@@ -253,7 +253,8 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 		{
 			PStackPushP(handle->old_labels, ClauseFlatCopy((Clause_p) PStackElementP(tab->old_labels, p)));
 		}
-		PStackPushP(handle->old_labels, ClauseFlatCopy(tab->label));
+		Clause_p old_label = ClauseFlatCopy(tab->label);
+		PStackPushP(handle->old_labels, old_label);
 	}
 	else
 	{
@@ -1305,7 +1306,6 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 
 void TableauControlFree(TableauControl_p trash)
 {
-	assert(ClauseSetEmpty(trash->label_storage));
 	ClauseSetFree(trash->label_storage);
 	PStackFree(trash->tableaux_trash);
 	fprintf(GlobalOut, "# Freeing feature tree\n");
