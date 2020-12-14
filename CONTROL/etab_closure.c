@@ -1,4 +1,5 @@
 #include <etab_closure.h>
+#include <etab_backtrack.h>
 
 /*  Simple wrapper for branch contradiction testing
  *  Checks the label of tab for contradiction against the labels of its parents
@@ -18,6 +19,10 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 		DStrAppendInt(tab->info, tab->id);
 		DStrAppendStr(tab->info, " ");
 		ClauseTableauRegisterStep(tab);
+
+		Backtrack_p backtrack = BacktrackAlloc(tab, subst);
+		PStackPushP(tab->backtracks, backtrack);
+
 		if (PStackGetSP(subst) == 0)  // Only subst needed was identity
 		{
 			SubstDelete(subst);

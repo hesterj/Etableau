@@ -43,8 +43,12 @@ bool VerifyBacktrackIsClosureStep(Backtrack_p handle);
 void BacktrackFree(Backtrack_p trash);
 ClauseTableau_p GetNodeFromPosition(ClauseTableau_p master, PStack_p position);
 BacktrackStack_p BacktrackStackCopy(BacktrackStack_p stack);
+bool SubstIsFailure(ClauseTableau_p tab, Subst_p subst);
+bool BindingOccursInSubst(Binding_p binding, Subst_p subst);
+bool BacktrackContainsSubst(Backtrack_p backtrack, Subst_p subst);
 void Backtrack(Backtrack_p bt);
 void RollBackEveryNode(ClauseTableau_p master);
+
 
 // Binding stuff, this is only used for failure substitutions!
 #define BindingCellAlloc() (BindingCell*)SizeMalloc(sizeof(BindingCell));

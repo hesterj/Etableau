@@ -11,4 +11,5 @@ int Etableau_n(TableauControl_p tableaucontrol,
                int max_depth,
                int tableauequality);
 
+ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol, ClauseTableau_p start, ClauseSet_p extension_candidates, int max_depth);
 #endif

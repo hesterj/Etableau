@@ -279,8 +279,8 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 		handle->children = NULL;
 	}
 
-	handle->backtracks = NULL;
-	handle->failures = NULL;
+	handle->backtracks = PStackAlloc();
+	handle->failures = PStackAlloc();
 	
 	return handle;
 }
@@ -339,8 +339,8 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->arity = 0;
 	handle->saturation_closed = false;
 
-	handle->backtracks = NULL;
-	handle->failures = NULL;
+	handle->backtracks = PStackAlloc();
+	handle->failures = PStackAlloc();
 
 	return handle;
 }
@@ -391,22 +391,21 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	DStrFree(trash->info);
 
 	// Free information about possible backtrack steps
-	if (trash->depth == 0)
+	assert(trash->backtracks);
+	assert(trash->failures);
+	Backtrack_p trash_backtrack;
+	while (!PStackEmpty(trash->backtracks))
 	{
-		Backtrack_p trash_backtrack;
-		while (!PStackEmpty(trash->backtracks))
-		{
-			trash_backtrack = (Backtrack_p) PStackPopP(trash->backtracks);
-			BacktrackFree(trash_backtrack);
-		}
-		PStackFree(trash->backtracks);
-		while (!PStackEmpty(trash->failures))
-		{
-			trash_backtrack = (Backtrack_p) PStackPopP(trash->failures);
-			BacktrackFree(trash_backtrack);
-		}
-		PStackFree(trash->failures);
+		trash_backtrack = (Backtrack_p) PStackPopP(trash->backtracks);
+		BacktrackFree(trash_backtrack);
 	}
+	PStackFree(trash->backtracks);
+	while (!PStackEmpty(trash->failures))
+	{
+		trash_backtrack = (Backtrack_p) PStackPopP(trash->failures);
+		BacktrackFree(trash_backtrack);
+	}
+	PStackFree(trash->failures);
 
 	// Free old labels
 	while (!PStackEmpty(trash->old_labels))

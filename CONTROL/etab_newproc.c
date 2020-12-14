@@ -41,20 +41,20 @@ int Etableau_n(TableauControl_p tableaucontrol,
     //  At this point, all that is left in extension_candidates are non-conjecture non-unit clauses.
     //  The conjecture non-unit clauses will be added to extension candidates later.
 
-    TableauSet_p distinct_tableaux_set = EtableauCreateStartRules(proofstate,
-                                                                  proofcontrol,
-                                                                  bank,
-                                                                  max_var,
-                                                                  unit_axioms,
-                                                                  start_rule_candidates,
-                                                                  tableaucontrol);
-   ClauseTableau_p initial_example = distinct_tableaux_set->anchor->succ->master;
+    TableauStack_p distinct_tableaux_stack = EtableauCreateStartRulesStack(proofstate,
+                                                                       proofcontrol,
+                                                                       bank,
+                                                                       max_var,
+                                                                       unit_axioms,
+                                                                       start_rule_candidates,
+                                                                       tableaucontrol);
 
-   if (distinct_tableaux_set->members == 0)
+   if (PStackEmpty(distinct_tableaux_stack))
    {
        Warning("There are no tableaux!");
    }
-   else if (!initial_example)
+   ClauseTableau_p initial_example = PStackElementP(distinct_tableaux_stack, 0);
+   if (!initial_example)
    {
        Warning("Unable to find a tableau!");
    }
@@ -89,11 +89,22 @@ int Etableau_n(TableauControl_p tableaucontrol,
    ClauseSetFreeUnits(start_rule_candidates);
    ClauseSetInsertSet(extension_candidates, start_rule_candidates);  // Now that all of the start rule tableaux have been created, non-unit start_rules can be made extension candidates.
    ClauseSetFree(start_rule_candidates);
-   fprintf(GlobalOut, "# %ld start rule tableaux created.\n", distinct_tableaux_set->members);
+   fprintf(GlobalOut, "# %ld start rule tableaux created.\n", PStackGetSP(distinct_tableaux_stack));
    fprintf(GlobalOut, "# %ld extension rule candidate clauses\n", extension_candidates->members);
    printf("\n");
 
    // Now do proof search...
+
+   while (!proof_found)
+   {
+       ClauseTableau_p closed_tableau = EtableauProofSearch_n(tableaucontrol, initial_example, extension_candidates, max_depth);
+       if (closed_tableau)
+       {
+           fprintf(GlobalOut, "# Report status...\n");
+           proof_found = true;
+       }
+   }
+
 
    // Proof search is over
 
@@ -104,12 +115,12 @@ int Etableau_n(TableauControl_p tableaucontrol,
    GCDeregisterClauseSet(gc, tableaucontrol->unprocessed);
    ClauseSetFree(tableaucontrol->unprocessed);
 
-   while (!TableauSetEmpty(distinct_tableaux_set))
+   while (!PStackEmpty(distinct_tableaux_stack))
    {
-       ClauseTableau_p trash = TableauSetExtractFirst(distinct_tableaux_set);
+       ClauseTableau_p trash = PStackPopP(distinct_tableaux_stack);
        ClauseTableauFree(trash);
    }
-   TableauSetFree(distinct_tableaux_set);
+   PStackFree(distinct_tableaux_stack);
 // Memory is cleaned up...
 
    if (proof_found) // success
@@ -122,4 +133,64 @@ int Etableau_n(TableauControl_p tableaucontrol,
        TSTPOUT(GlobalOut, "ResourceOut");
    }
    return 0;
+}
+
+ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol, ClauseTableau_p start, ClauseSet_p extension_candidates, int max_depth)
+{
+    assert(tableaucontrol);
+    assert(start);
+    assert(start->master == start);
+    assert(extension_candidates);
+    assert(max_depth);
+    assert(start->label);
+    assert(start->open_branches);
+
+    fprintf(GlobalOut, "# About to try to extend again...\n");
+
+    ClauseTableau_p closed_tableau = NULL;
+    ClauseTableau_p open_branch = branch_select(start->open_branches, max_depth);
+#ifndef DNDEBUG
+    ClauseTableauAssertCheck(open_branch->master);
+#endif
+
+    Clause_p selected = extension_candidates->anchor->succ;
+    int number_of_extensions = 0;
+    while (selected != extension_candidates->anchor) // iterate over the clauses we can split on the branch
+    {
+        number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranch(tableaucontrol,
+                                                                          open_branch,
+                                                                          NULL,
+                                                                          selected,
+                                                                          NULL);
+#ifndef DNDEBUG
+        ClauseTableauAssertCheck(open_branch->master);
+#endif
+        if (tableaucontrol->closed_tableau)
+        {
+            closed_tableau = tableaucontrol->closed_tableau;
+            fprintf(GlobalOut, "# Success\n");
+            return closed_tableau;
+        }
+        else if (number_of_extensions > 0)
+        {
+            fprintf(GlobalOut, "# Selecting a new open branch...\n");
+            return NULL;
+        }
+        selected = selected->succ;
+    }
+
+    fprintf(GlobalOut, "# Unable to extend on a branch!  It should be backtracked...\n");
+    assert(open_branch->parent->backtracks);
+    BacktrackStack_p backtrack_stack = open_branch->parent->backtracks;
+    Backtrack_p bt = (Backtrack_p) PStackPopP(backtrack_stack);
+    PStackPushP(open_branch->parent->failures, bt);
+    Backtrack(bt);
+
+    fprintf(GlobalOut, "# Backtracking completed...\n");
+
+#ifndef DNDEBUG
+    ClauseTableauAssertCheck(open_branch->master);
+#endif
+
+    return NULL;
 }

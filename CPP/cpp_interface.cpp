@@ -7,5 +7,5 @@
 
 void cpp_smoketest()
 {
-  std::cout << "Smoke" << std::endl;
+  std::cout << "# Smoke" << std::endl;
 }

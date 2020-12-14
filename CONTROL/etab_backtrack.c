@@ -77,9 +77,12 @@ ClauseTableau_p GetNodeFromPosition(ClauseTableau_p master, PStack_p position)
     assert(master);
     assert(position);
     ClauseTableau_p handle = master;
-    for (PStackPointer p = PStackGetSP(position); p != 0; p--)
+    for (PStackPointer p = PStackGetSP(position)-1; p != 0; p--)
     {
-        handle = master->children[(short) p];
+        int current_position = PStackElementInt(position, p);
+        handle = master->children[current_position];
+        assert(handle);
+        assert(handle->label);
     }
     return handle;
 }
@@ -140,15 +143,26 @@ BacktrackStack_p BacktrackStackCopy(BacktrackStack_p stack)
 
 void Backtrack(Backtrack_p bt)
 {
+    assert(bt);
     ClauseTableau_p master = bt->master;
+    assert(master);
+    assert(master->label);
     ClauseTableau_p position = GetNodeFromPosition(master, bt->position);
+    assert(position);
+    assert(position->label);
     if (BacktrackIsExtensionStep(bt))
     {
         // delete the children
-        position->open = true;
         for (int i=0; i<position->arity; i++)
         {
+            if (position->children[i]->set)
+            {
+                assert(position->children[i]->open == true);
+                TableauSetExtractEntry(position->children[i]);
+            }
             ClauseTableauFree(position->children[i]);
+            position->children[i]->label = NULL;
+            position->children[i] = NULL;
         }
         ClauseTableauArgArrayFree(position->children, position->arity);
         position->children = NULL;
@@ -156,11 +170,14 @@ void Backtrack(Backtrack_p bt)
     }
     else
     {
-        // mark the position as open
-        position->open = true;
+        assert(position->open == false);
+        assert(position->set == NULL);
     }
+    position->open = true;
+    TableauSetInsert(master->open_branches, position);
     // roll back every node of the tableau
     RollBackEveryNode(master);
+    assert(position->label);
     return;
 }
 
@@ -169,14 +186,13 @@ void RollBackEveryNode(ClauseTableau_p tab)
     PStackPointer p_labels = PStackGetSP(tab->old_labels);
     PStackPointer p_folding = PStackGetSP(tab->old_folding_labels);
     GCAdmin_p gc = tab->terms->gc;
-    if (p_labels == 0)
+    if (p_labels)
     {
-        Error("# ERROR:  Attempted to roll back a node, but there was nothing to roll back to.", 10);
+        Clause_p new_label = (Clause_p) PStackPopP(tab->old_labels);
+        ClauseSetExtractEntry(tab->label);
+        ClauseFree(tab->label);
+        tab->label = new_label;
     }
-    Clause_p new_label = (Clause_p) PStackPopP(tab->old_labels);
-    ClauseSetExtractEntry(tab->label);
-    ClauseFree(tab->label);
-    tab->label = new_label;
     if (p_folding)
     {
         ClauseSet_p new_folding_labels = (ClauseSet_p) PStackPopP(tab->old_folding_labels);
@@ -184,7 +200,8 @@ void RollBackEveryNode(ClauseTableau_p tab)
         ClauseSetFree(tab->folding_labels);
         tab->folding_labels = new_folding_labels;
     }
-    for (short i=0; i<tab->arity; i++)
+    assert(tab->label);
+    for (int i=0; i<tab->arity; i++)
     {
         RollBackEveryNode(tab->children[i]);
     }
@@ -213,4 +230,69 @@ void BindingStackFree(PStack_p trash)
         BindingFree(trash_bind);
     }
     PStackFree(trash);
+}
+
+/*
+** If a subst has been recorded as a failure substitution at a node, then return true!
+*/
+
+bool SubstIsFailure(ClauseTableau_p tab, Subst_p subst)
+{
+    assert(tab);
+    assert(subst);
+    assert(tab->failures);
+    BacktrackStack_p failures = tab->failures;
+    PStackPointer failures_length = PStackGetSP(failures);
+    for (int i=0; i<failures_length; i++)
+    {
+        Backtrack_p bt = PStackElementP(failures, i);
+        if (BacktrackContainsSubst(bt, subst))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+/*
+** Iterate over the subst, checking to see if the binding occurs
+*/
+
+bool BindingOccursInSubst(Binding_p binding, Subst_p subst)
+{
+    assert(binding);
+    assert(subst);
+    PStackPointer stack_pointer = PStackGetSP(subst);
+    for (int i=0; i<stack_pointer; i++)
+    {
+        Term_p var = PStackElementP(subst, i);
+        Term_p bound_var = TermDerefAlways(var);
+        Term_p binding_var = binding->variable;
+        Term_p binding_bound = binding->bind;
+        if ((var == binding_var) && (bound_var == binding_bound)) // Should probably not just do pointer comparisons...
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+/*
+** If any of the bindings in backtrack is more general than subst, return true.
+*/
+
+bool BacktrackContainsSubst(Backtrack_p backtrack, Subst_p subst)
+{
+    assert(backtrack);
+    assert(subst);
+    PStackPointer p = PStackGetSP(backtrack->bindings);
+    for (int i=0; i<p; i++)
+    {
+        Binding_p bind = PStackElementP(backtrack->bindings, i);
+        if (BindingOccursInSubst(bind, subst))
+        {
+            return true;
+        }
+    }
+    return false;
 }

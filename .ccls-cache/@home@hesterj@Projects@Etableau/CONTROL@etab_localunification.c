@@ -110,6 +110,8 @@ long CollectVariablesOfBranch(ClauseTableau_p branch, PTree_p *branch_vars, bool
 long CollectVariablesAtNode(ClauseTableau_p node, PTree_p *var_tree)
 {
    long num_collected = 0;
+   assert(node);
+   assert(node->label);
    
    num_collected += ClauseCollectVariables(node->label, var_tree);
 	

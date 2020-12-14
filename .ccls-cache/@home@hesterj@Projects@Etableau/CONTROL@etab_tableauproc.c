@@ -20,9 +20,11 @@ extern void c_smoketest();
 
 ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth)
 {
+	assert(open_branches);
 	int deepest_depth = 0;
 	ClauseTableau_p deepest = NULL;
 	ClauseTableau_p branch = open_branches->anchor->succ;
+	fprintf(GlobalOut, "# %ld open branches\n", open_branches->members);
 	while (branch != open_branches->anchor)
 	{
 		if (branch->depth > deepest_depth && branch->depth <= max_depth)
@@ -30,8 +32,14 @@ ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth)
 			deepest_depth = branch->depth;
 			deepest = branch;
 		}
+		fprintf(GlobalOut, "# %d\n", branch->depth);
+		assert(branch->label);
 		branch = branch->succ;
 	}
+	assert(deepest);
+	assert(deepest->label);
+	assert(deepest->arity == 0);
+	assert(deepest->children == NULL);
 	return deepest;
 }
 
@@ -938,6 +946,31 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
 
 	ClauseTableauFree(initial_tab);
 	return distinct_tableaux_set;
+}
+
+TableauStack_p EtableauCreateStartRulesStack(ProofState_p proofstate,
+											 ProofControl_p proofcontrol,
+											 TB_p bank,
+											 FunCode max_var,
+											 ClauseSet_p unit_axioms,
+											 ClauseSet_p start_rule_candidates,
+											 TableauControl_p tableaucontrol)
+{
+	PStack_p stack = PStackAlloc();
+	TableauSet_p dt = EtableauCreateStartRules(proofstate,
+											   proofcontrol,
+											   bank,
+											   max_var,
+											   unit_axioms,
+											   start_rule_candidates,
+											   tableaucontrol);
+	while (!TableauSetEmpty(dt))
+	{
+		ClauseTableau_p tab = TableauSetExtractFirst(dt);
+		PStackPushP(stack, tab);
+	}
+	TableauSetFree(dt);
+	return stack;
 }
 
 bool EtableauProofSearch(TableauControl_p tableaucontrol,

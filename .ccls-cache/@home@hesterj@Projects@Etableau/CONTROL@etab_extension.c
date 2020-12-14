@@ -414,10 +414,16 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableau_contro
 {
 	TB_p bank = extension->parent->terms;
 	Clause_p head_literal_clause = NULL;
-	ClauseSet_p new_leaf_clauses_set = ClauseSetAlloc(); // Copy the clauses of the extension into this
 	Subst_p subst = extension->subst;
 
+	if (SubstIsFailure(extension->parent, subst))
+	{
+		fprintf(GlobalOut, "# Failure substitution!\n");
+		SubstDelete(subst);
+		return NULL;
+	}
 
+	ClauseSet_p new_leaf_clauses_set = ClauseSetAlloc(); // Copy the clauses of the extension into this
 	// This for loop is used for regularity checking.  If the extension would create an irregular branch, block it and return NULL.
 	for (Clause_p handle = extension->other_clauses->anchor->succ;
 					  handle != extension->other_clauses->anchor;
@@ -470,8 +476,6 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableau_contro
 		assert(leaf_clause);
 		assert(parent->children[p]->label);
 		assert(parent->children[p]->label->set);
-		assert(parent->children[p]->backtracks == NULL);
-		assert(parent->children[p]->failures == NULL);
 		if (leaf_clause == head_literal_clause)
 		{
 			parent->children[p]->open = false;
@@ -504,7 +508,8 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableau_contro
 	// Register the extension step that we have completed with stack of backtracks we have available to us.
 
 	Backtrack_p backtrack = BacktrackAlloc(parent, subst);
-	BacktrackFree(backtrack);
+	PStackPushP(parent->backtracks, backtrack);
+	//BacktrackFree(backtrack);
 
 	SubstDelete(subst); // Extremely important!
 
@@ -559,7 +564,7 @@ ClauseTableau_p ClauseTableauExtensionRuleWrapper(TableauControl_p tableau_contr
 										  extension,
 										  new_tableaux);
 	}
-	Error("# This is not enabled yet.", 10);
+	//Error("# This is not enabled yet.", 10);
 	return ClauseTableauExtensionRuleNoCopy(tableau_control,
 											distinct_tableaux,
 											extension);
