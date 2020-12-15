@@ -149,9 +149,6 @@ ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol, ClauseTab
 
     ClauseTableau_p closed_tableau = NULL;
     ClauseTableau_p open_branch = branch_select(start->open_branches, max_depth);
-#ifndef DNDEBUG
-    ClauseTableauAssertCheck(open_branch->master);
-#endif
 
     Clause_p selected = extension_candidates->anchor->succ;
     int number_of_extensions = 0;
@@ -162,9 +159,6 @@ ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol, ClauseTab
                                                                           NULL,
                                                                           selected,
                                                                           NULL);
-#ifndef DNDEBUG
-        ClauseTableauAssertCheck(open_branch->master);
-#endif
         if (tableaucontrol->closed_tableau)
         {
             closed_tableau = tableaucontrol->closed_tableau;
@@ -179,17 +173,48 @@ ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol, ClauseTab
         selected = selected->succ;
     }
 
-    fprintf(GlobalOut, "# Unable to extend on a branch!  It should be backtracked...\n");
+    assert(number_of_extensions == 0);
     assert(open_branch->parent->backtracks);
-    BacktrackStack_p backtrack_stack = open_branch->parent->backtracks;
+
+    ClauseTableau_p backtrack_location = open_branch->parent;
+    BacktrackStack_p backtrack_stack = backtrack_location->backtracks;
+    fprintf(GlobalOut, "# Unable to extend on a branch!  It should be backtracked... there are %ld backtracks at the open branch\n", PStackGetSP(backtrack_stack));
+
+    // If there is nothing to backtrack at a node, we need to look farther up.
+    // Here, nothing to backtrack means that every extension attempt at the open branch has failed.
+    // That means that we must backtrack at a higher location...
+
+    while (PStackGetSP(backtrack_stack) == 0)
+    {
+        backtrack_location = backtrack_location->parent;
+        if (backtrack_location == NULL)
+        {
+            fprintf(GlobalOut, "# Went to the root in search of a backtrack...\n");
+            return NULL;
+        }
+        backtrack_stack = backtrack_location->backtracks;
+        assert(backtrack_stack);
+    }
     Backtrack_p bt = (Backtrack_p) PStackPopP(backtrack_stack);
-    PStackPushP(open_branch->parent->failures, bt);
+    PStackPushP(backtrack_location->failures, bt);
+    assert(GetNodeFromPosition(open_branch->master, bt->position) == backtrack_location);
+
+    assert(open_branch->master);
     Backtrack(bt);
+    open_branch = NULL; // open_branch has been free'd in backtracking!
 
     fprintf(GlobalOut, "# Backtracking completed...\n");
 
 #ifndef DNDEBUG
-    ClauseTableauAssertCheck(open_branch->master);
+    fprintf(GlobalOut, "# Verifying that the open branches are not broken...\n");
+    ClauseTableauAssertCheck(start->master);
+    ClauseTableau_p temp_handle = start->open_branches->anchor->succ;
+    while (temp_handle != start->open_branches->anchor)
+    {
+        assert(temp_handle->master == start);
+        assert(temp_handle->label);
+        temp_handle = temp_handle->succ;
+    }
 #endif
 
     return NULL;

@@ -461,9 +461,14 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableau_contro
 
 	parent->id = ClauseGetIdent(extension->selected);
 
+#ifndef DNDEBUG
+	fprintf(GlobalOut, "# Extension %p with %d children\n", parent, (int) number_of_children);
+#endif
+
 
 	assert(head_literal_clause);
 	assert(number_of_children == extension->other_clauses->members);
+	assert(number_of_children > 1);
 	assert(head_literal_clause->set == new_leaf_clauses_set);
 
 	parent->children = ClauseTableauArgArrayAlloc(number_of_children);

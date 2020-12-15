@@ -944,6 +944,7 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
 		start_label = start_label->succ;
 	}
 
+    TableauSetExtractEntry(initial_tab);
 	ClauseTableauFree(initial_tab);
 	return distinct_tableaux_set;
 }

@@ -43,11 +43,19 @@ Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst)
     backtrack->master = position->master;
     backtrack->position = PStackAlloc();
     ClauseTableau_p handle = position;
-    while (handle != position->master)
+    while (handle != handle->master)
     {
         PStackPushInt(backtrack->position, (long) handle->position);
-        handle = handle->master;
+        handle = handle->parent;
     }
+#ifndef DNDEBUG
+    assert(GetNodeFromPosition(position->master, backtrack->position) == position);
+    if (PStackGetSP(backtrack->position) != position->depth)
+    {
+        Warning("Recorded a position of depth %d with %d steps to reach it...", position->depth, PStackGetSP(backtrack->position));
+    }
+#endif
+
     backtrack->bindings = SubstRecordBindings(subst);
     return backtrack;
 
@@ -76,11 +84,18 @@ ClauseTableau_p GetNodeFromPosition(ClauseTableau_p master, PStack_p position)
 {
     assert(master);
     assert(position);
+
+    #ifndef DNDEBUG
+    fprintf(GlobalOut, "# Printing position stack: ");
+    PStackPrintInt(GlobalOut, " %ld ", position);
+    fprintf(GlobalOut, "\n");
+    #endif
+
     ClauseTableau_p handle = master;
-    for (PStackPointer p = PStackGetSP(position)-1; p != 0; p--)
+    for (PStackPointer p = PStackGetSP(position)-1; p >= 0; p--)
     {
         int current_position = PStackElementInt(position, p);
-        handle = master->children[current_position];
+        handle = handle->children[current_position];
         assert(handle);
         assert(handle->label);
     }
@@ -153,6 +168,8 @@ void Backtrack(Backtrack_p bt)
     if (BacktrackIsExtensionStep(bt))
     {
         // delete the children
+        fprintf(GlobalOut, "# Backtracking extension %p (d%d) with %d children and whose parent is %p\n", position, position->depth, position->arity, position->parent);
+        assert(position->arity > 1);
         for (int i=0; i<position->arity; i++)
         {
             if (position->children[i]->set)
@@ -160,23 +177,42 @@ void Backtrack(Backtrack_p bt)
                 assert(position->children[i]->open == true);
                 TableauSetExtractEntry(position->children[i]);
             }
+            #ifndef DNDEBUG
+            if (position->children[i]->arity)
+            {
+                Warning("Attempting to backtrack an extension with a child %p extended on!", position->children[i]);
+            }
+            #endif
+            assert(position->children[i]->set == NULL);
             ClauseTableauFree(position->children[i]);
             position->children[i]->label = NULL;
+            position->children[i]->parent = NULL;
+            position->children[i]->master = NULL;
             position->children[i] = NULL;
         }
         ClauseTableauArgArrayFree(position->children, position->arity);
         position->children = NULL;
         position->arity = 0;
+        position->id = 0;
     }
-    else
+    else // this is a closure step, etableau closures are not registered or backtracked
     {
         assert(position->open == false);
         assert(position->set == NULL);
     }
     position->open = true;
     TableauSetInsert(master->open_branches, position);
+
+#ifndef DNDEBUG
+    ClauseTableauAssertCheck(master);
+#endif
     // roll back every node of the tableau
     RollBackEveryNode(master);
+
+#ifndef DNDEBUG
+    ClauseTableauAssertCheck(master);
+#endif
+
     assert(position->label);
     return;
 }
@@ -269,9 +305,19 @@ bool BindingOccursInSubst(Binding_p binding, Subst_p subst)
         Term_p bound_var = TermDerefAlways(var);
         Term_p binding_var = binding->variable;
         Term_p binding_bound = binding->bind;
-        if ((var == binding_var) && (bound_var == binding_bound)) // Should probably not just do pointer comparisons...
+        //if ((var == binding_var) && (bound_var == binding_bound)) // Should probably not just do pointer comparisons...
+        if (var == binding_var) // Terms are ALWAYS shared
         {
-            return true;
+            Subst_p subst = SubstAlloc();
+            if (SubstMguComplete(bound_var, binding_bound, subst))
+            {
+                if (SubstIsRenaming(subst))
+                {
+                    SubstFree(subst);
+                    return true;
+                }
+            }
+            SubstFree(subst);
         }
     }
     return false;

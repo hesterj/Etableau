@@ -351,6 +351,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 void ClauseTableauFree(ClauseTableau_p trash)
 {
 	GCAdmin_p gc = trash->state->gc_terms;
+	assert(trash->set == NULL);
 	if (trash->depth == 0 && trash->tableau_variables)
 	{
 		//PStackFree(trash->derivation);
@@ -992,7 +993,14 @@ ClauseSet_p EqualityAxioms(TB_p bank)
 int ClauseTableauAssertCheck(ClauseTableau_p tab)
 {
 	int num_nodes = 0;
+	assert(tab);
 	assert(tab->label);
+#ifndef DNDEBUG
+	if (tab->arity == 0)
+	{
+		Warning("Depth %d", tab->depth);
+	}
+#endif
 	if (tab->parent)
 	{
 		assert(tab->depth > 0);
