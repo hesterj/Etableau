@@ -172,6 +172,7 @@ Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause,
 		Term_p old_var = PStackElementP(local_variables, p);
 		assert(old_var);
 		assert(old_var->f_code < 0);
+		assert(!(old_var->binding));
 		// master->max_var -= 2;
 		// Term_p fresh_var = VarBankGetFreshVar(variable_bank, old_var->type); // old
 		Term_p fresh_var = ClauseTableauGetFreshVar(master->master, old_var);

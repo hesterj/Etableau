@@ -56,8 +56,9 @@ typedef struct clausetableau
 	PTree_p tableau_variables;
 
 	// A stacks of previous steps.
-	BacktrackStack_p backtracks;  // This is only present at the master node.  This is a stack of Backtrack_p, most recent action is at the top.
-	BacktrackStack_p failures; // This is present at the master node.  If a node is unable to be extended on, the most recent substitution is added to this.
+	PStack_p master_backtracks; // This is present at the master only.  At the top is the most recent action taken anywhere in the tableau.  This is a PStack_p of PStack_p.
+	BacktrackStack_p backtracks;  // This is present at every node.  This is a stack of Backtrack_p, most recent action is at the top.
+	BacktrackStack_p failures; // This is present at every node.  If a node is unable to be extended on, the most recent substitution is added to this.
 	// The failures can be interpreted as failure substitutions with an associated position in the tableau where the work was done.
 	
 	Clause_p label; // The clause at this node
@@ -105,7 +106,6 @@ void ClauseTableauPrint2(ClauseTableau_p tab);
 void HCBClauseSetEvaluate(HCB_p hcb, ClauseSet_p clauses);
 
 ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set);
-ClauseSet_p ClauseSetFlatCopy(TB_p bank, ClauseSet_p set);
 ClauseSet_p ClauseSetFlatCopy(TB_p bank, ClauseSet_p set);
 Clause_p ClauseFlatCopyFresh(Clause_p clause, ClauseTableau_p tableau);
 

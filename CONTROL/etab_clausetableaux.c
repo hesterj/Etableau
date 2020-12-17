@@ -50,6 +50,7 @@ ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
 
 	handle->old_labels = PStackAlloc();
 	handle->old_folding_labels = PStackAlloc();
+	handle->master_backtracks = PStackAlloc();
 	handle->backtracks = PStackAlloc();
 	handle->failures = PStackAlloc();
 	
@@ -167,6 +168,14 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	assert(tab->depth == 0);
 	assert(tab->backtracks);
 	assert(tab->failures);
+
+	handle->master_backtracks = PStackAlloc();
+	for (PStackPointer p=0; p < PStackGetSP(tab->master_backtracks); p++)
+	{
+		PStack_p old_position = PStackElementP(tab->master_backtracks, p);
+		PStack_p copied_position = PStackCopy(old_position);
+		PStackPushP(handle->master_backtracks, copied_position);
+	}
 	handle->backtracks = BacktrackStackCopy(tab->backtracks);
 	handle->failures = BacktrackStackCopy(tab->failures);
 
@@ -279,6 +288,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 		handle->children = NULL;
 	}
 
+	handle->master_backtracks = NULL;
 	handle->backtracks = PStackAlloc();
 	handle->failures = PStackAlloc();
 	
@@ -339,6 +349,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->arity = 0;
 	handle->saturation_closed = false;
 
+	handle->master_backtracks = NULL;
 	handle->backtracks = PStackAlloc();
 	handle->failures = PStackAlloc();
 
@@ -351,7 +362,11 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 void ClauseTableauFree(ClauseTableau_p trash)
 {
 	GCAdmin_p gc = trash->state->gc_terms;
-	assert(trash->set == NULL);
+	if (trash->set)
+	{
+		Warning("Freeing open branch");
+		TableauSetExtractEntry(trash);
+	}
 	if (trash->depth == 0 && trash->tableau_variables)
 	{
 		//PStackFree(trash->derivation);
@@ -387,7 +402,14 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	}
 	if (trash->depth == 0)
 	{
+		assert(trash->master_backtracks);
 		TableauSetFree(trash->open_branches);
+		while (!PStackEmpty(trash->master_backtracks))
+		{
+			PStack_p trash_position = PStackPopP(trash->master_backtracks);
+			PStackFree(trash_position);
+		}
+		PStackFree(trash->master_backtracks);
 	}
 	DStrFree(trash->info);
 
@@ -995,12 +1017,12 @@ int ClauseTableauAssertCheck(ClauseTableau_p tab)
 	int num_nodes = 0;
 	assert(tab);
 	assert(tab->label);
-#ifndef DNDEBUG
-	if (tab->arity == 0)
-	{
-		Warning("Depth %d", tab->depth);
-	}
-#endif
+//#ifndef DNDEBUG
+	//if (tab->arity == 0)
+	//{
+		//Warning("Depth %d", tab->depth);
+	//}
+//#endif
 	if (tab->parent)
 	{
 		assert(tab->depth > 0);

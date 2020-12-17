@@ -14,6 +14,12 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 
 	if ((subst = ClauseContradictsBranch(tab, tab->label)))
 	{
+		if (SubstIsFailure(tab, subst))
+		{
+			fprintf(GlobalOut, "# Failure substitution in closure rule attempt!\n");
+			SubstDelete(subst);
+			return false;
+		}
 		SubstDStrPrint(tab->info, subst, tab->terms->sig, DEREF_NEVER);
 		DStrAppendStr(tab->info, " Reduction step with clause ");
 		DStrAppendInt(tab->info, tab->id);
@@ -21,19 +27,15 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 		ClauseTableauRegisterStep(tab);
 
 		Backtrack_p backtrack = BacktrackAlloc(tab, subst);
+		assert(BacktrackIsClosureStep(backtrack));
+		assert(tab->arity == 0);
 		PStackPushP(tab->backtracks, backtrack);
+		PStack_p position_copy = PStackCopy(backtrack->position);
+		PStackPushP(tab->master->master_backtracks, position_copy);
 
-		if (PStackGetSP(subst) == 0)  // Only subst needed was identity
-		{
-			SubstDelete(subst);
-			return true;
-		}
-		else
-		{
-			ClauseTableauApplySubstitution(tab->master, subst);
-			SubstDelete(subst);
-			return true;
-		}
+		ClauseTableauApplySubstitution(tab->master, subst);
+		SubstDelete(subst);
+		return true;
 	}
 	return false;
 }

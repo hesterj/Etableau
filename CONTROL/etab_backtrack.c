@@ -193,13 +193,14 @@ void Backtrack(Backtrack_p bt)
         ClauseTableauArgArrayFree(position->children, position->arity);
         position->children = NULL;
         position->arity = 0;
-        position->id = 0;
     }
     else // this is a closure step, etableau closures are not registered or backtracked
     {
+        assert(position->arity == 0);
         assert(position->open == false);
         assert(position->set == NULL);
     }
+    position->id = 0;
     position->open = true;
     TableauSetInsert(master->open_branches, position);
 
@@ -207,7 +208,10 @@ void Backtrack(Backtrack_p bt)
     ClauseTableauAssertCheck(master);
 #endif
     // roll back every node of the tableau
-    RollBackEveryNode(master);
+    if (PStackGetSP(bt->bindings) > 0) //
+    {
+        RollBackEveryNode(master);
+    }
 
 #ifndef DNDEBUG
     ClauseTableauAssertCheck(master);
@@ -313,11 +317,11 @@ bool BindingOccursInSubst(Binding_p binding, Subst_p subst)
             {
                 if (SubstIsRenaming(subst))
                 {
-                    SubstFree(subst);
+                    SubstDelete(subst);
                     return true;
                 }
             }
-            SubstFree(subst);
+            SubstDelete(subst);
         }
     }
     return false;

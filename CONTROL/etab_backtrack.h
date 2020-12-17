@@ -37,7 +37,7 @@ Backtrack_p BacktrackAlloc_UNUSED(Subst_p subst, VarBank_p varbank, ClauseTablea
 Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst);
 Backtrack_p BacktrackCopy(Backtrack_p original);
 #define BacktrackIsExtensionStep(bt) (bt->is_extension_step)
-#define BacktrackisClosureStep(bt) !BacktrackIsExtensionStep(bt)
+#define BacktrackIsClosureStep(bt) !BacktrackIsExtensionStep(bt)
 bool VerifyBacktrackIsExtensionStep(Backtrack_p handle);
 bool VerifyBacktrackIsClosureStep(Backtrack_p handle);
 void BacktrackFree(Backtrack_p trash);

@@ -51,16 +51,16 @@ int Etableau_n(TableauControl_p tableaucontrol,
 
    if (PStackEmpty(distinct_tableaux_stack))
    {
-       Warning("There are no tableaux!");
+       Error("There are no tableaux!", 10);
    }
    ClauseTableau_p initial_example = PStackElementP(distinct_tableaux_stack, 0);
    if (!initial_example)
    {
-       Warning("Unable to find a tableau!");
+       Error("Unable to find a tableau!", 10);
    }
    else if (!initial_example->label)
    {
-       Warning("Initial tableau has no label!");
+       Error("Initial tableau has no label!", 10);
    }
 
 // Do a branch saturation on the original problem before diving in to the tableaux proofsearch
@@ -100,7 +100,7 @@ int Etableau_n(TableauControl_p tableaucontrol,
        ClauseTableau_p closed_tableau = EtableauProofSearch_n(tableaucontrol, initial_example, extension_candidates, max_depth);
        if (closed_tableau)
        {
-           fprintf(GlobalOut, "# Report status...\n");
+           fprintf(GlobalOut, "# Report status... proof found\n");
            proof_found = true;
        }
    }
@@ -135,25 +135,26 @@ int Etableau_n(TableauControl_p tableaucontrol,
    return 0;
 }
 
-ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol, ClauseTableau_p start, ClauseSet_p extension_candidates, int max_depth)
+ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol, ClauseTableau_p master, ClauseSet_p extension_candidates, int max_depth)
 {
     assert(tableaucontrol);
-    assert(start);
-    assert(start->master == start);
+    assert(master);
+    assert(master->master == master);
     assert(extension_candidates);
     assert(max_depth);
-    assert(start->label);
-    assert(start->open_branches);
+    assert(master->label);
+    assert(master->open_branches);
 
-    fprintf(GlobalOut, "# About to try to extend again...\n");
 
     ClauseTableau_p closed_tableau = NULL;
-    ClauseTableau_p open_branch = branch_select(start->open_branches, max_depth);
+    ClauseTableau_p open_branch = branch_select(master->open_branches, max_depth);
+    fprintf(GlobalOut, "# About to try to extend again... %ld failures here\n", PStackGetSP(open_branch->failures));
 
     Clause_p selected = extension_candidates->anchor->succ;
     int number_of_extensions = 0;
     while (selected != extension_candidates->anchor) // iterate over the clauses we can split on the branch
     {
+        fprintf(GlobalOut, "# Attempting to expand with clause...\n");
         number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranch(tableaucontrol,
                                                                           open_branch,
                                                                           NULL,
@@ -167,7 +168,7 @@ ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol, ClauseTab
         }
         else if (number_of_extensions > 0)
         {
-            fprintf(GlobalOut, "# Selecting a new open branch...\n");
+            fprintf(GlobalOut, "#  Extended on a branch at depth %d...\n", open_branch->depth);
             return NULL;
         }
         selected = selected->succ;
@@ -176,42 +177,45 @@ ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol, ClauseTab
     assert(number_of_extensions == 0);
     assert(open_branch->parent->backtracks);
 
-    ClauseTableau_p backtrack_location = open_branch->parent;
+    PStack_p master_backtracks = master->master_backtracks;
+    fprintf(GlobalOut, "# Unable to extend on a branch!  We need to backtrack... There are %ld known previous steps we can backtrack\n", PStackGetSP(master_backtracks));
+    PStack_p bt_position = (PStack_p) PStackPopP(master_backtracks); // bt_position is a stack indicating a location in the tableau
+    ClauseTableau_p backtrack_location = GetNodeFromPosition(master, bt_position);
+    assert(backtrack_location);
+    assert(backtrack_location->label);
+    PStackFree(bt_position);
+    fprintf(GlobalOut, "# There are %ld failures at this node.\n", PStackGetSP(backtrack_location->failures));
     BacktrackStack_p backtrack_stack = backtrack_location->backtracks;
-    fprintf(GlobalOut, "# Unable to extend on a branch!  It should be backtracked... there are %ld backtracks at the open branch\n", PStackGetSP(backtrack_stack));
 
-    // If there is nothing to backtrack at a node, we need to look farther up.
-    // Here, nothing to backtrack means that every extension attempt at the open branch has failed.
-    // That means that we must backtrack at a higher location...
-
-    while (PStackGetSP(backtrack_stack) == 0)
-    {
-        backtrack_location = backtrack_location->parent;
-        if (backtrack_location == NULL)
-        {
-            fprintf(GlobalOut, "# Went to the root in search of a backtrack...\n");
-            return NULL;
-        }
-        backtrack_stack = backtrack_location->backtracks;
-        assert(backtrack_stack);
-    }
     Backtrack_p bt = (Backtrack_p) PStackPopP(backtrack_stack);
     PStackPushP(backtrack_location->failures, bt);
-    assert(GetNodeFromPosition(open_branch->master, bt->position) == backtrack_location);
-
+    assert(GetNodeFromPosition(master, bt->position) == backtrack_location);
     assert(open_branch->master);
+
+    if (backtrack_location->arity != 0)
+    {
+        fprintf(GlobalOut, "# We are backtracking an extension step\n");
+        assert(BacktrackIsExtensionStep(bt));
+    }
+    else
+    {
+        assert(backtrack_location->arity == 0);
+        assert(BacktrackIsClosureStep(bt));
+        fprintf(GlobalOut, "# We are backtracking a closure step\n");
+    }
     Backtrack(bt);
+
     open_branch = NULL; // open_branch has been free'd in backtracking!
 
     fprintf(GlobalOut, "# Backtracking completed...\n");
 
 #ifndef DNDEBUG
     fprintf(GlobalOut, "# Verifying that the open branches are not broken...\n");
-    ClauseTableauAssertCheck(start->master);
-    ClauseTableau_p temp_handle = start->open_branches->anchor->succ;
-    while (temp_handle != start->open_branches->anchor)
+    ClauseTableauAssertCheck(master->master);
+    ClauseTableau_p temp_handle = master->open_branches->anchor->succ;
+    while (temp_handle != master->open_branches->anchor)
     {
-        assert(temp_handle->master == start);
+        assert(temp_handle->master == master);
         assert(temp_handle->label);
         temp_handle = temp_handle->succ;
     }

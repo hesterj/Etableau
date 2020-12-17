@@ -24,7 +24,7 @@ ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth)
 	int deepest_depth = 0;
 	ClauseTableau_p deepest = NULL;
 	ClauseTableau_p branch = open_branches->anchor->succ;
-	fprintf(GlobalOut, "# %ld open branches\n", open_branches->members);
+	//fprintf(GlobalOut, "# %ld open branches\n", open_branches->members);
 	while (branch != open_branches->anchor)
 	{
 		if (branch->depth > deepest_depth && branch->depth <= max_depth)
@@ -32,7 +32,6 @@ ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth)
 			deepest_depth = branch->depth;
 			deepest = branch;
 		}
-		fprintf(GlobalOut, "# %d\n", branch->depth);
 		assert(branch->label);
 		branch = branch->succ;
 	}
