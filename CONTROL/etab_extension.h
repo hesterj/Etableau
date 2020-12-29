@@ -30,17 +30,21 @@ bool ClauseTableauExtensionIsRegular(ClauseTableau_p branch, Clause_p clause);
 #define TableauExtensionCellAlloc() (TableauExtension*)SizeMalloc(sizeof(TableauExtension))
 #define TableauExtensionCellFree(junk) SizeFree(junk, sizeof(TableauExtension))
 
+ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableaucontrol,
+														ClauseTableau_p open_branch,
+														ClauseSet_p extension_candidates,
+														int max_depth);
 int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p control,
-															 ClauseTableau_p open_branch, 
-															 TableauSet_p distinct_tableaux,
-															 Clause_p selected,
-															 TableauStack_p new_tableaux);
+											  ClauseTableau_p open_branch,
+											  TableauSet_p distinct_tableaux,
+											  Clause_p selected,
+											  TableauStack_p new_tableaux);
 ClauseSet_p SplitClauseFresh(TB_p bank, ClauseTableau_p tableau, Clause_p clause); // Major memory eating offender
 TableauExtension_p ClauseTableauCreateExtensionJobs(ClauseTableau_p open_branch, Clause_p selected);
 ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
-														 TableauSet_p distinct_tableaux, 
-														 TableauExtension_p extension, 
-														 TableauStack_p new_tableaux);
+										   TableauSet_p distinct_tableaux,
+										   TableauExtension_p extension,
+										   TableauStack_p new_tableaux);
 
 ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableau_control,
 												 TableauSet_p distinct_tableaux,

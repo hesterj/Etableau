@@ -192,6 +192,7 @@ typedef struct tableaucontrol_cell
 	long number_of_saturation_attempts;
 	long number_of_successful_saturation_attempts;
 	long neg_conjectures;
+	long number_of_nodes_freed;
 	char *problem_name;
 	PStack_p new_tableaux;
 	ClauseTableau_p closed_tableau;

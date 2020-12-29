@@ -357,14 +357,21 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 }
 
 /*  Sets the relevant fields to NULL after free'ing
+ *  Frees the children of the trash tableau as well.
 */
 
 void ClauseTableauFree(ClauseTableau_p trash)
 {
 	GCAdmin_p gc = trash->state->gc_terms;
+	fprintf(GlobalOut, "! Freeing a node\n");
+	trash->master->tableaucontrol->number_of_nodes_freed++;
+	if (trash->master->tableaucontrol->number_of_nodes_freed == 17)
+	{
+		Error("Early exit", 10);
+	}
 	if (trash->set)
 	{
-		Warning("Freeing open branch");
+		Warning("!!! Freeing open branch");
 		TableauSetExtractEntry(trash);
 	}
 	if (trash->depth == 0 && trash->tableau_variables)
@@ -391,14 +398,6 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	{
 		GCDeregisterClauseSet(gc, trash->folding_labels);
 		ClauseSetFree(trash->folding_labels);
-	}
-	if (trash->children)
-	{
-		for (int i=0; i<trash->arity; i++)
-		{
-			ClauseTableauFree(trash->children[i]);
-		}
-		ClauseTableauArgArrayFree(trash->children, trash->arity);
 	}
 	if (trash->depth == 0)
 	{
@@ -442,6 +441,7 @@ void ClauseTableauFree(ClauseTableau_p trash)
 		}
 		ClauseFree(old_trash_label);
 	}
+	assert(PStackEmpty(trash->old_labels));
 	PStackFree(trash->old_labels);
 
 	//  Free old folding label sets
@@ -451,7 +451,19 @@ void ClauseTableauFree(ClauseTableau_p trash)
 		GCDeregisterClauseSet(gc, old_trash_folds);
 		ClauseSetFree(old_trash_folds);
 	}
+	assert(PStackEmpty(trash->old_folding_labels));
 	PStackFree(trash->old_folding_labels);
+
+	// Everything that can be free'd has been done, so free the children...
+
+	if (trash->children)
+	{
+		for (int i=0; i<trash->arity; i++)
+		{
+			ClauseTableauFree(trash->children[i]);
+		}
+		ClauseTableauArgArrayFree(trash->children, trash->arity);
+	}
 
 	ClauseTableauCellFree(trash);
 }
@@ -533,19 +545,25 @@ FunCode ClauseSetGetMaxVar(ClauseSet_p set)
 }
 
 /*  Recursively apply subst to the clauses in tab, and tab's children
+ *  Subst is not directly used in the function... Since the subst sets bindings to variables, it is kept here as a reminder of what is happening.
 */
 
 void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 {
 	GCAdmin_p gc = tab->state->gc_terms;
+	assert(tab);
 	assert(tab->label);
 	assert(subst);
+	assert(PStackGetSP(subst));
+	//fprintf(GlobalOut, "# Applying substition of lenght %ld to node\n", PStackGetSP(subst));
 	ClauseSet_p label_storage = tab->master->tableaucontrol->label_storage;
+	//fprintf(GlobalOut, "# There are %ld clauses in label storage\n", label_storage->members);
 	Clause_p new_label = ClauseCopy(tab->label, tab->terms);
-	//ClauseSetExtractEntry(tab->label);
-	//ClauseFree(tab->label);
+	fprintf(GlobalOut, "# New label: %p\n", new_label);
+
 	PStackPushP(tab->old_labels, tab->label);  // Store old folding labels in case we need to backtrack
 	ClauseSetInsert(label_storage, new_label);
+	//fprintf(GlobalOut, "# There are %ld clauses in label storage after adding the new label\n", label_storage->members);
 	assert(new_label);
 	tab->label = new_label;
 	
@@ -564,6 +582,7 @@ void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 	{
 		ClauseTableauApplySubstitutionToNode(tab->children[i], subst);
 	}
+	return;
 }
 
 Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
@@ -1315,6 +1334,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->number_of_extensions = 0;  // Total number of extensions done
 	handle->number_of_saturation_attempts = 0;
 	handle->number_of_successful_saturation_attempts = 0;
+	handle->number_of_nodes_freed = 0;
 	handle->closed_tableau = NULL;
 	handle->branch_saturation_enabled = branch_saturation_enabled;
 	handle->satisfiable = false;

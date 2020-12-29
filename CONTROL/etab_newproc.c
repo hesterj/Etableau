@@ -135,7 +135,10 @@ int Etableau_n(TableauControl_p tableaucontrol,
    return 0;
 }
 
-ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol, ClauseTableau_p master, ClauseSet_p extension_candidates, int max_depth)
+ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol,
+                                      ClauseTableau_p master,
+                                      ClauseSet_p extension_candidates,
+                                      int max_depth)
 {
     assert(tableaucontrol);
     assert(master);
@@ -145,40 +148,61 @@ ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol, ClauseTab
     assert(master->label);
     assert(master->open_branches);
 
-
-    ClauseTableau_p closed_tableau = NULL;
-    ClauseTableau_p open_branch = branch_select(master->open_branches, max_depth);
-    fprintf(GlobalOut, "# About to try to extend again... %ld failures here\n", PStackGetSP(open_branch->failures));
-
-    Clause_p selected = extension_candidates->anchor->succ;
-    int number_of_extensions = 0;
-    while (selected != extension_candidates->anchor) // iterate over the clauses we can split on the branch
+    if (tableaucontrol->number_of_nodes_freed == 16)
     {
-        fprintf(GlobalOut, "# Attempting to expand with clause...\n");
-        number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranch(tableaucontrol,
-                                                                          open_branch,
-                                                                          NULL,
-                                                                          selected,
-                                                                          NULL);
-        if (tableaucontrol->closed_tableau)
-        {
-            closed_tableau = tableaucontrol->closed_tableau;
-            fprintf(GlobalOut, "# Success\n");
-            return closed_tableau;
-        }
-        else if (number_of_extensions > 0)
-        {
-            fprintf(GlobalOut, "#  Extended on a branch at depth %d...\n", open_branch->depth);
-            return NULL;
-        }
-        selected = selected->succ;
+        fprintf(GlobalOut, "!!! Extending with 16 nodes free'd\n");
+        //Error("!!! Leak check!\n", 10);
     }
 
-    assert(number_of_extensions == 0);
-    assert(open_branch->parent->backtracks);
+    int extensions_done = 0; // This allows us to keep track of the number of extensions done since the last backtrack
+    ClauseTableau_p open_branch = NULL, result = NULL;
+    TableauSet_p open_branches = master->open_branches;
+    while ((open_branch = branch_select(open_branches, max_depth)))
+    {
+        if (tableaucontrol->number_of_extensions == 17)
+        {
+            fprintf(GlobalOut, "!!! About to do a bad extension...\n");
+            //Error("!!! Leak check!", 10);
+        }
+        fprintf(GlobalOut, "# Selected open branch %p, %d extensions done so far\n", open_branch, tableaucontrol->number_of_extensions);
+        assert(open_branch);
+        assert(open_branch->id == 0);
+        assert(open_branch->backtracks);
+        assert(open_branch->failures);
+        assert(open_branch->parent);
+        assert(open_branch->parent->backtracks);
+        result = ClauseTableauSearchForPossibleExtension(tableaucontrol,
+                                                         open_branch,
+                                                         extension_candidates,
+                                                         max_depth);
+        if (tableaucontrol->number_of_extensions == 13)
+        {
+            fprintf(GlobalOut, "!!! %d extensions have been done!\n", tableaucontrol->number_of_extensions);
+            Error("!!! Leak check!\n", 10);
+        }
+        if (result) // We have found a closed tableau
+        {
+            return result;
+        }
+        if (open_branch->set) // If the open branch is still in a set after the extension rule attempt, it means it was not able to be extended and so should be backtracked
+        {
+            break;
+        }
+        extensions_done++;
+    }
+
+    if (tableaucontrol->number_of_nodes_freed == 16)
+    {
+        fprintf(GlobalOut, "!!! Backtracking with 16 nodes free'd, %d/%d extensions done since last backtrack\n", extensions_done, tableaucontrol->number_of_extensions);
+        Error("!!! Leak check!\n", 10);
+    }
 
     PStack_p master_backtracks = master->master_backtracks;
     fprintf(GlobalOut, "# Unable to extend on a branch!  We need to backtrack... There are %ld known previous steps we can backtrack\n", PStackGetSP(master_backtracks));
+    if (PStackGetSP(master_backtracks) == 0)
+    {
+        Error("The tableau failed to backtrack because there are no possible previous steps", 10);
+    }
     PStack_p bt_position = (PStack_p) PStackPopP(master_backtracks); // bt_position is a stack indicating a location in the tableau
     ClauseTableau_p backtrack_location = GetNodeFromPosition(master, bt_position);
     assert(backtrack_location);
@@ -203,6 +227,8 @@ ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol, ClauseTab
         assert(BacktrackIsClosureStep(bt));
         fprintf(GlobalOut, "# We are backtracking a closure step\n");
     }
+
+
     Backtrack(bt);
 
     open_branch = NULL; // open_branch has been free'd in backtracking!

@@ -199,6 +199,7 @@ void Backtrack(Backtrack_p bt)
         assert(position->arity == 0);
         assert(position->open == false);
         assert(position->set == NULL);
+        assert(position->children == NULL);
     }
     position->id = 0;
     position->open = true;

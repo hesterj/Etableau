@@ -348,6 +348,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			{
 				fflush(GlobalOut);
 				extensions_done++;
+				tableau_control->number_of_extensions++;
 				if (extended->open_branches->members == 0) //success
 				{
 					assert(extended->master->label);
@@ -385,6 +386,11 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 					ClauseSetFree(new_leaf_clauses);
 					return extensions_done;
 				}
+				if (new_leaf_clauses == NULL)
+				{
+					ClauseSetFree(new_leaf_clauses);
+					return NULL;
+				}
 			}
 		}
 		else
@@ -411,7 +417,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 **  Important:  When this function is called, there is a substitution active.
 */
 
-ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableau_control,
+ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol,
 												 TableauSet_p distinct_tableaux,
 												 TableauExtension_p extension)
 {
@@ -421,13 +427,13 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableau_contro
 	TB_p bank = extension->parent->terms;
 	Sig_p sig = master->terms->sig;
 	Clause_p head_literal_clause = NULL;
-
 	master->active_branch = NULL; // We have the handle where we are working, so set this to NULL to indicate this.
 
 	assert(extension->parent->id == 0);
 	assert(master->parent == NULL);
 	assert(parent);
 	assert(parent->arity == 0);
+	assert(parent->children == NULL);
 	assert(master->open_branches);
 	assert(master->open_branches->members != 0);
 	assert(extension->selected);
@@ -475,6 +481,11 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableau_contro
 	ClauseTableauApplySubstitution(master, subst);
 
 
+    if (tableaucontrol->number_of_extensions == 12)
+    {
+        fprintf(GlobalOut, "!!! %d extensions have been done! (after subst application), there are %ld clauses in the label storage...\n", tableaucontrol->number_of_extensions, tableaucontrol->label_storage->members);
+        Error("!!! Leak check!\n", 10);
+    }
 	// Do the extension rule on the active branch of the newly created tableau
 
 
@@ -512,6 +523,8 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableau_contro
 			parent->children[p]->open = true;
 		}
 	}
+	assert(ClauseSetEmpty(new_leaf_clauses_set));
+	assert(number_of_children == parent->arity);
 
 	ClauseSetFree(new_leaf_clauses_set);
 	// Now that the parent has been extended on, it should be removed from the collection of open leaves.
@@ -536,14 +549,8 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableau_contro
 	PStackPushP(parent->backtracks, backtrack);
 	PStack_p position_copy = PStackCopy(backtrack->position);
 	PStackPushP(parent->master->master_backtracks, position_copy);
-	//BacktrackFree(backtrack);
 
 	SubstDelete(subst); // Extremely important.  The backtracks require information from the substitution.
-
-	// Protect the unit axioms from the dirty substitution by copying them now...  Potential for memory leak!
-
-
-	//parent->master->unit_axioms = ClauseSetCopy(parent->master->terms, master->unit_axioms); // This is disabled because in this function, there is no new tableau.
 
 	// The work is done- try to close the remaining branches
 
@@ -555,12 +562,8 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableau_contro
 
 	if (parent->open_branches->members == 0)
 	{
-		tableau_control->closed_tableau = parent->master;
-		return parent->master;
+		tableaucontrol->closed_tableau = parent->master;
 	}
-
-	assert(number_of_children == parent->arity);
-	assert(parent->arity == number_of_children);
 
 	// There is no need to apply the substitution to the tablaeu, it has already been done by copying labels.
 	// In fact, the substitution should be free'd before this function ever returns.
@@ -578,6 +581,7 @@ ClauseTableau_p ClauseTableauExtensionRuleWrapper(TableauControl_p tableau_contr
 {
 	if (new_tableaux)
 	{
+		assert(false); // Disabled for debugging
 		return ClauseTableauExtensionRule(tableau_control,
 										  distinct_tableaux,
 										  extension,
@@ -586,4 +590,43 @@ ClauseTableau_p ClauseTableauExtensionRuleWrapper(TableauControl_p tableau_contr
 	return ClauseTableauExtensionRuleNoCopy(tableau_control,
 											distinct_tableaux,
 											extension);
+}
+
+/*
+**  Search for contradictions between literals of clauses in extension_candidatees.
+**  If an extension is found, return.
+**
+*/
+
+ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableaucontrol,
+														ClauseTableau_p open_branch,
+														ClauseSet_p extension_candidates,
+														int max_depth)
+{
+    Clause_p selected = extension_candidates->anchor->succ;
+	ClauseTableau_p closed_tableau = NULL;
+    int number_of_extensions = 0;
+    while (selected != extension_candidates->anchor) // iterate over the clauses we can split on the branch
+    {
+        //fprintf(GlobalOut, "# Attempting to expand with clause...\n");
+        number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranch(tableaucontrol,
+                                                                          open_branch,
+                                                                          NULL,
+                                                                          selected,
+                                                                          NULL);
+        if (tableaucontrol->closed_tableau)
+        {
+            closed_tableau = tableaucontrol->closed_tableau;
+            fprintf(GlobalOut, "# Success\n");
+            return closed_tableau;
+        }
+        else if (number_of_extensions > 0)
+        {
+            assert(number_of_extensions == 1); // Always return after one extension
+            fprintf(GlobalOut, "#  Extended on a branch at depth %d...\n", open_branch->depth);
+            return NULL;
+        }
+        selected = selected->succ;
+    }
+	return NULL;
 }

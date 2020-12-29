@@ -16,6 +16,8 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 	{
 		if (SubstIsFailure(tab, subst))
 		{
+			tab->id = 0; // ClauseContradictsBranch sets tab->id, if we block the closure rule attempt that needs to be reset to 0.
+			tab->mark_int = 0; // Similarly, the mark_int is set.  This needs to be undone...
 			fprintf(GlobalOut, "# Failure substitution in closure rule attempt!\n");
 			SubstDelete(subst);
 			return false;
@@ -78,6 +80,7 @@ int AttemptClosureRuleOnAllOpenBranches(ClauseTableau_p tableau)
 		}
 		else
 		{
+			assert(open_branch->id == 0);
 			open_branch = open_branch->succ;
 		}
 	}
@@ -94,7 +97,7 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	assert(tab);
 	assert(tab->label);
 	Subst_p subst = NULL;
-	Clause_p temporary_label;
+	Clause_p temporary_label = NULL;
 	
 	//long num_local_variables = 0;
 	long num_local_variables = UpdateLocalVariables(tab);
