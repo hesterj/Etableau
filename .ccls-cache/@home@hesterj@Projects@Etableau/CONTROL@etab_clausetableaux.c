@@ -365,10 +365,10 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	GCAdmin_p gc = trash->state->gc_terms;
 	fprintf(GlobalOut, "! Freeing a node\n");
 	trash->master->tableaucontrol->number_of_nodes_freed++;
-	if (trash->master->tableaucontrol->number_of_nodes_freed == 17)
-	{
-		Error("Early exit", 10);
-	}
+	//if (trash->master->tableaucontrol->number_of_nodes_freed == 17)
+	//{
+		//Error("Early exit in ClauseTableauFree", 10);
+	//}
 	if (trash->set)
 	{
 		Warning("!!! Freeing open branch");
@@ -559,9 +559,14 @@ void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 	ClauseSet_p label_storage = tab->master->tableaucontrol->label_storage;
 	//fprintf(GlobalOut, "# There are %ld clauses in label storage\n", label_storage->members);
 	Clause_p new_label = ClauseCopy(tab->label, tab->terms);
-	fprintf(GlobalOut, "# New label: %p\n", new_label);
+	//fprintf(GlobalOut, "# New label: %p\n", new_label);
+
 
 	PStackPushP(tab->old_labels, tab->label);  // Store old folding labels in case we need to backtrack
+	/////////
+	//ClauseSetExtractEntry(tab->label);
+	//ClauseFree(tab->label);
+	////////
 	ClauseSetInsert(label_storage, new_label);
 	//fprintf(GlobalOut, "# There are %ld clauses in label storage after adding the new label\n", label_storage->members);
 	assert(new_label);

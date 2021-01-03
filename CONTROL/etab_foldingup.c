@@ -310,14 +310,14 @@ int FoldUpAtNode(ClauseTableau_p node)
  * Folds up the entire tableau- attempting to fold up at every node below, and including, tableau.
  * Does not fold up edges.
  * 
- * Returns number of nodes that were successfully folded up.
+ * Returns (sum of distances folded) of the number of nodes that were successfully folded up.
 */
 
 
 int FoldUpEveryNodeOnce(ClauseTableau_p tableau)
 {
 	int number_of_nodes_folded = 0;
-	FoldUpAtNode(tableau);
+	number_of_nodes_folded += FoldUpAtNode(tableau);
 	for (int i=0; i<tableau->arity; i++)
 	{
 		number_of_nodes_folded += FoldUpEveryNodeOnce(tableau->children[i]);
@@ -347,6 +347,10 @@ int FoldUpCloseCycle(ClauseTableau_p tableau)
 	{
 		closures_done = 0;
 		folding_ups_done += FoldUpEveryNodeOnce(tableau);
+		//if (folding_ups_done > 0)
+		//{
+			//fprintf(GlobalOut, "Did a fold up...\n");
+		//}
 		closures_done = AttemptClosureRuleOnAllOpenBranches(tableau);
 		total_closures_done += closures_done;
 		//printf("Closures done in FoldUpCloseCycle: %d\n", closures_done);

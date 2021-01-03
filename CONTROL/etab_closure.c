@@ -169,6 +169,7 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 				{
 					tab->mark_int = distance_up - 1; // Etableau reduction
 				}
+				fprintf(GlobalOut, "# Closed a branch using a folding label\n");
 				goto return_point;
 			}
 		}
@@ -180,7 +181,6 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	
 	return_point: // Only accessed if a contradiction was found
 	
-	//fprintf(GlobalOut, "  Done with success.\n");
 	return subst;
 }
 

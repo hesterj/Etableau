@@ -297,8 +297,8 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	{
 		assert(PStackGetSP(open_branch->local_variables) > 0);
 		open_branch_label = ReplaceLocalVariablesWithFresh(open_branch->master,
-																			open_branch_label,
-																			open_branch->local_variables);
+														   open_branch_label,
+														   open_branch->local_variables);
 		ClauseSet_p label_storage = tableau_control->label_storage;
 		ClauseSetExtractEntry(open_branch->label);
 		ClauseFree(open_branch->label);
@@ -348,6 +348,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			{
 				fflush(GlobalOut);
 				extensions_done++;
+				assert(extensions_done == 1);
 				tableau_control->number_of_extensions++;
 				if (extended->open_branches->members == 0) //success
 				{
@@ -386,10 +387,10 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 					ClauseSetFree(new_leaf_clauses);
 					return extensions_done;
 				}
-				if (new_leaf_clauses == NULL)
+				if (new_tableaux == NULL)
 				{
 					ClauseSetFree(new_leaf_clauses);
-					return NULL;
+					return extensions_done;
 				}
 			}
 		}
@@ -483,6 +484,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 
     if (tableaucontrol->number_of_extensions == 12)
     {
+		ClauseTableauPrint(master);
         fprintf(GlobalOut, "!!! %d extensions have been done! (after subst application), there are %ld clauses in the label storage...\n", tableaucontrol->number_of_extensions, tableaucontrol->label_storage->members);
         Error("!!! Leak check!\n", 10);
     }
@@ -555,6 +557,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	// The work is done- try to close the remaining branches
 
 	FoldUpCloseCycle(parent->master);
+	//AttemptClosureRuleOnAllOpenBranches(parent->master);
 
 	// The parent may have been completely closed and extracted
 	// from the collection of open branches during the foldup close
