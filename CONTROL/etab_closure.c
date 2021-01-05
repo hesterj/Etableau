@@ -165,7 +165,7 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 				{
 					tab->mark_int = distance_up;
 				}
-				else 
+				else
 				{
 					tab->mark_int = distance_up - 1; // Etableau reduction
 				}
@@ -195,26 +195,60 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 		Clause_p handle = set->anchor->succ;
 		Subst_p subst = NULL;
 		PStack_p refreshed_clauses = PStackAlloc();
-		while ((handle = ClauseSetExtractFirst(set)))
+		//while ((handle = ClauseSetExtractFirst(set)))
+		//{
+			//Clause_p handle_clause = ReplaceLocalVariablesWithFresh(tab->master, handle, open_branch->local_variables);
+			////Clause_p handle_clause = handle;
+			//PStackPushP(refreshed_clauses, handle_clause);
+			//if ((subst = ClauseContradictsClause(tab, leaf, handle_clause)))
+			//{
+				//#ifndef DNDEBUG
+				//fprintf(GlobalOut, "# Folding label contradiction found!\n");
+				//#endif
+				//while (!PStackEmpty(refreshed_clauses))
+				//{
+					//Clause_p fresh = PStackPopP(refreshed_clauses);
+					//ClauseSetInsert(set, fresh);
+				//}
+				//PStackFree(refreshed_clauses);
+				//open_branch->id = ClauseGetIdent(handle_clause);
+				//return subst;
+			//}
+			//handle = set->anchor->succ;
+		//}
+		//while (!PStackEmpty(refreshed_clauses))
+		//{
+			//Clause_p fresh = PStackPopP(refreshed_clauses);
+			//ClauseSetInsert(set, fresh);
+		//}
+		fprintf(GlobalOut, "# Attempting to find contradiction against folding labels...\n");
+		while (handle != set->anchor)
 		{
 			Clause_p handle_clause = ReplaceLocalVariablesWithFresh(tab->master, handle, open_branch->local_variables);
+			//Clause_p handle_clause = handle;
 			PStackPushP(refreshed_clauses, handle_clause);
 			if ((subst = ClauseContradictsClause(tab, leaf, handle_clause)))
 			{
+				#ifndef DNDEBUG
+				fprintf(GlobalOut, "# Folding label contradiction found!\n");
+				#endif
 				while (!PStackEmpty(refreshed_clauses))
 				{
 					Clause_p fresh = PStackPopP(refreshed_clauses);
-					ClauseSetInsert(set, fresh);
+					//ClauseSetInsert(set, fresh);
+					ClauseFree(fresh);
 				}
 				PStackFree(refreshed_clauses);
+				open_branch->id = ClauseGetIdent(handle_clause);
 				return subst;
 			}
-			handle = set->anchor->succ;
+			handle = handle->succ;
 		}
 		while (!PStackEmpty(refreshed_clauses))
 		{
 			Clause_p fresh = PStackPopP(refreshed_clauses);
-			ClauseSetInsert(set, fresh);
+			//ClauseSetInsert(set, fresh);
+			ClauseFree(fresh);
 		}
 		PStackFree(refreshed_clauses);
 	}

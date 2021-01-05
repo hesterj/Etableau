@@ -482,7 +482,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	ClauseTableauApplySubstitution(master, subst);
 
 
-    if (tableaucontrol->number_of_extensions == 12)
+    if (tableaucontrol->number_of_extensions == 120)
     {
 		ClauseTableauPrint(master);
         fprintf(GlobalOut, "!!! %d extensions have been done! (after subst application), there are %ld clauses in the label storage...\n", tableaucontrol->number_of_extensions, tableaucontrol->label_storage->members);
