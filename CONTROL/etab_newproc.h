@@ -15,4 +15,8 @@ ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol,
                                       ClauseTableau_p state,
                                       ClauseSet_p extension_candidates,
                                       int max_depth);
+ClauseTableau_p EtableauProofSearchAtDepth_n(TableauControl_p tableaucontrol,
+                                             ClauseTableau_p master,
+                                             ClauseSet_p extension_candidates,
+                                             int max_depth);
 #endif

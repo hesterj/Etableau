@@ -46,6 +46,7 @@ BacktrackStack_p BacktrackStackCopy(BacktrackStack_p stack);
 bool SubstIsFailure(ClauseTableau_p tab, Subst_p subst);
 bool BindingOccursInSubst(Binding_p binding, Subst_p subst);
 bool BacktrackContainsSubst(Backtrack_p backtrack, Subst_p subst);
+bool BacktrackWrapper(ClauseTableau_p master);
 void Backtrack(Backtrack_p bt);
 void RollBackEveryNode(ClauseTableau_p master);
 

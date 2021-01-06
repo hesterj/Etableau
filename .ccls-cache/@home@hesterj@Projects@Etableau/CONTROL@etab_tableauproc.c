@@ -27,18 +27,18 @@ ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth)
 	//fprintf(GlobalOut, "# %ld open branches\n", open_branches->members);
 	while (branch != open_branches->anchor)
 	{
-		if (branch->depth > deepest_depth && branch->depth <= max_depth)
+		if (branch->depth > deepest_depth && branch->depth < max_depth)
 		{
 			deepest_depth = branch->depth;
 			deepest = branch;
+			assert(deepest);
+			assert(deepest->label);
+			assert(deepest->arity == 0);
+			assert(deepest->children == NULL);
 		}
 		assert(branch->label);
 		branch = branch->succ;
 	}
-	assert(deepest);
-	assert(deepest->label);
-	assert(deepest->arity == 0);
-	assert(deepest->children == NULL);
 	return deepest;
 }
 

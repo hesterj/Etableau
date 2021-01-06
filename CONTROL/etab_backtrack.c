@@ -347,3 +347,34 @@ bool BacktrackContainsSubst(Backtrack_p backtrack, Subst_p subst)
     }
     return false;
 }
+
+/*
+** The function collects the most recent backtrack information, and then backtracks that step.
+** If a bactkrack is found and executed, then return true.
+** Otherwise, return false.  This can happen if there are no more possible backtracks (failure tableau)
+*/
+
+bool BacktrackWrapper(ClauseTableau_p master)
+{
+    assert(master == master->master);
+    PStack_p master_backtracks = master->master_backtracks;
+    fprintf(GlobalOut, "# Unable to extend on a branch!  We need to backtrack... There are %ld known previous steps we can backtrack\n", PStackGetSP(master_backtracks));
+    if (PStackGetSP(master_backtracks) == 0)
+    {
+        Warning("The tableau failed to backtrack because there are no possible previous steps", 10);
+        return false;
+    }
+    PStack_p bt_position = (PStack_p) PStackPopP(master_backtracks); // bt_position is a stack indicating a location in the tableau
+    ClauseTableau_p backtrack_location = GetNodeFromPosition(master, bt_position);
+    PStackFree(bt_position);
+    fprintf(GlobalOut, "# There are %ld failures at this node.\n", PStackGetSP(backtrack_location->failures));
+    BacktrackStack_p backtrack_stack = backtrack_location->backtracks;
+    Backtrack_p bt = (Backtrack_p) PStackPopP(backtrack_stack);
+    PStackPushP(backtrack_location->failures, bt);
+    assert(GetNodeFromPosition(master, bt->position) == backtrack_location);
+
+    Backtrack(bt);
+
+    fprintf(GlobalOut, "# Backtracking completed...\n");
+    return true;
+}
