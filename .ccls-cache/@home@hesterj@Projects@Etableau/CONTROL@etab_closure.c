@@ -221,7 +221,7 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 			//Clause_p fresh = PStackPopP(refreshed_clauses);
 			//ClauseSetInsert(set, fresh);
 		//}
-		fprintf(GlobalOut, "# Attempting to find contradiction against folding labels...\n");
+		//fprintf(GlobalOut, "# Attempting to find contradiction against folding labels...\n");
 		while (handle != set->anchor)
 		{
 			Clause_p handle_clause = ReplaceLocalVariablesWithFresh(tab->master, handle, open_branch->local_variables);

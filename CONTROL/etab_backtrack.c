@@ -1,6 +1,13 @@
 #include "etab_backtrack.h"
 
+/*
+** Some forward declarations
+*/
 
+
+/*
+** Function definitions
+*/
 PStack_p SubstRecordBindings(Subst_p subst)
 {
     assert(subst);
@@ -16,25 +23,6 @@ PStack_p SubstRecordBindings(Subst_p subst)
     return bindings;
 }
 
-Backtrack_p BacktrackAlloc_UNUSED(Subst_p subst, VarBank_p varbank, ClauseTableau_p position)
-{
-    assert(varbank);
-    assert(position);
-    assert(subst);
-    Backtrack_p backtrack = BacktrackCellAlloc();
-    //backtrack->variable = variable;
-    //backtrack->bind = TermCopy(bind, varbank, DEREF_ALWAYS);
-    backtrack->master = position->master;
-    backtrack->position = PStackAlloc();
-    ClauseTableau_p handle = position;
-    while (handle != position->master)
-    {
-        PStackPushInt(backtrack->position, (long) handle->position);
-        handle = handle->master;
-    }
-    return backtrack;
-}
-
 Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst)
 {
     Backtrack_p backtrack = BacktrackCellAlloc();
@@ -42,6 +30,7 @@ Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst)
     else backtrack->is_extension_step = true;
     backtrack->master = position->master;
     backtrack->position = PStackAlloc();
+    backtrack->id = 0;
     ClauseTableau_p handle = position;
     while (handle != handle->master)
     {
@@ -201,6 +190,7 @@ void Backtrack(Backtrack_p bt)
         assert(position->set == NULL);
         assert(position->children == NULL);
     }
+    bt->id = position->id;
     position->id = 0;
     position->open = true;
     TableauSetInsert(master->open_branches, position);
@@ -288,6 +278,24 @@ bool SubstIsFailure(ClauseTableau_p tab, Subst_p subst)
     {
         Backtrack_p bt = PStackElementP(failures, i);
         if (BacktrackContainsSubst(bt, subst))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ExtensionIsFailure(ClauseTableau_p tab, Subst_p subst, long extension_id)
+{
+    assert(tab);
+    assert(subst);
+    assert(tab->failures);
+    BacktrackStack_p failures = tab->failures;
+    PStackPointer failures_length = PStackGetSP(failures);
+    for (int i=0; i<failures_length; i++)
+    {
+        Backtrack_p bt = PStackElementP(failures, i);
+        if ((bt->id == extension_id) && BacktrackContainsSubst(bt, subst))
         {
             return true;
         }

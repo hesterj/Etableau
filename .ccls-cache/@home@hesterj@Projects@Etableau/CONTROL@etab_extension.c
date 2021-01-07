@@ -448,9 +448,15 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	**  If this extension has already been performed at this node and failed, it must be prevented.
 	*/
 
-	if (SubstIsFailure(extension->parent, subst))
+	//if (SubstIsFailure(extension->parent, subst))
+	//{
+		//fprintf(GlobalOut, "# Failure substitution!\n");
+		//SubstDelete(subst);
+		//return NULL;
+	//}
+	if (ExtensionIsFailure(extension->parent, subst, ClauseGetIdent(extension->selected)))
 	{
-		fprintf(GlobalOut, "# Failure substitution!\n");
+		fprintf(GlobalOut, "# Failure substitution in extension!\n");
 		SubstDelete(subst);
 		return NULL;
 	}
@@ -464,6 +470,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	{
 		if (ClauseTableauBranchContainsLiteral(parent, handle->literals))
 		{
+			fprintf(GlobalOut, "# Irregular extension stopped\n");
 			ClauseSetFree(new_leaf_clauses_set);
 			SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
 			return NULL;  // REGULARITY CHECKING!

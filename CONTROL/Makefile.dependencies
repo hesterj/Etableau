@@ -2830,7 +2830,8 @@ etab_backtrack.o: etab_backtrack.c /usr/include/stdc-predef.h \
  ../include/cco_factoring.h ../include/ccl_factor.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
- ../include/etab_etableau.h ../include/etab_foldingup.h \
+ ../include/etab_extension.h ../include/etab_backtrack.h \
+ ../include/etab_xgboost_interaction.h ../include/etab_foldingup.h \
  ../include/etab_closure.h ../include/etab_localunification.h \
  ../include/etab_clausetableaux.h ../include/cco_scheduling.h \
  /usr/include/x86_64-linux-gnu/sys/wait.h ../include/cco_proc_ctrl.h \
@@ -2856,8 +2857,9 @@ etab_backtrack.o: etab_backtrack.c /usr/include/stdc-predef.h \
  /usr/include/asm-generic/sockios.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
- ../include/etab_xgboost_interaction.h ../include/etab_foldingup.h \
- /home/hesterj/Projects/xgboost/include/xgboost/c_api.h
+ /home/hesterj/Projects/xgboost/include/xgboost/c_api.h \
+ ../include/etab_etableau.h ../include/etab_foldingup.h \
+ ../include/etab_xgboost_interaction.h
 etab_clausetableaux.o: etab_clausetableaux.c /usr/include/stdc-predef.h \
  etab_clausetableaux.h ../include/clb_os_wrapper.h /usr/include/assert.h \
  /usr/include/features.h /usr/include/x86_64-linux-gnu/sys/cdefs.h \
@@ -3067,10 +3069,12 @@ etab_clausetableaux.o: etab_clausetableaux.c /usr/include/stdc-predef.h \
  /usr/include/asm-generic/sockios.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
- etab_backtrack.h ../include/etab_etableau.h ../include/etab_foldingup.h \
- ../include/etab_closure.h ../include/etab_localunification.h \
+ etab_backtrack.h ../include/etab_extension.h ../include/etab_backtrack.h \
  ../include/etab_xgboost_interaction.h ../include/etab_foldingup.h \
- /home/hesterj/Projects/xgboost/include/xgboost/c_api.h
+ ../include/etab_closure.h ../include/etab_localunification.h \
+ /home/hesterj/Projects/xgboost/include/xgboost/c_api.h \
+ ../include/etab_etableau.h ../include/etab_foldingup.h \
+ ../include/etab_xgboost_interaction.h
 etab_closure.o: etab_closure.c /usr/include/stdc-predef.h \
  ../include/etab_closure.h ../include/etab_localunification.h \
  ../include/etab_clausetableaux.h ../include/clb_os_wrapper.h \
@@ -3282,10 +3286,11 @@ etab_closure.o: etab_closure.c /usr/include/stdc-predef.h \
  /usr/include/asm-generic/sockios.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
- ../include/etab_backtrack.h ../include/etab_etableau.h \
- ../include/etab_foldingup.h ../include/etab_xgboost_interaction.h \
- ../include/etab_foldingup.h \
- /home/hesterj/Projects/xgboost/include/xgboost/c_api.h
+ ../include/etab_backtrack.h ../include/etab_extension.h \
+ ../include/etab_xgboost_interaction.h ../include/etab_foldingup.h \
+ /home/hesterj/Projects/xgboost/include/xgboost/c_api.h \
+ ../include/etab_etableau.h ../include/etab_foldingup.h \
+ ../include/etab_xgboost_interaction.h
 etab_etableau.o: etab_etableau.c /usr/include/stdc-predef.h \
  ../include/etab_etableau.h ../include/etab_foldingup.h \
  ../include/etab_closure.h ../include/etab_localunification.h \
@@ -3687,11 +3692,11 @@ etab_extension.o: etab_extension.c /usr/include/stdc-predef.h \
  ../include/cco_factoring.h ../include/ccl_factor.h \
  ../include/cco_eqnresolving.h ../include/ccl_eqnresolution.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
- ../include/etab_etableau.h ../include/etab_foldingup.h \
- ../include/etab_closure.h ../include/etab_localunification.h \
- ../include/etab_clausetableaux.h ../include/cco_scheduling.h \
- /usr/include/x86_64-linux-gnu/sys/wait.h ../include/cco_proc_ctrl.h \
- ../include/etab_apr.h /usr/include/time.h \
+ ../include/etab_extension.h ../include/etab_etableau.h \
+ ../include/etab_foldingup.h ../include/etab_closure.h \
+ ../include/etab_localunification.h ../include/etab_clausetableaux.h \
+ ../include/cco_scheduling.h /usr/include/x86_64-linux-gnu/sys/wait.h \
+ ../include/cco_proc_ctrl.h ../include/etab_apr.h /usr/include/time.h \
  /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
