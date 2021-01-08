@@ -443,15 +443,16 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 		 handle != extension->other_clauses->anchor;
 		 handle = handle->succ)
 	{
-		if (ClauseTableauBranchContainsLiteral(parent, handle->literals))
+		Clause_p subst_applied = ClauseCopy(handle, bank);
+		ClauseSetInsert(new_leaf_clauses_set, subst_applied);
+		//if (ClauseTableauBranchContainsLiteral(parent, handle->literals))
+		if (ClauseTableauBranchContainsLiteral(parent, subst_applied->literals))
 		{
 			fprintf(GlobalOut, "# Irregular extension stopped\n");
 			ClauseSetFree(new_leaf_clauses_set);
 			SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
 			return NULL;  // REGULARITY CHECKING!
 		}
-		Clause_p subst_applied = ClauseCopy(handle, bank);
-		ClauseSetInsert(new_leaf_clauses_set, subst_applied);
 		if (extension->head_clause == handle)
 		{
 			head_literal_clause = subst_applied;
@@ -460,9 +461,19 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	short number_of_children = (short) new_leaf_clauses_set->members;
 
 	// At this point the extension is happening, the subst needs to be applied to the tableau.
+	if (!ClauseTableauIsLeafRegular(parent->master))
+	{
+		fprintf(GlobalOut, "# Irregular before applying substitution\n");
+		Error("Irregular extension!", 10);
+	}
 
 	ClauseTableauApplySubstitution(master, subst);
 
+	//if (!ClauseTableauIsLeafRegular(parent->master))
+	//{
+		//fprintf(GlobalOut, "# Irregular after applying substitution\n");
+		//Error("Irregular extension!", 10);
+	//}
 	// Do the extension rule on the active branch of the newly created tableau
 
 
@@ -542,6 +553,13 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	{
 		tableaucontrol->closed_tableau = parent->master;
 	}
+
+	//if (!ClauseTableauIsLeafRegular(parent->master))
+	//{
+		//fprintf(GlobalOut, "# Irregular after actually carrying out the extension\n");
+		////ClauseTableauPrint(parent->master);
+		//Error("Irregular extension!", 10);
+	//}
 
 	// There is no need to apply the substitution to the tablaeu, it has already been done by copying labels.
 	// In fact, the substitution should be free'd before this function ever returns.
