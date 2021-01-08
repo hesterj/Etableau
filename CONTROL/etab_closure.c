@@ -28,7 +28,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 		DStrAppendStr(tab->info, " ");
 		ClauseTableauRegisterStep(tab);
 
-		Backtrack_p backtrack = BacktrackAlloc(tab, subst);
+		Backtrack_p backtrack = BacktrackAlloc(tab, subst, 0);
 		assert(BacktrackIsClosureStep(backtrack));
 		assert(tab->arity == 0);
 		PStackPushP(tab->backtracks, backtrack);

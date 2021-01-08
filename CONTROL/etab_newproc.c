@@ -102,7 +102,7 @@ int Etableau_n(TableauControl_p tableaucontrol,
                                                                      initial_example,
                                                                      extension_candidates,
                                                                      max_depth);
-       if (closed_tableau)
+       if (closed_tableau || initial_example->open_branches->members == 0)
        {
            fprintf(GlobalOut, "# Report status... proof found\n");
            proof_found = true;
@@ -110,7 +110,8 @@ int Etableau_n(TableauControl_p tableaucontrol,
        else
        {
            // Switch to a new tableau here?
-           fprintf(GlobalOut, "# Tableau failure for some reason...\n");
+           ClauseTableauPrint(initial_example->master);
+           fprintf(GlobalOut, "# Tableau failure for some reason %ld open branches...\n", initial_example->open_branches->members);
            break;
        }
    }
@@ -213,7 +214,7 @@ ClauseTableau_p EtableauProofSearchAtDepth_n(TableauControl_p tableaucontrol,
                                                       extension_candidates,
                                                       current_depth,
                                                       &backtrack_status);
-       if (result)
+       if (result || master->open_branches->members == 0)
        {
            assert(tableaucontrol->closed_tableau == result);
            return result;

@@ -17,6 +17,7 @@ typedef struct tableau_extension_cell
 	Clause_p head_clause; // the head literal of the extension step...
 	ClauseSet_p other_clauses; // the clauses that will be in the new branches
 	ClauseTableau_p parent; // the parent tableau.
+	short head_lit_position; // This position of the head literal in the selected clause
 	
 	struct tableau_extension_cell* succ;  // for singly linked lists of the extension steps
 }TableauExtension, *TableauExtension_p;
@@ -57,7 +58,8 @@ TableauExtension_p TableauExtensionAlloc(Clause_p selected,
 										 Subst_p subst, 
 										 Clause_p head_clause, 
 										 ClauseSet_p other_clauses, 
-										 ClauseTableau_p parent);
+										 ClauseTableau_p parent,
+										 short head_lit_position);
 void TableauExtensionFree(TableauExtension_p ext);
 
 #endif

@@ -23,14 +23,15 @@ PStack_p SubstRecordBindings(Subst_p subst)
     return bindings;
 }
 
-Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst)
+Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, short head_lit_position)
 {
     Backtrack_p backtrack = BacktrackCellAlloc();
     if (position->arity == 0) backtrack->is_extension_step = false;
     else backtrack->is_extension_step = true;
     backtrack->master = position->master;
     backtrack->position = PStackAlloc();
-    backtrack->id = 0;
+    backtrack->id = position->id;
+    backtrack->head_lit_position = head_lit_position;
     ClauseTableau_p handle = position;
     while (handle != handle->master)
     {
@@ -154,6 +155,7 @@ void Backtrack(Backtrack_p bt)
     ClauseTableau_p position = GetNodeFromPosition(master, bt->position);
     assert(position);
     assert(position->label);
+    assert(position->id == bt->id);
     if (BacktrackIsExtensionStep(bt))
     {
         // delete the children
@@ -190,7 +192,7 @@ void Backtrack(Backtrack_p bt)
         assert(position->set == NULL);
         assert(position->children == NULL);
     }
-    bt->id = position->id;
+    //bt->id = position->id;
     position->id = 0;
     position->open = true;
     TableauSetInsert(master->open_branches, position);
@@ -265,6 +267,7 @@ void BindingStackFree(PStack_p trash)
 
 /*
 ** If a subst has been recorded as a failure substitution at a node, then return true!
+** This is only used for checking if a closure rule application is a failure.
 */
 
 bool SubstIsFailure(ClauseTableau_p tab, Subst_p subst)
@@ -285,7 +288,7 @@ bool SubstIsFailure(ClauseTableau_p tab, Subst_p subst)
     return false;
 }
 
-bool ExtensionIsFailure(ClauseTableau_p tab, Subst_p subst, long extension_id)
+bool ExtensionIsFailure(ClauseTableau_p tab, Subst_p subst, long extension_id, short head_literal_position)
 {
     assert(tab);
     assert(subst);
@@ -295,7 +298,7 @@ bool ExtensionIsFailure(ClauseTableau_p tab, Subst_p subst, long extension_id)
     for (int i=0; i<failures_length; i++)
     {
         Backtrack_p bt = PStackElementP(failures, i);
-        if ((bt->id == extension_id) && BacktrackContainsSubst(bt, subst))
+        if ((bt->id == extension_id) && (head_literal_position == bt->head_lit_position) && BacktrackContainsSubst(bt, subst))
         {
             return true;
         }

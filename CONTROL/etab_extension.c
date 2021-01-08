@@ -5,7 +5,8 @@ TableauExtension_p TableauExtensionAlloc(Clause_p selected,
 										 Subst_p subst, 
 										 Clause_p head_clause, 
 										 ClauseSet_p other_clauses, 
-										 ClauseTableau_p parent)
+										 ClauseTableau_p parent,
+										 short head_lit_position)
 {
 	TableauExtension_p handle = TableauExtensionCellAlloc();
 	handle->selected = selected;
@@ -14,6 +15,7 @@ TableauExtension_p TableauExtensionAlloc(Clause_p selected,
 	handle->other_clauses = other_clauses;
 	handle->parent = parent;
 	handle->succ = NULL;
+	handle->head_lit_position = head_lit_position;
 	return handle;
 }
 
@@ -307,6 +309,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	}
 	
 	Clause_p leaf_clause = new_leaf_clauses->anchor->succ;
+	short position = 0; // This is the position of the current leaf clause in the split clause
 	while (leaf_clause != new_leaf_clauses->anchor)
 	{
 		assert(open_branch);
@@ -333,11 +336,12 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			subst_completed++;
 			assert(open_branch->master->label);
 			Clause_p head_clause = leaf_clause;
-			TableauExtension_p extension_candidate = TableauExtensionAlloc(selected, 
+			TableauExtension_p extension_candidate = TableauExtensionAlloc(selected,
 																		   success_subst, 
 																		   head_clause, 
 																		   new_leaf_clauses, 
-																		   open_branch);
+																		   open_branch,
+																		   position);
 			// If there is no new_tableaux stack passed to the function we are in, the extension is done on the tableau itself
 			ClauseTableau_p extended = ClauseTableauExtensionRuleWrapper(tableau_control,
 																		 distinct_tableaux,
@@ -346,51 +350,20 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			TableauExtensionFree(extension_candidate);
 			if (extended) // extension may not happen due to regularity
 			{
-				fflush(GlobalOut);
 				extensions_done++;
-				assert(extensions_done == 1);
 				tableau_control->number_of_extensions++;
-				if (extended->open_branches->members == 0) //success
-				{
-					assert(extended->master->label);
-					tableau_control->closed_tableau = extended->master;
-					ClauseSetFree(new_leaf_clauses);
-					return extensions_done;
-				}
-				// Etableau branch saturation methods here!
-				//else if (tableau_control->branch_saturation_enabled && GetTotalCPUTime() > 30)
-				else if (tableau_control->branch_saturation_enabled)
+				if (tableau_control->branch_saturation_enabled)
 				{
 					BranchSaturation_p branch_sat = BranchSaturationAlloc(tableau_control->proofstate, 
 																		  tableau_control->proofcontrol,
 																		  extended->master,
 																		  10000);
-					// Trying to keep one object in extensions and saturations
 					AttemptToCloseBranchesWithSuperpositionSerial(tableau_control, branch_sat);
 					BranchSaturationFree(branch_sat);
-					if (extended->open_branches->members == 0)
-					{
-						//~ // fprintf(GlobalOut, "# Closed tableau found!\n");
-						assert(extended->master->label);
-						tableau_control->closed_tableau = extended->master;
-						ClauseSetFree(new_leaf_clauses);
-						return extensions_done;
-					}
-					else
-					{
-						ClauseSetFree(new_leaf_clauses);
-						return extensions_done;
-					}
 				}
-				else
+				if (new_tableaux == NULL) // If we extended on a tableau without copying it, return.
 				{
-					ClauseSetFree(new_leaf_clauses);
-					return extensions_done;
-				}
-				if (new_tableaux == NULL)
-				{
-					ClauseSetFree(new_leaf_clauses);
-					return extensions_done;
+					goto return_point;
 				}
 			}
 		}
@@ -400,6 +373,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			// Otherwise, we must free it here
 			SubstDelete(subst);
 		}
+		position++;
 		leaf_clause = leaf_clause->succ;
 	}
 	
@@ -407,8 +381,9 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	// The current open branch is now "old" and will only be used for other extensions.
    
    //  OK We're done
+   return_point:
    ClauseSetFree(new_leaf_clauses);
-	return extensions_done;
+   return extensions_done;
 }
 
 /*  Do an extension rule attempt, only way it can fail is through regularity.
@@ -454,7 +429,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 		//SubstDelete(subst);
 		//return NULL;
 	//}
-	if (ExtensionIsFailure(extension->parent, subst, ClauseGetIdent(extension->selected)))
+	if (ExtensionIsFailure(extension->parent, subst, ClauseGetIdent(extension->selected), extension->head_lit_position))
 	{
 		fprintf(GlobalOut, "# Failure substitution in extension!\n");
 		SubstDelete(subst);
@@ -547,7 +522,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 
 	// Register the extension step that we have completed with stack of backtracks we have available to us.
 
-	Backtrack_p backtrack = BacktrackAlloc(parent, subst);
+	Backtrack_p backtrack = BacktrackAlloc(parent, subst, extension->head_lit_position);
 	PStackPushP(parent->backtracks, backtrack);
 	PStack_p position_copy = PStackCopy(backtrack->position);
 	PStackPushP(parent->master->master_backtracks, position_copy);

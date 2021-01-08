@@ -363,7 +363,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 void ClauseTableauFree(ClauseTableau_p trash)
 {
 	GCAdmin_p gc = trash->state->gc_terms;
-	fprintf(GlobalOut, "! Freeing a node\n");
+	//fprintf(GlobalOut, "! Freeing a node\n");
 	trash->master->tableaucontrol->number_of_nodes_freed++;
 	//if (trash->master->tableaucontrol->number_of_nodes_freed == 17)
 	//{
@@ -773,7 +773,12 @@ void ClauseTableauPrintBranch(ClauseTableau_p branch)
 {
 	ClauseTableau_p depth_check = branch;
 	assert(depth_check);
-	fprintf(GlobalOut, "# Depth: %d\n", depth_check->depth);
+	fprintf(GlobalOut, "# Depth: %d ", depth_check->depth);
+	if (branch->open && branch->arity == 0)
+	{
+		fprintf(GlobalOut, "OPEN");
+	}
+	fprintf(GlobalOut, "\n");
 	//printf("\033[1;33m");
 	while (depth_check->depth != 0)
 	{
@@ -877,49 +882,36 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
 	assert(tableau->master);
 	assert(tableau->master->terms);
 	assert(tableau->master->terms->vars);
-   PTree_p variable_tree = NULL;
-   PStack_p variables;
-   PStackPointer p;
-   Subst_p subst;
-   Term_p old_var, fresh_var;
-   Clause_p handle;
-   // VarBank_p variable_bank = tableau->master->terms->vars;
-   
-   assert(clause);
-   
-   variables = PStackAlloc();
-   //VarBankSetVCountsToUsed(variable_bank);
-   subst = SubstAlloc();
-   
-   ClauseCollectVariables(clause, &variable_tree);
-   PTreeToPStack(variables, variable_tree);
-   PTreeFree(variable_tree);
-   
-   //printf("Clause being copied: ");ClausePrint(GlobalOut, clause, true);printf("\n");
-   
-   for (p = 0; p < PStackGetSP(variables); p++)
-   {
-	   old_var = PStackElementP(variables, p);
-	   fresh_var = ClauseTableauGetFreshVar(tableau->master, old_var); // new
-	   assert(fresh_var != old_var);
-	   assert(fresh_var->f_code != old_var->f_code);
-	   if (fresh_var->f_code == old_var->f_code)
-	   {
-			printf("Clause copy fresh error\n");
-			exit(0);
-		}
-	   SubstAddBinding(subst, old_var, fresh_var);
-	   //printf("The subst: %ld %ld\n", fresh_var->f_code, old_var->f_code);
-	   //SubstPrint(GlobalOut, subst, tableau->terms->sig, DEREF_NEVER);
-	   //printf("\n");
-   }
-   
-   handle = ClauseCopy(clause, tableau->terms);
-   
-   SubstDelete(subst);
-   PStackFree(variables);
+	assert(clause);
+	PTree_p variable_tree = NULL;
+	PStack_p variables;
+	PStackPointer p;
+	Subst_p subst;
+	Term_p old_var, fresh_var;
+	Clause_p handle;
 
-   return handle;
+	variables = PStackAlloc();
+	subst = SubstAlloc();
+
+	ClauseCollectVariables(clause, &variable_tree);
+	PTreeToPStack(variables, variable_tree);
+	PTreeFree(variable_tree);
+
+	for (p = 0; p < PStackGetSP(variables); p++)
+	{
+		old_var = PStackElementP(variables, p);
+		fresh_var = ClauseTableauGetFreshVar(tableau->master, old_var); // new
+		assert(fresh_var != old_var);
+		assert(fresh_var->f_code != old_var->f_code);
+		SubstAddBinding(subst, old_var, fresh_var);
+	}
+
+	handle = ClauseCopy(clause, tableau->terms);
+
+	SubstDelete(subst);
+	PStackFree(variables);
+
+	return handle;
 }
 
 ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
