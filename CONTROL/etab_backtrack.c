@@ -23,15 +23,15 @@ PStack_p SubstRecordBindings(Subst_p subst)
     return bindings;
 }
 
-Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, short head_lit_position)
+Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, short head_lit_position, bool is_extension_step)
 {
     Backtrack_p backtrack = BacktrackCellAlloc();
-    if (position->arity == 0) backtrack->is_extension_step = false;
-    else backtrack->is_extension_step = true;
+    backtrack->is_extension_step = is_extension_step;
     backtrack->master = position->master;
     backtrack->position = PStackAlloc();
     backtrack->id = position->id;
     backtrack->head_lit_position = head_lit_position;
+    backtrack->completed = false;
     ClauseTableau_p handle = position;
     while (handle != handle->master)
     {
@@ -156,7 +156,7 @@ void Backtrack(Backtrack_p bt)
     assert(position);
     assert(position->label);
     assert(position->id == bt->id);
-    if (BacktrackIsExtensionStep(bt))
+    if (BacktrackIsExtensionStep(bt) && bt->completed)
     {
         // delete the children
         fprintf(GlobalOut, "# Backtracking extension %p (d%d) with %d children and whose parent is %p\n", position, position->depth, position->arity, position->parent);
@@ -185,7 +185,7 @@ void Backtrack(Backtrack_p bt)
         position->children = NULL;
         position->arity = 0;
     }
-    else // this is a closure step, etableau closures are not registered or backtracked
+    else if (BacktrackIsClosureStep(bt))// this is a closure step, etableau closures are not registered or backtracked
     {
         assert(position->arity == 0);
         assert(position->open == false);
@@ -369,7 +369,7 @@ bool BacktrackWrapper(ClauseTableau_p master)
 {
     assert(master == master->master);
     PStack_p master_backtracks = master->master_backtracks;
-    fprintf(GlobalOut, "# Unable to extend on a branch!  We need to backtrack... There are %ld known previous steps we can backtrack\n", PStackGetSP(master_backtracks));
+    fprintf(GlobalOut, "# We need to backtrack... There are %ld known previous steps we can backtrack\n", PStackGetSP(master_backtracks));
     if (PStackGetSP(master_backtracks) == 0)
     {
         Warning("The tableau failed to backtrack because there are no possible previous steps", 10);

@@ -418,6 +418,8 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	assert(master->open_branches);
 	assert(master->backtracks);
 	assert(master->failures);
+	assert(parent != parent->master);
+	assert(parent->set == parent->open_branches);
 
 	/*
 	**  If this extension has already been performed at this node and failed, it must be prevented.
@@ -436,6 +438,17 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 		return NULL;
 	}
 
+	ClauseTableauApplySubstitution(master, subst);
+	TableauSetExtractEntry(parent); // Remove the parent from the collection of open branches
+	parent->id = ClauseGetIdent(extension->selected);
+
+	// Register the extension step that we are about to do with stack of backtracks we have available to us.
+
+	Backtrack_p backtrack = BacktrackAlloc(parent, subst, extension->head_lit_position, true);
+	PStackPushP(parent->backtracks, backtrack);
+	PStack_p position_copy = PStackCopy(backtrack->position);
+	PStackPushP(parent->master->master_backtracks, position_copy);
+
 	ClauseSet_p new_leaf_clauses_set = ClauseSetAlloc(); // Copy the clauses of the extension into this
 
 	// This for loop is used for regularity checking.  If the extension would create an irregular branch, block it and return NULL.
@@ -448,9 +461,11 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 		//if (ClauseTableauBranchContainsLiteral(parent, handle->literals))
 		if (ClauseTableauBranchContainsLiteral(parent, subst_applied->literals))
 		{
-			fprintf(GlobalOut, "# Irregular extension stopped\n");
+			fprintf(GlobalOut, "# Irregular extension stopped at parent\n");
 			ClauseSetFree(new_leaf_clauses_set);
 			SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
+			bool backtracked = BacktrackWrapper(master);
+			assert(backtracked);
 			return NULL;  // REGULARITY CHECKING!
 		}
 		if (extension->head_clause == handle)
@@ -458,31 +473,22 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 			head_literal_clause = subst_applied;
 		}
 	}
-	short number_of_children = (short) new_leaf_clauses_set->members;
 
-	// At this point the extension is happening, the subst needs to be applied to the tableau.
-	if (!ClauseTableauIsLeafRegular(parent->master))
+	// At this point, parent has NOT been extended on, so the only way an irregularity can happen is if the OTHER open branches contain one.
+	// They have had their labels replaced, and parent is no longer in the open branches set, so we check the remaining open branches.
+	if (!ClauseTableauIsLeafRegular(master))
 	{
-		fprintf(GlobalOut, "# Irregular before applying substitution\n");
-		Error("Irregular extension!", 10);
+		fprintf(GlobalOut, "# Irregular extension stopped at non-parent\n");
+		ClauseSetFree(new_leaf_clauses_set);
+		SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
+		bool backtracked = BacktrackWrapper(master);
+		assert(backtracked);
+		return NULL;  // REGULARITY CHECKING!
+
 	}
+	backtrack->completed = true; // The extension is happening at this point.
 
-	ClauseTableauApplySubstitution(master, subst);
-
-	//if (!ClauseTableauIsLeafRegular(parent->master))
-	//{
-		//fprintf(GlobalOut, "# Irregular after applying substitution\n");
-		//Error("Irregular extension!", 10);
-	//}
-	// Do the extension rule on the active branch of the newly created tableau
-
-
-	parent->id = ClauseGetIdent(extension->selected);
-
-#ifndef DNDEBUG
-	fprintf(GlobalOut, "# Extension %p with %d children\n", parent, (int) number_of_children);
-#endif
-
+	short number_of_children = (short) new_leaf_clauses_set->members;
 
 	assert(head_literal_clause);
 	assert(number_of_children == extension->other_clauses->members);
@@ -518,11 +524,6 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	// Now that the parent has been extended on, it should be removed from the collection of open leaves.
 	// Important to do this now, as otherwise folding up or branch saturation may not work correctly.
 
-	assert(parent != parent->master);
-	if (parent->set == parent->open_branches)
-	{
-		TableauSetExtractEntry(parent);
-	}
 
 	// The copying is done, we can delete the subst and print it to the info
 	DStrAppendStr(parent->info, " Expansion with clause ");
@@ -531,19 +532,16 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	SubstDStrPrint(parent->info, subst, sig, DEREF_NEVER);
 	ClauseTableauRegisterStep(parent);
 
-	// Register the extension step that we have completed with stack of backtracks we have available to us.
-
-	Backtrack_p backtrack = BacktrackAlloc(parent, subst, extension->head_lit_position);
-	PStackPushP(parent->backtracks, backtrack);
-	PStack_p position_copy = PStackCopy(backtrack->position);
-	PStackPushP(parent->master->master_backtracks, position_copy);
+	//Backtrack_p backtrack = BacktrackAlloc(parent, subst, extension->head_lit_position);
+	//PStackPushP(parent->backtracks, backtrack);
+	//PStack_p position_copy = PStackCopy(backtrack->position);
+	//PStackPushP(parent->master->master_backtracks, position_copy);
 
 	SubstDelete(subst); // Extremely important.  The backtracks require information from the substitution.
 
 	// The work is done- try to close the remaining branches
 
 	FoldUpCloseCycle(parent->master);
-	//AttemptClosureRuleOnAllOpenBranches(parent->master);
 
 	// The parent may have been completely closed and extracted
 	// from the collection of open branches during the foldup close
@@ -553,13 +551,6 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	{
 		tableaucontrol->closed_tableau = parent->master;
 	}
-
-	//if (!ClauseTableauIsLeafRegular(parent->master))
-	//{
-		//fprintf(GlobalOut, "# Irregular after actually carrying out the extension\n");
-		////ClauseTableauPrint(parent->master);
-		//Error("Irregular extension!", 10);
-	//}
 
 	// There is no need to apply the substitution to the tablaeu, it has already been done by copying labels.
 	// In fact, the substitution should be free'd before this function ever returns.

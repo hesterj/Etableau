@@ -28,7 +28,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 		DStrAppendStr(tab->info, " ");
 		ClauseTableauRegisterStep(tab);
 
-		Backtrack_p backtrack = BacktrackAlloc(tab, subst, 0);
+		Backtrack_p backtrack = BacktrackAlloc(tab, subst, 0, false);
 		assert(BacktrackIsClosureStep(backtrack));
 		assert(tab->arity == 0);
 		PStackPushP(tab->backtracks, backtrack);
@@ -36,7 +36,21 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 		PStackPushP(tab->master->master_backtracks, position_copy);
 
 		ClauseTableauApplySubstitution(tab->master, subst);
+		tab->open = false;
+		assert(tab->set == tab->open_branches);
+		TableauSetExtractEntry(tab);
+		// Check for regularity?
 		SubstDelete(subst);
+		if (!ClauseTableauIsLeafRegular(tab->master))
+		{
+			fprintf(GlobalOut, "# Backtracking after closure step violated regularity\n");
+			bool backtracked = BacktrackWrapper(tab->master);
+			assert(backtracked);
+			tab->id = 0;
+			tab->mark_int = 0;
+			return false;
+		}
+		backtrack->completed = true;
 		return true;
 	}
 	return false;
@@ -65,9 +79,9 @@ int AttemptClosureRuleOnAllOpenBranches(ClauseTableau_p tableau)
 		if (ClauseTableauBranchClosureRuleWrapper(open_branch))
 		{
 			num_branches_closed += 1;
-			open_branch->open = false;
+			//open_branch->open = false;
 			open_branch = open_branch->succ;
-			TableauSetExtractEntry(open_branch->pred);
+			//TableauSetExtractEntry(open_branch->pred);
 			ClauseTableauUpdateVariables(tableau->master);
 			if (open_branch == tableau->open_branches->anchor)
 			{

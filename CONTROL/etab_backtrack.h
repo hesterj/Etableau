@@ -19,6 +19,7 @@ typedef struct backtrackcell
     short head_lit_position; // This is the position in the literals array of the selected clause of the head literal.  0 if it was a closure rule step
     PStack_p bindings; // This is a stack of the Binding_p that were used in this step
     PStack_p position; // If an extension step was done at this step, this is a path to the parent node of the step from the master node.
+    bool completed;
     // If it was a closure rule done, position is the closed node.
     // Clearly, if a position has no children, then it was a closure step, extension otherwise.
     // There are no branch saturations stored, as they do not affect the tableaux and are purely good.
@@ -40,7 +41,7 @@ typedef int* BacktrackStatus_p;
 #define BacktrackCellAlloc() (BackTrackCell*)SizeMalloc(sizeof(BackTrackCell))
 #define BacktrackCellCellFree(junk) SizeFree(junk, sizeof(BackTrackCell))
 PStack_p SubstRecordBindings(Subst_p subst);
-Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, short head_lit_position);
+Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, short head_lit_position, bool is_extension_step);
 Backtrack_p BacktrackCopy(Backtrack_p original);
 #define BacktrackIsExtensionStep(bt) (bt->is_extension_step)
 #define BacktrackIsClosureStep(bt) !BacktrackIsExtensionStep(bt)
