@@ -18,7 +18,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 		{
 			tab->id = 0; // ClauseContradictsBranch sets tab->id, if we block the closure rule attempt that needs to be reset to 0.
 			tab->mark_int = 0; // Similarly, the mark_int is set.  This needs to be undone...
-			fprintf(GlobalOut, "# Failure substitution in closure rule attempt!\n");
+			//fprintf(GlobalOut, "# Failure substitution in closure rule attempt!\n");
 			SubstDelete(subst);
 			return false;
 		}
@@ -36,14 +36,14 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 		PStackPushP(tab->master->master_backtracks, position_copy);
 
 		ClauseTableauApplySubstitution(tab->master, subst);
-		tab->open = false;
 		assert(tab->set == tab->open_branches);
+		tab->open = false;
 		TableauSetExtractEntry(tab);
 		// Check for regularity?
 		SubstDelete(subst);
 		if (!ClauseTableauIsLeafRegular(tab->master))
 		{
-			fprintf(GlobalOut, "# Backtracking after closure step violated regularity\n");
+			//fprintf(GlobalOut, "# Backtracking after closure step violated regularity\n");
 			bool backtracked = BacktrackWrapper(tab->master);
 			assert(backtracked);
 			tab->id = 0;
@@ -73,19 +73,25 @@ int AttemptClosureRuleOnAllOpenBranches(ClauseTableau_p tableau)
 	assert(tableau->master->label);
 	int num_branches_closed = 0;
 	ClauseTableau_p open_branch = tableau->open_branches->anchor->succ;
+	assert(open_branch);
 	ClauseTableauUpdateVariables(tableau->master);
 	while (open_branch != tableau->open_branches->anchor)
 	{
+		ClauseTableau_p next_open_branch = open_branch->succ;
+		assert(open_branch);
 		if (ClauseTableauBranchClosureRuleWrapper(open_branch))
 		{
+			//fprintf(GlobalOut, "# Branch closed\n");
 			num_branches_closed += 1;
 			//open_branch->open = false;
-			open_branch = open_branch->succ;
+			open_branch = next_open_branch;
+			assert(open_branch);
 			//TableauSetExtractEntry(open_branch->pred);
 			ClauseTableauUpdateVariables(tableau->master);
 			if (open_branch == tableau->open_branches->anchor)
 			{
-				open_branch = open_branch->succ;
+				//open_branch = open_branch->succ;
+				break;
 			}
 			if (tableau->open_branches->members == 0)
 			{
@@ -94,8 +100,9 @@ int AttemptClosureRuleOnAllOpenBranches(ClauseTableau_p tableau)
 		}
 		else
 		{
+			//fprintf(GlobalOut, "# Branch not closed\n");
 			assert(open_branch->id == 0);
-			open_branch = open_branch->succ;
+			open_branch = next_open_branch;
 		}
 	}
 	return num_branches_closed;
@@ -183,7 +190,7 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 				{
 					tab->mark_int = distance_up - 1; // Etableau reduction
 				}
-				fprintf(GlobalOut, "# Closed a branch using a folding label\n");
+				//fprintf(GlobalOut, "# Closed a branch using a folding label\n");
 				goto return_point;
 			}
 		}

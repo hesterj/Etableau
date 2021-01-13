@@ -698,7 +698,7 @@ void ClauseTableauPrint(ClauseTableau_p tab)
 	if (tab == NULL) Error("# Error:  Attempting to print NULL tableau", 1);
 	PStack_p leaves = PStackAlloc();
 	ClauseTableauCollectLeavesStack(tab, leaves);
-	fprintf(GlobalOut, "# There are %ld leaves\n", PStackGetSP(leaves));
+	fprintf(GlobalOut, "# There are %ld leaves in ClauseTableauPrint\n", PStackGetSP(leaves));
 	for (PStackPointer p = 0; p<PStackGetSP(leaves); p++)
 	{
 		ClauseTableau_p handle = PStackElementP(leaves, p);
@@ -710,6 +710,7 @@ void ClauseTableauPrint(ClauseTableau_p tab)
 void ClauseTableauPrint2(ClauseTableau_p tab)
 {
 	PStack_p leaves = PStackAlloc();
+	fprintf(GlobalOut, "# ClauseTableauPrint2\n");
 	ClauseTableauCollectLeavesStack(tab, leaves);
 	for (PStackPointer p = 0; p<PStackGetSP(leaves); p++)
 	{

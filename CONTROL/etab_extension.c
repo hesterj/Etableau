@@ -433,7 +433,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	//}
 	if (ExtensionIsFailure(extension->parent, subst, ClauseGetIdent(extension->selected), extension->head_lit_position))
 	{
-		fprintf(GlobalOut, "# Failure substitution in extension!\n");
+		//fprintf(GlobalOut, "# Failure substitution in extension!\n");
 		SubstDelete(subst);
 		return NULL;
 	}
@@ -461,7 +461,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 		//if (ClauseTableauBranchContainsLiteral(parent, handle->literals))
 		if (ClauseTableauBranchContainsLiteral(parent, subst_applied->literals))
 		{
-			fprintf(GlobalOut, "# Irregular extension stopped at parent\n");
+			//fprintf(GlobalOut, "# Irregular extension stopped at parent\n");
 			ClauseSetFree(new_leaf_clauses_set);
 			SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
 			bool backtracked = BacktrackWrapper(master);
@@ -478,7 +478,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	// They have had their labels replaced, and parent is no longer in the open branches set, so we check the remaining open branches.
 	if (!ClauseTableauIsLeafRegular(master))
 	{
-		fprintf(GlobalOut, "# Irregular extension stopped at non-parent\n");
+		//fprintf(GlobalOut, "# Irregular extension stopped at non-parent\n");
 		ClauseSetFree(new_leaf_clauses_set);
 		SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
 		bool backtracked = BacktrackWrapper(master);
@@ -604,13 +604,13 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
         if (tableaucontrol->closed_tableau)
         {
             closed_tableau = tableaucontrol->closed_tableau;
-            fprintf(GlobalOut, "# Success\n");
+            //fprintf(GlobalOut, "# Success\n");
             return closed_tableau;
         }
         else if (number_of_extensions > 0)
         {
             assert(number_of_extensions == 1); // Always return after one extension
-            fprintf(GlobalOut, "#  Extended on a branch at depth %d...\n", open_branch->depth);
+            //fprintf(GlobalOut, "#  Extended on a branch at depth %d...\n", open_branch->depth);
             return NULL;
         }
         selected = selected->succ;

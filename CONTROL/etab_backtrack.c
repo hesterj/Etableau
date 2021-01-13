@@ -75,11 +75,11 @@ ClauseTableau_p GetNodeFromPosition(ClauseTableau_p master, PStack_p position)
     assert(master);
     assert(position);
 
-    #ifndef DNDEBUG
-    fprintf(GlobalOut, "# Printing position stack: ");
-    PStackPrintInt(GlobalOut, " %ld ", position);
-    fprintf(GlobalOut, "\n");
-    #endif
+    //#ifndef DNDEBUG
+    //fprintf(GlobalOut, "# Printing position stack: ");
+    //PStackPrintInt(GlobalOut, " %ld ", position);
+    //fprintf(GlobalOut, "\n");
+    //#endif
 
     ClauseTableau_p handle = master;
     for (PStackPointer p = PStackGetSP(position)-1; p >= 0; p--)
@@ -159,7 +159,7 @@ void Backtrack(Backtrack_p bt)
     if (BacktrackIsExtensionStep(bt) && bt->completed)
     {
         // delete the children
-        fprintf(GlobalOut, "# Backtracking extension %p (d%d) with %d children and whose parent is %p\n", position, position->depth, position->arity, position->parent);
+        //fprintf(GlobalOut, "# Backtracking extension %p (d%d) with %d children and whose parent is %p\n", position, position->depth, position->arity, position->parent);
         assert(position->arity > 1);
         for (int i=0; i<position->arity; i++)
         {
@@ -168,12 +168,6 @@ void Backtrack(Backtrack_p bt)
                 assert(position->children[i]->open == true);
                 TableauSetExtractEntry(position->children[i]);
             }
-            #ifndef DNDEBUG
-            if (position->children[i]->arity)
-            {
-                Warning("Attempting to backtrack an extension with a child %p extended on!", position->children[i]);
-            }
-            #endif
             assert(position->children[i]->set == NULL);
             ClauseTableauFree(position->children[i]);
             position->children[i]->label = NULL;
@@ -197,18 +191,11 @@ void Backtrack(Backtrack_p bt)
     position->open = true;
     TableauSetInsert(master->open_branches, position);
 
-#ifndef DNDEBUG
-    ClauseTableauAssertCheck(master);
-#endif
     // roll back every node of the tableau
     if (PStackGetSP(bt->bindings) > 0) //
     {
         RollBackEveryNode(master);
     }
-
-#ifndef DNDEBUG
-    ClauseTableauAssertCheck(master);
-#endif
 
     assert(position->label);
     return;
@@ -369,7 +356,7 @@ bool BacktrackWrapper(ClauseTableau_p master)
 {
     assert(master == master->master);
     PStack_p master_backtracks = master->master_backtracks;
-    fprintf(GlobalOut, "# We need to backtrack... There are %ld known previous steps we can backtrack\n", PStackGetSP(master_backtracks));
+    //fprintf(GlobalOut, "# We need to backtrack... There are %ld known previous steps we can backtrack\n", PStackGetSP(master_backtracks));
     if (PStackGetSP(master_backtracks) == 0)
     {
         Warning("The tableau failed to backtrack because there are no possible previous steps", 10);
@@ -378,7 +365,7 @@ bool BacktrackWrapper(ClauseTableau_p master)
     PStack_p bt_position = (PStack_p) PStackPopP(master_backtracks); // bt_position is a stack indicating a location in the tableau
     ClauseTableau_p backtrack_location = GetNodeFromPosition(master, bt_position);
     PStackFree(bt_position);
-    fprintf(GlobalOut, "# There are %ld failures at this node.\n", PStackGetSP(backtrack_location->failures));
+    //fprintf(GlobalOut, "# There are %ld failures at this node.\n", PStackGetSP(backtrack_location->failures));
     BacktrackStack_p backtrack_stack = backtrack_location->backtracks;
     Backtrack_p bt = (Backtrack_p) PStackPopP(backtrack_stack);
     PStackPushP(backtrack_location->failures, bt);
@@ -386,6 +373,6 @@ bool BacktrackWrapper(ClauseTableau_p master)
 
     Backtrack(bt);
 
-    fprintf(GlobalOut, "# Backtracking completed...\n");
+    //fprintf(GlobalOut, "# Backtracking completed...\n");
     return true;
 }

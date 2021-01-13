@@ -219,8 +219,7 @@ int FoldUpAtNode(ClauseTableau_p node)
 
 	assert(ClauseLiteralNumber(node->label) == 1);
 	assert(node->label);
-	bool work_done = false;
-	
+
 	//Easy situation- if the node has already been folded up to the root do nothing
 	if (node->folded_up == node->depth)
 	//if (node->mark_int == node->depth)
@@ -247,7 +246,6 @@ int FoldUpAtNode(ClauseTableau_p node)
 			ClauseFlipLiteralSign(flipped_label, flipped_label->literals);
 			node->folded_up = node->depth;
 			ClauseTableauEdgeInsert(master_node, flipped_label);
-			work_done = true;
 
 			//ClauseFree(flipped_label); // Temporary, for debugging
 		}
@@ -273,7 +271,6 @@ int FoldUpAtNode(ClauseTableau_p node)
 			//ClausePrint(GlobalOut, flipped_label, true);printf("\n");
 			node->folded_up = node->depth;
 			ClauseTableauEdgeInsert(master_node, flipped_label);
-			work_done = true;
 			//ClauseFree(flipped_label); // Temporary, for debugging
 		}
 		else
@@ -284,22 +281,12 @@ int FoldUpAtNode(ClauseTableau_p node)
 			flipped_label = ClauseCopy(node->label, node->terms);
 			ClauseFlipLiteralSign(flipped_label, flipped_label->literals);
 			ClauseTableauEdgeInsert(deepest->parent, flipped_label);
-			work_done = true;
 			//ClauseFree(flipped_label); // Temporary, for debugging
 		}
 		
 	}
 	
 	PStackFree(dominators);
-	#ifndef DNDEBUG
-	if (work_done)
-	{
-		assert(flipped_label);
-		//fprintf(GlobalOut, "# Folded up a label at depth %d %d nodes\n", node->depth, node->folded_up);
-		//ClausePrint(GlobalOut, flipped_label, true);
-		fprintf(GlobalOut, "\n");
-	}
-	#endif
 	return node->folded_up;
 }
 

@@ -95,27 +95,22 @@ int Etableau_n(TableauControl_p tableaucontrol,
 
    // Now do proof search...
 
-   while (!proof_found)
+   if (!proof_found && tableaucontrol->multiprocessing_active)
    {
-       //ClauseTableau_p closed_tableau = EtableauProofSearch_n(tableaucontrol, initial_example, extension_candidates, max_depth);
-       ClauseTableau_p closed_tableau = EtableauProofSearchAtDepth_n(tableaucontrol,
-                                                                     initial_example,
-                                                                     extension_candidates,
-                                                                     max_depth);
-       if (closed_tableau || initial_example->open_branches->members == 0)
-       {
-           fprintf(GlobalOut, "# Report status... proof found\n");
-           proof_found = true;
-       }
-       else
-       {
-           // Switch to a new tableau here?
-           ClauseTableauPrint(initial_example->master);
-           fprintf(GlobalOut, "# Tableau failure for some reason %ld open branches...\n", initial_example->open_branches->members);
-           break;
-       }
-   }
+       proof_found = EtableauMultiprocess_n(tableaucontrol,
+                                            distinct_tableaux_stack,
+                                            extension_candidates,
+                                            max_depth);
 
+   }
+   else if (!proof_found)
+   {
+       proof_found = EtableauProofSearchAtDepthWrapper_n(tableaucontrol,
+                                                         distinct_tableaux_stack,
+                                                         active,
+                                                         extension_candidates,
+                                                         max_depth);
+   }
 
    // Proof search is over
 
@@ -165,7 +160,7 @@ ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol,
     TableauSet_p open_branches = master->open_branches;
     while ((open_branch = branch_select(open_branches, current_depth)))
     {
-        fprintf(GlobalOut, "# Selected open branch %p, %d extensions done so far, current depth %d\n", open_branch, tableaucontrol->number_of_extensions, current_depth);
+        //fprintf(GlobalOut, "# Selected open branch %p, %d extensions done so far, current depth %d\n", open_branch, tableaucontrol->number_of_extensions, current_depth);
         assert(open_branch);
         assert(open_branch->id == 0);
         assert(open_branch->backtracks);
@@ -195,7 +190,7 @@ ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol,
         extensions_done++;
     }
 
-    fprintf(GlobalOut, "# Unable to extend (at depth), or could not backtrack...\n");
+    //fprintf(GlobalOut, "# Unable to extend (at depth), or could not backtrack...\n");
 
     return NULL;
 }
@@ -226,4 +221,59 @@ ClauseTableau_p EtableauProofSearchAtDepth_n(TableauControl_p tableaucontrol,
    }
 
    return NULL;
+}
+
+bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
+                            PStack_p starting_tableaux,
+                            ClauseSet_p extension_candidates,
+                            int max_depth)
+{
+    return false;
+}
+
+bool EtableauProofSearchAtDepthWrapper_n(TableauControl_p tableaucontrol,
+                                         TableauStack_p distinct_tableaux_stack,
+                                         ClauseSet_p active,
+                                         ClauseSet_p extension_candidates,
+                                         int max_depth)
+{
+    bool proof_found = false;
+    PStackPointer current_tableau_index = 0;
+    ClauseTableau_p current_tableau = PStackElementP(distinct_tableaux_stack, current_tableau_index);
+    while (!proof_found)
+    {
+        //ClauseTableau_p closed_tableau = EtableauProofSearch_n(tableaucontrol, initial_example, extension_candidates, max_depth);
+        ClauseTableau_p closed_tableau = EtableauProofSearchAtDepth_n(tableaucontrol,
+                                                                        current_tableau,
+                                                                        extension_candidates,
+                                                                        max_depth);
+        if (closed_tableau || current_tableau->open_branches->members == 0)
+        {
+            fprintf(GlobalOut, "# Report status... proof found\n");
+            EtableauStatusReport(tableaucontrol, active, closed_tableau);
+            ClauseTableauPrint(current_tableau);
+            proof_found = true;
+        }
+        else
+        {
+            // Switch to a new tableau here?
+            fprintf(GlobalOut, "# Tableau failure for some reason %ld open branches...\n", current_tableau->open_branches->members);
+            current_tableau = EtableauGetNextTableau(distinct_tableaux_stack, &current_tableau_index);
+        }
+    }
+
+    return proof_found;
+}
+
+ClauseTableau_p EtableauGetNextTableau(TableauStack_p distinct_tableaux_stack,
+                                       PStackPointer *current_index_p)
+{
+    PStackPointer current_index = *current_index_p;
+    current_index++;
+    if (current_index == PStackGetSP(distinct_tableaux_stack))
+    {
+        current_index = 0;
+    }
+    ClauseTableau_p new_current_tableau = PStackElementP(distinct_tableaux_stack, current_index);
+    return new_current_tableau;
 }
