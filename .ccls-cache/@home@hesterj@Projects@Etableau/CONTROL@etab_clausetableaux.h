@@ -29,6 +29,9 @@ typedef PStack_p BacktrackStack_p; // Stack of Backtrack_p
 typedef PStack_p BindingStack_p; // Stack of Binding_p
 struct tableaucontrol_cell;
 
+#define DEPTH_OK 0
+#define ALL_DEPTHS_EXCEEDED 1
+
 typedef struct clausetableau 
 {
 	ProofState_p state;
@@ -226,5 +229,8 @@ void EqnRepFree(void *eqn_p);
 ClauseRep_p ClauseGetRepresentation(Clause_p clause);
 
 void ClauseStackFree(ClauseStack_p trash);
+void EtableauStatusReport(TableauControl_p tableaucontrol,
+                          ClauseSet_p active,
+                          ClauseTableau_p resulting_tab);
 
 #endif

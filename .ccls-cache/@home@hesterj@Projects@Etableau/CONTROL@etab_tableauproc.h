@@ -83,9 +83,6 @@ ClauseTableau_p ConnectionCalculusExtendSelectedBranch(ClauseTableau_p active_ta
                                                        int max_depth, 
                                                        TableauStack_p max_depth_tableaux);
 ClauseTableau_p EtableauHailMary(TableauControl_p tableaucontrol);
-void EtableauStatusReport(TableauControl_p tableaucontrol,
-                          ClauseSet_p active,
-                          ClauseTableau_p resulting_tab);
 ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate,
                                            ClauseSet_p active);
 TableauSet_p EtableauCreateStartRules(ProofState_p proofstate, 
@@ -104,6 +101,6 @@ TableauStack_p EtableauCreateStartRulesStack(ProofState_p proofstate,
                                       TableauControl_p tableaucontrol);
 
 ClauseTableau_p tableau_select(TableauControl_p tableaucontrol, TableauSet_p set);
-ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth);
+ClauseTableau_p branch_select(TableauSet_p open_branches, int current_depth, int max_depth, int *depth_status);
 
 #endif

@@ -18,27 +18,41 @@ extern void c_smoketest();
 /*  Function Definitions
 */
 
-ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth)
+ClauseTableau_p branch_select(TableauSet_p open_branches, int current_depth, int max_depth, int *depth_status)
 {
+	fprintf(GlobalOut, "# branch_select\n");
 	assert(open_branches);
+	assert(current_depth <= max_depth);
 	int deepest_depth = 0;
+	int num_max_depth_branches = 0;
 	ClauseTableau_p deepest = NULL;
 	ClauseTableau_p branch = open_branches->anchor->succ;
 	//fprintf(GlobalOut, "# %ld open branches\n", open_branches->members);
 	while (branch != open_branches->anchor)
 	{
-		if (branch->depth > deepest_depth && branch->depth < max_depth)
+		assert(branch);
+		assert(branch->label);
+		assert(branch->arity == 0);
+		assert(branch->children == NULL);
+		if (branch->depth > deepest_depth && branch->depth < current_depth)
 		{
 			deepest_depth = branch->depth;
 			deepest = branch;
-			assert(deepest);
-			assert(deepest->label);
-			assert(deepest->arity == 0);
-			assert(deepest->children == NULL);
+		}
+		if (branch->depth >= max_depth-1)
+		{
+			num_max_depth_branches++;
 		}
 		assert(branch->label);
 		branch = branch->succ;
 	}
+	fprintf(GlobalOut, "# %d of %ld open branches exceed max_depth\n", num_max_depth_branches, open_branches->members);
+	if (depth_status && num_max_depth_branches == (int) open_branches->members) // All of the branches are at the maximum depth
+	{
+		*depth_status = ALL_DEPTHS_EXCEEDED;
+		fprintf(GlobalOut, "# All depths exceeded!\n");
+	}
+	fprintf(GlobalOut, "# Returning %p from branch_select\n", deepest);
 	return deepest;
 }
 
@@ -611,7 +625,8 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranchesModified(ClauseTableau_p act
 	TableauSet_p open_branches = active_tableau->open_branches;
 	//ClauseTableau_p open_branch = active_tableau->open_branches->anchor->succ;
 	//while (open_branch != active_tableau->open_branches->anchor) // iterate over the open branches of the current tableau
-	ClauseTableau_p open_branch = branch_select(open_branches, max_depth);
+	Warning("# This method has been changed to have a hardcoded constant in the next statement!");
+	ClauseTableau_p open_branch = branch_select(open_branches, max_depth, 1000, NULL);
 	{
 		//fprintf(GlobalOut, "! %d %ld\n", open_branch->depth, open_branches->members);
 		//if (open_branch->depth > max_depth)
@@ -690,7 +705,8 @@ ClauseTableau_p ConnectionCalculusExtendSelectedBranch(ClauseTableau_p active_ta
 	//fprintf(GlobalOut, "d: %d\n", active_tableau->depth);
 	
 	TableauSet_p open_branches = active_tableau->open_branches;
-	ClauseTableau_p open_branch = branch_select(open_branches, max_depth);
+	Warning("The branch select method below has been toyed with");
+	ClauseTableau_p open_branch = branch_select(open_branches, max_depth, 1000, NULL);
 	
 	if (open_branch == NULL) // All max depth branches
 	{
@@ -773,70 +789,6 @@ ClauseTableau_p EtableauHailMary(TableauControl_p tableaucontrol)
 	return NULL;
 }
 
-/*-----------------------------------------------------------------------
-//
-// Function: EtableauStatusReport(...)
-//
-//   If a closed tableau was found (resulting_tab), interpret the specification
-//   to report an appropriate SZS status.  
-//
-// Side Effects    :  None
-//
-/----------------------------------------------------------------------*/
-
-void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, ClauseTableau_p resulting_tab)
-{
-	assert(resulting_tab);
-	assert(resulting_tab == tableaucontrol->closed_tableau);
-	fflush(GlobalOut);
-	
-	long neg_conjectures = tableaucontrol->neg_conjectures;
-	if (!tableaucontrol->satisfiable)
-	{
-		if(neg_conjectures)
-		{
-			fprintf(GlobalOut, "# SZS status Theorem for %s\n", tableaucontrol->problem_name);
-		}
-		else
-		{
-			fprintf(GlobalOut, "# SZS status Unsatisfiable for %s\n", tableaucontrol->problem_name);
-		}
-	}
-	else
-	{
-		if (neg_conjectures)
-		{
-			fprintf(GlobalOut, "# SZS status CounterSatisfiable for %s\n", tableaucontrol->problem_name);
-		}
-		else
-		{
-			fprintf(GlobalOut, "# SZS status Satisfiable for %s\n", tableaucontrol->problem_name);
-		}
-	}
-	
-	fprintf(GlobalOut, "# SZS output start CNFRefutation for %s\n", tableaucontrol->problem_name);
-	if (false && tableaucontrol->clausification_buffer) // Disabled for sanity
-	{
-		fprintf(GlobalOut, "# Begin clausification derivation\n");
-		fprintf(GlobalOut, "%s\n", tableaucontrol->clausification_buffer);
-		fprintf(GlobalOut, "# End clausification derivation\n");
-		fprintf(GlobalOut, "# Begin listing active clauses obtained from FOF to CNF conversion\n");
-		ClauseSetPrint(GlobalOut, active, true);
-		fprintf(GlobalOut, "# End listing active clauses.  There is an equivalent clause to each of these in the clausification!\n");
-	}
-	else
-	{
-		fprintf(GlobalOut, "# Clausification printing disabled or no record found\n");
-	}
-	fprintf(GlobalOut, "# Begin printing tableau\n");
-	ClauseTableauPrint(resulting_tab);
-	ClauseTableauTPTPPrint(resulting_tab);
-	fprintf(GlobalOut, "# End printing tableau\n");
-	fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
-	fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
-	fflush(GlobalOut);
-	return;
-}
 
 /*-----------------------------------------------------------------------
 //

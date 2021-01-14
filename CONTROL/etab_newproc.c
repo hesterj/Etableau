@@ -66,20 +66,7 @@ int Etableau_n(TableauControl_p tableaucontrol,
 // Do a branch saturation on the original problem before diving in to the tableaux proofsearch
    if (tableaucontrol->branch_saturation_enabled)
    {
-       fprintf(GlobalOut, "# Attempting initial tableau saturation\n");
-       BranchSaturation_p branch_sat = BranchSaturationAlloc(tableaucontrol->proofstate,
-                                                             tableaucontrol->proofcontrol,
-                                                             initial_example,
-                                                             10000);
-// Trying to keep one object in extensions and saturations
-        AttemptToCloseBranchesWithSuperpositionSerial(tableaucontrol, branch_sat);
-        BranchSaturationFree(branch_sat);
-        if (tableaucontrol->closed_tableau)
-        {
-            proof_found = true;
-            tableaucontrol->closed_tableau = initial_example;
-            EtableauStatusReport(tableaucontrol, active, tableaucontrol->closed_tableau);
-        }
+       proof_found = EtableauSaturateAllTableauxInStack(tableaucontrol, distinct_tableaux_stack, active);
    }
    else
    {
@@ -145,6 +132,7 @@ ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol,
                                       ClauseTableau_p master,
                                       ClauseSet_p extension_candidates,
                                       int current_depth,
+                                      int max_depth,
                                       BacktrackStatus_p backtrack_status)
 {
     assert(tableaucontrol);
@@ -154,13 +142,34 @@ ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol,
     assert(current_depth);
     assert(master->label);
     assert(master->open_branches);
+    fprintf(GlobalOut, "# Current depth %d\n", current_depth);
 
     int extensions_done = 0; // This allows us to keep track of the number of extensions done since the last backtrack
+    int depth_status = DEPTH_OK;
     ClauseTableau_p open_branch = NULL, result = NULL;
     TableauSet_p open_branches = master->open_branches;
-    while ((open_branch = branch_select(open_branches, current_depth)))
+    while (true)
     {
-        //fprintf(GlobalOut, "# Selected open branch %p, %d extensions done so far, current depth %d\n", open_branch, tableaucontrol->number_of_extensions, current_depth);
+        open_branch = branch_select(open_branches, current_depth, max_depth, &depth_status);
+        if (depth_status == ALL_DEPTHS_EXCEEDED) // All of the open branches exceed our maximum depth, so we must backtrack
+        {
+            assert(!open_branch);
+            fprintf(GlobalOut, "# Backtracking due to all depths exceeded, %ld remaining\n", PStackGetSP(master->master_backtracks));
+            bool backtrack_successful = BacktrackWrapper(master);
+            if (!backtrack_successful)
+            {
+                *backtrack_status = BACKTRACK_FAILURE; // Failed backtrack, this tableau is no good.
+                break;
+            }
+            depth_status = DEPTH_OK;
+            continue; // We backtracked, try again
+        }
+        else if (!open_branch) // All of the open branches exceed our current depth, so we must break and return in order to increase it
+        {
+            break;
+        }
+        fprintf(GlobalOut, "# Selected open branch %p, %d extensions done so far, current depth %d\n", open_branch, tableaucontrol->number_of_extensions, current_depth);
+        int extended = 0;
         assert(open_branch);
         assert(open_branch->id == 0);
         assert(open_branch->backtracks);
@@ -168,10 +177,15 @@ ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol,
         assert(open_branch->failures);
         assert(open_branch->parent);
         assert(open_branch->parent->backtracks);
+        assert(depth_status == DEPTH_OK);
+
         result = ClauseTableauSearchForPossibleExtension(tableaucontrol,
                                                          open_branch,
                                                          extension_candidates,
-                                                         current_depth);
+                                                         current_depth,
+                                                         &extended);
+        extensions_done += extended;
+
         if (result || (open_branches->members == 0)) // We have found a closed tableau
         {
             assert(tableaucontrol->closed_tableau == result);
@@ -179,18 +193,22 @@ ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol,
         }
         if (open_branch->set) // If the open branch is still in a set after the extension rule attempt, it means it was not able to be extended and so should be backtracked
         {
+            fprintf(GlobalOut, "# Backtracking, %ld remaining\n", PStackGetSP(master->master_backtracks));
             bool backtrack_successful = BacktrackWrapper(master);
             if (!backtrack_successful)
             {
                 *backtrack_status = BACKTRACK_FAILURE; // Failed backtrack, this tableau is no good.
                 break;
             }
-            continue;
         }
-        extensions_done++;
+        else if (extended && tableaucontrol->number_of_extensions % 100 == 0)
+        {
+            *backtrack_status = NEXT_TABLEAU;
+            break;
+        }
     }
 
-    //fprintf(GlobalOut, "# Unable to extend (at depth), or could not backtrack...\n");
+    fprintf(GlobalOut, "# Unable to extend at depth... Returning from EtableauProofSearch_n\n");
 
     return NULL;
 }
@@ -198,7 +216,8 @@ ClauseTableau_p EtableauProofSearch_n(TableauControl_p tableaucontrol,
 ClauseTableau_p EtableauProofSearchAtDepth_n(TableauControl_p tableaucontrol,
                                              ClauseTableau_p master,
                                              ClauseSet_p extension_candidates,
-                                             int max_depth)
+                                             int max_depth,
+                                             BacktrackStatus_p status)
 {
    // Root is depth 0, initial start rule is depth 1, so first depth should be 2
    BacktrackStatus backtrack_status = BACKTRACK_OK;
@@ -208,13 +227,15 @@ ClauseTableau_p EtableauProofSearchAtDepth_n(TableauControl_p tableaucontrol,
                                                       master,
                                                       extension_candidates,
                                                       current_depth,
+                                                      max_depth,
                                                       &backtrack_status);
+       *status = backtrack_status;
        if (result || master->open_branches->members == 0)
        {
            assert(tableaucontrol->closed_tableau == result);
            return result;
        }
-       if (backtrack_status == BACKTRACK_FAILURE)
+       if (backtrack_status == BACKTRACK_FAILURE || backtrack_status == NEXT_TABLEAU)
        {
            break;
        }
@@ -240,24 +261,32 @@ bool EtableauProofSearchAtDepthWrapper_n(TableauControl_p tableaucontrol,
     bool proof_found = false;
     PStackPointer current_tableau_index = 0;
     ClauseTableau_p current_tableau = PStackElementP(distinct_tableaux_stack, current_tableau_index);
+    BacktrackStatus status = BACKTRACK_OK;
     while (!proof_found)
     {
         //ClauseTableau_p closed_tableau = EtableauProofSearch_n(tableaucontrol, initial_example, extension_candidates, max_depth);
         ClauseTableau_p closed_tableau = EtableauProofSearchAtDepth_n(tableaucontrol,
-                                                                        current_tableau,
-                                                                        extension_candidates,
-                                                                        max_depth);
+                                                                      current_tableau,
+                                                                      extension_candidates,
+                                                                      max_depth,
+                                                                      &status);
         if (closed_tableau || current_tableau->open_branches->members == 0)
         {
             fprintf(GlobalOut, "# Report status... proof found\n");
             EtableauStatusReport(tableaucontrol, active, closed_tableau);
-            ClauseTableauPrint(current_tableau);
             proof_found = true;
         }
         else
         {
-            // Switch to a new tableau here?
-            fprintf(GlobalOut, "# Tableau failure for some reason %ld open branches...\n", current_tableau->open_branches->members);
+            assert(status == BACKTRACK_FAILURE || status == NEXT_TABLEAU);
+            if (status == BACKTRACK_FAILURE)
+            {
+                fprintf(GlobalOut, "# Switching from a tableau with %ld open branches because of backtrack failure.\n", current_tableau->open_branches->members);
+            }
+            else if (status == NEXT_TABLEAU)
+            {
+                fprintf(GlobalOut, "# Switching from a tableau with %ld open branches because of extension limit.\n", current_tableau->open_branches->members);
+            }
             current_tableau = EtableauGetNextTableau(distinct_tableaux_stack, &current_tableau_index);
         }
     }

@@ -34,7 +34,8 @@ bool ClauseTableauExtensionIsRegular(ClauseTableau_p branch, Clause_p clause);
 ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableaucontrol,
 														ClauseTableau_p open_branch,
 														ClauseSet_p extension_candidates,
-														int max_depth);
+														int max_depth,
+														int *extended);
 int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p control,
 											  ClauseTableau_p open_branch,
 											  TableauSet_p distinct_tableaux,

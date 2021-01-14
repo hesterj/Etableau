@@ -37,6 +37,7 @@ typedef int BacktrackStatus;
 typedef int* BacktrackStatus_p;
 #define BACKTRACK_FAILURE 0
 #define BACKTRACK_OK 1
+#define NEXT_TABLEAU 2
 
 #define BacktrackCellAlloc() (BackTrackCell*)SizeMalloc(sizeof(BackTrackCell))
 #define BacktrackCellCellFree(junk) SizeFree(junk, sizeof(BackTrackCell))

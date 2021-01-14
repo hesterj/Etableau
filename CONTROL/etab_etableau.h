@@ -52,4 +52,6 @@ int ProcessSpecificClauseWrapper(ProofState_p state, ProofControl_p control, Cla
 
 
 int ProcessSpecificClauseSetWrapper(ProofState_p state, ProofControl_p control, ClauseSet_p set);
+
+bool EtableauSaturateAllTableauxInStack(TableauControl_p tableaucontrol, TableauStack_p distinct_tableaux_stack, ClauseSet_p active);
 #endif

@@ -354,12 +354,14 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 				tableau_control->number_of_extensions++;
 				if (tableau_control->branch_saturation_enabled)
 				{
+					fprintf(GlobalOut, "# Saturating branch\n");
 					BranchSaturation_p branch_sat = BranchSaturationAlloc(tableau_control->proofstate, 
 																		  tableau_control->proofcontrol,
 																		  extended->master,
 																		  10000);
 					AttemptToCloseBranchesWithSuperpositionSerial(tableau_control, branch_sat);
 					BranchSaturationFree(branch_sat);
+					fprintf(GlobalOut, "# Saturation done\n");
 				}
 				if (new_tableaux == NULL) // If we extended on a tableau without copying it, return.
 				{
@@ -588,7 +590,8 @@ ClauseTableau_p ClauseTableauExtensionRuleWrapper(TableauControl_p tableau_contr
 ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableaucontrol,
 														ClauseTableau_p open_branch,
 														ClauseSet_p extension_candidates,
-														int max_depth)
+														int max_depth,
+														int *extended)
 {
     Clause_p selected = extension_candidates->anchor->succ;
 	ClauseTableau_p closed_tableau = NULL;
@@ -610,6 +613,7 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
         else if (number_of_extensions > 0)
         {
             assert(number_of_extensions == 1); // Always return after one extension
+			*extended = number_of_extensions;
             //fprintf(GlobalOut, "#  Extended on a branch at depth %d...\n", open_branch->depth);
             return NULL;
         }

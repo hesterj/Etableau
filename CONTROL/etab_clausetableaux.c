@@ -1594,3 +1594,68 @@ void ClauseStackFree(ClauseStack_p trash)
 	PStackFree(trash);
 	return;
 }
+
+/*-----------------------------------------------------------------------
+//
+// Function: EtableauStatusReport(...)
+//
+//   If a closed tableau was found (resulting_tab), interpret the specification
+//   to report an appropriate SZS status.
+//
+// Side Effects    :  None
+//
+/----------------------------------------------------------------------*/
+
+void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, ClauseTableau_p resulting_tab)
+{
+	assert(resulting_tab);
+	assert(resulting_tab == tableaucontrol->closed_tableau);
+	fflush(GlobalOut);
+
+	long neg_conjectures = tableaucontrol->neg_conjectures;
+	if (!tableaucontrol->satisfiable)
+	{
+		if(neg_conjectures)
+		{
+			fprintf(GlobalOut, "# SZS status Theorem for %s\n", tableaucontrol->problem_name);
+		}
+		else
+		{
+			fprintf(GlobalOut, "# SZS status Unsatisfiable for %s\n", tableaucontrol->problem_name);
+		}
+	}
+	else
+	{
+		if (neg_conjectures)
+		{
+			fprintf(GlobalOut, "# SZS status CounterSatisfiable for %s\n", tableaucontrol->problem_name);
+		}
+		else
+		{
+			fprintf(GlobalOut, "# SZS status Satisfiable for %s\n", tableaucontrol->problem_name);
+		}
+	}
+
+	fprintf(GlobalOut, "# SZS output start CNFRefutation for %s\n", tableaucontrol->problem_name);
+	if (false && tableaucontrol->clausification_buffer) // Disabled for sanity
+	{
+		fprintf(GlobalOut, "# Begin clausification derivation\n");
+		fprintf(GlobalOut, "%s\n", tableaucontrol->clausification_buffer);
+		fprintf(GlobalOut, "# End clausification derivation\n");
+		fprintf(GlobalOut, "# Begin listing active clauses obtained from FOF to CNF conversion\n");
+		ClauseSetPrint(GlobalOut, active, true);
+		fprintf(GlobalOut, "# End listing active clauses.  There is an equivalent clause to each of these in the clausification!\n");
+	}
+	else
+	{
+		fprintf(GlobalOut, "# Clausification printing disabled or no record found\n");
+	}
+	fprintf(GlobalOut, "# Begin printing tableau\n");
+	ClauseTableauPrint(resulting_tab);
+	ClauseTableauTPTPPrint(resulting_tab);
+	fprintf(GlobalOut, "# End printing tableau\n");
+	fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
+	fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
+	fflush(GlobalOut);
+	return;
+}

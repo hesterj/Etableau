@@ -361,5 +361,24 @@ void TermCellStoreDeleteRWLinks(TermCellStore_p store)
    }
 }
 
-
-
+bool EtableauSaturateAllTableauxInStack(TableauControl_p tableaucontrol, TableauStack_p distinct_tableaux_stack, ClauseSet_p active)
+{
+	for (PStackPointer p=0; p<PStackGetSP(distinct_tableaux_stack); p++)
+	{
+		fprintf(GlobalOut, "# Attempting initial tableau saturation\n");
+		ClauseTableau_p saturation_tableau = PStackElementP(distinct_tableaux_stack, p);
+		BranchSaturation_p branch_sat = BranchSaturationAlloc(tableaucontrol->proofstate,
+															  tableaucontrol->proofcontrol,
+															  saturation_tableau,
+															  10000);
+		AttemptToCloseBranchesWithSuperpositionSerial(tableaucontrol, branch_sat);
+		BranchSaturationFree(branch_sat);
+		if (tableaucontrol->closed_tableau)
+		{
+			assert(tableaucontrol->closed_tableau == saturation_tableau);
+			EtableauStatusReport(tableaucontrol, active, tableaucontrol->closed_tableau);
+			return true;
+		}
+	}
+	return false;
+}
