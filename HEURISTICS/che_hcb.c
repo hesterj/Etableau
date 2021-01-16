@@ -358,7 +358,7 @@ void HeuristicParmsParseInto(Scanner_p in,
                              HeuristicParms_p handle,
                              bool warn_missing)
 {
-   bool res = true;
+   __attribute__((unused)) bool res = true;
 
    AcceptInpTok(in, OpenCurly);
    if(TestInpId(in, "no_preproc"))

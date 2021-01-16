@@ -178,7 +178,7 @@ long EqnBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_eqns)
         PTree_p eqn_vars = NULL;
         Eqn_p label_eqn = branch->label->literals;
 
-        long num_vars = EqnCollectVariables(label_eqn, &eqn_vars);
+        __attribute__((unused)) long num_vars = EqnCollectVariables(label_eqn, &eqn_vars);
 
         Subst_p variable_subst = SubstAlloc();
         Term_p x1 = VarBankVarAssertAlloc(vars, -2, individual_type);

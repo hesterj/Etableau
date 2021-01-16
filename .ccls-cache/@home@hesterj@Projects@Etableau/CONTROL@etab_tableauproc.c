@@ -20,7 +20,6 @@ extern void c_smoketest();
 
 ClauseTableau_p branch_select(TableauSet_p open_branches, int current_depth, int max_depth, int *depth_status)
 {
-	fprintf(GlobalOut, "# branch_select\n");
 	assert(open_branches);
 	assert(current_depth <= max_depth);
 	int deepest_depth = 0;
@@ -46,13 +45,10 @@ ClauseTableau_p branch_select(TableauSet_p open_branches, int current_depth, int
 		assert(branch->label);
 		branch = branch->succ;
 	}
-	fprintf(GlobalOut, "# %d of %ld open branches exceed max_depth\n", num_max_depth_branches, open_branches->members);
 	if (depth_status && num_max_depth_branches == (int) open_branches->members) // All of the branches are at the maximum depth
 	{
 		*depth_status = ALL_DEPTHS_EXCEEDED;
-		fprintf(GlobalOut, "# All depths exceeded!\n");
 	}
-	fprintf(GlobalOut, "# Returning %p from branch_select\n", deepest);
 	return deepest;
 }
 
@@ -595,91 +591,6 @@ ClauseTableau_p ConnectionCalculusExtendOpenBranches(ClauseTableau_p active_tabl
 	return closed_tableau;
 }
 
-/*-----------------------------------------------------------------------
-//
-// Function: ConnectionCalculusExtendOpenBranches(...)
-//
-//   Create all of the extension rules possible off of open branches of active_tableau,
-//   limited by max_depth.  Open tableaux with all of their branches at max_depth
-//   are added to max_depth_tableaux to be extended on later.  newly_created_tableaux
-//   contains just that, tableaux that will be extended on later at the next iteration
-//   and are likely at max depth.  This function has been modified so that it only extends on the selected branch. 
-//
-// Side Effects    :  Calls Saturate, so many.
-//
-/----------------------------------------------------------------------*/
-
-ClauseTableau_p ConnectionCalculusExtendOpenBranchesModified(ClauseTableau_p active_tableau, TableauStack_p newly_created_tableaux,
-																							TableauControl_p tableaucontrol,
-																							TableauSet_p distinct_tableaux,
-																							ClauseSet_p extension_candidates,
-																							int max_depth, TableauStack_p max_depth_tableaux)
-{
-	assert(active_tableau);
-	assert(active_tableau->open_branches);
-	TableauStack_p tab_tmp_store = PStackAlloc();
-	ClauseTableau_p closed_tableau = NULL;
-	int number_of_extensions = 0;
-	//fprintf(GlobalOut, "d: %d\n", active_tableau->depth);
-	
-	TableauSet_p open_branches = active_tableau->open_branches;
-	//ClauseTableau_p open_branch = active_tableau->open_branches->anchor->succ;
-	//while (open_branch != active_tableau->open_branches->anchor) // iterate over the open branches of the current tableau
-	Warning("# This method has been changed to have a hardcoded constant in the next statement!");
-	ClauseTableau_p open_branch = branch_select(open_branches, max_depth, 1000, NULL);
-	{
-		//fprintf(GlobalOut, "! %d %ld\n", open_branch->depth, open_branches->members);
-		//if (open_branch->depth > max_depth)
-		//{
-			//open_branch = open_branch->succ;
-			//num_branches_at_max_depth++;
-			//continue;
-		//}
-		if (open_branch == NULL)
-		{
-			PStackPushP(max_depth_tableaux, active_tableau);	
-			goto return_point;
-		}
-		
-		Clause_p selected = extension_candidates->anchor->succ;
-		while (selected != extension_candidates->anchor) // iterate over the clauses we can split on the branch
-		{
-			number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranch(tableaucontrol,
-																									open_branch,
-																									NULL,
-																									selected,
-																									tab_tmp_store);
-			if (tableaucontrol->closed_tableau)
-			{
-				closed_tableau = tableaucontrol->closed_tableau;
-				fprintf(GlobalOut, "# Success\n");
-				goto return_point;
-			}
-			else if (number_of_extensions > 0)
-			{
-				goto return_point;	
-			}
-			selected = selected->succ;
-		}
-		open_branch = open_branch->succ;
-	}
-	
-	//if (num_branches_at_max_depth == open_branches->members) // Save these for processing at the next depth
-	//{
-		//PStackPushP(max_depth_tableaux, active_tableau);
-	//}
-	//else  // Extended or not, active should have no references to it elsewhere and has been worked on so can be discarded
-	//{
-		////PStackPushP(tableaucontrol->tableaux_trash, active_tableau);
-		//ClauseTableauFree(active_tableau->master);
-	//}
-	ClauseTableauFree(active_tableau->master);
-	
-	return_point:
-	PStackPushStack(newly_created_tableaux, tab_tmp_store);
-	PStackFree(tab_tmp_store);
-	return closed_tableau;
-}
 
 /*-----------------------------------------------------------------------
 //

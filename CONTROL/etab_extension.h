@@ -35,7 +35,8 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
 														ClauseTableau_p open_branch,
 														ClauseSet_p extension_candidates,
 														int max_depth,
-														int *extended);
+														int *extended,
+														TableauStack_p new_tableaux);
 int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p control,
 											  ClauseTableau_p open_branch,
 											  TableauSet_p distinct_tableaux,
@@ -49,12 +50,13 @@ ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
 										   TableauStack_p new_tableaux);
 
 ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableau_control,
-												 TableauSet_p distinct_tableaux,
 												 TableauExtension_p extension);
+ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
+											   TableauStack_p new_tableaux,
+											   TableauExtension_p extension);
 ClauseTableau_p ClauseTableauExtensionRuleWrapper(TableauControl_p tableau_control,
-												  TableauSet_p distinct_tableaux,
 												  TableauExtension_p extension,
-												  PStack_p new_tableaux);
+												  TableauStack_p new_tableaux);
 TableauExtension_p TableauExtensionAlloc(Clause_p selected,
 										 Subst_p subst, 
 										 Clause_p head_clause, 

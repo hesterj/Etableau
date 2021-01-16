@@ -173,6 +173,7 @@ void TableauSetMoveClauses(TableauSet_p to, TableauSet_p from);
 
 
 void TableauStackFreeTableaux(PStack_p stack);
+void TableauStackFree(TableauStack_p stack);
 void ClauseTableauCollectLeaves(ClauseTableau_p tab, TableauSet_p leaves);
 void ClauseTableauCollectLeavesStack(ClauseTableau_p tab, PStack_p leaves);
 

@@ -592,7 +592,7 @@ int main(int argc, char* argv[])
       fclose(clausification_stream);
       tableaucontrol->clausification_buffer = buf;
 // This is the entry point for tableaux proof search
-      Etableau_n(tableaucontrol,
+      Etableau_n0(tableaucontrol,
                  proofstate,
                  proofcontrol,
                  proofstate->terms,

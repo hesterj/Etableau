@@ -194,11 +194,6 @@ bool BranchIsLocal(ClauseTableau_p branch)
 	PTree_p branch_vars = NULL;
 	long local_vars = UpdateLocalVariables(branch);
 	long num_vars = CollectVariablesOfBranch(branch, &branch_vars, true);
-#ifndef DNDEBUG
-	long branch_local_variables = PStackGetSP(branch->local_variables);
-	assert(branch_local_variables == local_vars);
-#endif
-	//printf("# %ld local vars, %ld total vars\n", local_vars, num_vars);
 	if (num_vars == 0)
 	{
 		PTree_p temp = NULL;
@@ -207,8 +202,6 @@ bool BranchIsLocal(ClauseTableau_p branch)
 	}
 	if (local_vars == num_vars)
 	{
-		//printf("# Local branch\n");
-		//PTreeDebugPrint(GlobalOut, branch_vars);
 		return true;
 	}
 	PTreeFree(branch_vars);

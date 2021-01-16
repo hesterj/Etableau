@@ -113,7 +113,6 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	}
 	handle->head_lit = tab->head_lit;
 	handle->succ = NULL;
-	handle->active_branch = NULL;
 	handle->saturation_closed = tab->saturation_closed;
 	handle->max_var = tab->max_var;
 	handle->open_branches = TableauSetAlloc();
@@ -310,7 +309,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->old_labels = PStackAlloc();
 	handle->old_folding_labels = PStackAlloc();
 
-	GCAdmin_p gc = parent->state->gc_terms;
+	__attribute__((unused)) GCAdmin_p gc = parent->state->gc_terms;
 	ClauseSet_p label_storage = parent->master->tableaucontrol->label_storage;
 	ClauseSetInsert(label_storage, label); // For gc
 	handle->tableaucontrol = NULL;
@@ -371,8 +370,10 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	//}
 	if (trash->set)
 	{
-		Warning("!!! Freeing open branch");
+		Warning("!!! Freeing open branch at depth %d", trash->depth);
+		assert(trash->depth != 0);
 		TableauSetExtractEntry(trash);
+		//assert(false);
 	}
 	if (trash->depth == 0 && trash->tableau_variables)
 	{
@@ -880,6 +881,7 @@ Clause_p ClauseApplySubst(Clause_p clause,  TB_p bank, Subst_p subst)
 Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
 {
 	assert(tableau);
+	assert(tableau->terms);
 	assert(tableau->master);
 	assert(tableau->master->terms);
 	assert(tableau->master->terms->vars);
@@ -1567,7 +1569,7 @@ long SubstDStrPrint(DStr_p str, Subst_p subst, Sig_p sig, DerefType deref)
 // Now for stuff about representing clauses and branches as stack of integers 
 ClauseRep_p ClauseGetRepresentation(Clause_p clause)
 {
-	Eqn_p literals = clause->literals;
+	__attribute__((unused)) Eqn_p literals = clause->literals;
 	return NULL;
 }
 
@@ -1657,5 +1659,12 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 	fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
 	fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
 	fflush(GlobalOut);
+	return;
+}
+
+void TableauStackFree(TableauStack_p stack)
+{
+	TableauStackFreeTableaux(stack);
+	PStackFree(stack);
 	return;
 }
