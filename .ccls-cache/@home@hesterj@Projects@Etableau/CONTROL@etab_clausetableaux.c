@@ -23,6 +23,7 @@ ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
 	handle->arity = 0;
 	handle->unit_axioms = NULL;
 	handle->previously_saturated = 0;
+	handle->previously_selected = false;
 	//handle->mark = NULL;
 	handle->mark_int = 0;
 	handle->folded_up = 0;
@@ -77,6 +78,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	handle->tableau_variables = NULL;
 	handle->arity = tab->arity;
 	handle->previously_saturated = tab->previously_saturated;
+	handle->previously_selected = false;
 	
 	char *info = DStrCopy(tab->info);
 	handle->info = DStrAlloc();
@@ -190,6 +192,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 
 	handle->old_labels = PStackAlloc();
 	handle->old_folding_labels = PStackAlloc();
+	handle->previously_selected = false;
 
 	handle->tableaucontrol = NULL;
 	handle->tableau_variables = NULL;
@@ -314,6 +317,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	ClauseSetInsert(label_storage, label); // For gc
 	handle->tableaucontrol = NULL;
 	handle->tableau_variables = NULL;
+	handle->previously_selected = false;
 	assert(parent);
 	assert(label);
 	parent->arity += 1;
@@ -403,7 +407,6 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	if (trash->depth == 0)
 	{
 		assert(trash->master_backtracks);
-		TableauSetFree(trash->open_branches);
 		while (!PStackEmpty(trash->master_backtracks))
 		{
 			PStack_p trash_position = PStackPopP(trash->master_backtracks);
@@ -464,6 +467,11 @@ void ClauseTableauFree(ClauseTableau_p trash)
 			ClauseTableauFree(trash->children[i]);
 		}
 		ClauseTableauArgArrayFree(trash->children, trash->arity);
+	}
+
+	if (trash->depth == 0)
+	{
+		TableauSetFree(trash->open_branches);
 	}
 
 	ClauseTableauCellFree(trash);
@@ -1121,6 +1129,7 @@ ClauseTableau_p   TableauSetExtractFirst(TableauSet_p list)
 
 void TableauSetFree(TableauSet_p set)
 {
+	assert(set->members == 0);
 	ClauseTableauCellFree(set->anchor);
 	TableauSetCellFree(set);
 }
@@ -1667,4 +1676,14 @@ void TableauStackFree(TableauStack_p stack)
 	TableauStackFreeTableaux(stack);
 	PStackFree(stack);
 	return;
+}
+
+void ClauseTableauDeselectBranches(TableauSet_p open_branches)
+{
+	ClauseTableau_p handle = open_branches->anchor->succ;
+	while (handle!= open_branches->anchor)
+	{
+		handle->previously_selected = false;
+		handle = handle->succ;
+	}
 }

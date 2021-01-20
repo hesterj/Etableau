@@ -356,7 +356,7 @@ bool BacktrackWrapper(ClauseTableau_p master)
 {
     assert(master == master->master);
     PStack_p master_backtracks = master->master_backtracks;
-    //fprintf(GlobalOut, "# We need to backtrack... There are %ld known previous steps we can backtrack\n", PStackGetSP(master_backtracks));
+    fprintf(GlobalOut, "# We need to backtrack... There are %ld known previous steps we can backtrack\n", PStackGetSP(master_backtracks));
     if (PStackGetSP(master_backtracks) == 0)
     {
         Warning("The tableau failed to backtrack because there are no possible previous steps", 10);

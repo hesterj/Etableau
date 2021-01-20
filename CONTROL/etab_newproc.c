@@ -102,6 +102,7 @@ int Etableau_n0(TableauControl_p tableaucontrol,
    }
 
    // Proof search is over
+   fprintf(GlobalOut, "# Proof search is over...\n");
 
    GCDeregisterClauseSet(gc, extension_candidates);
    ClauseSetFree(extension_candidates);
@@ -163,6 +164,12 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
             depth_status = DEPTH_OK;
             continue; // We backtracked, try again
         }
+        if (new_tableaux && depth_status == ALL_PREVIOUSLY_SELECTED)
+        {
+            fprintf(GlobalOut, "# Moving to next tableau for population because all the possible branches were already extended\n");
+            *backtrack_status = NEXT_TABLEAU;
+            break;
+        }
         else if (!open_branch) // All of the open branches exceed our current depth, so we must break and return in order to increase it
         {
             break;
@@ -190,7 +197,7 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         if (result || (open_branches->members == 0)) // We have found a closed tableau
         {
             assert(tableaucontrol->closed_tableau == result);
-            return result;
+            break;
         }
         if (new_tableaux)
         {
@@ -202,7 +209,7 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
                 break;
             }
         }
-        if (open_branch->set) // If the open branch is still in a set after the extension rule attempt, it means it was not able to be extended and so should be backtracked
+        if (!new_tableaux && open_branch->set) // If the open branch is still in a set after the extension rule attempt, it means it was not able to be extended and so should be backtracked
         {
             fprintf(GlobalOut, "# Backtracking due to branch still open, %ld remaining\n", PStackGetSP(master->master_backtracks));
             bool backtrack_successful = BacktrackWrapper(master);
@@ -219,9 +226,10 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         }
     }
 
+    //ClauseTableauDeselectBranches(open_branches);
     fprintf(GlobalOut, "# Unable to extend at depth... Returning from EtableauProofSearch_n\n");
 
-    return NULL;
+    return result;
 }
 
 ClauseTableau_p EtableauProofSearchAtDepth_n2(TableauControl_p tableaucontrol,
@@ -311,6 +319,7 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
 {
     bool proof_found = false;
     PStackPointer current_tableau_index = 0;
+    PStackPointer current_new_tableaux_index = 0;
     ClauseTableau_p current_tableau = PStackElementP(distinct_tableaux_stack, current_tableau_index);
     BacktrackStatus status = BACKTRACK_OK;
     while (!proof_found)
@@ -343,7 +352,7 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
             {
                 return proof_found;
             }
-            current_tableau = EtableauGetNextTableau(distinct_tableaux_stack, &current_tableau_index);
+            current_tableau = EtableauGetNextTableau(distinct_tableaux_stack, &current_tableau_index, new_tableaux, &current_new_tableaux_index);
         }
     }
 
@@ -351,12 +360,26 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
 }
 
 ClauseTableau_p EtableauGetNextTableau(TableauStack_p distinct_tableaux_stack,
-                                       PStackPointer *current_index_p)
+                                       PStackPointer *current_index_p,
+                                       TableauStack_p new_tableaux,
+                                       PStackPointer *current_new_tableaux_index_p)
 {
     PStackPointer current_index = *current_index_p;
     current_index++;
     if (current_index == PStackGetSP(distinct_tableaux_stack))
     {
+        if (new_tableaux)
+        {
+            PStackPointer current_new_tableaux_index = *current_new_tableaux_index_p;
+            fprintf(GlobalOut, "# Extending on a tableau from the new tableau stack while populating\n");
+            if (current_new_tableaux_index == PStackGetSP(new_tableaux))
+            {
+                Error("Ran out of tableaux to extend on while populating", 10);
+            }
+            ClauseTableau_p new_tableau = PStackPopP(new_tableaux);
+            PStackPushP(distinct_tableaux_stack, new_tableau);
+            return new_tableau;
+        }
         current_index = 0;
     }
     ClauseTableau_p new_current_tableau = PStackElementP(distinct_tableaux_stack, current_index);

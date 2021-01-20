@@ -36,5 +36,7 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
                                          int max_depth,
                                          TableauStack_p new_tableaux);
 ClauseTableau_p EtableauGetNextTableau(TableauStack_p distinct_tableaux_stack,
-                                       PStackPointer *current_index_p);
+                                       PStackPointer *current_index_p,
+                                       TableauStack_p new_tableaux,
+                                       PStackPointer *current_new_tableau_index);
 #endif

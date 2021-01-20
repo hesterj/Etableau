@@ -31,6 +31,7 @@ struct tableaucontrol_cell;
 
 #define DEPTH_OK 0
 #define ALL_DEPTHS_EXCEEDED 1
+#define ALL_PREVIOUSLY_SELECTED 2
 
 typedef struct clausetableau 
 {
@@ -41,6 +42,7 @@ typedef struct clausetableau
 	Sig_p         signature;
 	bool open;
 	bool saturation_closed;
+	bool previously_selected;
 	bool head_lit;    // If this node was made as a head literal in an extension step, it is true.  Otherwise false.
 	short max_step;   // The number of expansion/closure steps done on the tableaux so far.  Nonzero at root node.
 	short step;       // Nodes are marked in the order they were expanded/closed on.
@@ -99,7 +101,6 @@ ClauseSet_p ClauseSetApplySubstitution(TB_p bank, ClauseSet_p set, Subst_p subst
 FunCode ClauseSetGetMaxVar(ClauseSet_p set);
 Clause_p ClauseApplySubst(Clause_p clause,  TB_p bank, Subst_p subst);
 int ClauseTableauDifference(ClauseTableau_p higher, ClauseTableau_p lower);
-
 void ClauseTableauScoreActive(ClauseTableau_p tab);
 void ClauseTableauPrint(ClauseTableau_p tab);
 void ClauseTableauCollectSteps(ClauseTableau_p tab, PStack_p steps);
@@ -170,6 +171,7 @@ void TableauSetFree(TableauSet_p handle);
 void TableauSetDrainToStack(PStack_p to, TableauSet_p from);
 void TableauStackDrainToSet(TableauSet_p to, PStack_p from);
 void TableauSetMoveClauses(TableauSet_p to, TableauSet_p from);
+void ClauseTableauDeselectBranches(TableauSet_p open_branches);
 
 
 void TableauStackFreeTableaux(PStack_p stack);
