@@ -142,7 +142,11 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
     assert(current_depth);
     assert(master->label);
     assert(master->open_branches);
-    fprintf(GlobalOut, "# Current depth %d\n", current_depth);
+    //fprintf(GlobalOut, "# Current depth %d\n", current_depth);
+
+    ClauseTableau_p (*branch_selection_function)(TableauSet_p, int, int, int*) = &branch_select;
+
+    if ((UNLIKELY(new_tableaux))) branch_selection_function = &branch_select2; // If we are still populating, we cannot extend on previously extended branches
 
     int extensions_done = 0; // This allows us to keep track of the number of extensions done since the last backtrack
     int depth_status = DEPTH_OK;
@@ -150,11 +154,11 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
     TableauSet_p open_branches = master->open_branches;
     while (true)
     {
-        open_branch = branch_select(open_branches, current_depth, max_depth, &depth_status);
+        open_branch = (*branch_selection_function)(open_branches, current_depth, max_depth, &depth_status);
         if (depth_status == ALL_DEPTHS_EXCEEDED) // All of the open branches exceed our maximum depth, so we must backtrack
         {
             assert(!open_branch);
-            fprintf(GlobalOut, "# Backtracking due to all depths exceeded, %ld remaining\n", PStackGetSP(master->master_backtracks));
+            //fprintf(GlobalOut, "# Backtracking due to all depths exceeded, %ld remaining\n", PStackGetSP(master->master_backtracks));
             bool backtrack_successful = BacktrackWrapper(master);
             if (!backtrack_successful)
             {
@@ -164,9 +168,9 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
             depth_status = DEPTH_OK;
             continue; // We backtracked, try again
         }
-        if (new_tableaux && depth_status == ALL_PREVIOUSLY_SELECTED)
+        if (UNLIKELY(new_tableaux && depth_status == ALL_PREVIOUSLY_SELECTED))
         {
-            fprintf(GlobalOut, "# Moving to next tableau for population because all the possible branches were already extended\n");
+            //fprintf(GlobalOut, "# Moving to next tableau for population because all the possible branches were already extended\n");
             *backtrack_status = NEXT_TABLEAU;
             break;
         }
@@ -174,7 +178,7 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         {
             break;
         }
-        fprintf(GlobalOut, "# Selected open branch %p, %d extensions done so far, current depth %d\n", open_branch, tableaucontrol->number_of_extensions, current_depth);
+        //fprintf(GlobalOut, "# Selected open branch %p, %d extensions done so far, current depth %d\n", open_branch, tableaucontrol->number_of_extensions, current_depth);
         int extended = 0;
         assert(open_branch);
         assert(open_branch->id == 0);
@@ -192,17 +196,16 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
                                                          &extended,
                                                          new_tableaux);
         extensions_done += extended;
-        fprintf(GlobalOut, "# Exited from ClauseTableauSearchForPossibleExtension\n");
 
         if (result || (open_branches->members == 0)) // We have found a closed tableau
         {
             assert(tableaucontrol->closed_tableau == result);
             break;
         }
-        if (new_tableaux)
+        if (UNLIKELY(new_tableaux))
         {
             assert(tableaucontrol->multiprocessing_active);
-            fprintf(GlobalOut, "# There are %ld new tableaux.\n", PStackGetSP(new_tableaux));
+            //fprintf(GlobalOut, "# There are %ld new tableaux.\n", PStackGetSP(new_tableaux));
             if (PStackGetSP(new_tableaux) >= (long) tableaucontrol->multiprocessing_active)
             {
                 *backtrack_status = RETURN_NOW;
@@ -211,7 +214,7 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         }
         if (!new_tableaux && open_branch->set) // If the open branch is still in a set after the extension rule attempt, it means it was not able to be extended and so should be backtracked
         {
-            fprintf(GlobalOut, "# Backtracking due to branch still open, %ld remaining\n", PStackGetSP(master->master_backtracks));
+            //fprintf(GlobalOut, "# Backtracking due to branch still open, %ld remaining\n", PStackGetSP(master->master_backtracks));
             bool backtrack_successful = BacktrackWrapper(master);
             if (!backtrack_successful)
             {
@@ -219,15 +222,14 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
                 break;
             }
         }
-        else if (extended && tableaucontrol->number_of_extensions % 100 == 0)
+        else if (UNLIKELY(extended && tableaucontrol->number_of_extensions % 100 == 0))
         {
             *backtrack_status = NEXT_TABLEAU;
             break;
         }
     }
 
-    //ClauseTableauDeselectBranches(open_branches);
-    fprintf(GlobalOut, "# Unable to extend at depth... Returning from EtableauProofSearch_n\n");
+    if (UNLIKELY(new_tableaux)) ClauseTableauDeselectBranches(open_branches);
 
     return result;
 }
@@ -261,7 +263,6 @@ ClauseTableau_p EtableauProofSearchAtDepth_n2(TableauControl_p tableaucontrol,
            break;
        }
    }
-   fprintf(GlobalOut, "# return n3\n");
 
    return NULL;
 }
@@ -275,26 +276,16 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     bool proof_found = false;
     int num_cores_available = TableauControlGetCores(tableaucontrol);
     ClauseTableau_p resulting_tab = NULL;
+    TableauStack_p new_tableaux = PStackAlloc();
     if (PStackGetSP(starting_tableaux) < num_cores_available)
     {
         fprintf(GlobalOut, "# There are not enough tableaux to fork, creating more\n");
-        TableauStack_p new_tableaux = PStackAlloc();
-        //TableauSet_p set = TableauSetAlloc();
-        //TableauStackDrainToSet(set, starting_tableaux);
         proof_found = EtableauProofSearchAtDepthWrapper_n1(tableaucontrol,
                                                           starting_tableaux,
                                                           active,
                                                           extension_candidates,
                                                           max_depth,
                                                           new_tableaux);
-        //resulting_tab = ConnectionTableauProofSearchAtDepth(tableaucontrol,
-                                                   //tableaucontrol->proofstate,
-                                                   //tableaucontrol->proofcontrol,
-                                                   //set,
-                                                   //extension_candidates,
-                                                   //3,
-                                                   //new_tableaux,
-                                                   //num_cores_available);
         fprintf(GlobalOut, "# We now have %ld tableaux to operate on\n", PStackGetSP(new_tableaux));
         if (resulting_tab)
         {
@@ -303,16 +294,93 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
             TableauStackFree(new_tableaux);
             return true;
         }
-        ///
-        TableauStackFree(new_tableaux);
-        ///
     }
+    ///////////
+    if (PStackGetSP(new_tableaux) < num_cores_available)
+    {
+        Error("# Trying to fork with too few tableaux...", 1);
+    }
+    assert(TableauSetEmpty(distinct_tableaux_set));
+    EPCtrlSet_p process_set = EPCtrlSetAlloc();
+    PStack_p buckets = PStackAlloc();
+    for (int i=0; i < num_cores_available; i++)
+    {
+        PStackPushP(buckets, PStackAlloc());
+    }
+    int tableaux_distributor = 0;
+    while (!PStackEmpty(new_tableaux))
+    {
+        tableaux_distributor = tableaux_distributor % num_cores_available;
+        ClauseTableau_p tab = PStackPopP(new_tableaux);
+        TableauStack_p process_bucket = PStackElementP(buckets, tableaux_distributor);
+        PStackPushP(process_bucket, tab);
+        tableaux_distributor++;
+    }
+    for (int i=0; i < num_cores_available; i++)
+    {
+        int pipefd[2];
+        EPCtrl_p proc = EPCtrlAlloc((char*) &i);
+        if (pipe(pipefd) == -1)
+        {
+            Error("# Pipe error", 1);
+        }
+        fflush(GlobalOut);
+        pid_t worker = fork();
+        if (worker == 0) // child process
+        {
+            SilentTimeOut = true;
+            fprintf(GlobalOut, "# Hello from worker %d...\n", i);
+            fflush(GlobalOut);
+            TableauStack_p new_tableaux = PStackElementP(buckets, i);
+            assert(!PStackEmpty(new_tableaux));
+            //TableauSetMoveClauses(distinct_tableaux_set, process_starting_tableaux);
+
+            // should be good to go...
+            proc->pipe = fdopen(pipefd[1], "w");
+            GlobalOut = proc->pipe;
+            close(pipefd[0]);
+            tableaucontrol->process_control = proc;
+            proof_found = EtableauProofSearchAtDepthWrapper_n1(tableaucontrol,
+                                                               new_tableaux,
+                                                               active,
+                                                               extension_candidates,
+                                                               max_depth,
+                                                               NULL);
+            fprintf(GlobalOut, "# Worker has escaped from proof search area.\n");
+            fflush(GlobalOut);
+            TableauStackFree(new_tableaux);
+            if (proof_found) exit(PROOF_FOUND);
+            else exit(RESOURCE_OUT);
+        }
+        else if (worker > 0) // parent
+        {
+            proc->pipe = fdopen(pipefd[0], "r");
+            close(pipefd[1]);
+            proc->pid = worker;
+            proc->fileno = worker; // Since the problem is transmitted through memory, the fileno is the pid
+            EPCtrlSetAddProc(process_set, proc);
+        }
+        else
+        {
+            fprintf(GlobalOut, "# Fork error!\n"); // Really important...
+            Error("Fork error", 1);
+        }
+    }
+    // Wait for the children to exit...
+    proof_found = EtableauWait(num_cores_available, process_set);
+    while (!PStackEmpty(buckets))
+    {
+        TableauStack_p trash = PStackPopP(buckets);
+        TableauStackFree(trash);
+    }
+    PStackFree(buckets);
+    TableauStackFree(new_tableaux);
     return proof_found;
 }
 
 bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
                                          TableauStack_p distinct_tableaux_stack,
-                                         ClauseSet_p active,
+                                          ClauseSet_p active,
                                          ClauseSet_p extension_candidates,
                                          int max_depth,
                                          TableauStack_p new_tableaux)
@@ -340,17 +408,17 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
         else
         {
             assert(status == BACKTRACK_FAILURE || status == NEXT_TABLEAU || status == RETURN_NOW);
-            if (status == BACKTRACK_FAILURE)
+            //if (status == BACKTRACK_FAILURE)
+            //{
+                //fprintf(GlobalOut, "# Switching from a tableau with %ld open branches because of backtrack failure.\n", current_tableau->open_branches->members);
+            //}
+            //else if (status == NEXT_TABLEAU)
+            //{
+                //fprintf(GlobalOut, "# Switching from a tableau with %ld open branches because of extension limit.\n", current_tableau->open_branches->members);
+            //}
+            if (status == RETURN_NOW)
             {
-                fprintf(GlobalOut, "# Switching from a tableau with %ld open branches because of backtrack failure.\n", current_tableau->open_branches->members);
-            }
-            else if (status == NEXT_TABLEAU)
-            {
-                fprintf(GlobalOut, "# Switching from a tableau with %ld open branches because of extension limit.\n", current_tableau->open_branches->members);
-            }
-            else if (status == RETURN_NOW)
-            {
-                return proof_found;
+                break;
             }
             current_tableau = EtableauGetNextTableau(distinct_tableaux_stack, &current_tableau_index, new_tableaux, &current_new_tableaux_index);
         }

@@ -102,5 +102,6 @@ TableauStack_p EtableauCreateStartRulesStack(ProofState_p proofstate,
 
 ClauseTableau_p tableau_select(TableauControl_p tableaucontrol, TableauSet_p set);
 ClauseTableau_p branch_select(TableauSet_p open_branches, int current_depth, int max_depth, int *depth_status);
+ClauseTableau_p branch_select2(TableauSet_p open_branches, int current_depth, int max_depth, int *depth_status);
 
 #endif

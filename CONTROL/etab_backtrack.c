@@ -153,6 +153,10 @@ void Backtrack(Backtrack_p bt)
     assert(master);
     assert(master->label);
     ClauseTableau_p position = GetNodeFromPosition(master, bt->position);
+
+    DStrFree(position->info);
+    position->info = DStrAlloc();
+
     assert(position);
     assert(position->label);
     assert(position->id == bt->id);
@@ -356,7 +360,7 @@ bool BacktrackWrapper(ClauseTableau_p master)
 {
     assert(master == master->master);
     PStack_p master_backtracks = master->master_backtracks;
-    fprintf(GlobalOut, "# We need to backtrack... There are %ld known previous steps we can backtrack\n", PStackGetSP(master_backtracks));
+    //fprintf(GlobalOut, "# We need to backtrack... There are %ld known previous steps we can backtrack\n", PStackGetSP(master_backtracks));
     if (PStackGetSP(master_backtracks) == 0)
     {
         Warning("The tableau failed to backtrack because there are no possible previous steps", 10);

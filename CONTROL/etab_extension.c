@@ -354,16 +354,16 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 				tableau_control->number_of_extensions++;
 				if (tableau_control->branch_saturation_enabled)
 				{
-					fprintf(GlobalOut, "# Saturating branch\n");
+					//fprintf(GlobalOut, "# Saturating branch\n");
 					BranchSaturation_p branch_sat = BranchSaturationAlloc(tableau_control->proofstate, 
 																		  tableau_control->proofcontrol,
 																		  extended->master,
 																		  10000);
 					AttemptToCloseBranchesWithSuperpositionSerial(tableau_control, branch_sat);
 					BranchSaturationFree(branch_sat);
-					fprintf(GlobalOut, "# Saturation done\n");
+					//fprintf(GlobalOut, "# Saturation done\n");
 				}
-				if (new_tableaux == NULL || PStackGetSP(new_tableaux) >= tableau_control->multiprocessing_active) // If we extended on a tableau without copying it, return.
+				if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= tableau_control->multiprocessing_active) // If we extended on a tableau without copying it, return.
 				{
 					goto return_point;
 				}
@@ -463,7 +463,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 		//if (ClauseTableauBranchContainsLiteral(parent, handle->literals))
 		if (ClauseTableauBranchContainsLiteral(parent, subst_applied->literals))
 		{
-			fprintf(GlobalOut, "# Irregular extension stopped at parent\n");
+			//fprintf(GlobalOut, "# Irregular extension stopped at parent\n");
 			ClauseSetFree(new_leaf_clauses_set);
 			SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
 			__attribute__((unused)) bool backtracked = BacktrackWrapper(master);
@@ -480,7 +480,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	// They have had their labels replaced, and parent is no longer in the open branches set, so we check the remaining open branches.
 	if (!ClauseTableauIsLeafRegular(master))
 	{
-		fprintf(GlobalOut, "# Irregular extension stopped at non-parent\n");
+		//fprintf(GlobalOut, "# Irregular extension stopped at non-parent\n");
 		ClauseSetFree(new_leaf_clauses_set);
 		SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
 		__attribute__((unused)) bool backtracked = BacktrackWrapper(master);
@@ -633,7 +633,7 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 		//if (ClauseTableauBranchContainsLiteral(parent, handle->literals))
 		if (ClauseTableauBranchContainsLiteral(parent, subst_applied->literals))
 		{
-			fprintf(GlobalOut, "# Irregular extension stopped at parent\n");
+			//fprintf(GlobalOut, "# Irregular extension stopped at parent\n");
 			ClauseSetFree(new_leaf_clauses_set);
 			SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
 			__attribute__((unused)) bool backtracked = BacktrackWrapper(master);
@@ -651,7 +651,7 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 	// They have had their labels replaced, and parent is no longer in the open branches set, so we check the remaining open branches.
 	if (!ClauseTableauIsLeafRegular(master))
 	{
-		fprintf(GlobalOut, "# Irregular extension stopped at non-parent\n");
+		//fprintf(GlobalOut, "# Irregular extension stopped at non-parent\n");
 		ClauseSetFree(new_leaf_clauses_set);
 		SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
 		__attribute__((unused)) bool backtracked = BacktrackWrapper(master);
@@ -741,9 +741,8 @@ ClauseTableau_p ClauseTableauExtensionRuleWrapper(TableauControl_p tableau_contr
 												  TableauExtension_p extension,
 												  PStack_p new_tableaux)
 {
-	if (new_tableaux)
+	if (UNLIKELY(new_tableaux))
 	{
-		fprintf(GlobalOut, "# New tableaux stack present, so adding extension result to the stack\n");
 		ClauseTableau_p result = ClauseTableauExtensionRuleCopy(tableau_control, new_tableaux, extension);
 		return result;
 	}
@@ -775,7 +774,7 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
                                                                           NULL,
                                                                           selected,
                                                                           new_tableaux);
-        if (tableaucontrol->closed_tableau)
+        if (UNLIKELY(tableaucontrol->closed_tableau))
         {
             closed_tableau = tableaucontrol->closed_tableau;
             //fprintf(GlobalOut, "# Success\n");
@@ -786,16 +785,12 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
             assert(new_tableaux || number_of_extensions == 1); // Always return after one extension
 			*extended += number_of_extensions;
             //fprintf(GlobalOut, "#  Extended on a branch at depth %d...\n", open_branch->depth);
-            if (!new_tableaux || PStackGetSP(new_tableaux) >= tableaucontrol->multiprocessing_active)
+            if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= tableaucontrol->multiprocessing_active)
 			{
 				return NULL;
 			}
         }
         selected = selected->succ;
     }
-	if (new_tableaux)
-	{
-		fprintf(GlobalOut, "# Populating still, there are %ld new tableaux\n", PStackGetSP(new_tableaux));
-	}
 	return NULL;
 }
