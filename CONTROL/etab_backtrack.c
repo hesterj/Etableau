@@ -356,7 +356,7 @@ bool BacktrackContainsSubst(Backtrack_p backtrack, Subst_p subst)
 ** Otherwise, return false.  This can happen if there are no more possible backtracks (failure tableau)
 */
 
-bool BacktrackWrapper(ClauseTableau_p master)
+bool BacktrackWrapper(ClauseTableau_p master, bool delete_info)
 {
     assert(master == master->master);
     PStack_p master_backtracks = master->master_backtracks;

@@ -1190,9 +1190,9 @@ int TableauControlGetCores(TableauControl_p tableaucontrol)
 	{
 		Error("# Requested more cores than are available to the program...", 1);
 	}
-	if (num_cores == 1)
-	{
-		return nprocs;
-	}
+	//if (num_cores == 1)
+	//{
+		//return nprocs;
+	//}
 	return num_cores;
 }

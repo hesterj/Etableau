@@ -22,11 +22,6 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 			SubstDelete(subst);
 			return false;
 		}
-		SubstDStrPrint(tab->info, subst, tab->terms->sig, DEREF_NEVER);
-		DStrAppendStr(tab->info, " Reduction step with clause ");
-		DStrAppendInt(tab->info, tab->id);
-		DStrAppendStr(tab->info, " ");
-		ClauseTableauRegisterStep(tab);
 
 		Backtrack_p backtrack = BacktrackAlloc(tab, subst, 0, false);
 		assert(BacktrackIsClosureStep(backtrack));
@@ -40,16 +35,23 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 		tab->open = false;
 		TableauSetExtractEntry(tab);
 		// Check for regularity?
-		SubstDelete(subst);
 		if (!ClauseTableauIsLeafRegular(tab->master))
 		{
 			//fprintf(GlobalOut, "# Backtracking after closure step violated regularity\n");
-			__attribute__((unused)) bool backtracked = BacktrackWrapper(tab->master);
+			__attribute__((unused)) bool backtracked = BacktrackWrapper(tab->master, false);
 			assert(backtracked);
 			tab->id = 0;
 			tab->mark_int = 0;
+			SubstDelete(subst);
 			return false;
 		}
+		assert(tab->info);
+		SubstDStrPrint(tab->info, subst, tab->terms->sig, DEREF_NEVER);
+		DStrAppendStr(tab->info, " Reduction step with clause ");
+		DStrAppendInt(tab->info, tab->id);
+		DStrAppendStr(tab->info, " ");
+		SubstDelete(subst);
+		ClauseTableauRegisterStep(tab);
 		backtrack->completed = true;
 		return true;
 	}

@@ -120,6 +120,8 @@ PList_p ClauseSetToPList(ClauseSet_p set);
 
 Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b);
 Subst_p ClauseContradictsClauseSubst(Clause_p a, Clause_p b, Subst_p subst);
+int ClauseTableauGetDeepestBranch(ClauseTableau_p tab);
+int ClauseTableauGetShallowestBranch(ClauseTableau_p tab);
 
 
 ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start);

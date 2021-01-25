@@ -374,7 +374,7 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	//}
 	if (trash->set)
 	{
-		Warning("!!! Freeing open branch at depth %d", trash->depth);
+		//Warning("!!! Freeing open branch at depth %d", trash->depth);
 		assert(trash->depth != 0);
 		TableauSetExtractEntry(trash);
 		//assert(false);
@@ -783,12 +783,12 @@ void ClauseTableauPrintBranch(ClauseTableau_p branch)
 {
 	ClauseTableau_p depth_check = branch;
 	assert(depth_check);
-	fprintf(GlobalOut, "# Depth: %d ", depth_check->depth);
-	if (branch->open && branch->arity == 0)
-	{
-		fprintf(GlobalOut, "OPEN");
-	}
-	fprintf(GlobalOut, "\n");
+	//fprintf(GlobalOut, "# Depth: %d ", depth_check->depth);
+	//if (branch->open && branch->arity == 0)
+	//{
+		//fprintf(GlobalOut, "OPEN");
+	//}
+	//fprintf(GlobalOut, "\n");
 	//printf("\033[1;33m");
 	while (depth_check->depth != 0)
 	{
@@ -1686,4 +1686,36 @@ void ClauseTableauDeselectBranches(TableauSet_p open_branches)
 		handle->previously_selected = false;
 		handle = handle->succ;
 	}
+}
+
+int ClauseTableauGetDeepestBranch(ClauseTableau_p tab)
+{
+	TableauSet_p open_branches = tab->open_branches;
+	ClauseTableau_p handle = open_branches->anchor->succ;
+	assert(handle != open_branches->anchor);
+	int deepest = 0;
+	while (handle != open_branches->anchor)
+	{
+		int depth = handle->depth;
+		if (depth > deepest) deepest = depth;
+		handle = handle->succ;
+	}
+	assert(deepest);
+	return deepest;
+}
+
+int ClauseTableauGetShallowestBranch(ClauseTableau_p tab)
+{
+	TableauSet_p open_branches = tab->open_branches;
+	ClauseTableau_p handle = open_branches->anchor->succ;
+	assert(handle != open_branches->anchor);
+	int shallowest = handle->depth;
+	while (handle != open_branches->anchor)
+	{
+		int depth = handle->depth;
+		if (depth < shallowest) shallowest = depth;
+		handle = handle->succ;
+	}
+	assert(shallowest);
+	return shallowest;
 }

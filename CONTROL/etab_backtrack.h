@@ -56,7 +56,7 @@ bool SubstIsFailure(ClauseTableau_p tab, Subst_p subst);
 bool ExtensionIsFailure(ClauseTableau_p tab, Subst_p subst, long extension_id, short head_lit_position);
 bool BindingOccursInSubst(Binding_p binding, Subst_p subst);
 bool BacktrackContainsSubst(Backtrack_p backtrack, Subst_p subst);
-bool BacktrackWrapper(ClauseTableau_p master);
+bool BacktrackWrapper(ClauseTableau_p master, bool delete_info);
 void Backtrack(Backtrack_p bt);
 void RollBackEveryNode(ClauseTableau_p master);
 
