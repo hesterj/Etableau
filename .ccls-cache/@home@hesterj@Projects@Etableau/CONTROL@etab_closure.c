@@ -252,9 +252,6 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 			PStackPushP(refreshed_clauses, handle_clause);
 			if ((subst = ClauseContradictsClause(tab, leaf, handle_clause)))
 			{
-				#ifndef DNDEBUG
-				fprintf(GlobalOut, "# Folding label contradiction found!\n");
-				#endif
 				while (!PStackEmpty(refreshed_clauses))
 				{
 					Clause_p fresh = PStackPopP(refreshed_clauses);

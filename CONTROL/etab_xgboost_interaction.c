@@ -408,10 +408,10 @@ void EqnPListPrint(FILE* out, PList_p list_of_eqns)
     }
 }
 
-void XGBoostTest()
-{
-    BoosterHandle booster;
-    XGBoosterCreate(NULL, 0, &booster);
-    XGBoosterSetParam(booster, "seed", "0");
-    XGBoosterFree(booster);
-}
+//void XGBoostTest()
+//{
+    //BoosterHandle booster;
+    //XGBoosterCreate(NULL, 0, &booster);
+    //XGBoosterSetParam(booster, "seed", "0");
+    //XGBoosterFree(booster);
+//}

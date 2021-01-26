@@ -306,7 +306,7 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     }
     else
     {
-        for (PStackPointer p=0; p<PStackGetSP(starting_tableaux); p++)
+        while (!PStackEmpty(starting_tableaux))
         {
             ClauseTableau_p start = PStackPopP(starting_tableaux);
             PStackPushP(new_tableaux, start);
