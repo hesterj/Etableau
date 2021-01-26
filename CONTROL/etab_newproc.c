@@ -147,7 +147,7 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
     ClauseTableau_p (*branch_selection_function)(TableauSet_p, int, int, int*) = &branch_select;
 
     if ((UNLIKELY(new_tableaux))) branch_selection_function = &branch_select2; // If we are still populating, we cannot extend on previously extended branches
-    fprintf(stdout, " %p %d %d ", master, tableaucontrol->number_of_extensions, current_depth);
+    //fprintf(stdout, " %p %d %d ", master, tableaucontrol->number_of_extensions, current_depth);
 
     int extensions_done = 0; // This allows us to keep track of the number of extensions done since the last backtrack
     int depth_status = DEPTH_OK;
@@ -233,7 +233,7 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
     }
 
     if (UNLIKELY(new_tableaux)) ClauseTableauDeselectBranches(open_branches);
-    fprintf(stdout," %d\n", extensions_done);
+    //fprintf(stdout," %d\n", extensions_done);
     fflush(stdout);
 
     return result;

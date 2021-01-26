@@ -351,7 +351,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			if (extended) // extension may not happen due to regularity
 			{
 				extensions_done++;
-				fprintf(stdout, "#");
+				//fprintf(stdout, "#");
 				tableau_control->number_of_extensions++;
 				if (tableau_control->branch_saturation_enabled)
 				{
