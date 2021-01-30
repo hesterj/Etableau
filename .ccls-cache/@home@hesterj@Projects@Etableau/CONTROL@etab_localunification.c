@@ -52,30 +52,28 @@ long UpdateLocalVariables(ClauseTableau_p node)
 	num_variables = PTreeToPStack(local_variables, local_variables_tree);
 	node->local_variables = local_variables;
 	
-#ifndef DNDEBUG
-	if (num_variables)
-	{
+	//if (num_variables)
+	//{
 		//printf("%ld Local variables found! ", num_variables);
-		for (PStackPointer p = 0; p<PStackGetSP(local_variables); p++)
-		{
-			Term_p local_variable = PStackElementP(local_variables, p);
-			//printf("# Local variable ");
-			//TermPrint(GlobalOut, local_variable, sig,DEREF_ALWAYS);
-			//TermPrint(GlobalOut, local_variable, node->terms->sig, DEREF_ALWAYS);printf(" ");
-			if (PTreeFind(&temp_variable_tree, local_variable))
-			{
-				printf("Found local variable in other branches var tree...\n");
-				printf("Root of temp_variable_tree: %7p\n", temp_variable_tree->key);
-				printf("Able to delete? %d\n", PTreeDeleteEntry(&temp_variable_tree, local_variable));
-				printf("Root of temp_variable_tree: %7p\n", temp_variable_tree->key);
-				printf("%ld nodes in temp_variable_tree.\n", PTreeNodes(temp_variable_tree));
-				//TermPrint(GlobalOut, temp_variable_tree->key, node->terms->sig, DEREF_ALWAYS);printf("\n");
-				Error("Found local variable in another branch...", 1);
-			}
-			
-		}
-	}
-#endif
+		//for (PStackPointer p = 0; p<PStackGetSP(local_variables); p++)
+		//{
+			//Term_p local_variable = PStackElementP(local_variables, p);
+			////printf("# Local variable ");
+			////TermPrint(GlobalOut, local_variable, sig,DEREF_ALWAYS);
+			////TermPrint(GlobalOut, local_variable, node->terms->sig, DEREF_ALWAYS);printf(" ");
+			//if (PTreeFind(&temp_variable_tree, local_variable))
+			//{
+				//printf("Found local variable in other branches var tree...\n");
+				//printf("Root of temp_variable_tree: %7p\n", temp_variable_tree->key);
+				//printf("Able to delete? %d\n", PTreeDeleteEntry(&temp_variable_tree, local_variable));
+				//printf("Root of temp_variable_tree: %7p\n", temp_variable_tree->key);
+				//printf("%ld nodes in temp_variable_tree.\n", PTreeNodes(temp_variable_tree));
+				////TermPrint(GlobalOut, temp_variable_tree->key, node->terms->sig, DEREF_ALWAYS);printf("\n");
+				//Error("Found local variable in another branch...", 1);
+			//}
+		//
+		//}
+	//}
 
 	PStackFree(other_branches_vars_stack);
 	PTreeFree(temp_variable_tree);

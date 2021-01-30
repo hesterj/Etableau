@@ -551,6 +551,11 @@ int main(int argc, char* argv[])
    assert(problemType != PROBLEM_HO || proofcontrol->ocb->type == KBO6);
 #endif
 
+   // Moved here by John from just before main saturation
+   if(SigHasUnimplementedInterpretedSymbols(proofstate->signature))
+   {
+      inf_sys_complete = false;
+   }
 
    if (!success && TableauOptions == 1)
    {
@@ -614,10 +619,6 @@ int main(int argc, char* argv[])
    }
    PERF_CTR_EXIT(SatTimer);
 
-   if(SigHasUnimplementedInterpretedSymbols(proofstate->signature))
-   {
-      inf_sys_complete = false;
-   }
 
    out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
    if(filter_sat)

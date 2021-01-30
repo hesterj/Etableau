@@ -987,6 +987,8 @@ bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 			case SATISFIABLE:
 			{
 				EPCtrlSetFree(process_set, false);
+				fprintf(GlobalOut, "# Satisfiable branch?\n");
+				fflush(GlobalOut);
 				Error("# A branch is satisfiable- this is highly unlikely", 1);
 			}
 			case OUT_OF_MEMORY:
@@ -1188,7 +1190,7 @@ int TableauControlGetCores(TableauControl_p tableaucontrol)
 	fprintf(GlobalOut, "# %d cores available to the main process.\n", nprocs);
 	if (num_cores > nprocs)
 	{
-		Error("# Requested more cores than are available to the program...", 1);
+		Warning("# Requested more cores than are available to the program...");
 	}
 	//if (num_cores == 1)
 	//{

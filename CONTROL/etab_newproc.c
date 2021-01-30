@@ -364,8 +364,6 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
                                                                extension_candidates,
                                                                max_depth,
                                                                NULL);
-            fprintf(GlobalOut, "# Worker has escaped from proof search area.\n");
-            fflush(GlobalOut);
             TableauStackFree(new_tableaux);
             if (proof_found) exit(PROOF_FOUND);
             else exit(RESOURCE_OUT);
@@ -428,10 +426,15 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
             assert(status == BACKTRACK_FAILURE || status == NEXT_TABLEAU || status == RETURN_NOW);
             if (status == BACKTRACK_FAILURE)
             {
-                fprintf(GlobalOut, "# Destroying a tableau with %ld open branches because of backtrack failure.\n", current_tableau->open_branches->members);
+                fprintf(stdout, "# Destroying a tableau with %ld open branches because of backtrack failure.\n", current_tableau->open_branches->members);
                 PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
+                fprintf(stdout, "# Discarded tableau\n");
+                fflush(stdout);
                 ClauseTableauFree(current_tableau);
+                fprintf(stdout, "# Deleted tableau\n");
+                fflush(stdout);
                 current_tableau = NULL;
+                current_tableau_index = 0;
             }
             //else if (status == NEXT_TABLEAU)
             //{
@@ -442,6 +445,7 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
                 break;
             }
             current_tableau = EtableauGetNextTableau(distinct_tableaux_stack, &current_tableau_index, new_tableaux, &current_new_tableaux_index);
+            if (current_tableau == NULL) break; // In case we ran out of tableaux...
         }
     }
 
@@ -467,8 +471,14 @@ ClauseTableau_p EtableauGetNextTableau(TableauStack_p distinct_tableaux_stack,
             PStackPushP(distinct_tableaux_stack, new_tableau);
             return new_tableau;
         }
+        if ( PStackEmpty(distinct_tableaux_stack) )
+        {
+            fprintf(GlobalOut, "# Unable to get any tableaux...\n");
+            return NULL;
+        }
         *current_index_p = 0;
     }
+    assert(*current_index_p < distinct_tableaux_stack->current);
     ClauseTableau_p new_current_tableau = PStackElementP(distinct_tableaux_stack, *current_index_p);
     return new_current_tableau;
 }

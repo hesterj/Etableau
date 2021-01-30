@@ -3,6 +3,8 @@
 
 // Forward declaration
 
+extern bool inf_sys_complete;
+
 int process_saturation_output(TableauControl_p tableau_control,
 										pid_t *pool, 
 										int *return_status, 
@@ -83,14 +85,14 @@ int process_branch_nofork(ProofState_p proofstate,
 	if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
 
 	//SilentTimeOut = true;
-	//proofcontrol->heuristic_parms.prefer_initial_clauses = true;
+	proofcontrol->heuristic_parms.prefer_initial_clauses = true;
 	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
 	EtableauProofStateResetClauseSets(proofstate);
 	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
 	int branch_status = ECloseBranchProcessBranchFirstSerial(proofstate, 
-																				proofcontrol, 
-																				branch, 
-																				selected_number_of_clauses_to_process);
+															 proofcontrol,
+															 branch,
+															 selected_number_of_clauses_to_process);
 	EtableauProofStateResetClauseSets(proofstate);
 	TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
 	branch->previously_saturated = selected_number_of_clauses_to_process;
@@ -100,9 +102,9 @@ int process_branch_nofork(ProofState_p proofstate,
 
 
 int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate, 
-													  ProofControl_p proofcontrol, 
-													  ClauseTableau_p branch, 
-													  long max_proc)
+										 ProofControl_p proofcontrol,
+										 ClauseTableau_p branch,
+										 long max_proc)
 {
 	Clause_p success = NULL;
 	assert(proofstate);
@@ -117,8 +119,20 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 	success = Saturate(proofstate, proofcontrol, max_proc,
 							 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
 							 LLONG_MAX, LONG_MAX);
+	bool out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
+	if (out_of_clauses &&
+		inf_sys_complete &&
+		proofstate->state_is_complete &&
+		!(proofstate->has_interpreted_symbols))
+	{
+		fprintf(stdout, "# Ran out of clauses on local branch saturation...\n");
+		fflush(stdout);
+		branch->master->tableaucontrol->satisfiable = true;
+		return SATISFIABLE;
+	}
 	if (success)
 	{
+		//fprintf(stdout, "# Branch contradiction found\n");
 		return PROOF_FOUND;
 	}
     //GCCollect(proofstate->terms->gc);
@@ -139,6 +153,7 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 	ClauseTableau_p handle = open_branches->anchor->succ;
 	int num_local_branches = 0;
 	int successful_count = 0;
+	int branch_status = RESOURCE_OUT;
 	while (handle != open_branches->anchor)
 	{
 		assert(handle != master->open_branches->anchor);
@@ -153,11 +168,11 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 
 			tableau_control->number_of_saturation_attempts++;
 			//ResetAllOccurrences(&tableau_control->feature_tree);
-			int branch_status = process_branch_nofork(proofstate, 
-																	proofcontrol, 
-																	handle, 
-																	tableau_control, 
-																	max_proc);
+			branch_status = process_branch_nofork(proofstate,
+												  proofcontrol,
+												  handle,
+												  tableau_control,
+												  max_proc);
 			//fprintf(GlobalOut, "# Done.\n");
 			//EqnBranchRepresentationsList(handle, tableau_control->feature_list, branch_status);
 			//XGBoostTest();
@@ -177,10 +192,16 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 				//return 1;
 				continue;
 			}
+			else if (branch_status == SATISFIABLE)
+			{
+				DStrAppendStr(handle->info, " Satisfiable ");
+				DStrAppendInt(handle->info, tableau_control->number_of_saturation_attempts);
+				break;
+			}
 		}
 		handle = handle->succ;
 	}
-	if (open_branches->members == 0)
+	if (open_branches->members == 0 || branch_status == SATISFIABLE)
 	{
 		tableau_control->closed_tableau = master;
 	}

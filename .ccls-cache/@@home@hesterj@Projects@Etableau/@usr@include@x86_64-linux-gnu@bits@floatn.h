@@ -29,7 +29,7 @@
 #if (defined __x86_64__							\
      ? __GNUC_PREREQ (4, 3)						\
      : (defined __GNU__ ? __GNUC_PREREQ (4, 5) : __GNUC_PREREQ (4, 4))) \
-     &&  !defined(__CUDACC__) && !defined(__ICC)
+     &&  !defined(__CUDACC__)
 # define __HAVE_FLOAT128 1
 #else
 # define __HAVE_FLOAT128 0

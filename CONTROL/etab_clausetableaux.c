@@ -1647,7 +1647,8 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 		}
 	}
 
-	fprintf(GlobalOut, "# SZS output start CNFRefutation for %s\n", tableaucontrol->problem_name);
+	//fprintf(GlobalOut, "# SZS output start CNFRefutation for %s\n", tableaucontrol->problem_name);
+	fprintf(GlobalOut, "# SZS output start for %s\n", tableaucontrol->problem_name);
 	if (false && tableaucontrol->clausification_buffer) // Disabled for sanity
 	{
 		fprintf(GlobalOut, "# Begin clausification derivation\n");
@@ -1665,7 +1666,8 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 	ClauseTableauPrint(resulting_tab);
 	ClauseTableauTPTPPrint(resulting_tab);
 	fprintf(GlobalOut, "# End printing tableau\n");
-	fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
+	//fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
+	fprintf(GlobalOut, "# SZS output end\n");
 	fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
 	fflush(GlobalOut);
 	return;
