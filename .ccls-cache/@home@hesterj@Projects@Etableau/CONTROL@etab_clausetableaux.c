@@ -1165,9 +1165,16 @@ void TableauSetMoveClauses(TableauSet_p to, TableauSet_p from)
 
 void ClauseTableauPrintDOTGraph(ClauseTableau_p tab)
 {
-	FILE *dotgraph = fopen("/home/hesterj/Projects/APRTESTING/DOT/graph.dot", "w");
+	TableauControl_p control = tab->tableaucontrol;
+	DStr_p file_name = DStrAlloc();
+	DStrAppendStr(file_name, "/home/hesterj/Projects/Testing/DOT/");
+	DStrAppendStr(file_name, control->problem_name);
+	DStrAppendStr(file_name, ".dot");
+	//FILE *dotgraph = fopen("/home/hesterj/Projects/Testing/DOT/graph.dot", "w");
+	FILE *dotgraph = fopen(DStrView(file_name), "w");
 	ClauseTableauPrintDOTGraphToFile(dotgraph, tab);
 	fclose(dotgraph);
+	DStrFree(file_name);
 }
 
 void ClauseTableauPrintDOTGraphToFile(FILE* dotgraph, ClauseTableau_p tab)
@@ -1189,21 +1196,21 @@ void ClauseTableauPrintDOTGraphToFile(FILE* dotgraph, ClauseTableau_p tab)
 	int folds = 0;
 	if (tab->folding_labels) folds = tab->folding_labels->members;
 	
-	fprintf(dotgraph, "digraph aprgraph {\n");
+	fprintf(dotgraph, "digraph dotgraph {\n");
 	
 	fprintf(dotgraph,"   %ld [color=Green, label=\"", root_id);
-	ClauseTSTPCorePrint(dotgraph, root_label, true);
+	//ClauseTSTPCorePrint(dotgraph, root_label, true);
 	if (tab->folding_labels)
 	{
-		Clause_p handle = tab->folding_labels->anchor->succ;
-		while (handle != tab->folding_labels->anchor) 
-		{
-			fprintf(dotgraph, "\n");
-			ClauseTSTPCorePrint(dotgraph, handle, true);
-			handle = handle->succ;
-		}
+		//Clause_p handle = tab->folding_labels->anchor->succ;
+		//while (handle != tab->folding_labels->anchor)
+		//{
+			//fprintf(dotgraph, "\n");
+			//ClauseTSTPCorePrint(dotgraph, handle, true);
+			//handle = handle->succ;
+		//}
 	}
-	fprintf(dotgraph, " %d\"]\n", folds);
+	fprintf(dotgraph, " %ld\"]\n", root_id);
 	
 	for (int i=0; i < tab->arity; i++)
 	{	
@@ -1240,18 +1247,19 @@ void ClauseTableauPrintDOTGraphChildren(ClauseTableau_p tab, FILE* dotgraph)
 			fprintf(dotgraph,"   %ld [color=Blue, label=\"", ident);
 		}
 	}
-	ClauseTSTPCorePrint(dotgraph, label, true);
+	//ClauseTSTPCorePrint(dotgraph, label, true);
 	int tab_depth = tab->depth;
 	bool tab_saturation_closed = tab->saturation_closed;
 	int tab_mark_int = tab->mark_int;
 	int tab_folded_up = tab->folded_up;
 	
-	fprintf(dotgraph, " d:%d ", tab_depth);
-	fprintf(dotgraph, "f:%d ", folds);
-	fprintf(dotgraph, "s:%d ", tab_saturation_closed);
-	fprintf(dotgraph, "m:%d ", tab_mark_int);
-	fprintf(dotgraph, "id:%ld ", tab->id);
-	fprintf(dotgraph, "fu:%d\"]\n ", tab_folded_up);
+	//fprintf(dotgraph, " d:%d ", tab_depth);
+	//fprintf(dotgraph, "f:%d ", folds);
+	//fprintf(dotgraph, "m:%d ", tab_mark_int);
+	//fprintf(dotgraph, "id:%ld ", tab->id);
+	fprintf(dotgraph, "%ld ", tab->id);
+	fprintf(dotgraph, "s:%d\"]\n ", tab_saturation_closed);
+	//fprintf(dotgraph, "\"]\n ");
 	fprintf(dotgraph,"   %ld -> %ld\n", parent_ident, ident);
 	
 	for (int i=0; i < tab->arity; i++)
@@ -1669,6 +1677,9 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 	//fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
 	fprintf(GlobalOut, "# SZS output end\n");
 	fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
+	fprintf(GlobalOut, "# Printing DOT graph...\n");
+	ClauseTableauPrintDOTGraph(resulting_tab);
+	fprintf(GlobalOut, "# DOT graph printed.\n");
 	fflush(GlobalOut);
 	return;
 }

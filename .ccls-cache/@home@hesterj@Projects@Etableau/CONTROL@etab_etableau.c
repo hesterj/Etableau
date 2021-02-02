@@ -120,7 +120,8 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 							 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
 							 LLONG_MAX, LONG_MAX);
 	bool out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
-	if (out_of_clauses &&
+	if (!success &&
+		out_of_clauses &&
 		inf_sys_complete &&
 		proofstate->state_is_complete &&
 		!(proofstate->has_interpreted_symbols))
