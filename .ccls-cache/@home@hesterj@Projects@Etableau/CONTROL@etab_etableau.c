@@ -38,11 +38,11 @@ void BranchSaturationFree(BranchSaturation_p branch_sat)
 }
 
 
-int process_branch_nofork(ProofState_p proofstate, 
-						  ProofControl_p proofcontrol,
-						  ClauseTableau_p branch,
-						  TableauControl_p tableau_control,
-						  long max_proc)
+ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
+							   ProofControl_p proofcontrol,
+							   ClauseTableau_p branch,
+							   TableauControl_p tableau_control,
+							   long max_proc)
 {
 	long selected_number_of_clauses_to_process = max_proc;
 	long previously_saturated = branch->previously_saturated; 
@@ -74,12 +74,6 @@ int process_branch_nofork(ProofState_p proofstate,
 		//fprintf(stdout, "# Do not replicate work...\n");
 		return RESOURCE_OUT;
 	}
-	else
-	{
-		//fprintf(stdout, "# Saturating branch...\n");
-		//ClauseTableauPrintBranch(branch);
-		//fprintf(stdout, "# Done printing branch\n");
-	}
 
 	// Large number of clauses to process, for last ditch attempts
 	if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
@@ -89,10 +83,14 @@ int process_branch_nofork(ProofState_p proofstate,
 	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
 	EtableauProofStateResetClauseSets(proofstate);
 	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
-	int branch_status = ECloseBranchProcessBranchFirstSerial(proofstate, 
-															 proofcontrol,
-															 branch,
-															 selected_number_of_clauses_to_process);
+	//int branch_status = ECloseBranchProcessBranchFirstSerial(proofstate,
+															 //proofcontrol,
+															 //branch,
+															 //selected_number_of_clauses_to_process);
+	ErrorCodes branch_status = ECloseBranchWithInterreduction(proofstate,
+															  proofcontrol,
+															  branch,
+															  selected_number_of_clauses_to_process);
 	EtableauProofStateResetClauseSets(proofstate);
 	TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
 	branch->previously_saturated = selected_number_of_clauses_to_process;
@@ -101,10 +99,10 @@ int process_branch_nofork(ProofState_p proofstate,
 }
 
 
-int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate, 
-										 ProofControl_p proofcontrol,
-										 ClauseTableau_p branch,
-										 long max_proc)
+ErrorCodes ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
+												ProofControl_p proofcontrol,
+												ClauseTableau_p branch,
+												long max_proc)
 {
 	Clause_p success = NULL;
 	assert(proofstate);
@@ -113,8 +111,11 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 	int early_return_status = EtableauInsertBranchClausesIntoUnprocessed(proofstate, proofcontrol, branch);
 	if (early_return_status == PROOF_FOUND) // Maybe a contradiction can be found via superposition within the branch...
 	{
-		return PROOF_FOUND;	
+		return PROOF_FOUND;
 	}
+
+
+
 	proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver
 	success = Saturate(proofstate, proofcontrol, max_proc,
 							 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
@@ -138,6 +139,62 @@ int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 	}
     //GCCollect(proofstate->terms->gc);
 	return RESOURCE_OUT;
+}
+
+ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
+										  ProofControl_p proofcontrol,
+										  ClauseTableau_p branch,
+										  long max_proc)
+{
+	Clause_p success = NULL;
+	PStack_p branch_labels = PStackAlloc();
+	ErrorCodes status = RESOURCE_OUT;
+	assert(proofstate);
+	assert(proofcontrol);
+
+	ClauseTableauCollectBranchCopyLabels(branch, proofstate->unprocessed, branch_labels);
+
+    LiteralSelectionFun sel_strat =
+		proofcontrol->heuristic_parms.selection_strategy;
+	proofcontrol->heuristic_parms.selection_strategy = SelectNoGeneration;
+    success = Saturate(proofstate, proofcontrol, LONG_MAX, // Interreduction
+                       LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
+                       LLONG_MAX, LONG_MAX);
+    proofcontrol->heuristic_parms.selection_strategy = sel_strat;
+    if(LIKELY(!success))
+    {
+		ProofStateResetProcessed(proofstate, proofcontrol);
+		proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver
+		status = ProcessSpecificClauseStackWrapper(proofstate, proofcontrol, branch_labels); // Process the branch clauses first
+		if (UNLIKELY(status == PROOF_FOUND)) // A contradiction was found while processing the branch clauses
+		{
+			success = (Clause_p) 1; // Dummy non-NULL clause
+		}
+		else // Now do the full branch saturation
+		{
+			success = Saturate(proofstate, proofcontrol, max_proc,
+							   LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
+							   LLONG_MAX, LONG_MAX);
+		}
+	}
+
+	bool out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
+	if (!success &&
+		out_of_clauses &&
+		inf_sys_complete &&
+		proofstate->state_is_complete &&
+		!(proofstate->has_interpreted_symbols))
+	{
+		branch->master->tableaucontrol->satisfiable = true;
+		status = SATISFIABLE;
+	}
+	if (success)
+	{
+		status = PROOF_FOUND;
+	}
+    //GCCollect(proofstate->terms->gc);
+	PStackFree(branch_labels); // The branch labels are free'd elsewhere, so no need to worry about losing the pointers to them.
+	return status;
 }
 
 
@@ -169,11 +226,11 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 
 			tableau_control->number_of_saturation_attempts++;
 			//ResetAllOccurrences(&tableau_control->feature_tree);
-			branch_status = process_branch_nofork(proofstate,
-												  proofcontrol,
-												  handle,
-												  tableau_control,
-												  max_proc);
+			branch_status = ECloseBranchWrapper(proofstate,
+												proofcontrol,
+												handle,
+												tableau_control,
+												max_proc);
 			//fprintf(GlobalOut, "# Done.\n");
 			//EqnBranchRepresentationsList(handle, tableau_control->feature_list, branch_status);
 			//XGBoostTest();
@@ -295,17 +352,7 @@ int EtableauInsertBranchClausesIntoUnprocessed(ProofState_p state,
 
 int ProcessSpecificClauseWrapper(ProofState_p state, ProofControl_p control, Clause_p clause)
 {
-	Clause_p handle = ClauseCopy(clause, state->terms);
-	//Clause_p tmpclause = ClauseFlatCopy(handle);
-	//ClausePushDerivation(tmpclause, DCCnfQuote, handle, NULL);
-	//ClauseSetInsert(state->archive, handle);
-	//handle = tmpclause;
-	HCBClauseEvaluate(control->hcb, handle);
-	ClauseDelProp(handle, CPIsOriented);
-	ClauseDelProp(handle, CPLimitedRW);
-	ClauseSetProp(handle, CPInitial);
-	DocClauseQuoteDefault(6, handle, "move_eval");
-	EvalListChangePriority(handle->evaluations, -PrioLargestReasonable);
+	Clause_p handle = ClauseCopyAndPrepareForSaturation(clause, state->terms, control->hcb);
 	ClauseSetInsert(state->unprocessed, handle);
 	Clause_p success = ProcessSpecificClause(state, control, handle, LONG_MAX);
 	if (success)
@@ -315,7 +362,7 @@ int ProcessSpecificClauseWrapper(ProofState_p state, ProofControl_p control, Cla
 	return RESOURCE_OUT;
 }
 
-int ProcessSpecificClauseSetWrapper(ProofState_p state, ProofControl_p control, ClauseSet_p set)
+ErrorCodes ProcessSpecificClauseSetWrapper(ProofState_p state, ProofControl_p control, ClauseSet_p set)
 {
 	Clause_p handle = set->anchor->succ;
 	while (handle != set->anchor)
@@ -329,6 +376,23 @@ int ProcessSpecificClauseSetWrapper(ProofState_p state, ProofControl_p control, 
 	}
 	return RESOURCE_OUT;
 }
+
+
+ErrorCodes ProcessSpecificClauseStackWrapper(ProofState_p state, ProofControl_p control, ClauseStack_p stack)
+{
+	while (!PStackEmpty(stack))
+	{
+		Clause_p handle = PStackPopP(stack);
+		int status = ProcessSpecificClauseWrapper(state, control, handle);
+		if (status == PROOF_FOUND)
+		{
+			return PROOF_FOUND;
+		}
+		handle = handle->succ;
+	}
+	return RESOURCE_OUT;
+}
+
 /*-----------------------------------------------------------------------
 //
 // Function: TermTreeDeleteRWLinks()
@@ -403,4 +467,49 @@ bool EtableauSaturateAllTableauxInStack(TableauControl_p tableaucontrol, Tableau
 		}
 	}
 	return false;
+}
+
+long ClauseTableauCollectBranchCopyLabels(ClauseTableau_p branch, ClauseSet_p set, PStack_p branch_labels)
+{
+	ClauseTableau_p branch_handle = branch;
+	assert(branch);
+	while (branch_handle)
+	{
+		Clause_p label = ClauseCopyAndPrepareForSaturation(branch->label, branch->terms, branch->control->hcb);
+		assert(label->set == NULL);
+		ClauseSetInsert(set, label);
+		PStackPushP(branch_labels, label);
+		if (branch_handle->folding_labels)
+		{
+			ClauseSetCopyInsertAndPrepareForSaturation(branch_handle->folding_labels, set, branch->terms, branch->control->hcb, branch_labels);
+		}
+		branch_handle = branch_handle->parent;
+	}
+	return set->members;
+}
+
+Clause_p ClauseCopyAndPrepareForSaturation(Clause_p clause, TB_p bank, HCB_p hcb)
+{
+	Clause_p handle = ClauseCopy(clause, bank);
+	HCBClauseEvaluate(hcb, handle);
+	ClauseDelProp(handle, CPIsOriented);
+	ClauseDelProp(handle, CPLimitedRW);
+	ClauseSetProp(handle, CPInitial);
+	DocClauseQuoteDefault(6, handle, "move_eval");
+	EvalListChangePriority(handle->evaluations, -PrioLargestReasonable);
+	return handle;
+}
+
+long ClauseSetCopyInsertAndPrepareForSaturation(ClauseSet_p from, ClauseSet_p to, TB_p bank, HCB_p hcb, PStack_p branch_labels)
+{
+	Clause_p handle = from->anchor->succ;
+	while (handle != from->anchor)
+	{
+		Clause_p copied = ClauseCopyAndPrepareForSaturation(handle, bank, hcb);
+		ClauseSetInsert(to, copied);
+		PStackPushP(branch_labels, copied);
+		handle = handle->succ;
+	}
+
+	return to->members;
 }

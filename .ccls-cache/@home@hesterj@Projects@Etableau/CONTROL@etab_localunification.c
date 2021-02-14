@@ -126,6 +126,12 @@ long CollectVariablesAtNode(ClauseTableau_p node, PTree_p *var_tree)
 	return num_collected;
 }
 
+long ClauseCollectVariablesStack(Clause_p clause, PStack_p stack)
+{
+	assert(false);
+	return 0;
+}
+
 /*  Only call this method if the local variables of the tableau have been udpated!
  *  This method incorporates the replacement of replacements of variables with fresh ones into subst.
 */
@@ -134,24 +140,17 @@ Clause_p ReplaceLocalVariablesWithFreshSubst(ClauseTableau_p master, Clause_p cl
 {
 	Clause_p new_clause = NULL;
 	assert(PStackGetSP(local_variables));
-	//printf("Old clause: ");ClausePrint(GlobalOut, clause, true);printf("\n");
-	//Subst_p subst = SubstAlloc();
 	for (PStackPointer p = 0; p < PStackGetSP(local_variables); p++)
 	{
 		Term_p old_var = PStackElementP(local_variables, p);
 		assert(old_var);
 		assert(old_var->f_code < 0);
-		//master->max_var -= 2;
-		//Term_p fresh_var = VarBankVarAssertAlloc(variable_bank, master->max_var, old_var->type);
-		//Term_p fresh_var = VarBankGetFreshVar(master->state->freshvars, old_var->type);
 		Term_p fresh_var = ClauseTableauGetFreshVar(master->master, old_var);
 		assert(old_var != fresh_var);
 		assert(old_var->f_code != fresh_var->f_code);
 		SubstAddBinding(subst, old_var, fresh_var);
 	}
 	new_clause = ClauseCopy(clause, master->terms);
-	//printf("New clause with binding: ");ClausePrint(GlobalOut, new_clause, true);printf("\n");
-	//SubstDelete(subst);
 	return new_clause;
 }
 
@@ -163,7 +162,6 @@ Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause,
 {
 	Clause_p new_clause = NULL;
 	assert(PStackGetSP(local_variables));
-	//VarBank_p variable_bank = master->terms->vars;
 	Subst_p subst = SubstAlloc();
 	for (PStackPointer p = 0; p < PStackGetSP(local_variables); p++)
 	{
@@ -171,8 +169,6 @@ Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause,
 		assert(old_var);
 		assert(old_var->f_code < 0);
 		assert(!(old_var->binding));
-		// master->max_var -= 2;
-		// Term_p fresh_var = VarBankGetFreshVar(variable_bank, old_var->type); // old
 		Term_p fresh_var = ClauseTableauGetFreshVar(master->master, old_var);
 		assert(fresh_var != old_var);
 		assert(old_var->f_code != fresh_var->f_code);

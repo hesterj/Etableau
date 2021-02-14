@@ -1199,7 +1199,7 @@ void ClauseTableauPrintDOTGraphToFile(FILE* dotgraph, ClauseTableau_p tab)
 	fprintf(dotgraph, "digraph dotgraph {\n");
 	
 	fprintf(dotgraph,"   %ld [color=Green, label=\"", root_id);
-	//ClauseTSTPCorePrint(dotgraph, root_label, true);
+	ClauseTSTPCorePrint(dotgraph, root_label, true);
 	if (tab->folding_labels)
 	{
 		//Clause_p handle = tab->folding_labels->anchor->succ;
@@ -1247,19 +1247,18 @@ void ClauseTableauPrintDOTGraphChildren(ClauseTableau_p tab, FILE* dotgraph)
 			fprintf(dotgraph,"   %ld [color=Blue, label=\"", ident);
 		}
 	}
-	//ClauseTSTPCorePrint(dotgraph, label, true);
+	ClauseTSTPCorePrint(dotgraph, label, true);
 	int tab_depth = tab->depth;
 	bool tab_saturation_closed = tab->saturation_closed;
 	int tab_mark_int = tab->mark_int;
 	int tab_folded_up = tab->folded_up;
 	
-	//fprintf(dotgraph, " d:%d ", tab_depth);
-	//fprintf(dotgraph, "f:%d ", folds);
-	//fprintf(dotgraph, "m:%d ", tab_mark_int);
-	//fprintf(dotgraph, "id:%ld ", tab->id);
+	fprintf(dotgraph, " d:%d ", tab_depth);
+	fprintf(dotgraph, "f:%d ", folds);
+	fprintf(dotgraph, "m:%d ", tab_mark_int);
+	fprintf(dotgraph, "id:%ld ", tab->id);
 	fprintf(dotgraph, "%ld ", tab->id);
-	fprintf(dotgraph, "s:%d\"]\n ", tab_saturation_closed);
-	//fprintf(dotgraph, "\"]\n ");
+	fprintf(dotgraph, " s:%d\"]\n ", tab_saturation_closed);
 	fprintf(dotgraph,"   %ld -> %ld\n", parent_ident, ident);
 	
 	for (int i=0; i < tab->arity; i++)

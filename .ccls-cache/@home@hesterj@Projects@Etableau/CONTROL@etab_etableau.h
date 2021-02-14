@@ -12,11 +12,6 @@ typedef struct branch_saturation
 	long max_proc; // Max number of clauses to process on a branch
 }BranchSaturationCell, *BranchSaturation_p;
 
-int process_branch_nofork(ProofState_p proofstate, 
-						  ProofControl_p proofcontrol,
-						  ClauseTableau_p branch,
-						  TableauControl_p tableau_control,
-						  long max_proc);
 
 #define BranchSaturationCellAlloc()    (BranchSaturationCell*)SizeMalloc(sizeof(BranchSaturationCell))
 #define BranchSaturationCellFree(junk) SizeFree(junk, sizeof(BranchSaturationCell))
@@ -30,13 +25,18 @@ BranchSaturation_p BranchSaturationAlloc(ProofState_p proofstate,
 int ECloseBranchProcessBranchFirst(ProofState_p proofstate, ProofControl_p proofcontrol, 
 					  ClauseTableau_p branch);
 int ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate, 
-													  ProofControl_p proofcontrol, 
-													  ClauseTableau_p branch, 
-													  long max_proc);
-int ECloseBranch(ProofState_p proofstate, 
-					  ProofControl_p proofcontrol,
-					  TableauControl_p tableaucontrol, 
-					  ClauseTableau_p branch);
+										 ProofControl_p proofcontrol,
+										 ClauseTableau_p branch,
+										 long max_proc);
+ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
+										  ProofControl_p proofcontrol,
+										  ClauseTableau_p branch,
+										  long max_proc);
+ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
+							   ProofControl_p proofcontrol,
+							   ClauseTableau_p branch,
+							   TableauControl_p tableau_control,
+							   long max_proc);
 int AttemptToCloseBranchesWithSuperposition(TableauControl_p tableau_control, BranchSaturation_p jobs);
 int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_control, BranchSaturation_p jobs);
 
@@ -47,11 +47,15 @@ int EtableauInsertBranchClausesIntoUnprocessed(ProofState_p state,
 void TermTreeDeleteRWLinks(Term_p root);
 void TermCellStoreDeleteRWLinks(TermCellStore_p store);
 
+long ClauseTableauCollectBranchCopyLabels(ClauseTableau_p branch, ClauseSet_p set, PStack_p branch_labels);
 
 int ProcessSpecificClauseWrapper(ProofState_p state, ProofControl_p control, Clause_p clause);
 
 
-int ProcessSpecificClauseSetWrapper(ProofState_p state, ProofControl_p control, ClauseSet_p set);
+ErrorCodes ProcessSpecificClauseSetWrapper(ProofState_p state, ProofControl_p control, ClauseSet_p set);
+ErrorCodes ProcessSpecificClauseStackWrapper(ProofState_p state, ProofControl_p control, ClauseStack_p stack);
 
 bool EtableauSaturateAllTableauxInStack(TableauControl_p tableaucontrol, TableauStack_p distinct_tableaux_stack, ClauseSet_p active);
+Clause_p ClauseCopyAndPrepareForSaturation(Clause_p clause, TB_p bank, HCB_p hcb);
+long ClauseSetCopyInsertAndPrepareForSaturation(ClauseSet_p from, ClauseSet_p to, TB_p bank, HCB_p hcb, PStack_p branch_labels);
 #endif
