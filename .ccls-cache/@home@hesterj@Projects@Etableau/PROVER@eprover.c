@@ -51,6 +51,7 @@ PERF_CTR_DEFINE(SatTimer);
 /*---------------------------------------------------------------------*/
 
 char              *outname = NULL;
+char              *tableau_dot_out = NULL;
 char              *watchlist_filename = NULL;
 HeuristicParms_p  h_parms;
 FVIndexParms_p    fvi_parms;
@@ -561,6 +562,7 @@ int main(int argc, char* argv[])
    {
       TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures,
                                                             argv[argc-1], // the problem file
+                                                            tableau_dot_out,
                                                             proofstate,
                                                             proofcontrol,
                                                             TableauSaturation,
@@ -982,6 +984,9 @@ CLState_p process_options(int argc, char* argv[])
 		case OPT_TABLEAU_DEPTH:
 				TableauDepth = CLStateGetIntArg(handle, arg);
 				break;
+      case OPT_TABLEAU_DOT_PRINT:
+            tableau_dot_out = arg;
+            break;
       case OPT_VERBOSE:
             Verbose = CLStateGetIntArg(handle, arg);
             break;

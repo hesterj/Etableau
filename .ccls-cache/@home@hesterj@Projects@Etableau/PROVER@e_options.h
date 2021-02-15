@@ -193,6 +193,7 @@ typedef enum
    OPT_TABLEAU_SATURATION,
    OPT_TABLEAU_CORES,
    OPT_TABLEAU_APR_DISTANCE,
+   OPT_TABLEAU_DOT_PRINT,
    OPT_DUMMY
 }OptionCodes;
 
@@ -1475,6 +1476,12 @@ OptCell opts[] =
 		 "The defualt 0 means that no alternating path relevance filtering will be done."
 		 "Otherwise, the argument determines the radius of the relevance neighborhood."
 	 },
+     {
+     OPT_TABLEAU_DOT_PRINT,
+     '\0', "tableau-dot-print",
+     ReqArg, NULL,
+     "Direct a DOT graph of the closed tableau to the specified file."
+     },
 
    {OPT_NOOPT,
     '\0', NULL,

@@ -202,6 +202,7 @@ typedef struct tableaucontrol_cell
 	long neg_conjectures;
 	long number_of_nodes_freed;
 	char *problem_name;
+	char *dot_output;
 	PStack_p new_tableaux;
 	ClauseTableau_p closed_tableau;
 	ClauseSet_p unprocessed;
@@ -222,11 +223,12 @@ typedef struct tableaucontrol_cell
 
 
 TableauControl_p TableauControlAlloc(long neg_conjectures, 
-												 char *problem_name, 
-												 ProofState_p proofstate, 
-												 ProofControl_p proofcontrol,
-												 bool branch_saturation_enabled,
-												 int num_cores_to_use);
+									 char *problem_name,
+									 char *dot_output,
+									 ProofState_p proofstate,
+									 ProofControl_p proofcontrol,
+									 bool branch_saturation_enabled,
+									 int num_cores_to_use);
 void TableauControlFree(TableauControl_p trash);
 void EqnRepFree(void *eqn_p);
 

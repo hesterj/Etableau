@@ -1339,11 +1339,12 @@ bool ClauseTableauBranchContainsLiteral(ClauseTableau_p branch, Eqn_p literal)
 }
 
 TableauControl_p TableauControlAlloc(long neg_conjectures, 
-												 char *problem_name, 
-												 ProofState_p proofstate, 
-												 ProofControl_p proofcontrol,
-												 bool branch_saturation_enabled,
-												 int num_cores_to_use)
+									 char *problem_name,
+									 char *dot_output,
+									 ProofState_p proofstate,
+									 ProofControl_p proofcontrol,
+									 bool branch_saturation_enabled,
+									 int num_cores_to_use)
 {
 	TableauControl_p handle = TableauControlCellAlloc();
 	handle->terms = NULL; // The termbank for this tableau control..
@@ -1358,6 +1359,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->unprocessed = NULL;
 	handle->label_storage = ClauseSetAlloc();
 	handle->problem_name = problem_name;
+	handle->dot_output = dot_output;
 	handle->neg_conjectures = neg_conjectures;
 	handle->proofstate = proofstate;
 	handle->proofcontrol = proofcontrol;
@@ -1676,9 +1678,21 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 	//fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
 	fprintf(GlobalOut, "# SZS output end\n");
 	fprintf(GlobalOut, "# Branches closed with saturation will be marked with an \"s\"\n");
-	fprintf(GlobalOut, "# Printing DOT graph...\n");
-	ClauseTableauPrintDOTGraph(resulting_tab);
-	fprintf(GlobalOut, "# DOT graph printed.\n");
+	if (tableaucontrol->dot_output)
+	{
+		fprintf(GlobalOut, "# Printing DOT graph...\n");
+		FILE* dot_output = fopen(tableaucontrol->dot_output, "w+");
+		if (dot_output)
+		{
+			ClauseTableauPrintDOTGraphToFile(dot_output, resulting_tab);
+			fclose(dot_output);
+			fprintf(GlobalOut, "# DOT graph printed.\n");
+		}
+		else
+		{
+			Warning("# Unable to print DOT graph...");
+		}
+	}
 	fflush(GlobalOut);
 	return;
 }
