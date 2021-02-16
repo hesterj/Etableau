@@ -169,6 +169,7 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 		if (UNLIKELY(status == PROOF_FOUND)) // A contradiction was found while processing the branch clauses
 		{
 			success = (Clause_p) 1; // Dummy non-NULL clause
+			fprintf(GlobalOut, "# PROOF_FOUND 172\n");
 		}
 		else // Now do the full branch saturation
 		{
@@ -176,6 +177,10 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 							   LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
 							   LLONG_MAX, LONG_MAX);
 		}
+	}
+	else
+	{
+		fprintf(GlobalOut, "# PROOF_FOUND 183\n");
 	}
 
 	bool out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
@@ -190,6 +195,11 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	}
 	if (success)
 	{
+		fprintf(GlobalOut, "# PROOF_FOUND 198\n");
+		if (out_of_clauses)
+		{
+			fprintf(GlobalOut, "# Out of clauses...\n");
+		}
 		status = PROOF_FOUND;
 	}
     //GCCollect(proofstate->terms->gc);
@@ -236,7 +246,7 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 			//XGBoostTest();
 			if (branch_status == PROOF_FOUND)
 			{
-				//fprintf(stdout, "# Proof found on branch. %ld remain.\n", handle->set->members - 1);
+				fprintf(GlobalOut, "# PROOF_FOUND found on branch. %ld remain.\n", handle->set->members - 1);
 				TableauSetExtractEntry(handle);
 				handle->open = false;
 				handle->saturation_closed = true;
@@ -252,6 +262,7 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 			}
 			else if (branch_status == SATISFIABLE)
 			{
+				fprintf(GlobalOut, "# Satisfiable branch found.\n");
 				DStrAppendStr(handle->info, " Satisfiable ");
 				DStrAppendInt(handle->info, tableau_control->number_of_saturation_attempts);
 				break;
@@ -355,6 +366,7 @@ int ProcessSpecificClauseWrapper(ProofState_p state, ProofControl_p control, Cla
 	Clause_p handle = ClauseCopyAndPrepareForSaturation(clause, state->terms, control->hcb);
 	ClauseSetInsert(state->unprocessed, handle);
 	Clause_p success = ProcessSpecificClause(state, control, handle, LONG_MAX);
+	// For some reason this can yield false positives...
 	if (success)
 	{
 		return PROOF_FOUND;	

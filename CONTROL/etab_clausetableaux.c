@@ -1681,7 +1681,12 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 	if (tableaucontrol->dot_output)
 	{
 		fprintf(GlobalOut, "# Printing DOT graph...\n");
-		FILE* dot_output = fopen(tableaucontrol->dot_output, "w+");
+		DStr_p dot_output_location = DStrAlloc();
+		DStrAppendStr(dot_output_location, tableaucontrol->dot_output);
+		DStrAppendStr(dot_output_location, "/");
+		DStrAppendStr(dot_output_location, tableaucontrol->problem_name);
+		DStrAppendStr(dot_output_location, ".dot");
+		FILE* dot_output = fopen(DStrView(dot_output_location), "w+");
 		if (dot_output)
 		{
 			ClauseTableauPrintDOTGraphToFile(dot_output, resulting_tab);
@@ -1692,6 +1697,7 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 		{
 			Warning("# Unable to print DOT graph...");
 		}
+		DStrFree(dot_output_location);
 	}
 	fflush(GlobalOut);
 	return;

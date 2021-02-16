@@ -1480,7 +1480,7 @@ OptCell opts[] =
      OPT_TABLEAU_DOT_PRINT,
      '\0', "tableau-dot-print",
      ReqArg, NULL,
-     "Direct a DOT graph of the closed tableau to the specified file."
+     "Print a DOT graph of the closed tableau to a file in the specified directory."
      },
 
    {OPT_NOOPT,
