@@ -160,7 +160,8 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         if (depth_status == ALL_DEPTHS_EXCEEDED) // All of the open branches exceed our maximum depth, so we must backtrack
         {
             assert(!open_branch);
-            //fprintf(GlobalOut, "# Backtracking due to all depths exceeded, %ld remaining\n", PStackGetSP(master->master_backtracks));
+            //fprintf(stdout, "# Backtracking due to all depths exceeded, %ld remaining\n", PStackGetSP(master->master_backtracks));
+            //fflush(stdout);
             bool backtrack_successful = BacktrackWrapper(master, true);
             if (!backtrack_successful)
             {

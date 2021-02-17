@@ -171,7 +171,6 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 		if (UNLIKELY(status == PROOF_FOUND)) // A contradiction was found while processing the branch clauses
 		{
 			success = (Clause_p) 1; // Dummy non-NULL clause
-			fprintf(stdout, "# PROOF_FOUND 172\n");
 		}
 		else // Now do the full branch saturation
 		{
@@ -182,7 +181,6 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	}
 	else
 	{
-		fprintf(stdout, "# PROOF_FOUND 183\n");
 	}
 
 	bool out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
@@ -197,15 +195,13 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	}
 	if (success)
 	{
-		fprintf(stdout, "# PROOF_FOUND 198\n");
 		if (out_of_clauses)
 		{
-			fprintf(stdout, "# Out of clauses...\n");
+			fprintf(stdout, "# Out of clauses, but found contradiction...\n");
 		}
 		status = PROOF_FOUND;
 	}
     //GCCollect(proofstate->terms->gc);
-    fflush(stdout);
 	PStackFree(branch_labels); // The branch labels are free'd elsewhere, so no need to worry about losing the pointers to them.
 	return status;
 }
@@ -249,7 +245,7 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 			//XGBoostTest();
 			if (branch_status == PROOF_FOUND)
 			{
-				fprintf(GlobalOut, "# PROOF_FOUND found on branch. %ld remain.\n", handle->set->members - 1);
+				//fprintf(GlobalOut, "# PROOF_FOUND found on branch. %ld remain.\n", handle->set->members - 1);
 				TableauSetExtractEntry(handle);
 				handle->open = false;
 				handle->saturation_closed = true;

@@ -1364,6 +1364,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->proofstate = proofstate;
 	handle->proofcontrol = proofcontrol;
 	handle->tableaux_trash = PStackAlloc();
+	handle->max_depth_tableaux = PStackAlloc();
 	handle->clausification_buffer = NULL;
 	handle->process_control = NULL;
 	handle->feature_tree = NULL;
@@ -1375,6 +1376,7 @@ void TableauControlFree(TableauControl_p trash)
 {
 	ClauseSetFree(trash->label_storage);
 	PStackFree(trash->tableaux_trash);
+	TableauStackFree(trash->max_depth_tableaux);
 	fprintf(GlobalOut, "# Freeing feature tree\n");
 	if (trash->feature_tree)
 	{

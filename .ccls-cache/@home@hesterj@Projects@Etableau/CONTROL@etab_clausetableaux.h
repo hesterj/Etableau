@@ -212,6 +212,7 @@ typedef struct tableaucontrol_cell
 	int multiprocessing_active;  // Have we reached enough tableaux to break the problem in to forks?
 	bool satisfiable;
 	TableauStack_p tableaux_trash;
+	TableauStack_p max_depth_tableaux;
 	char *clausification_buffer;
 	EPCtrl_p process_control;
 	PObjTree_p feature_tree;
