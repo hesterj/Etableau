@@ -1168,6 +1168,49 @@ void ProofStateResetProcessedSet(ProofState_p state,
    }
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: ProofStateResetProcessedSetNoCopy()
+//
+//   Move all clauses from set into state->unprocessed.
+//
+// Global Variables: -
+//
+// Side Effects    : -
+//
+/----------------------------------------------------------------------*/
+
+void ProofStateResetProcessedSetNoCopy(ProofState_p state,
+                                 ProofControl_p control,
+                                       ClauseSet_p set,
+                                       PStack_p tableau_stack)
+{
+   Clause_p handle;
+
+   while((handle = ClauseSetExtractFirst(set)))
+   {
+      if(ClauseQueryProp(handle, CPIsGlobalIndexed))
+      {
+         GlobalIndicesDeleteClause(&(state->gindices), handle);
+      }
+      if(ProofObjectRecordsGCSelection)
+      {
+         ClausePushDerivation(handle, DCCnfEvalGC, NULL, NULL);
+      }
+      if(ClauseQueryProp(handle, CPIsTableauClause))
+      {
+         PStackPushP(tableau_stack, handle);
+      }
+      HCBClauseEvaluate(control->hcb, handle);
+      ClauseDelProp(handle, CPIsOriented);
+
+      if(control->heuristic_parms.prefer_initial_clauses)
+      {
+         EvalListChangePriority(handle->evaluations, -PrioLargestReasonable);
+      }
+      ClauseSetInsert(state->unprocessed, handle);
+   }
+}
 
 /*-----------------------------------------------------------------------
 //
@@ -1189,6 +1232,27 @@ void ProofStateResetProcessed(ProofState_p state, ProofControl_p control)
    ProofStateResetProcessedSet(state, control, state->processed_non_units);
 }
 
+
+/*-----------------------------------------------------------------------
+//
+// Function: ProofStateResetProcessedNoCopy()
+//
+//   Move all clauses from the processed clause sets to unprocessed.
+//   Does not create copies for archiving.
+//
+// Global Variables: -
+//
+// Side Effects    : -
+//
+/----------------------------------------------------------------------*/
+
+void ProofStateResetProcessedNoCopy(ProofState_p state, ProofControl_p control, PStack_p tableau_stack)
+{
+   ProofStateResetProcessedSetNoCopy(state, control, state->processed_pos_rules, tableau_stack);
+   ProofStateResetProcessedSetNoCopy(state, control, state->processed_pos_eqns, tableau_stack);
+   ProofStateResetProcessedSetNoCopy(state, control, state->processed_neg_units, tableau_stack);
+   ProofStateResetProcessedSetNoCopy(state, control, state->processed_non_units, tableau_stack);
+}
 
 /*-----------------------------------------------------------------------
 //

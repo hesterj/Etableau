@@ -11,6 +11,7 @@ int Etableau_n0(TableauControl_p tableaucontrol,
                int tableauequality)
 {
     if(geteuid() == 0) Error("# Please do not run Etableau as root.", 1);
+    ClauseSetFreeClauses(proofstate->archive);
     APRVerify();
     c_smoketest();
 

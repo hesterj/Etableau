@@ -124,7 +124,8 @@ typedef enum
    CPIsRelevant     = 2*CPLimitedRW,       /* Clause is selected as
                                            * relevant for a proof
                                            * attempt (used by SInE). */
-   CPIsAPRRelevant = 2*CPIsRelevant
+   CPIsAPRRelevant = 2*CPIsRelevant,
+   CPIsTableauClause = 2*CPIsAPRRelevant
 }FormulaProperties;
 
 

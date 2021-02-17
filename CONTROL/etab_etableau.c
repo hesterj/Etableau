@@ -153,6 +153,7 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	assert(proofcontrol);
 
 	ClauseTableauCollectBranchCopyLabels(branch, proofstate->unprocessed, branch_labels);
+	assert(PStackEmpty(branch_labels));
 
     LiteralSelectionFun sel_strat =
 		proofcontrol->heuristic_parms.selection_strategy;
@@ -163,13 +164,14 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
     proofcontrol->heuristic_parms.selection_strategy = sel_strat;
     if(LIKELY(!success))
     {
-		ProofStateResetProcessed(proofstate, proofcontrol);
+		//fprintf(stdout, "# No success in interreduction\n");
+		ProofStateResetProcessedNoCopy(proofstate, proofcontrol, branch_labels);
 		proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver
-		status = ProcessSpecificClauseStackWrapper(proofstate, proofcontrol, branch_labels); // Process the branch clauses first
+		status = ProcessSpecificClauseStackWrapperNoCopy(proofstate, proofcontrol, branch_labels); // Process the branch clauses first
 		if (UNLIKELY(status == PROOF_FOUND)) // A contradiction was found while processing the branch clauses
 		{
 			success = (Clause_p) 1; // Dummy non-NULL clause
-			fprintf(GlobalOut, "# PROOF_FOUND 172\n");
+			fprintf(stdout, "# PROOF_FOUND 172\n");
 		}
 		else // Now do the full branch saturation
 		{
@@ -180,7 +182,7 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	}
 	else
 	{
-		fprintf(GlobalOut, "# PROOF_FOUND 183\n");
+		fprintf(stdout, "# PROOF_FOUND 183\n");
 	}
 
 	bool out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
@@ -195,14 +197,15 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	}
 	if (success)
 	{
-		fprintf(GlobalOut, "# PROOF_FOUND 198\n");
+		fprintf(stdout, "# PROOF_FOUND 198\n");
 		if (out_of_clauses)
 		{
-			fprintf(GlobalOut, "# Out of clauses...\n");
+			fprintf(stdout, "# Out of clauses...\n");
 		}
 		status = PROOF_FOUND;
 	}
     //GCCollect(proofstate->terms->gc);
+    fflush(stdout);
 	PStackFree(branch_labels); // The branch labels are free'd elsewhere, so no need to worry about losing the pointers to them.
 	return status;
 }
@@ -374,6 +377,19 @@ int ProcessSpecificClauseWrapper(ProofState_p state, ProofControl_p control, Cla
 	return RESOURCE_OUT;
 }
 
+int ProcessSpecificClauseWrapperNoCopy(ProofState_p state, ProofControl_p control, Clause_p clause)
+{
+	assert(clause->set);
+	assert(clause->set == state->unprocessed);
+	Clause_p success = ProcessSpecificClause(state, control, clause, LONG_MAX);
+	// For some reason this can yield false positives...
+	if (success)
+	{
+		return PROOF_FOUND;
+	}
+	return RESOURCE_OUT;
+}
+
 ErrorCodes ProcessSpecificClauseSetWrapper(ProofState_p state, ProofControl_p control, ClauseSet_p set)
 {
 	Clause_p handle = set->anchor->succ;
@@ -396,6 +412,21 @@ ErrorCodes ProcessSpecificClauseStackWrapper(ProofState_p state, ProofControl_p 
 	{
 		Clause_p handle = PStackPopP(stack);
 		int status = ProcessSpecificClauseWrapper(state, control, handle);
+		if (status == PROOF_FOUND)
+		{
+			return PROOF_FOUND;
+		}
+		handle = handle->succ;
+	}
+	return RESOURCE_OUT;
+}
+
+ErrorCodes ProcessSpecificClauseStackWrapperNoCopy(ProofState_p state, ProofControl_p control, ClauseStack_p stack)
+{
+	while (!PStackEmpty(stack))
+	{
+		Clause_p handle = PStackPopP(stack);
+		int status = ProcessSpecificClauseWrapperNoCopy(state, control, handle);
 		if (status == PROOF_FOUND)
 		{
 			return PROOF_FOUND;
@@ -490,7 +521,8 @@ long ClauseTableauCollectBranchCopyLabels(ClauseTableau_p branch, ClauseSet_p se
 		Clause_p label = ClauseCopyAndPrepareForSaturation(branch->label, branch->terms, branch->control->hcb);
 		assert(label->set == NULL);
 		ClauseSetInsert(set, label);
-		PStackPushP(branch_labels, label);
+		//PStackPushP(branch_labels, label);
+		ClauseSetProp(label, CPIsTableauClause);
 		if (branch_handle->folding_labels)
 		{
 			ClauseSetCopyInsertAndPrepareForSaturation(branch_handle->folding_labels, set, branch->terms, branch->control->hcb, branch_labels);
@@ -519,7 +551,8 @@ long ClauseSetCopyInsertAndPrepareForSaturation(ClauseSet_p from, ClauseSet_p to
 	{
 		Clause_p copied = ClauseCopyAndPrepareForSaturation(handle, bank, hcb);
 		ClauseSetInsert(to, copied);
-		PStackPushP(branch_labels, copied);
+		//PStackPushP(branch_labels, copied);
+		ClauseSetProp(copied, CPIsAPRRelevant);
 		handle = handle->succ;
 	}
 
