@@ -83,7 +83,7 @@ int Etableau_n0(TableauControl_p tableaucontrol,
 
    // Now do proof search...
 
-   if (!proof_found && tableaucontrol->multiprocessing_active)
+   if (!proof_found && tableaucontrol->multiprocessing_active != 0)
    {
        proof_found = EtableauMultiprocess_n(tableaucontrol,
                                             distinct_tableaux_stack,
@@ -286,6 +286,7 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
 {
     bool proof_found = false;
     int num_cores_available = TableauControlGetCores(tableaucontrol);
+    tableaucontrol->multiprocessing_active = num_cores_available;
     ClauseTableau_p resulting_tab = NULL;
     TableauStack_p new_tableaux = PStackAlloc();
     if (PStackGetSP(starting_tableaux) < num_cores_available)

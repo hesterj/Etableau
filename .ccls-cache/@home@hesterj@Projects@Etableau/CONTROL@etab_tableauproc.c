@@ -1192,9 +1192,10 @@ int TableauControlGetCores(TableauControl_p tableaucontrol)
 	{
 		Warning("# Requested more cores than are available to the program...");
 	}
-	//if (num_cores == 1)
-	//{
-		//return nprocs;
-	//}
+	if (num_cores == -1)
+	{
+		fprintf(GlobalOut, "# Using all %d available cores\n", nprocs);
+		return nprocs;
+	}
 	return num_cores;
 }
