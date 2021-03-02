@@ -26,6 +26,7 @@ Changes
 #define CLB_PSTACKS
 
 #include <clb_memory.h>
+#include <execinfo.h>
 
 /*---------------------------------------------------------------------*/
 /*                    Data type declarations                           */

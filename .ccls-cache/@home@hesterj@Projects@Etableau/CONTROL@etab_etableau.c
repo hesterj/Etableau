@@ -195,6 +195,11 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	}
 	if (success)
 	{
+		assert(ClauseLiteralNumber(success) == 0);
+		if (ClauseLiteralNumber(success) != 0)
+		{
+			Error("A nonempty clause was returned by saturate.", 10);
+		}
 		if (out_of_clauses)
 		{
 			fprintf(stdout, "# Out of clauses, but found contradiction...\n");

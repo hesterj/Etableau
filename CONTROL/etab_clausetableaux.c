@@ -131,7 +131,10 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 		assert(handle->old_labels);
 		for (PStackPointer p=0; p<PStackGetSP(tab->old_labels); p++)
 		{
-			PStackPushP(handle->old_labels, ClauseFlatCopy((Clause_p) PStackElementP(tab->old_labels, p)));
+			Clause_p copied_old_label = ClauseFlatCopy((Clause_p) PStackElementP(tab->old_labels, p));
+			ClauseSetInsert(label_storage, copied_old_label);
+			PStackPushP(handle->old_labels, copied_old_label);
+			//PStackPushP(handle->old_labels, ClauseFlatCopy((Clause_p) PStackElementP(tab->old_labels, p)));
 		}
 		PStackPushP(handle->old_labels, ClauseFlatCopy(tab->label));
 	}
@@ -177,8 +180,8 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 		PStack_p copied_position = PStackCopy(old_position);
 		PStackPushP(handle->master_backtracks, copied_position);
 	}
-	handle->backtracks = BacktrackStackCopy(tab->backtracks);
-	handle->failures = BacktrackStackCopy(tab->failures);
+	handle->backtracks = BacktrackStackCopy(tab->backtracks, handle->master);
+	handle->failures = BacktrackStackCopy(tab->failures, handle->master);
 
 	return handle;
 }
@@ -262,7 +265,10 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 		assert(handle->old_labels);
 		for (PStackPointer p=0; p<PStackGetSP(tab->old_labels); p++)
 		{
-			PStackPushP(handle->old_labels, ClauseFlatCopy((Clause_p) PStackElementP(tab->old_labels, p)));
+			Clause_p copied_old_label = ClauseFlatCopy((Clause_p) PStackElementP(tab->old_labels, p));
+			ClauseSetInsert(label_storage, copied_old_label);
+			PStackPushP(handle->old_labels, copied_old_label);
+			//PStackPushP(handle->old_labels, ClauseFlatCopy((Clause_p) PStackElementP(tab->old_labels, p)));
 		}
 		Clause_p old_label = ClauseFlatCopy(tab->label);
 		PStackPushP(handle->old_labels, old_label);
@@ -291,8 +297,10 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	}
 
 	handle->master_backtracks = NULL;
-	handle->backtracks = PStackAlloc();
-	handle->failures = PStackAlloc();
+	//handle->backtracks = PStackAlloc();
+	handle->backtracks = BacktrackStackCopy(tab->backtracks, handle->master);
+	//handle->failures = PStackAlloc();
+	handle->failures = BacktrackStackCopy(tab->failures, handle->master);
 	
 	return handle;
 }

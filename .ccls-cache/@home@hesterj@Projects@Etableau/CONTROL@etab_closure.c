@@ -83,6 +83,7 @@ int AttemptClosureRuleOnAllOpenBranches(ClauseTableau_p tableau)
 		assert(open_branch);
 		if (ClauseTableauBranchClosureRuleWrapper(open_branch))
 		{
+			assert(PStackGetSP(open_branch->backtracks));
 			//fprintf(GlobalOut, "# Branch closed\n");
 			num_branches_closed += 1;
 			//open_branch->open = false;

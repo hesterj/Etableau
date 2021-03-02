@@ -43,13 +43,18 @@ int Etableau_n0(TableauControl_p tableaucontrol,
     //  The conjecture non-unit clauses will be added to extension candidates later.
 
     TableauStack_p distinct_tableaux_stack = EtableauCreateStartRulesStack(proofstate,
-                                                                       proofcontrol,
-                                                                       bank,
-                                                                       max_var,
-                                                                       unit_axioms,
-                                                                       start_rule_candidates,
-                                                                       tableaucontrol);
+                                                                           proofcontrol,
+                                                                           bank,
+                                                                           max_var,
+                                                                           unit_axioms,
+                                                                           start_rule_candidates,
+                                                                           tableaucontrol);
 
+    if (tableaucontrol->closed_tableau)
+    {
+        EtableauStatusReport(tableaucontrol, active, tableaucontrol->closed_tableau);
+        proof_found = true;
+    }
    if (PStackEmpty(distinct_tableaux_stack))
    {
        Error("There are no tableaux!", 10);
@@ -65,7 +70,7 @@ int Etableau_n0(TableauControl_p tableaucontrol,
    }
 
 // Do a branch saturation on the original problem before diving in to the tableaux proofsearch
-   if (tableaucontrol->branch_saturation_enabled)
+   if (!proof_found && tableaucontrol->branch_saturation_enabled)
    {
        proof_found = EtableauSaturateAllTableauxInStack(tableaucontrol, distinct_tableaux_stack, active);
    }
@@ -311,6 +316,7 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     {
         while (!PStackEmpty(starting_tableaux))
         {
+            assert(starting_tableaux->current);
             ClauseTableau_p start = PStackPopP(starting_tableaux);
             PStackPushP(new_tableaux, start);
         }
@@ -332,6 +338,7 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     while (!PStackEmpty(new_tableaux))
     {
         tableaux_distributor = tableaux_distributor % num_cores_available;
+        assert(new_tableaux->current);
         ClauseTableau_p tab = PStackPopP(new_tableaux);
         TableauStack_p process_bucket = PStackElementP(buckets, tableaux_distributor);
         PStackPushP(process_bucket, tab);
@@ -470,6 +477,7 @@ ClauseTableau_p EtableauGetNextTableau(TableauStack_p distinct_tableaux_stack,
             {
                 Error("Ran out of tableaux to extend on while populating", 10);
             }
+            assert(new_tableaux->current);
             ClauseTableau_p new_tableau = PStackPopP(new_tableaux);
             PStackPushP(distinct_tableaux_stack, new_tableau);
             return new_tableau;

@@ -319,7 +319,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		assert(open_branch->label);
 		assert(open_branch->arity == 0);
 		assert(open_branch_label);
-		assert(open_branch->label->set);
+		assert(open_branch->label->set); // Labels are supposed to be part of a collection of clauses for GC purposes
 		assert(leaf_clause);
 		assert(leaf_clause->literals);
 		assert(open_branch_label->literals);
@@ -554,6 +554,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	{
 		tableaucontrol->closed_tableau = parent->master;
 	}
+	assert(PStackGetSP(parent->backtracks));
 
 	// There is no need to apply the substitution to the tablaeu, it has already been done by copying labels.
 	// In fact, the substitution should be free'd before this function ever returns.
@@ -731,6 +732,7 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 
 	// There is no need to apply the substitution to the tablaeu, it has already been done by copying labels.
 	// In fact, the substitution should be free'd before this function ever returns.
+	assert(PStackGetSP(parent->backtracks));
 	return parent->master;
 }
 

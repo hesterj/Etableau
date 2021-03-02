@@ -44,14 +44,14 @@ typedef int* BacktrackStatus_p;
 #define BacktrackCellCellFree(junk) SizeFree(junk, sizeof(BackTrackCell))
 PStack_p SubstRecordBindings(Subst_p subst);
 Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, short head_lit_position, bool is_extension_step);
-Backtrack_p BacktrackCopy(Backtrack_p original);
+Backtrack_p BacktrackCopy(Backtrack_p original, ClauseTableau_p new_master);
+BacktrackStack_p BacktrackStackCopy(BacktrackStack_p stack, ClauseTableau_p new_master);
 #define BacktrackIsExtensionStep(bt) (bt->is_extension_step)
 #define BacktrackIsClosureStep(bt) !BacktrackIsExtensionStep(bt)
 bool VerifyBacktrackIsExtensionStep(Backtrack_p handle);
 bool VerifyBacktrackIsClosureStep(Backtrack_p handle);
 void BacktrackFree(Backtrack_p trash);
 ClauseTableau_p GetNodeFromPosition(ClauseTableau_p master, PStack_p position);
-BacktrackStack_p BacktrackStackCopy(BacktrackStack_p stack);
 bool SubstIsFailure(ClauseTableau_p tab, Subst_p subst);
 bool ExtensionIsFailure(ClauseTableau_p tab, Subst_p subst, long extension_id, short head_lit_position);
 bool BindingOccursInSubst(Binding_p binding, Subst_p subst);

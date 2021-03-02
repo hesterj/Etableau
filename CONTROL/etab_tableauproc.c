@@ -885,6 +885,17 @@ TableauStack_p EtableauCreateStartRulesStack(ProofState_p proofstate,
 	while (!TableauSetEmpty(dt))
 	{
 		ClauseTableau_p tab = TableauSetExtractFirst(dt);
+		FoldUpCloseCycle(tab);
+		if (tab->open_branches == 0)
+		{
+			tableaucontrol->closed_tableau = tab;
+			while (!TableauSetEmpty(dt))
+			{
+				ClauseTableau_p trash = TableauSetExtractFirst(dt);
+				ClauseTableauFree(trash);
+			}
+		}
+		assert(TableauSetEmpty(dt));
 		PStackPushP(stack, tab);
 	}
 	TableauSetFree(dt);
@@ -953,7 +964,8 @@ bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 		else 
 		{
 			EPCtrlSetFree(process_set, false);
-			fflush(GlobalOut);
+			fprintf(stderr, "%s\n", strerror(exit_status));
+			fflush(stderr);
 			Error("Child did not exit normally", 1);
 		}
 		switch(return_status)
@@ -1187,7 +1199,7 @@ int TableauControlGetCores(TableauControl_p tableaucontrol)
 {
 	int num_cores = tableaucontrol->multiprocessing_active;
 	int nprocs = get_nprocs();
-	fprintf(GlobalOut, "# %d cores available to the main process.\n", nprocs);
+	fprintf(GlobalOut, "# Requested %d, %d cores available to the main process.\n", num_cores, nprocs);
 	if (num_cores > nprocs)
 	{
 		Warning("# Requested more cores than are available to the program...");
