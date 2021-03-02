@@ -36,7 +36,8 @@ long UpdateLocalVariables(ClauseTableau_p node)
 	{
 		if (branch_iterator != node)
 		{
-			CollectVariablesOfBranch(branch_iterator, &temp_variable_tree, false);
+			//CollectVariablesOfBranch(branch_iterator, &temp_variable_tree, false);
+			CollectVariablesOfBranch(branch_iterator, &temp_variable_tree, true); // We need to include the root, otherwise branches could share variables there...
 		}
 		branch_iterator = branch_iterator->succ;
 	}
@@ -162,7 +163,9 @@ Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause,
 {
 	Clause_p new_clause = NULL;
 	assert(PStackGetSP(local_variables));
+	assert(clause->set);
 	Subst_p subst = SubstAlloc();
+	ClauseSet_p label_storage = clause->set;
 	for (PStackPointer p = 0; p < PStackGetSP(local_variables); p++)
 	{
 		Term_p old_var = PStackElementP(local_variables, p);
@@ -175,6 +178,7 @@ Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause,
 		SubstAddBinding(subst, old_var, fresh_var);
 	}
 	new_clause = ClauseCopy(clause, master->terms);
+	ClauseSetInsert(label_storage, new_clause);
 	SubstDelete(subst);
 	return new_clause;
 }

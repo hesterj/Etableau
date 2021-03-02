@@ -137,6 +137,8 @@ void ClauseTableauPrintDOTGraph(ClauseTableau_p tab);
 void ClauseTableauPrintDOTGraphChildren(ClauseTableau_p tab, FILE* dotgraph);
 void ClauseTableauPrintDerivation(FILE* out, ClauseTableau_p final_tableau, TableauStack_p derivation);
 
+void AssertClauseStackMembersAreInSet(ClauseStack_p stack);
+void AssertAllOldLabelsAreInSet(ClauseTableau_p tab);
 
 #define NodeIsLeaf(tab) (tab->arity == 0)
 #define NodeIsNonLeaf(tab) (tab->arity != 0)

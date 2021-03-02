@@ -895,7 +895,6 @@ TableauStack_p EtableauCreateStartRulesStack(ProofState_p proofstate,
 				ClauseTableauFree(trash);
 			}
 		}
-		assert(TableauSetEmpty(dt));
 		PStackPushP(stack, tab);
 	}
 	TableauSetFree(dt);
@@ -966,6 +965,7 @@ bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 			EPCtrlSetFree(process_set, false);
 			fprintf(stderr, "%s\n", strerror(exit_status));
 			fflush(stderr);
+			fflush(GlobalOut);
 			Error("Child did not exit normally", 1);
 		}
 		switch(return_status)
@@ -998,10 +998,11 @@ bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 			}
 			case SATISFIABLE:
 			{
+				proof_found = true;
 				EPCtrlSetFree(process_set, false);
-				fprintf(GlobalOut, "# Satisfiable branch?\n");
+				fprintf(GlobalOut, "# Satisfiable branch\n");
 				fflush(GlobalOut);
-				Error("# A branch is satisfiable- this is highly unlikely", 1);
+				return proof_found;
 			}
 			case OUT_OF_MEMORY:
 			{

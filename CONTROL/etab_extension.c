@@ -302,11 +302,12 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		open_branch_label = ReplaceLocalVariablesWithFresh(open_branch->master,
 														   open_branch_label,
 														   open_branch->local_variables);
-		ClauseSet_p label_storage = tableau_control->label_storage;
+		//ClauseSet_p label_storage = tableau_control->label_storage;
 		ClauseSetExtractEntry(open_branch->label);
 		ClauseFree(open_branch->label);
 		open_branch->label = open_branch_label;
-		ClauseSetInsert(label_storage, open_branch_label);
+		assert(open_branch->label->set);
+		//ClauseSetInsert(label_storage, open_branch_label);
 	}
 	
 	Clause_p leaf_clause = new_leaf_clauses->anchor->succ;
@@ -317,6 +318,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		assert(open_branch != open_branch->open_branches->anchor);
 		assert(open_branch->parent);
 		assert(open_branch->label);
+		assert(open_branch->label->set);
 		assert(open_branch->arity == 0);
 		assert(open_branch_label);
 		assert(open_branch->label->set); // Labels are supposed to be part of a collection of clauses for GC purposes
@@ -579,6 +581,8 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 	Sig_p sig = old_master->terms->sig;
 	Clause_p head_literal_clause = NULL;
 	old_master->active_branch = old_parent; // We have the handle where we are working, so set this to NULL to indicate this.
+	assert(old_parent->label);
+	assert(old_parent->label->set);
 
 	ClauseTableau_p master = ClauseTableauMasterCopy(old_master);
 	ClauseTableau_p parent = master->active_branch;
@@ -599,6 +603,8 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 	assert(master->failures);
 	assert(parent != parent->master);
 	assert(parent->set == parent->open_branches);
+	assert(parent->label);
+	assert(parent->label->set);
 
 	/*
 	**  If this extension has already been performed at this node and failed, it must be prevented.
@@ -613,6 +619,7 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 	}
 
 	ClauseTableauApplySubstitution(master, subst);
+
 	TableauSetExtractEntry(parent); // Remove the parent from the collection of open branches
 	parent->id = ClauseGetIdent(extension->selected);
 

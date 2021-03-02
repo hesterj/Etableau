@@ -151,9 +151,18 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	ErrorCodes status = RESOURCE_OUT;
 	assert(proofstate);
 	assert(proofcontrol);
+	////////////////////
+	fprintf(stdout, "# Unprocessed before inserting branch labels (including folds)\n");
+	ClauseSetPrint(stdout, proofstate->unprocessed, true);
+	fprintf(stdout, "# Done printing unprocessed\n");
+	fflush(stdout);
 
+
+	////////////////////
 	ClauseTableauCollectBranchCopyLabels(branch, proofstate->unprocessed, branch_labels);
 	assert(PStackEmpty(branch_labels));
+
+	ClauseSet_p debug_unprocessed = ClauseSetCopy(branch->terms, proofstate->unprocessed);
 
     LiteralSelectionFun sel_strat =
 		proofcontrol->heuristic_parms.selection_strategy;
@@ -170,6 +179,9 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 		status = ProcessSpecificClauseStackWrapperNoCopy(proofstate, proofcontrol, branch_labels); // Process the branch clauses first
 		if (UNLIKELY(status == PROOF_FOUND)) // A contradiction was found while processing the branch clauses
 		{
+			fprintf(stdout, "# Something weird is going on!\n");
+			fflush(stdout);
+			assert(NULL);
 			success = (Clause_p) 1; // Dummy non-NULL clause
 		}
 		else // Now do the full branch saturation
@@ -181,7 +193,16 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	}
 	else
 	{
+		fprintf(stdout, "# Contradiction found during interreduction on a branch\n");
+		ProofStatePrint(stdout, proofstate);
+		ClauseSetPrint(stdout, debug_unprocessed, true);
+		ClauseTableauPrintBranch(branch);
+		ClauseTableauPrintDOTGraph(branch->master);
+		fprintf(stdout, "######################\n");
+		fflush(stdout);
+		exit(0);
 	}
+	ClauseSetFree(debug_unprocessed);
 
 	bool out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
 	if (!success &&
@@ -191,6 +212,8 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 		!(proofstate->has_interpreted_symbols))
 	{
 		branch->master->tableaucontrol->satisfiable = true;
+		fprintf(stdout, "# Satisfiable branch\n");
+		fflush(stdout);
 		status = SATISFIABLE;
 	}
 	if (success)
@@ -522,10 +545,12 @@ long ClauseTableauCollectBranchCopyLabels(ClauseTableau_p branch, ClauseSet_p se
 		Clause_p label = ClauseCopyAndPrepareForSaturation(branch->label, branch->terms, branch->control->hcb);
 		assert(label->set == NULL);
 		ClauseSetInsert(set, label);
+		if (ClauseGetIdent(label) == 4511) assert(false);
 		//PStackPushP(branch_labels, label);
 		ClauseSetProp(label, CPIsTableauClause);
 		if (branch_handle->folding_labels)
 		{
+			printf("there are %ld folding labels at a node of depth %d\n", branch_handle->folding_labels->members, branch_handle->depth);
 			ClauseSetCopyInsertAndPrepareForSaturation(branch_handle->folding_labels, set, branch->terms, branch->control->hcb, branch_labels);
 		}
 		branch_handle = branch_handle->parent;
@@ -551,9 +576,10 @@ long ClauseSetCopyInsertAndPrepareForSaturation(ClauseSet_p from, ClauseSet_p to
 	while (handle != from->anchor)
 	{
 		Clause_p copied = ClauseCopyAndPrepareForSaturation(handle, bank, hcb);
+		if (ClauseGetIdent(copied) == 4511) printf("# inserting the evil clause...\n");
 		ClauseSetInsert(to, copied);
 		//PStackPushP(branch_labels, copied);
-		ClauseSetProp(copied, CPIsAPRRelevant);
+		ClauseSetProp(copied, CPIsTableauClause);
 		handle = handle->succ;
 	}
 

@@ -322,6 +322,8 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
         }
     }
     ///////////
+
+
     if (PStackGetSP(new_tableaux) < num_cores_available)
     {
         fprintf(GlobalOut, "# %ld tableaux and %d cores\n", PStackGetSP(new_tableaux), num_cores_available);

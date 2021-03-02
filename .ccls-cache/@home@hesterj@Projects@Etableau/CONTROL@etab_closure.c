@@ -52,6 +52,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 		DStrAppendStr(tab->info, " ");
 		SubstDelete(subst);
 		ClauseTableauRegisterStep(tab);
+		assert(tab->label->set);
 		backtrack->completed = true;
 		return true;
 	}
@@ -130,7 +131,8 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		original_clause = ReplaceLocalVariablesWithFresh(tab, original_clause, tab->local_variables);
 		ClauseSetExtractEntry(tab->label);
 		ClauseFree(tab->label);
-		ClauseSetInsert(tab->master->tableaucontrol->label_storage, original_clause);
+		assert(original_clause->set);
+		//ClauseSetInsert(tab->master->tableaucontrol->label_storage, original_clause);
 		tab->label = original_clause;
 	}
 	//num_local_variables = 0;
@@ -171,7 +173,8 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 			ClauseSetExtractEntry(temporary_tab->label);
 			ClauseFree(temporary_tab->label);
 			temporary_tab->label = temporary_label;
-			ClauseSetInsert(tab->master->tableaucontrol->label_storage, temporary_tab->label);
+			assert(temporary_label->set);
+			//ClauseSetInsert(tab->master->tableaucontrol->label_storage, temporary_tab->label);
 		}
 		if ((subst = ClauseContradictsClause(tab, temporary_label, original_clause)))
 		{
@@ -219,37 +222,10 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 		Clause_p handle = set->anchor->succ;
 		Subst_p subst = NULL;
 		PStack_p refreshed_clauses = PStackAlloc();
-		//while ((handle = ClauseSetExtractFirst(set)))
-		//{
-			//Clause_p handle_clause = ReplaceLocalVariablesWithFresh(tab->master, handle, open_branch->local_variables);
-			////Clause_p handle_clause = handle;
-			//PStackPushP(refreshed_clauses, handle_clause);
-			//if ((subst = ClauseContradictsClause(tab, leaf, handle_clause)))
-			//{
-				//#ifndef DNDEBUG
-				//fprintf(GlobalOut, "# Folding label contradiction found!\n");
-				//#endif
-				//while (!PStackEmpty(refreshed_clauses))
-				//{
-					//Clause_p fresh = PStackPopP(refreshed_clauses);
-					//ClauseSetInsert(set, fresh);
-				//}
-				//PStackFree(refreshed_clauses);
-				//open_branch->id = ClauseGetIdent(handle_clause);
-				//return subst;
-			//}
-			//handle = set->anchor->succ;
-		//}
-		//while (!PStackEmpty(refreshed_clauses))
-		//{
-			//Clause_p fresh = PStackPopP(refreshed_clauses);
-			//ClauseSetInsert(set, fresh);
-		//}
-		//fprintf(GlobalOut, "# Attempting to find contradiction against folding labels...\n");
 		while (handle != set->anchor)
 		{
 			Clause_p handle_clause = ReplaceLocalVariablesWithFresh(tab->master, handle, open_branch->local_variables);
-			//Clause_p handle_clause = handle;
+			ClauseSetExtractEntry(handle_clause);
 			PStackPushP(refreshed_clauses, handle_clause);
 			if ((subst = ClauseContradictsClause(tab, leaf, handle_clause)))
 			{
@@ -268,7 +244,6 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 		while (!PStackEmpty(refreshed_clauses))
 		{
 			Clause_p fresh = PStackPopP(refreshed_clauses);
-			//ClauseSetInsert(set, fresh);
 			ClauseFree(fresh);
 		}
 		PStackFree(refreshed_clauses);
