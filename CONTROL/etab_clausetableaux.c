@@ -29,7 +29,7 @@ ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
 	handle->folded_up = 0;
 	handle->step = 0;
 	handle->max_step = 0;
-	handle->folding_labels = NULL;
+	handle->folding_labels = ClauseSetAlloc();;
 	handle->set = NULL;
 	handle->head_lit = false;
 	handle->saturation_closed = false;
@@ -112,7 +112,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	}
 	else
 	{
-		handle->folding_labels = NULL;
+		handle->folding_labels = ClauseSetAlloc();
 	}
 	handle->head_lit = tab->head_lit;
 	handle->succ = NULL;
@@ -249,7 +249,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	}
 	else
 	{
-		handle->folding_labels = NULL;
+		handle->folding_labels = ClauseSetAlloc();
 	}
 	if (tab->master->active_branch == tab)
 	{
@@ -348,7 +348,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->set = NULL;
 	handle->mark_int = 0;
 	handle->folded_up = 0;
-	handle->folding_labels = NULL;
+	handle->folding_labels = ClauseSetAlloc();
 	handle->info = DStrAlloc();
 	handle->active_branch = NULL;
 	handle->pred = NULL;
@@ -731,15 +731,14 @@ void ClauseTableauPrint2(ClauseTableau_p tab)
 	PStackFree(leaves);
 }
 
-/*  Checks to see if the node dominates tab, properly.
- *  i/e if they are the same, return false;
- * 
+/*  Checks to see if the node dominates tab.
+ *
 */
 
 bool TableauDominatesNode(ClauseTableau_p tab, ClauseTableau_p node)
 {
-	if (tab == node) return false;
-	ClauseTableau_p climber = node->parent;
+	//if (tab == node) return false;
+	ClauseTableau_p climber = node;
 	while (climber)
 	{
 		if (climber == tab) return true;
@@ -1626,18 +1625,25 @@ void ClauseStackFree(ClauseStack_p trash)
 //   If a closed tableau was found (resulting_tab), interpret the specification
 //   to report an appropriate SZS status.
 //
+//   If no closed tableau and tableaucontrol->satisfiable has not been set,
+//   report ResourceOut.
+//
 // Side Effects    :  None
 //
 /----------------------------------------------------------------------*/
 
 void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, ClauseTableau_p resulting_tab)
 {
-	assert(resulting_tab);
-	assert(resulting_tab == tableaucontrol->closed_tableau);
-	fflush(GlobalOut);
 
+	if (!resulting_tab)
+	{
+		TSTPOUT(GlobalOut, "ResourceOut");
+	}
 	long neg_conjectures = tableaucontrol->neg_conjectures;
-	if (!tableaucontrol->satisfiable)
+	assert(resulting_tab == tableaucontrol->closed_tableau);
+	assert(resulting_tab);
+	fflush(GlobalOut);
+	if (resulting_tab && !tableaucontrol->satisfiable)
 	{
 		if(neg_conjectures)
 		{
@@ -1648,7 +1654,7 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 			fprintf(GlobalOut, "# SZS status Unsatisfiable for %s\n", tableaucontrol->problem_name);
 		}
 	}
-	else
+	else if (resulting_tab)
 	{
 		if (neg_conjectures)
 		{
@@ -1658,6 +1664,10 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 		{
 			fprintf(GlobalOut, "# SZS status Satisfiable for %s\n", tableaucontrol->problem_name);
 		}
+	}
+	else
+	{
+		Error("Error in SZS status reporting", 10);
 	}
 
 	//fprintf(GlobalOut, "# SZS output start CNFRefutation for %s\n", tableaucontrol->problem_name);

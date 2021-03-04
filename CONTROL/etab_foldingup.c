@@ -1,7 +1,6 @@
 #include <etab_foldingup.h>
 
 /*  Returns true if all of the nodes below tableau are closed
- *  Return FALSE if a branch dominated by tableau has been closed by superposition!
  *  Closes nodes that have all children closed
 */
 
@@ -17,7 +16,8 @@ bool ClauseTableauMarkClosedNodes(ClauseTableau_p tableau, int *subtree_saturati
 	{
 		//fprintf(GlobalOut, "# Found saturation closed branch by marking\n");
 		*subtree_saturation_closed = CHILD_CLOSED_BY_SATURATION;
-		return false;
+		//return false;
+		return true;
 	}
 	if (!tableau->open)
 	{
@@ -77,6 +77,7 @@ ClauseTableau_p PStackGetDeepestTableauNode(PStack_p stack)
 		//printf("Depth of temp: %d\n", temp->depth);
 		if (temp->depth >= deepest_depth)
 		{
+			//printf("d%d\n", temp->depth);
 			deepest = temp;
 			deepest_depth = deepest->depth;
 		}
@@ -139,6 +140,7 @@ PStack_p CollectDominatedMarkingsWrapper(ClauseTableau_p tableau)
 {
 	PStack_p dominated_markings = PStackAlloc();
 	CollectDominatedMarkings(tableau, tableau, dominated_markings);
+	//printf("# Done collecting markings\n");
 	return dominated_markings;
 }
 
@@ -162,8 +164,9 @@ void CollectDominatedMarkings(ClauseTableau_p original, ClauseTableau_p tableau,
 		//assert(NodeIsLeaf(tableau));
 		//printf("Mark int of a leaf node dominated by the tableau: %d\n", tableau->mark_int);
 		ClauseTableau_p mark = FoldingUpGetNodeFromMark(tableau, tableau->mark_int);
-		if (mark->depth < original->depth)
+		if (mark->depth <= original->depth)
 		{
+			//printf("# mark of depth %d\n", mark->depth);
 			PStackPushP(stack, mark);
 		}
 	}
@@ -184,8 +187,10 @@ PStack_p NodesThatDominateTableauFromMarks(ClauseTableau_p tableau, PStack_p mar
 	for (PStackPointer p = 0; p<PStackGetSP(marks); p++)
 	{
 		ClauseTableau_p mark = PStackElementP(marks, p);
+		//printf("mark depth in nodes that dominate tableau from marks: %d\n", mark->depth);
 		if (TableauDominatesNode(mark, tableau))
 		{
+			//printf("added\n");
 			PStackPushP(dominating_nodes, mark);
 		}
 	}
@@ -203,8 +208,12 @@ PStack_p NodesThatDominateTableauFromMarks(ClauseTableau_p tableau, PStack_p mar
 
 int FoldUpAtNode(ClauseTableau_p node)
 {
+	assert(node);
+	ClauseTableau_p master_node = node->master;
 	assert(node->label);
-	
+	assert(master_node->folding_labels);
+	assert(node->folding_labels);
+
 	// Do not fold up the master node
 	if (node->depth == 0) return 0;
 	// Do not fold up leaf nodes
@@ -217,8 +226,8 @@ int FoldUpAtNode(ClauseTableau_p node)
 		return 0;
 	}
 
+
 	assert(ClauseLiteralNumber(node->label) == 1);
-	assert(node->label);
 
 	//Easy situation- if the node has already been folded up to the root do nothing
 	if (node->folded_up == node->depth)
@@ -233,9 +242,17 @@ int FoldUpAtNode(ClauseTableau_p node)
 	// This may not be necessary, the markings of dominated nodes must come from the same branch?
 	PStack_p dominators = NodesThatDominateTableauFromMarks(node, dominated_markings); 
 	PStackFree(dominated_markings);
+
+	if (child_saturation_closed == CHILD_CLOSED_BY_SATURATION)
+	{
+		// A superclosed node with children closed by saturation could have had any clause on the branch used in its closing
+		// To reflect this, the deepest relevant node (node itself here) must be included as a dominator.
+		// By keeping track of which clauses were used in the saturation attempt, it could potentially be folded up higher.
+		// This would be tricky to implement and likely not worth the effort...
+		PStackPushP(dominators, node);
+	}
 	
 	Clause_p flipped_label = NULL;
-	ClauseTableau_p master_node = node->master;
 	if ((PStackGetSP(dominators) == 0) ||
 		((PStackGetSP(dominators) == 1) && (PStackElementP(dominators,0) == node->master)))
 	{
@@ -246,6 +263,9 @@ int FoldUpAtNode(ClauseTableau_p node)
 			ClauseFlipLiteralSign(flipped_label, flipped_label->literals);
 			node->folded_up = node->depth;
 			ClauseTableauEdgeInsert(master_node, flipped_label);
+			//ClauseSetInsertSet(master_node->folding_labels, node->folding_labels);
+			ClauseSetDeleteCopies(master_node->folding_labels);
+			//fprintf(stdout, "Folding up clause %ld to the root\n", ClauseGetIdent(flipped_label));
 
 			//ClauseFree(flipped_label); // Temporary, for debugging
 		}
@@ -271,6 +291,9 @@ int FoldUpAtNode(ClauseTableau_p node)
 			//ClausePrint(GlobalOut, flipped_label, true);printf("\n");
 			node->folded_up = node->depth;
 			ClauseTableauEdgeInsert(master_node, flipped_label);
+			//ClauseSetInsertSet(master_node->folding_labels, node->folding_labels);
+			ClauseSetDeleteCopies(master_node->folding_labels);
+			//fprintf(stdout, "Folding up clause %ld case 2.1\n", ClauseGetIdent(flipped_label));
 			//ClauseFree(flipped_label); // Temporary, for debugging
 		}
 		else
@@ -281,6 +304,9 @@ int FoldUpAtNode(ClauseTableau_p node)
 			flipped_label = ClauseCopy(node->label, node->terms);
 			ClauseFlipLiteralSign(flipped_label, flipped_label->literals);
 			ClauseTableauEdgeInsert(deepest->parent, flipped_label);
+			//ClauseSetInsertSet(deepest->parent->folding_labels, node->folding_labels);
+			ClauseSetDeleteCopies(deepest->parent->folding_labels);
+			//fprintf(stdout, "Folding up clause %ld case 2.2, deepest depth is %d\n", ClauseGetIdent(flipped_label), deepest->depth);
 			//ClauseFree(flipped_label); // Temporary, for debugging
 		}
 		

@@ -72,7 +72,8 @@ int Etableau_n0(TableauControl_p tableaucontrol,
 // Do a branch saturation on the original problem before diving in to the tableaux proofsearch
    if (!proof_found && tableaucontrol->branch_saturation_enabled)
    {
-       proof_found = EtableauSaturateAllTableauxInStack(tableaucontrol, distinct_tableaux_stack, active);
+       // The maximum number of tableaux to attmept to saturate before moving on is the last paramater of the below function
+       proof_found = EtableauSaturateAllTableauxInStack(tableaucontrol, distinct_tableaux_stack, active, 30);
    }
    else
    {
@@ -438,13 +439,8 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
             assert(status == BACKTRACK_FAILURE || status == NEXT_TABLEAU || status == RETURN_NOW);
             if (status == BACKTRACK_FAILURE)
             {
-                fprintf(stdout, "# Destroying a tableau with %ld open branches because of backtrack failure.\n", current_tableau->open_branches->members);
                 PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
-                fprintf(stdout, "# Discarded tableau\n");
-                fflush(stdout);
                 ClauseTableauFree(current_tableau);
-                fprintf(stdout, "# Deleted tableau\n");
-                fflush(stdout);
                 current_tableau = NULL;
                 current_tableau_index = 0;
             }
@@ -469,20 +465,27 @@ ClauseTableau_p EtableauGetNextTableau(TableauStack_p distinct_tableaux_stack,
                                        TableauStack_p new_tableaux,
                                        PStackPointer *current_new_tableaux_index_p)
 {
+    ClauseTableau_p new_current_tableau = NULL;
     (*current_index_p)++;
     if (*current_index_p >= PStackGetSP(distinct_tableaux_stack))
     {
         if (new_tableaux)
         {
             fprintf(GlobalOut, "# Extending on a tableau from the new tableau stack while populating\n");
-            if (*current_new_tableaux_index_p == PStackGetSP(new_tableaux))
+            //if (*current_new_tableaux_index_p == PStackGetSP(new_tableaux))
+            if (PStackEmpty(new_tableaux))
             {
-                Error("Ran out of tableaux to extend on while populating", 10);
+                //TSTPOUT(GlobalOut, "ResourceOut");
+                //fprintf(GlobalOut, "# There are %ld new_tableaux and %ld in distinct_tableaux_stack\n", PStackGetSP(new_tableaux), PStackGetSP(distinct_tableaux_stack));
+                //Error("Ran out of tableaux to extend on while populating", 10);
+                *current_index_p = 0;
+                new_current_tableau = PStackElementP(distinct_tableaux_stack, *current_index_p);
+                return new_current_tableau;
             }
             assert(new_tableaux->current);
-            ClauseTableau_p new_tableau = PStackPopP(new_tableaux);
-            PStackPushP(distinct_tableaux_stack, new_tableau);
-            return new_tableau;
+            new_current_tableau = PStackPopP(new_tableaux);
+            PStackPushP(distinct_tableaux_stack, new_current_tableau);
+            return new_current_tableau;
         }
         if ( PStackEmpty(distinct_tableaux_stack) )
         {
@@ -492,6 +495,6 @@ ClauseTableau_p EtableauGetNextTableau(TableauStack_p distinct_tableaux_stack,
         *current_index_p = 0;
     }
     assert(*current_index_p < distinct_tableaux_stack->current);
-    ClauseTableau_p new_current_tableau = PStackElementP(distinct_tableaux_stack, *current_index_p);
+    new_current_tableau = PStackElementP(distinct_tableaux_stack, *current_index_p);
     return new_current_tableau;
 }

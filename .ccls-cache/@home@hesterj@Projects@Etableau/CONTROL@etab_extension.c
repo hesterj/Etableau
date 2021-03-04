@@ -286,8 +286,8 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 {
 	int extensions_done = 0;
 	int subst_completed = 0;
-	long split_clause_ident = ClauseGetIdent(selected);
-	if (split_clause_ident == open_branch->parent->id) return 0; // Don't split the same clause twice
+	//long split_clause_ident = ClauseGetIdent(selected);
+	//if (split_clause_ident == open_branch->parent->id) return 0; // Don't split the same clause twice
 	
 	//  SplitClauseFresh here is a major performance offender.
 	ClauseTableauUpdateVariables(open_branch->master);
@@ -795,7 +795,7 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
             assert(new_tableaux || number_of_extensions == 1); // Always return after one extension
 			*extended += number_of_extensions;
             //fprintf(GlobalOut, "#  Extended on a branch at depth %d...\n", open_branch->depth);
-            if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= 2*tableaucontrol->multiprocessing_active)
+            if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= tableaucontrol->multiprocessing_active)
 			{
 				break;
 			}

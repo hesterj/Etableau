@@ -5,6 +5,7 @@
 
 #define NO_CHILDREN_CLOSED_BY_SATURATION 0
 #define CHILD_CLOSED_BY_SATURATION 1
+#define CHILDREN_CLOSED_BY_SATURATION_ALLOWED 2
 
 bool ClauseTableauMarkClosedNodes(ClauseTableau_p tableau, int *subtree_saturation_closed);
 #define ClauseTableauNodeIsClosed(tab) ClauseTableauMarkClosedNodes(tab, NULL)

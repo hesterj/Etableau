@@ -373,7 +373,6 @@ bool BacktrackWrapper(ClauseTableau_p master, bool delete_info)
     //fprintf(GlobalOut, "# We need to backtrack... There are %ld known previous steps we can backtrack\n", PStackGetSP(master_backtracks));
     if (PStackGetSP(master_backtracks) == 0)
     {
-        Warning("The tableau failed to backtrack because there are no possible previous steps", 10);
         return false;
     }
     PStack_p bt_position = (PStack_p) PStackPopP(master_backtracks); // bt_position is a stack indicating a location in the tableau

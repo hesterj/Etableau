@@ -966,6 +966,7 @@ bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 			fprintf(stderr, "%s\n", strerror(exit_status));
 			fflush(stderr);
 			fflush(GlobalOut);
+			//Warning("A child process did not exit normally.  This means that there may be a bug in the program and that refutational completeness may have been lost.");
 			Error("Child did not exit normally", 1);
 		}
 		switch(return_status)

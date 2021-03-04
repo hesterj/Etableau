@@ -147,22 +147,24 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 										  long max_proc)
 {
 	Clause_p success = NULL;
+	Clause_p* success_ref = NULL;
 	PStack_p branch_labels = PStackAlloc();
 	ErrorCodes status = RESOURCE_OUT;
 	assert(proofstate);
 	assert(proofcontrol);
 	////////////////////
-	fprintf(stdout, "# Unprocessed before inserting branch labels (including folds)\n");
-	ClauseSetPrint(stdout, proofstate->unprocessed, true);
-	fprintf(stdout, "# Done printing unprocessed\n");
-	fflush(stdout);
+	//fprintf(stdout, "# Unprocessed before inserting branch labels (including folds)\n");
+	//ClauseSetPrint(stdout, proofstate->unprocessed, true);
+	//fprintf(stdout, "# Done printing unprocessed\n");
+	//fflush(stdout);
 
 
 	////////////////////
 	ClauseTableauCollectBranchCopyLabels(branch, proofstate->unprocessed, branch_labels);
 	assert(PStackEmpty(branch_labels));
+	ClauseSetDeleteCopies(proofstate->unprocessed);
 
-	ClauseSet_p debug_unprocessed = ClauseSetCopy(branch->terms, proofstate->unprocessed);
+	//ClauseSet_p debug_unprocessed = ClauseSetCopy(branch->terms, proofstate->unprocessed);
 
     LiteralSelectionFun sel_strat =
 		proofcontrol->heuristic_parms.selection_strategy;
@@ -176,13 +178,20 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 		//fprintf(stdout, "# No success in interreduction\n");
 		ProofStateResetProcessedNoCopy(proofstate, proofcontrol, branch_labels);
 		proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver
-		status = ProcessSpecificClauseStackWrapperNoCopy(proofstate, proofcontrol, branch_labels); // Process the branch clauses first
+		Clause_p *success_ref = NULL;
+		status = ProcessSpecificClauseStackWrapperNoCopy(proofstate, proofcontrol, branch_labels, success_ref); // Process the branch clauses first
 		if (UNLIKELY(status == PROOF_FOUND)) // A contradiction was found while processing the branch clauses
 		{
 			fprintf(stdout, "# Something weird is going on!\n");
 			fflush(stdout);
-			assert(NULL);
-			success = (Clause_p) 1; // Dummy non-NULL clause
+			//assert(NULL);
+			printf("success ref %p\n", success_ref);
+			assert(success_ref);
+			success = *success_ref;
+			printf("success ref done %p\n", success);
+			fflush(stdout);
+			assert(success);
+			//success = (Clause_p) 1; // Dummy non-NULL clause
 		}
 		else // Now do the full branch saturation
 		{
@@ -193,16 +202,16 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	}
 	else
 	{
-		fprintf(stdout, "# Contradiction found during interreduction on a branch\n");
-		ProofStatePrint(stdout, proofstate);
-		ClauseSetPrint(stdout, debug_unprocessed, true);
-		ClauseTableauPrintBranch(branch);
-		ClauseTableauPrintDOTGraph(branch->master);
-		fprintf(stdout, "######################\n");
-		fflush(stdout);
-		exit(0);
+		//fprintf(stdout, "# Contradiction found during interreduction on a branch\n");
+		//ProofStatePrint(stdout, proofstate);
+		//ClauseSetPrint(stdout, debug_unprocessed, true);
+		//ClauseTableauPrintBranch(branch);
+		//ClauseTableauPrintDOTGraph(branch->master);
+		//fprintf(stdout, "######################\n");
+		//fflush(stdout);
+		//exit(0);
 	}
-	ClauseSetFree(debug_unprocessed);
+	//ClauseSetFree(debug_unprocessed);
 
 	bool out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
 	if (!success &&
@@ -218,7 +227,11 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	}
 	if (success)
 	{
+		printf("about to check success...\n");
+		fflush(stdout);
 		assert(ClauseLiteralNumber(success) == 0);
+		printf("ok\n");
+		fflush(stdout);
 		if (ClauseLiteralNumber(success) != 0)
 		{
 			Error("A nonempty clause was returned by saturate.", 10);
@@ -401,7 +414,7 @@ int ProcessSpecificClauseWrapper(ProofState_p state, ProofControl_p control, Cla
 	return RESOURCE_OUT;
 }
 
-int ProcessSpecificClauseWrapperNoCopy(ProofState_p state, ProofControl_p control, Clause_p clause)
+int ProcessSpecificClauseWrapperNoCopy(ProofState_p state, ProofControl_p control, Clause_p clause, Clause_p *success_ref)
 {
 	assert(clause->set);
 	assert(clause->set == state->unprocessed);
@@ -409,6 +422,7 @@ int ProcessSpecificClauseWrapperNoCopy(ProofState_p state, ProofControl_p contro
 	// For some reason this can yield false positives...
 	if (success)
 	{
+		*success_ref = success;
 		return PROOF_FOUND;
 	}
 	return RESOURCE_OUT;
@@ -445,16 +459,17 @@ ErrorCodes ProcessSpecificClauseStackWrapper(ProofState_p state, ProofControl_p 
 	return RESOURCE_OUT;
 }
 
-ErrorCodes ProcessSpecificClauseStackWrapperNoCopy(ProofState_p state, ProofControl_p control, ClauseStack_p stack)
+ErrorCodes ProcessSpecificClauseStackWrapperNoCopy(ProofState_p state, ProofControl_p control, ClauseStack_p stack, Clause_p *success_ref)
 {
 	while (!PStackEmpty(stack))
 	{
 		Clause_p handle = PStackPopP(stack);
-		int status = ProcessSpecificClauseWrapperNoCopy(state, control, handle);
+		int status = ProcessSpecificClauseWrapperNoCopy(state, control, handle, success_ref);
 		if (status == PROOF_FOUND)
 		{
 			return PROOF_FOUND;
 		}
+		assert(!success_ref);
 		handle = handle->succ;
 	}
 	return RESOURCE_OUT;
@@ -514,11 +529,15 @@ void TermCellStoreDeleteRWLinks(TermCellStore_p store)
    }
 }
 
-bool EtableauSaturateAllTableauxInStack(TableauControl_p tableaucontrol, TableauStack_p distinct_tableaux_stack, ClauseSet_p active)
+bool EtableauSaturateAllTableauxInStack(TableauControl_p tableaucontrol, TableauStack_p distinct_tableaux_stack, ClauseSet_p active, long maximum)
 {
 	for (PStackPointer p=0; p<PStackGetSP(distinct_tableaux_stack); p++)
 	{
-		fprintf(GlobalOut, "# Attempting initial tableau saturation\n");
+		if (p >= maximum)
+		{
+			fprintf(GlobalOut, "# Unsuccessfully attempted saturation on %ld start tableaux, moving on.\n", maximum);
+			break;
+		}
 		ClauseTableau_p saturation_tableau = PStackElementP(distinct_tableaux_stack, p);
 		BranchSaturation_p branch_sat = BranchSaturationAlloc(tableaucontrol->proofstate,
 															  tableaucontrol->proofcontrol,
@@ -545,12 +564,12 @@ long ClauseTableauCollectBranchCopyLabels(ClauseTableau_p branch, ClauseSet_p se
 		Clause_p label = ClauseCopyAndPrepareForSaturation(branch->label, branch->terms, branch->control->hcb);
 		assert(label->set == NULL);
 		ClauseSetInsert(set, label);
-		if (ClauseGetIdent(label) == 4511) assert(false);
+		//if (ClauseGetIdent(label) == 4511) assert(false);
 		//PStackPushP(branch_labels, label);
 		ClauseSetProp(label, CPIsTableauClause);
 		if (branch_handle->folding_labels)
 		{
-			printf("there are %ld folding labels at a node of depth %d\n", branch_handle->folding_labels->members, branch_handle->depth);
+			//printf("there are %ld folding labels at a node of depth %d\n", branch_handle->folding_labels->members, branch_handle->depth);
 			ClauseSetCopyInsertAndPrepareForSaturation(branch_handle->folding_labels, set, branch->terms, branch->control->hcb, branch_labels);
 		}
 		branch_handle = branch_handle->parent;
@@ -576,7 +595,7 @@ long ClauseSetCopyInsertAndPrepareForSaturation(ClauseSet_p from, ClauseSet_p to
 	while (handle != from->anchor)
 	{
 		Clause_p copied = ClauseCopyAndPrepareForSaturation(handle, bank, hcb);
-		if (ClauseGetIdent(copied) == 4511) printf("# inserting the evil clause...\n");
+		//if (ClauseGetIdent(copied) == 4511) printf("# inserting the evil clause...\n");
 		ClauseSetInsert(to, copied);
 		//PStackPushP(branch_labels, copied);
 		ClauseSetProp(copied, CPIsTableauClause);
