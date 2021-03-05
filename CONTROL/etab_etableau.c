@@ -71,7 +71,7 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 	// Do not duplicate work.
 	if (previously_saturated >= selected_number_of_clauses_to_process)
 	{
-		//fprintf(stdout, "# Do not replicate work...\n");
+		//fprintf(stdout, "# (%ld) Do not replicate work...\n", (long) getpid());
 		return RESOURCE_OUT;
 	}
 
@@ -83,6 +83,7 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
 	EtableauProofStateResetClauseSets(proofstate);
 	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
+
 	//int branch_status = ECloseBranchProcessBranchFirstSerial(proofstate,
 															 //proofcontrol,
 															 //branch,
@@ -91,10 +92,13 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 															  proofcontrol,
 															  branch,
 															  selected_number_of_clauses_to_process);
+
 	EtableauProofStateResetClauseSets(proofstate);
 	TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
 	branch->previously_saturated = selected_number_of_clauses_to_process;
 	ClauseSetFree(unprocessed);
+
+
 	return branch_status;
 }
 
@@ -147,19 +151,12 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 										  long max_proc)
 {
 	Clause_p success = NULL;
-	Clause_p* success_ref = NULL;
+	Clause_p success_ref = NULL;
 	PStack_p branch_labels = PStackAlloc();
 	ErrorCodes status = RESOURCE_OUT;
 	assert(proofstate);
 	assert(proofcontrol);
-	////////////////////
-	//fprintf(stdout, "# Unprocessed before inserting branch labels (including folds)\n");
-	//ClauseSetPrint(stdout, proofstate->unprocessed, true);
-	//fprintf(stdout, "# Done printing unprocessed\n");
-	//fflush(stdout);
 
-
-	////////////////////
 	ClauseTableauCollectBranchCopyLabels(branch, proofstate->unprocessed, branch_labels);
 	assert(PStackEmpty(branch_labels));
 	ClauseSetDeleteCopies(proofstate->unprocessed);
@@ -169,29 +166,20 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
     LiteralSelectionFun sel_strat =
 		proofcontrol->heuristic_parms.selection_strategy;
 	proofcontrol->heuristic_parms.selection_strategy = SelectNoGeneration;
-    success = Saturate(proofstate, proofcontrol, LONG_MAX, // Interreduction
+    success = Saturate(proofstate, proofcontrol, LONG_MAX, // This is the interreduction
                        LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
                        LLONG_MAX, LONG_MAX);
     proofcontrol->heuristic_parms.selection_strategy = sel_strat;
-    if(LIKELY(!success))
+
+    if(LIKELY(!success)) // First we will process the clauses of the branch, and then the full saturation
     {
-		//fprintf(stdout, "# No success in interreduction\n");
 		ProofStateResetProcessedNoCopy(proofstate, proofcontrol, branch_labels);
 		proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver
-		Clause_p *success_ref = NULL;
-		status = ProcessSpecificClauseStackWrapperNoCopy(proofstate, proofcontrol, branch_labels, success_ref); // Process the branch clauses first
+		status = ProcessSpecificClauseStackWrapperNoCopy(proofstate, proofcontrol, branch_labels, &success_ref); // Process the branch clauses first
 		if (UNLIKELY(status == PROOF_FOUND)) // A contradiction was found while processing the branch clauses
 		{
-			fprintf(stdout, "# Something weird is going on!\n");
-			fflush(stdout);
-			//assert(NULL);
-			printf("success ref %p\n", success_ref);
 			assert(success_ref);
-			success = *success_ref;
-			printf("success ref done %p\n", success);
-			fflush(stdout);
-			assert(success);
-			//success = (Clause_p) 1; // Dummy non-NULL clause
+			success = success_ref;
 		}
 		else // Now do the full branch saturation
 		{
@@ -199,17 +187,6 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 							   LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
 							   LLONG_MAX, LONG_MAX);
 		}
-	}
-	else
-	{
-		//fprintf(stdout, "# Contradiction found during interreduction on a branch\n");
-		//ProofStatePrint(stdout, proofstate);
-		//ClauseSetPrint(stdout, debug_unprocessed, true);
-		//ClauseTableauPrintBranch(branch);
-		//ClauseTableauPrintDOTGraph(branch->master);
-		//fprintf(stdout, "######################\n");
-		//fflush(stdout);
-		//exit(0);
 	}
 	//ClauseSetFree(debug_unprocessed);
 
@@ -221,28 +198,19 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 		!(proofstate->has_interpreted_symbols))
 	{
 		branch->master->tableaucontrol->satisfiable = true;
-		fprintf(stdout, "# Satisfiable branch\n");
+		fprintf(stdout, "# %ld Satisfiable branch\n", (long) getpid());
 		fflush(stdout);
 		status = SATISFIABLE;
 	}
 	if (success)
 	{
-		printf("about to check success...\n");
-		fflush(stdout);
 		assert(ClauseLiteralNumber(success) == 0);
-		printf("ok\n");
-		fflush(stdout);
 		if (ClauseLiteralNumber(success) != 0)
 		{
 			Error("A nonempty clause was returned by saturate.", 10);
 		}
-		if (out_of_clauses)
-		{
-			fprintf(stdout, "# Out of clauses, but found contradiction...\n");
-		}
 		status = PROOF_FOUND;
 	}
-    //GCCollect(proofstate->terms->gc);
 	PStackFree(branch_labels); // The branch labels are free'd elsewhere, so no need to worry about losing the pointers to them.
 	return status;
 }
@@ -254,9 +222,13 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 {
 	ProofState_p proofstate = jobs->proofstate;
 	ProofControl_p proofcontrol = jobs->proofcontrol;
+	assert(tableau_control);
+	assert(proofstate);
+	assert(proofcontrol);
 	ClauseTableau_p master = jobs->master;
 	long max_proc = jobs->max_proc;
 	TableauSet_p open_branches = master->open_branches;
+	assert(open_branches);
 	
 	ClauseTableau_p handle = open_branches->anchor->succ;
 	int num_local_branches = 0;
@@ -264,16 +236,12 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 	int branch_status = RESOURCE_OUT;
 	while (handle != open_branches->anchor)
 	{
+		assert(handle);
 		assert(handle != master->open_branches->anchor);
+		assert(handle->info);
 		if ((open_branches->members == 1) || BranchIsLocal(handle))
 		{
 			num_local_branches++;
-			//fprintf(GlobalOut, "# Saturating branch...\n");
-			//fprintf(GlobalOut, "# Tree address: %p Nodes: %ld Branch: %p\n", &tableau_control->feature_tree, PTreeNodes(tableau_control->feature_tree), handle);
-			//DTreeBranchRepresentations(handle, &tableau_control->feature_tree);
-			//EqnBranchRepresentations(handle, &tableau_control->feature_tree);
-
-
 			tableau_control->number_of_saturation_attempts++;
 			//ResetAllOccurrences(&tableau_control->feature_tree);
 			branch_status = ECloseBranchWrapper(proofstate,
@@ -281,7 +249,6 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 												handle,
 												tableau_control,
 												max_proc);
-			//fprintf(GlobalOut, "# Done.\n");
 			//EqnBranchRepresentationsList(handle, tableau_control->feature_list, branch_status);
 			//XGBoostTest();
 			if (branch_status == PROOF_FOUND)
@@ -303,6 +270,7 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 			else if (branch_status == SATISFIABLE)
 			{
 				fprintf(GlobalOut, "# Satisfiable branch found.\n");
+				assert(tableau_control->satisfiable);
 				DStrAppendStr(handle->info, " Satisfiable ");
 				DStrAppendInt(handle->info, tableau_control->number_of_saturation_attempts);
 				break;
@@ -419,10 +387,10 @@ int ProcessSpecificClauseWrapperNoCopy(ProofState_p state, ProofControl_p contro
 	assert(clause->set);
 	assert(clause->set == state->unprocessed);
 	Clause_p success = ProcessSpecificClause(state, control, clause, LONG_MAX);
-	// For some reason this can yield false positives...
 	if (success)
 	{
-		*success_ref = success;
+		//printf("%ld setting success_ref\n", (long) getpid());
+		success_ref = &success;
 		return PROOF_FOUND;
 	}
 	return RESOURCE_OUT;

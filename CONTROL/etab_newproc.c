@@ -360,8 +360,6 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
         if (worker == 0) // child process
         {
             SilentTimeOut = true;
-            fprintf(GlobalOut, "# Hello from worker %d...\n", i);
-            fflush(GlobalOut);
             TableauStack_p new_tableaux = PStackElementP(buckets, i);
             assert(!PStackEmpty(new_tableaux));
             //TableauSetMoveClauses(distinct_tableaux_set, process_starting_tableaux);
