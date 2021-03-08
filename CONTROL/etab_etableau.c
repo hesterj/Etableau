@@ -173,7 +173,20 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 
     if(LIKELY(!success)) // First we will process the clauses of the branch, and then the full saturation
     {
+		assert(ProofStateProcCardinality(proofstate));
 		ProofStateResetProcessedNoCopy(proofstate, proofcontrol, branch_labels);
+#ifndef DNDEBUG
+		if (branch->open_branches->members == 1)
+		{
+			for (PStackPointer p=0; p<PStackGetSP(branch_labels); p++)
+			{
+				ClausePrint(stdout, PStackElementP(branch_labels, p), true);
+				fprintf(stdout, "\n");
+				fflush(stdout);
+			}
+		}
+#endif
+		assert(!ClauseSetEmpty(proofstate->unprocessed));
 		proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver
 		status = ProcessSpecificClauseStackWrapperNoCopy(proofstate, proofcontrol, branch_labels, &success_ref); // Process the branch clauses first
 		if (UNLIKELY(status == PROOF_FOUND)) // A contradiction was found while processing the branch clauses
@@ -188,6 +201,32 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 							   LLONG_MAX, LONG_MAX);
 		}
 	}
+#ifndef DNDEBUG
+	else if (ClauseSetEmpty(proofstate->unprocessed)) // This is a debugging else if that should be removed...
+	{
+		if (!success &&
+			inf_sys_complete &&
+			proofstate->state_is_complete &&
+			!(proofstate->has_interpreted_symbols))
+		{
+			fprintf(stdout, "# Satisfiable branch...\n");
+		}
+		else if (!success)
+		{
+			fprintf(stdout, "%d %d %d\n", inf_sys_complete,
+					proofstate->state_is_complete,
+					!(proofstate->has_interpreted_symbols));
+			fprintf(stdout, "One of the other conditions failed...\n");
+		}
+		else
+		{
+			assert(success);
+			assert(ClauseIsEmpty(success));
+			fflush(stdout);
+		}
+		fflush(stdout);
+	}
+#endif
 	//ClauseSetFree(debug_unprocessed);
 
 	bool out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
@@ -205,10 +244,17 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	if (success)
 	{
 		assert(ClauseLiteralNumber(success) == 0);
+#ifndef DNDEBUG
+		if (branch->open_branches->members == 1)
+		{
+			fprintf(stdout, "# (%ld) Contradiction found after %ld processed\n", (long) getpid(), (long) ProofStateProcCardinality(proofstate));
+			fflush(stdout);
+		}
 		if (ClauseLiteralNumber(success) != 0)
 		{
 			Error("A nonempty clause was returned by saturate.", 10);
 		}
+#endif
 		status = PROOF_FOUND;
 	}
 	PStackFree(branch_labels); // The branch labels are free'd elsewhere, so no need to worry about losing the pointers to them.
@@ -280,6 +326,10 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 	}
 	if (open_branches->members == 0 || branch_status == SATISFIABLE)
 	{
+#ifndef DNDEBUG
+		fprintf(stdout, "# (%ld) Found closed tableau\n", (long) getpid());
+		fflush(stdout);
+#endif
 		tableau_control->closed_tableau = master;
 	}
 	// Exit and return to tableaux proof search
@@ -390,8 +440,15 @@ int ProcessSpecificClauseWrapperNoCopy(ProofState_p state, ProofControl_p contro
 	if (success)
 	{
 		//printf("%ld setting success_ref\n", (long) getpid());
-		success_ref = &success;
+		*success_ref = success;
+		assert(*success_ref);
 		return PROOF_FOUND;
+	}
+	else if (UNLIKELY(ClauseSetEmpty(state->unprocessed)))
+	{
+		fprintf(stdout, "# Bizzare behavior: Satisfiable branch in ProcessSpecificClauseWrapperNoCopy?\n");
+		fflush(stdout);
+		assert(false);
 	}
 	return RESOURCE_OUT;
 }
@@ -429,15 +486,18 @@ ErrorCodes ProcessSpecificClauseStackWrapper(ProofState_p state, ProofControl_p 
 
 ErrorCodes ProcessSpecificClauseStackWrapperNoCopy(ProofState_p state, ProofControl_p control, ClauseStack_p stack, Clause_p *success_ref)
 {
+	Clause_p success = NULL;
 	while (!PStackEmpty(stack))
 	{
 		Clause_p handle = PStackPopP(stack);
-		int status = ProcessSpecificClauseWrapperNoCopy(state, control, handle, success_ref);
+		//int status = ProcessSpecificClauseWrapperNoCopy(state, control, handle, success_ref);
+		int status = ProcessSpecificClauseWrapperNoCopy(state, control, handle, &success);
 		if (status == PROOF_FOUND)
 		{
+			assert(success);
+			*success_ref = success;
 			return PROOF_FOUND;
 		}
-		assert(!success_ref);
 		handle = handle->succ;
 	}
 	return RESOURCE_OUT;
@@ -525,11 +585,15 @@ bool EtableauSaturateAllTableauxInStack(TableauControl_p tableaucontrol, Tableau
 
 long ClauseTableauCollectBranchCopyLabels(ClauseTableau_p branch, ClauseSet_p set, PStack_p branch_labels)
 {
-	ClauseTableau_p branch_handle = branch;
 	assert(branch);
+	assert(set);
+	assert(branch_labels);
+	ClauseTableau_p branch_handle = branch;
 	while (branch_handle)
 	{
+		assert(branch_handle);
 		Clause_p label = ClauseCopyAndPrepareForSaturation(branch->label, branch->terms, branch->control->hcb);
+		assert(label);
 		assert(label->set == NULL);
 		ClauseSetInsert(set, label);
 		//if (ClauseGetIdent(label) == 4511) assert(false);
@@ -547,6 +611,9 @@ long ClauseTableauCollectBranchCopyLabels(ClauseTableau_p branch, ClauseSet_p se
 
 Clause_p ClauseCopyAndPrepareForSaturation(Clause_p clause, TB_p bank, HCB_p hcb)
 {
+	assert(clause);
+	assert(bank);
+	assert(hcb);
 	Clause_p handle = ClauseCopy(clause, bank);
 	HCBClauseEvaluate(hcb, handle);
 	ClauseDelProp(handle, CPIsOriented);
@@ -559,6 +626,11 @@ Clause_p ClauseCopyAndPrepareForSaturation(Clause_p clause, TB_p bank, HCB_p hcb
 
 long ClauseSetCopyInsertAndPrepareForSaturation(ClauseSet_p from, ClauseSet_p to, TB_p bank, HCB_p hcb, PStack_p branch_labels)
 {
+	assert(from);
+	assert(to);
+	assert(bank);
+	assert(hcb);
+	assert(branch_labels);
 	Clause_p handle = from->anchor->succ;
 	while (handle != from->anchor)
 	{

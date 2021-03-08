@@ -233,6 +233,10 @@ void ClauseTableauCollectVariables(ClauseTableau_p tab, PTree_p *variables)
 	}
 }
 
+/*
+** Update the local variables of tab
+*/
+
 void ClauseTableauUpdateVariables(ClauseTableau_p tab)
 {
 	assert(tab);

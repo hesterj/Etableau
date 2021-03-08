@@ -973,9 +973,9 @@ ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 
 // The number of steps up one must go to reach higher from lower, if they are in the same branch.
 
-int ClauseTableauDifference(ClauseTableau_p higher, ClauseTableau_p lower)
+int ClauseTableauDifference(ClauseTableau_p deeper, ClauseTableau_p shallower)
 {
-	return (lower->depth - higher->depth);
+	return (deeper->depth - shallower->depth);
 }
 
 /*  Creates the symmetry, reflexivity, and transitivity equality axioms.
@@ -1229,6 +1229,7 @@ void ClauseTableauPrintDOTGraphChildren(ClauseTableau_p tab, FILE* dotgraph)
 	long parent_ident = ClauseGetIdent(parent_label);
 	Clause_p label = tab->label;
 	long ident = ClauseGetIdent(label);
+	ClauseSet_p folding_labels = tab->folding_labels;
 	// any folded up clauses here?
 	int folds = 0;
 	if (tab->folding_labels) folds = tab->folding_labels->members;
@@ -1249,6 +1250,17 @@ void ClauseTableauPrintDOTGraphChildren(ClauseTableau_p tab, FILE* dotgraph)
 		}
 	}
 	ClauseTSTPCorePrint(dotgraph, label, true);
+	if (!ClauseSetEmpty(tab->folding_labels))
+	{
+		Clause_p folding_handle = folding_labels->anchor->succ;
+		while (folding_handle != folding_labels->anchor)
+		{
+			fprintf(dotgraph, "\\n");
+			ClauseTSTPCorePrint(dotgraph, folding_handle, true);
+			folding_handle = folding_handle->succ;
+		}
+	}
+	fprintf(dotgraph, "\\n");
 	int tab_depth = tab->depth;
 	bool tab_saturation_closed = tab->saturation_closed;
 	int tab_mark_int = tab->mark_int;
@@ -1258,7 +1270,7 @@ void ClauseTableauPrintDOTGraphChildren(ClauseTableau_p tab, FILE* dotgraph)
 	fprintf(dotgraph, "f:%d ", folds);
 	fprintf(dotgraph, "m:%d ", tab_mark_int);
 	fprintf(dotgraph, "id:%ld ", tab->id);
-	fprintf(dotgraph, "%ld ", tab->id);
+	fprintf(dotgraph, "fu: %ld ", (long) tab->folded_up);
 	fprintf(dotgraph, " s:%d\"]\n ", tab_saturation_closed);
 	fprintf(dotgraph,"   %ld -> %ld\n", parent_ident, ident);
 	

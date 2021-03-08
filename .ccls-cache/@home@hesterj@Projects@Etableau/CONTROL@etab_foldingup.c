@@ -265,6 +265,7 @@ int FoldUpAtNode(ClauseTableau_p node)
 			ClauseTableauEdgeInsert(master_node, flipped_label);
 			//ClauseSetInsertSet(master_node->folding_labels, node->folding_labels);
 			ClauseSetDeleteCopies(master_node->folding_labels);
+			node->folded_up = node->depth;
 			//fprintf(stdout, "Folding up clause %ld to the root\n", ClauseGetIdent(flipped_label));
 
 			//ClauseFree(flipped_label); // Temporary, for debugging
@@ -300,7 +301,9 @@ int FoldUpAtNode(ClauseTableau_p node)
 		{
 			// The actual case 2
 			assert(deepest->depth > 0);
-			node->folded_up = ClauseTableauDifference(deepest, node);
+			node->folded_up = ClauseTableauDifference(deepest, node)+1;
+			//assert(deepest != node);
+			assert(node->folded_up);
 			flipped_label = ClauseCopy(node->label, node->terms);
 			ClauseFlipLiteralSign(flipped_label, flipped_label->literals);
 			ClauseTableauEdgeInsert(deepest->parent, flipped_label);

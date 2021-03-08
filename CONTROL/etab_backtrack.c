@@ -186,6 +186,7 @@ void Backtrack(Backtrack_p bt)
         ClauseTableauArgArrayFree(position->children, position->arity);
         position->children = NULL;
         position->arity = 0;
+        position->folded_up = 0;
     }
     else if (BacktrackIsClosureStep(bt))// this is a closure step, etableau closures are not registered or backtracked
     {
@@ -197,6 +198,7 @@ void Backtrack(Backtrack_p bt)
     //bt->id = position->id;
     position->id = 0;
     position->open = true;
+    position->mark_int = 0;
     TableauSetInsert(master->open_branches, position);
 
     // roll back every node of the tableau
@@ -204,6 +206,7 @@ void Backtrack(Backtrack_p bt)
     {
         RollBackEveryNode(master);
     }
+    ClauseTableauUpdateVariables(master);
 
     assert(position->label);
     return;

@@ -864,7 +864,8 @@ long TFormulaEstimateClauses(TB_p bank, TFormula_p form, bool pos)
       }
       else
       {
-         assert(false && "Formula not in correct simplified form");
+         //assert(false && "Formula not in correct simplified form");
+         Warning("Formula not in correct simplified form, possible XOR?");
       }
    }
    else
@@ -919,7 +920,8 @@ long TFormulaEstimateClauses(TB_p bank, TFormula_p form, bool pos)
       }
       else
       {
-         assert(false && "Formula not in correct simplified form");
+         //assert(false && "Formula not in correct simplified form");
+         Warning("Formula not in correct simplified form, possible XOR?");
       }
    }
    if(res > TFORM_MANY_LIMIT)

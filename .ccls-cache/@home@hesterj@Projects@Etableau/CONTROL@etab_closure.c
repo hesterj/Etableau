@@ -40,12 +40,13 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 			//fprintf(GlobalOut, "# Backtracking after closure step violated regularity\n");
 			__attribute__((unused)) bool backtracked = BacktrackWrapper(tab->master, false);
 			assert(backtracked);
-			tab->id = 0;
-			tab->mark_int = 0;
+			assert(tab->mark_int == 0);
+			assert(tab->id == 0);
 			SubstDelete(subst);
 			return false;
 		}
 		assert(tab->info);
+		tab->mark_int = tab->depth;
 		SubstDStrPrint(tab->info, subst, tab->terms->sig, DEREF_NEVER);
 		DStrAppendStr(tab->info, " Reduction step with clause ");
 		DStrAppendInt(tab->info, tab->id);
