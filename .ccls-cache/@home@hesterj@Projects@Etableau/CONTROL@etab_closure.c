@@ -125,7 +125,7 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	Subst_p subst = NULL;
 	Clause_p temporary_label = NULL;
 	
-	//long num_local_variables = 0;
+#ifdef LOCAL
 	long num_local_variables = UpdateLocalVariables(tab);
 	if (num_local_variables)
 	{
@@ -136,8 +136,11 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		//ClauseSetInsert(tab->master->tableaucontrol->label_storage, original_clause);
 		tab->label = original_clause;
 	}
-	//num_local_variables = 0;
-	
+#else
+	long num_local_variables = 0;
+#endif
+
+
 	// Check against the unit axioms
 	ClauseSet_p unit_axioms = tab->master->unit_axioms;
 	assert(unit_axioms);
@@ -218,7 +221,13 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set, ClauseTableau_p open_branch)
 {
 	assert(set->anchor);
-	if ((open_branch->local_variables) && (PStackGetSP(open_branch->local_variables) > 0))
+#ifdef LOCAL
+	bool use_local_variables = true;
+#else
+	bool use_local_variables = false;
+#endif
+
+	if ((use_local_variables) && (open_branch->local_variables) && (PStackGetSP(open_branch->local_variables) > 0))
 	{
 		Clause_p handle = set->anchor->succ;
 		Subst_p subst = NULL;

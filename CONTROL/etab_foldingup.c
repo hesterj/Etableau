@@ -4,31 +4,39 @@
  *  Closes nodes that have all children closed
 */
 
+void assert_all_children_closed(ClauseTableau_p tab);
+
+void assert_all_children_closed(ClauseTableau_p tab)
+{
+	assert(tab->open == false);
+	for (short i=0; i<tab->arity; i++)
+	{
+		assert(tab->children[i]->set == NULL);
+		assert_all_children_closed(tab->children[i]);
+	}
+}
+
 bool ClauseTableauMarkClosedNodes(ClauseTableau_p tableau, int *subtree_saturation_closed)
 {
 	//printf("Attempting to mark a new node.");
+	int saturation_closed = *subtree_saturation_closed;
 	assert(tableau);
 	if (tableau->set)
 	{
 		//printf("Found an open branch while attempting to mark nodes as closed.\n");
+		return false;
 	}
 	if (tableau->saturation_closed)
 	{
 		//fprintf(GlobalOut, "# Found saturation closed branch by marking\n");
-		*subtree_saturation_closed = CHILD_CLOSED_BY_SATURATION;
-		//return false;
-		return true;
-	}
-	if (!tableau->open)
-	{
-		//printf("Tableau has !tableau->open.\n");
-		return true;
+		assert(tableau->open == false);
+		saturation_closed = CHILD_CLOSED_BY_SATURATION;
 	}
 	int arity = tableau->arity;
-	if (arity == 0)
-	{
-		return false;
-	}
+	//if (arity == 0)
+	//{
+		//return false;
+	//}
 	bool all_children_closed = true;
 	// Check to see if all the children are actually superclosed
 	//printf("Marking children.\n");
@@ -36,7 +44,13 @@ bool ClauseTableauMarkClosedNodes(ClauseTableau_p tableau, int *subtree_saturati
 	{
 			assert(tableau->children[i]);
 			ClauseTableau_p child = tableau->children[i];
-			bool child_is_superclosed = ClauseTableauMarkClosedNodes(child, subtree_saturation_closed);
+			bool child_is_superclosed = ClauseTableauMarkClosedNodes(child, &saturation_closed);
+#ifndef NDEBUG
+			if (child_is_superclosed)
+			{
+				assert_all_children_closed(child);
+			}
+#endif
 			if (!child_is_superclosed) // there is a child that is open or whose children are open
 			{
 				all_children_closed = false;
@@ -53,7 +67,7 @@ bool ClauseTableauMarkClosedNodes(ClauseTableau_p tableau, int *subtree_saturati
 		tableau->open = true;
 		return false;
 	}
-	return false;
+	return true;
 }
 
 /*  Iterate through the nodes collected in stack,
@@ -226,16 +240,17 @@ int FoldUpAtNode(ClauseTableau_p node)
 		return 0;
 	}
 
-
 	assert(ClauseLiteralNumber(node->label) == 1);
 
 	//Easy situation- if the node has already been folded up to the root do nothing
 	if (node->folded_up == node->depth)
-	//if (node->mark_int == node->depth)
 	{
 		//printf("Node has already been folded up to root.\n");
 		return 0;
 	}
+#ifndef NDEBUG
+	assert_all_children_closed(node);
+#endif
 
 	// Get the nodes that are eligible to fold up to
 	PStack_p dominated_markings = CollectDominatedMarkingsWrapper(node);
@@ -359,11 +374,13 @@ int FoldUpCloseCycle(ClauseTableau_p tableau)
 	do
 	{
 		closures_done = 0;
+#ifdef FOLD
 		folding_ups_done += FoldUpEveryNodeOnce(tableau);
+#endif
 		closures_done = AttemptClosureRuleOnAllOpenBranches(tableau);
 		total_closures_done += closures_done;
 		//printf("Closures done in FoldUpCloseCycle: %d\n", closures_done);
-		if (closures_done < 0)
+		if ((tableau->open_branches->members == 0) || (closures_done < 0))
 		{
 			assert(tableau->open_branches->members == 0);
 			fprintf(GlobalOut, "# Closed tableau found in foldup close cycle with %d folds.\n", folding_ups_done);

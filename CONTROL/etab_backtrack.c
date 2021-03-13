@@ -20,6 +20,7 @@ PStack_p SubstRecordBindings(Subst_p subst)
         Binding_p binding = BindingAlloc(element);
         PStackPushP(bindings, binding);
     }
+    assert(PStackGetSP(subst) == PStackGetSP(bindings));
     return bindings;
 }
 
@@ -164,6 +165,7 @@ void Backtrack(Backtrack_p bt)
     assert(position);
     assert(position->label);
     assert(position->id == bt->id);
+    assert(position->saturation_closed == false); // We do not roll back successfuly branch saturations
     if (BacktrackIsExtensionStep(bt) && bt->completed)
     {
         // delete the children
@@ -220,11 +222,8 @@ void RollBackEveryNode(ClauseTableau_p tab)
     if (p_labels)
     {
         assert(tab->old_labels->current);
-        ClauseSet_p storage_set = tab->label->set; // Clauses are stored in a set for GC purposes
-        assert(storage_set);
         Clause_p new_label = (Clause_p) PStackPopP(tab->old_labels);
         assert(new_label->set);
-        assert(new_label->set == storage_set); // The new label should already be in the storage set
         ClauseSetExtractEntry(tab->label);
         ClauseFree(tab->label);
         tab->label = new_label;
@@ -380,28 +379,7 @@ bool BacktrackWrapper(ClauseTableau_p master, bool delete_info)
     }
     PStack_p bt_position = (PStack_p) PStackPopP(master_backtracks); // bt_position is a stack indicating a location in the tableau
     ClauseTableau_p backtrack_location = GetNodeFromPosition(master, bt_position);
-    //fprintf(GlobalOut, "# There are %ld failures at this node.\n", PStackGetSP(backtrack_location->failures));
     BacktrackStack_p backtrack_stack = backtrack_location->backtracks;
-    //fprintf(stderr, "%p\n", backtrack_location);
-    //if (UNLIKELY(!backtrack_stack->current))
-    //{
-        //ClauseTableauPrint(backtrack_location->master);
-        //PStackPrintInt(stderr, "%ld\n", bt_position);
-        //fprintf(stderr, "There are %ld master backtracks remaining\n", PStackGetSP(master_backtracks));
-        //fprintf(stderr, "Problem node: %p\n", backtrack_location);
-        //fprintf(stderr, "Backtrack stack: %ld\n", PStackGetSP(backtrack_stack));
-        //fprintf(stderr, "Arity: %d\n", backtrack_location->arity);
-        //fprintf(stderr, "Open : %d\n", backtrack_location->open);
-        //fprintf(stderr, "Set: %p\n", backtrack_location->set);
-        //fprintf(stderr, "Saturation closed? %d\n", backtrack_location->saturation_closed);
-        //fprintf(stderr, "Head lit? %d\n", backtrack_location->head_lit);
-        //fprintf(stderr, "Info: %s\n", DStrView(backtrack_location->info));
-        //// What is happening here??  Is the position pointing to a spot that was backtracked, but has been
-        //// replaced with something different?
-        //fflush(stderr);
-        //Error("# Attempted to backtrack a step with nothing to backtrack there...", 42069);
-    //}
-    assert(backtrack_stack->current);
     Backtrack_p bt = (Backtrack_p) PStackPopP(backtrack_stack);
     PStackPushP(backtrack_location->failures, bt);
     assert(GetNodeFromPosition(master, bt->position) == backtrack_location);

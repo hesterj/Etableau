@@ -664,6 +664,10 @@ ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set)
 		assert(handle);
 		//temp = ClauseCopy(handle,bank);
 		temp = ClauseCopy(handle, bank);
+#ifdef DEBUG
+		ClauseRecomputeLitCounts(temp);
+		assert(ClauseLiteralNumber(temp));
+#endif
 		ClauseSetInsert(new, temp);
 	}
 	return new;
@@ -945,6 +949,7 @@ ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 	assert(!(tab->set));
 	assert(tab->open_branches->members == 0);
 	tab->label = ClauseCopy(start, tab->terms);
+	ClauseRecomputeLitCounts(tab->label);
 	ClauseSetInsert(tableau_label_storage, tab->label);
 	assert(tab->label);
 	
@@ -1191,6 +1196,7 @@ void ClauseTableauPrintDOTGraphToFile(FILE* dotgraph, ClauseTableau_p tab)
 	}
 	
 	Clause_p root_label = tab->label;
+	ClauseSet_p folding_labels = tab->folding_labels;
 	assert(root_label);
 	long root_id = ClauseGetIdent(root_label);
 	// any folded up clauses here?
@@ -1201,16 +1207,17 @@ void ClauseTableauPrintDOTGraphToFile(FILE* dotgraph, ClauseTableau_p tab)
 	
 	fprintf(dotgraph,"   %ld [color=Green, label=\"", root_id);
 	ClauseTSTPCorePrint(dotgraph, root_label, true);
-	if (tab->folding_labels)
+	if (!ClauseSetEmpty(tab->folding_labels))
 	{
-		//Clause_p handle = tab->folding_labels->anchor->succ;
-		//while (handle != tab->folding_labels->anchor)
-		//{
-			//fprintf(dotgraph, "\n");
-			//ClauseTSTPCorePrint(dotgraph, handle, true);
-			//handle = handle->succ;
-		//}
+		Clause_p folding_handle = folding_labels->anchor->succ;
+		while (folding_handle != folding_labels->anchor)
+		{
+			fprintf(dotgraph, "\\n");
+			ClauseTSTPCorePrint(dotgraph, folding_handle, true);
+			folding_handle = folding_handle->succ;
+		}
 	}
+	fprintf(dotgraph, "\\n");
 	fprintf(dotgraph, " %ld, f:%d\"]\n", root_id, folds);
 	
 	for (int i=0; i < tab->arity; i++)
@@ -1264,7 +1271,7 @@ void ClauseTableauPrintDOTGraphChildren(ClauseTableau_p tab, FILE* dotgraph)
 	int tab_depth = tab->depth;
 	bool tab_saturation_closed = tab->saturation_closed;
 	int tab_mark_int = tab->mark_int;
-	int tab_folded_up = tab->folded_up;
+	//int tab_folded_up = tab->folded_up;
 	
 	fprintf(dotgraph, " d:%d ", tab_depth);
 	fprintf(dotgraph, "f:%d ", folds);
@@ -1684,7 +1691,7 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 
 	//fprintf(GlobalOut, "# SZS output start CNFRefutation for %s\n", tableaucontrol->problem_name);
 	fprintf(GlobalOut, "# SZS output start for %s\n", tableaucontrol->problem_name);
-	if (false && tableaucontrol->clausification_buffer) // Disabled for sanity
+	if (tableaucontrol->clausification_buffer) // Disabled for sanity
 	{
 		fprintf(GlobalOut, "# Begin clausification derivation\n");
 		fprintf(GlobalOut, "%s\n", tableaucontrol->clausification_buffer);
@@ -1801,5 +1808,41 @@ void AssertAllOldLabelsAreInSet(ClauseTableau_p tab)
 	for (short i=0; i<tab->arity; i++)
 	{
 		AssertAllOldLabelsAreInSet(tab->children[i]);
+	}
+}
+
+/*-----------------------------------------------------------------------
+//
+// Function: ClauseCmpByIdent()
+//
+//   Compare two clauses by permanent identifier.
+//
+// Global Variables: -
+//
+// Side Effects    : -
+//
+/----------------------------------------------------------------------*/
+
+int ClauseCmpByIdent(const void* clause1, const void* clause2)
+{
+   const Clause_p *c1 = (const Clause_p*) clause1;
+   const Clause_p *c2 = (const Clause_p*) clause2;
+
+   if (ClauseGetIdent(*c1) < ClauseGetIdent(*c2)) return -1;
+   if (ClauseGetIdent(*c1) > ClauseGetIdent(*c2)) return -1;
+   return 0;
+}
+
+void ClauseStackPrint(FILE* out, PStack_p stack)
+{
+	for (PStackPointer p=0; p<PStackGetSP(stack); p++)
+	{
+		Clause_p clause = PStackElementP(stack, p);
+		ClauseRecomputeLitCounts(clause);
+		assert(clause);
+		assert(ClauseLiteralNumber(clause));
+		ClausePrint(out, clause, true);
+		fprintf(out, " %d \n", (int) ClauseLiteralNumber(clause));
+		fflush(stdout);
 	}
 }

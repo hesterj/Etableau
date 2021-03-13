@@ -978,7 +978,7 @@ bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 				if (successful_process)
 				{
 					proof_found = true;
-					fprintf(stdout, "# Child has found a proof.\n");
+					fprintf(stdout, "# Child (%ld) has found a proof.\n", (long) exited_child);
 					fflush(stdout);
 					char readbuf[EPCTRL_BUFSIZE];
 					int fd_in = fileno(successful_process->pipe);

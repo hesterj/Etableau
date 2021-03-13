@@ -242,5 +242,7 @@ void ClauseStackFree(ClauseStack_p trash);
 void EtableauStatusReport(TableauControl_p tableaucontrol,
                           ClauseSet_p active,
                           ClauseTableau_p resulting_tab);
+int ClauseCmpByIdent(const void* clause1, const void* clause2);
+void ClauseStackPrint(FILE* out, PStack_p stack);
 
 #endif

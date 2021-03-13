@@ -95,6 +95,10 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 
 	EtableauProofStateResetClauseSets(proofstate);
 	TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
+	//// Are definition causing inconsistency?  If they were this should help...
+	//DefStoreFree(proofstate->definition_store);
+	//proofstate->definition_store = DefStoreAlloc(proofstate->terms);
+
 	branch->previously_saturated = selected_number_of_clauses_to_process;
 	ClauseSetFree(unprocessed);
 
@@ -154,14 +158,34 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	Clause_p success_ref = NULL;
 	PStack_p branch_labels = PStackAlloc();
 	ErrorCodes status = RESOURCE_OUT;
+	bool process_branch_clauses_first = true;
+	max_proc = 100;
 	assert(proofstate);
 	assert(proofcontrol);
+	PStack_p debug_branch_labels = NULL;
 
-	ClauseTableauCollectBranchCopyLabels(branch, proofstate->unprocessed, branch_labels);
+	long number_found __attribute__((unused)) = ClauseTableauCollectBranchCopyLabels(branch, proofstate->unprocessed, debug_branch_labels);
+	assert(number_found >= (long) branch->depth);
 	assert(PStackEmpty(branch_labels));
-	ClauseSetDeleteCopies(proofstate->unprocessed);
+	//ClauseSetDeleteCopies(proofstate->unprocessed);
 
-	//ClauseSet_p debug_unprocessed = ClauseSetCopy(branch->terms, proofstate->unprocessed);
+    //long preproc_removed __attribute__((unused)) = ClauseSetPreprocess(proofstate->axioms,
+																	   //proofstate->watchlist,
+																	   //proofstate->archive,
+																	   //proofstate->tmp_terms);
+	//if (preproc_removed)
+	//{
+		//fprintf(stdout, "# %ld clauses removed during preprocessing of branch...\n", preproc_removed);
+		//fflush(stdout);
+	//}
+
+	ClauseSet_p debug_unprocessed = ClauseSetCopy(branch->terms, proofstate->unprocessed);
+	ClauseSetDeleteCopies(debug_unprocessed);
+	//fprintf(stdout, "# (%ld) Printing branch of depth %d...\n", (long) getpid(), (int) branch->depth);
+	//fflush(stdout);
+	//ClauseStackPrint(stdout, debug_branch_labels);
+	//fprintf(stdout, "# Done printing branch...\n");
+	//fflush(stdout);
 
     LiteralSelectionFun sel_strat =
 		proofcontrol->heuristic_parms.selection_strategy;
@@ -175,20 +199,18 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
     {
 		assert(ProofStateProcCardinality(proofstate));
 		ProofStateResetProcessedNoCopy(proofstate, proofcontrol, branch_labels);
-#ifndef DNDEBUG
-		if (branch->open_branches->members == 1)
-		{
-			for (PStackPointer p=0; p<PStackGetSP(branch_labels); p++)
-			{
-				ClausePrint(stdout, PStackElementP(branch_labels, p), true);
-				fprintf(stdout, "\n");
-				fflush(stdout);
-			}
-		}
-#endif
+
+		//fprintf(stdout, "# (%ld) branch labels stack...\n", (long) getpid());
+		//ClauseStackPrint(stdout, branch_labels);
+		//fprintf(stdout, "# Done printing branch labels\n");
+		//fflush(stdout);
+
 		assert(!ClauseSetEmpty(proofstate->unprocessed));
 		proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver
-		status = ProcessSpecificClauseStackWrapperNoCopy(proofstate, proofcontrol, branch_labels, &success_ref); // Process the branch clauses first
+		if (process_branch_clauses_first)
+		{
+			status = ProcessSpecificClauseStackWrapperNoCopy(proofstate, proofcontrol, branch_labels, &success_ref); // Process the branch clauses first
+		}
 		if (UNLIKELY(status == PROOF_FOUND)) // A contradiction was found while processing the branch clauses
 		{
 			assert(success_ref);
@@ -201,33 +223,39 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 							   LLONG_MAX, LONG_MAX);
 		}
 	}
-#ifndef DNDEBUG
-	else if (ClauseSetEmpty(proofstate->unprocessed)) // This is a debugging else if that should be removed...
+	else
 	{
-		if (!success &&
-			inf_sys_complete &&
-			proofstate->state_is_complete &&
-			!(proofstate->has_interpreted_symbols))
-		{
-			fprintf(stdout, "# Satisfiable branch...\n");
-		}
-		else if (!success)
-		{
-			fprintf(stdout, "%d %d %d\n", inf_sys_complete,
-					proofstate->state_is_complete,
-					!(proofstate->has_interpreted_symbols));
-			fprintf(stdout, "One of the other conditions failed...\n");
-		}
-		else
-		{
-			assert(success);
-			assert(ClauseIsEmpty(success));
-			fflush(stdout);
-		}
-		fflush(stdout);
+		//fprintf(stdout, "# (%ld) Proof found during interreduction on branch...\n", (long) getpid());
+		//ClauseSetPrint(stdout, debug_unprocessed, true);
+		//fprintf(stdout, "# Done printing intereduction branch with label ");
+		//ClausePrint(stdout, branch->label, true);
+		//fprintf(stdout, "\n");
+		//fflush(stdout);
 	}
-#endif
-	//ClauseSetFree(debug_unprocessed);
+	//else if (ClauseSetEmpty(proofstate->unprocessed)) // This is a debugging else if that should be removed...
+	//{
+		//if (!success &&
+			//inf_sys_complete &&
+			//proofstate->state_is_complete &&
+			//!(proofstate->has_interpreted_symbols))
+		//{
+			//fprintf(stdout, "# Satisfiable branch...\n");
+		//}
+		//else if (!success)
+		//{
+			//fprintf(stdout, "%d %d %d\n", inf_sys_complete,
+					//proofstate->state_is_complete,
+					//!(proofstate->has_interpreted_symbols));
+			//fprintf(stdout, "One of the other conditions failed...\n");
+		//}
+		//else
+		//{
+			//assert(success);
+			//assert(ClauseIsEmpty(success));
+			//fflush(stdout);
+		//}
+		//fflush(stdout);
+	//}
 
 	bool out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
 	if (!success &&
@@ -244,19 +272,32 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	if (success)
 	{
 		assert(ClauseLiteralNumber(success) == 0);
-#ifndef DNDEBUG
 		if (branch->open_branches->members == 1)
 		{
-			fprintf(stdout, "# (%ld) Contradiction found after %ld processed\n", (long) getpid(), (long) ProofStateProcCardinality(proofstate));
-			fflush(stdout);
+			fprintf(stdout, "# Printing %ld unprocessed...\n", ClauseSetCardinality(debug_unprocessed));
+			ClauseSetPrint(stdout, debug_unprocessed, true);
+			fprintf(stdout, "# Done printing unprocessed.\n");
 		}
-		if (ClauseLiteralNumber(success) != 0)
-		{
-			Error("A nonempty clause was returned by saturate.", 10);
-		}
-#endif
+//#ifdef DEBUG
+		//if (branch->open_branches->members == 1)
+		//{
+			//fprintf(stdout, "# Printing branch...\n");
+			//ClauseStackPrint(stdout, debug_branch_labels);
+			//fprintf(stdout, "# Done printing branch...\n");
+			//fprintf(stdout, "# Printing %ld unprocessed...\n", ClauseSetCardinality(debug_unprocessed));
+			//ClauseSetPrint(stdout, debug_unprocessed, true);
+			//fprintf(stdout, "# Done printing unprocessed.\n");
+			//fprintf(stdout, "# (%ld) Contradiction found after %ld processed\n", (long) getpid(), (long) ProofStateProcCardinality(proofstate));
+			//fflush(stdout);
+		//}
+		//if (ClauseLiteralNumber(success) != 0)
+		//{
+			//Error("A nonempty clause was returned by saturate.", 10);
+		//}
+//#endif
 		status = PROOF_FOUND;
 	}
+	ClauseSetFree(debug_unprocessed);
 	PStackFree(branch_labels); // The branch labels are free'd elsewhere, so no need to worry about losing the pointers to them.
 	return status;
 }
@@ -311,11 +352,15 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 				tableau_control->number_of_successful_saturation_attempts++;
 				handle = open_branches->anchor->succ;
 				//return 1;
+				fprintf(stdout, "# (%ld) Saturation attempt %ld successful\n", (long) getpid(), (long) tableau_control->number_of_saturation_attempts);
+				fflush(stdout);
 				continue;
 			}
 			else if (branch_status == SATISFIABLE)
 			{
-				fprintf(GlobalOut, "# Satisfiable branch found.\n");
+				fprintf(stdout, "# Satisfiable branch found.\n");
+				fflush(stdout);
+				successful_count++;
 				assert(tableau_control->satisfiable);
 				DStrAppendStr(handle->info, " Satisfiable ");
 				DStrAppendInt(handle->info, tableau_control->number_of_saturation_attempts);
@@ -587,23 +632,27 @@ long ClauseTableauCollectBranchCopyLabels(ClauseTableau_p branch, ClauseSet_p se
 {
 	assert(branch);
 	assert(set);
-	assert(branch_labels);
 	ClauseTableau_p branch_handle = branch;
 	while (branch_handle)
 	{
 		assert(branch_handle);
-		Clause_p label = ClauseCopyAndPrepareForSaturation(branch->label, branch->terms, branch->control->hcb);
+		Clause_p label = ClauseCopyAndPrepareForSaturation(branch_handle->label, branch->terms, branch->control->hcb);
 		assert(label);
 		assert(label->set == NULL);
+		assert(ClauseLiteralNumber(label));
 		ClauseSetInsert(set, label);
-		//if (ClauseGetIdent(label) == 4511) assert(false);
-		//PStackPushP(branch_labels, label);
+		if (branch_labels)
+		{
+			PStackPushP(branch_labels, label);
+		}
 		ClauseSetProp(label, CPIsTableauClause);
+#ifdef SATURATION_USES_FOLDING_LABELS
 		if (branch_handle->folding_labels)
 		{
 			//printf("there are %ld folding labels at a node of depth %d\n", branch_handle->folding_labels->members, branch_handle->depth);
 			ClauseSetCopyInsertAndPrepareForSaturation(branch_handle->folding_labels, set, branch->terms, branch->control->hcb, branch_labels);
 		}
+#endif
 		branch_handle = branch_handle->parent;
 	}
 	return set->members;
@@ -614,7 +663,15 @@ Clause_p ClauseCopyAndPrepareForSaturation(Clause_p clause, TB_p bank, HCB_p hcb
 	assert(clause);
 	assert(bank);
 	assert(hcb);
+#ifdef  DEBUG
+	ClauseRecomputeLitCounts(clause);
+	assert(ClauseLiteralNumber(clause));
+#endif
 	Clause_p handle = ClauseCopy(clause, bank);
+#ifdef  DEBUG
+	ClauseRecomputeLitCounts(handle);
+	assert(ClauseLiteralNumber(handle));
+#endif
 	HCBClauseEvaluate(hcb, handle);
 	ClauseDelProp(handle, CPIsOriented);
 	ClauseDelProp(handle, CPLimitedRW);
@@ -630,7 +687,6 @@ long ClauseSetCopyInsertAndPrepareForSaturation(ClauseSet_p from, ClauseSet_p to
 	assert(to);
 	assert(bank);
 	assert(hcb);
-	assert(branch_labels);
 	Clause_p handle = from->anchor->succ;
 	while (handle != from->anchor)
 	{
