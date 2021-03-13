@@ -24,10 +24,10 @@ PStack_p SubstRecordBindings(Subst_p subst)
     return bindings;
 }
 
-Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, short head_lit_position, bool is_extension_step)
+Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, short head_lit_position, TableauStepType type)
 {
     Backtrack_p backtrack = BacktrackCellAlloc();
-    backtrack->is_extension_step = is_extension_step;
+    backtrack->type = type;
     backtrack->master = position->master;
     backtrack->position = PStackAlloc();
     backtrack->id = position->id;
@@ -65,7 +65,7 @@ void BacktrackFree(Backtrack_p trash)
 Backtrack_p BacktrackCopy(Backtrack_p original, ClauseTableau_p new_master)
 {
     Backtrack_p new = BacktrackCellAlloc();
-    new->is_extension_step = original->is_extension_step;
+    new->type = original->type;
     new->head_lit_position = original->head_lit_position;
     new->id = original->id;
     new->position = PStackCopy(original->position);
@@ -190,12 +190,18 @@ void Backtrack(Backtrack_p bt)
         position->arity = 0;
         position->folded_up = 0;
     }
-    else if (BacktrackIsClosureStep(bt))// this is a closure step, etableau closures are not registered or backtracked
+    else if (BacktrackIsClosureStep(bt))
     {
         assert(position->arity == 0);
         assert(position->open == false);
         assert(position->set == NULL);
         assert(position->children == NULL);
+    }
+    else if (BacktrackIsEtableauStep(bt))
+    {
+        assert(position->open == false);
+        position->saturation_blocked = true;
+        position->saturation_closed = false;
     }
     //bt->id = position->id;
     position->id = 0;
@@ -283,7 +289,7 @@ bool SubstIsFailure(ClauseTableau_p tab, Subst_p subst)
     for (int i=0; i<failures_length; i++)
     {
         Backtrack_p bt = PStackElementP(failures, i);
-        if (BacktrackContainsSubst(bt, subst))
+        if (PStackGetSP(subst) && BacktrackContainsSubst(bt, subst)) // The empty substitution is not a failure substitution...
         {
             return true;
         }
@@ -301,7 +307,8 @@ bool ExtensionIsFailure(ClauseTableau_p tab, Subst_p subst, long extension_id, s
     for (int i=0; i<failures_length; i++)
     {
         Backtrack_p bt = PStackElementP(failures, i);
-        if ((bt->id == extension_id) && (head_literal_position == bt->head_lit_position) && BacktrackContainsSubst(bt, subst))
+        // The empty substitution is not a failure substitution...
+        if (PStackGetSP(subst) && (bt->id == extension_id) && (head_literal_position == bt->head_lit_position) && BacktrackContainsSubst(bt, subst))
         {
             return true;
         }

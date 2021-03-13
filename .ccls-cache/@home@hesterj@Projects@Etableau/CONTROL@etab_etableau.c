@@ -1,4 +1,5 @@
 #include <etab_etableau.h>
+#include <etab_backtrack.h>
 #include <omp.h>
 
 // Forward declaration
@@ -80,6 +81,7 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 
 	//SilentTimeOut = true;
 	proofcontrol->heuristic_parms.prefer_initial_clauses = true;
+	TermBankUnbindAll(branch->terms);
 	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
 	EtableauProofStateResetClauseSets(proofstate);
 	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
@@ -94,6 +96,7 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 															  selected_number_of_clauses_to_process);
 
 	EtableauProofStateResetClauseSets(proofstate);
+	TermBankUnbindAll(branch->terms);
 	TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
 	//// Are definition causing inconsistency?  If they were this should help...
 	//DefStoreFree(proofstate->definition_store);
@@ -165,8 +168,10 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	PStack_p debug_branch_labels = NULL;
 
 	long number_found __attribute__((unused)) = ClauseTableauCollectBranchCopyLabels(branch, proofstate->unprocessed, debug_branch_labels);
-	assert(number_found >= (long) branch->depth);
-	assert(PStackEmpty(branch_labels));
+
+	//assert(number_found >= (long) branch->depth);
+	//assert(PStackEmpty(branch_labels));
+
 	//ClauseSetDeleteCopies(proofstate->unprocessed);
 
     //long preproc_removed __attribute__((unused)) = ClauseSetPreprocess(proofstate->axioms,
@@ -178,15 +183,26 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 		//fprintf(stdout, "# %ld clauses removed during preprocessing of branch...\n", preproc_removed);
 		//fflush(stdout);
 	//}
+	//fprintf(stdout, "# Printing high unprocessed of attempt %ld\n", branch->tableaucontrol->number_of_saturation_attempts);
+	//Clause_p print_handle = proofstate->unprocessed->anchor->succ;
+	//while (print_handle != proofstate->unprocessed->anchor)
+	//{
+		//if (ClauseGetIdent(print_handle)> 1000)
+		//{
+			//ClausePrint(stdout, print_handle, true);
+			//fprintf(stdout, "\n");
+		//}
+		//print_handle = print_handle->succ;
+	//}
+	//fprintf(stdout, "# Done printing high unprocessed\n");
 
-	ClauseSet_p debug_unprocessed = ClauseSetCopy(branch->terms, proofstate->unprocessed);
-	ClauseSetDeleteCopies(debug_unprocessed);
 	//fprintf(stdout, "# (%ld) Printing branch of depth %d...\n", (long) getpid(), (int) branch->depth);
 	//fflush(stdout);
 	//ClauseStackPrint(stdout, debug_branch_labels);
 	//fprintf(stdout, "# Done printing branch...\n");
 	//fflush(stdout);
 
+	// This is the interreduction step!
     LiteralSelectionFun sel_strat =
 		proofcontrol->heuristic_parms.selection_strategy;
 	proofcontrol->heuristic_parms.selection_strategy = SelectNoGeneration;
@@ -271,13 +287,19 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	}
 	if (success)
 	{
+		Sig_p sig = proofstate->signature;
 		assert(ClauseLiteralNumber(success) == 0);
-		if (branch->open_branches->members == 1)
-		{
-			fprintf(stdout, "# Printing %ld unprocessed...\n", ClauseSetCardinality(debug_unprocessed));
-			ClauseSetPrint(stdout, debug_unprocessed, true);
-			fprintf(stdout, "# Done printing unprocessed.\n");
-		}
+		assert(success->derivation);
+		//fprintf(stdout, "# (%ld) Derivation stack after %ld processed: %ld\n", (long) getpid(), PStackGetSP(success->derivation), (long) ProofStateProcCardinality(proofstate));
+		//DerivationStackTSTPPrint(stdout, sig, success->derivation);
+		//fprintf(stdout, "\n# (%ld) Done printing derivation stack\n", (long) getpid());
+		//fflush(stdout);
+		//if (branch->open_branches->members == 1)
+		//{
+			//fprintf(stdout, "# Printing %ld unprocessed...\n", ClauseSetCardinality(debug_unprocessed));
+			//ClauseSetPrint(stdout, debug_unprocessed, true);
+			//fprintf(stdout, "# Done printing unprocessed.\n");
+		//}
 //#ifdef DEBUG
 		//if (branch->open_branches->members == 1)
 		//{
@@ -297,7 +319,6 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 //#endif
 		status = PROOF_FOUND;
 	}
-	ClauseSetFree(debug_unprocessed);
 	PStackFree(branch_labels); // The branch labels are free'd elsewhere, so no need to worry about losing the pointers to them.
 	return status;
 }
@@ -326,7 +347,7 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 		assert(handle);
 		assert(handle != master->open_branches->anchor);
 		assert(handle->info);
-		if ((open_branches->members == 1) || BranchIsLocal(handle))
+		if ((!handle->saturation_blocked) && ((open_branches->members == 1) || BranchIsLocal(handle)))
 		{
 			num_local_branches++;
 			tableau_control->number_of_saturation_attempts++;
@@ -354,6 +375,17 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 				//return 1;
 				fprintf(stdout, "# (%ld) Saturation attempt %ld successful\n", (long) getpid(), (long) tableau_control->number_of_saturation_attempts);
 				fflush(stdout);
+
+				// Create the backtrack for the etableau closure rule...
+				Subst_p empty_subst = SubstAlloc(); // No substitutions are applied to the tableau in Etableau closure rule applications
+				Backtrack_p backtrack = BacktrackAlloc(handle, empty_subst, 0, ETABLEAU_RULE);
+				backtrack->completed = true;
+				assert(BacktrackIsEtableauStep(backtrack));
+				assert(handle->arity == 0);
+				PStackPushP(handle->backtracks, backtrack);
+				PStack_p position_copy = PStackCopy(backtrack->position);
+				PStackPushP(handle->master->master_backtracks, position_copy);
+
 				continue;
 			}
 			else if (branch_status == SATISFIABLE)
@@ -699,4 +731,73 @@ long ClauseSetCopyInsertAndPrepareForSaturation(ClauseSet_p from, ClauseSet_p to
 	}
 
 	return to->members;
+}
+
+/*-----------------------------------------------------------------------
+//
+// Function: TermTreeUnbind()
+//
+//   Unbind all of the bindings of the term and subterms.
+//   Returns number of terms unbound.
+//
+// Global Variables: -
+//
+// Side Effects    : -
+//
+/----------------------------------------------------------------------*/
+
+long TermTreeUnbind(Term_p root)
+{
+   PStack_p stack = PStackAlloc();
+   long     res   = 0;
+
+   PStackPushP(stack, root);
+
+   while(!PStackEmpty(stack))
+   {
+      root = PStackPopP(stack);
+      if(root)
+      {
+         PStackPushP(stack, root->lson);
+         PStackPushP(stack, root->rson);
+		 if (CAN_DEREF(root))
+		 {
+			 root->binding = NULL;
+		 }
+         res++;
+      }
+   }
+   PStackFree(stack);
+
+   return res;
+}
+
+/*-----------------------------------------------------------------------
+//
+// Function: TermCellStoreUnbindAll()
+//
+//   Return the number of nodes in the term cell store.
+//   Unbind all the terms found in the termcellstore.
+//
+// Global Variables: -
+//
+// Side Effects    : -
+//
+/----------------------------------------------------------------------*/
+
+long TermCellStoreUnbindAll(TermCellStore_p store)
+{
+   long res = 0;
+   int i;
+
+   for(i=0; i<TERM_STORE_HASH_SIZE; i++)
+   {
+      res+=TermTreeUnbind(store->store[i]);
+   }
+   return res;
+}
+
+long TermBankUnbindAll(TB_p bank)
+{
+	return TermCellStoreUnbindAll(&(bank->term_store));
 }

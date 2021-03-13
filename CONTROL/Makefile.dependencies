@@ -3694,6 +3694,8 @@ etab_etableau.o: etab_etableau.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/socket2.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
  ../include/etab_xgboost_interaction.h ../include/etab_foldingup.h \
+ ../include/etab_backtrack.h ../include/etab_extension.h \
+ ../include/etab_xgboost_interaction.h \
  /usr/lib/gcc/x86_64-linux-gnu/9/include/omp.h
 etab_extension.o: etab_extension.c /usr/include/stdc-predef.h \
  etab_extension.h ../include/etab_backtrack.h ../include/cco_proofproc.h \

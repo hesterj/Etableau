@@ -14,7 +14,7 @@
 typedef struct backtrackcell
 {
     ClauseTableau_p master;
-    bool is_extension_step;
+    TableauStepType type;
     long id; // This is the ident of the clause split in the extension step, or the clause used in the closure rule
     short head_lit_position; // This is the position in the literals array of the selected clause of the head literal.  0 if it was a closure rule step
     PStack_p bindings; // This is a stack of the Binding_p that were used in this step
@@ -33,6 +33,7 @@ typedef struct bindingcell
     Term_p bind;
 }BindingCell, *Binding_p;
 
+
 typedef int BacktrackStatus;
 typedef int* BacktrackStatus_p;
 #define BACKTRACK_FAILURE 0
@@ -43,11 +44,12 @@ typedef int* BacktrackStatus_p;
 #define BacktrackCellAlloc() (BackTrackCell*)SizeMalloc(sizeof(BackTrackCell))
 #define BacktrackCellCellFree(junk) SizeFree(junk, sizeof(BackTrackCell))
 PStack_p SubstRecordBindings(Subst_p subst);
-Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, short head_lit_position, bool is_extension_step);
+Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, short head_lit_position, TableauStepType type);
 Backtrack_p BacktrackCopy(Backtrack_p original, ClauseTableau_p new_master);
 BacktrackStack_p BacktrackStackCopy(BacktrackStack_p stack, ClauseTableau_p new_master);
-#define BacktrackIsExtensionStep(bt) (bt->is_extension_step)
-#define BacktrackIsClosureStep(bt) !BacktrackIsExtensionStep(bt)
+#define BacktrackIsExtensionStep(bt) (bt->type == EXTENSION_RULE)
+#define BacktrackIsClosureStep(bt) (bt->type == CLOSURE_RULE)
+#define BacktrackIsEtableauStep(bt) (bt->type == ETABLEAU_RULE)
 bool VerifyBacktrackIsExtensionStep(Backtrack_p handle);
 bool VerifyBacktrackIsClosureStep(Backtrack_p handle);
 void BacktrackFree(Backtrack_p trash);

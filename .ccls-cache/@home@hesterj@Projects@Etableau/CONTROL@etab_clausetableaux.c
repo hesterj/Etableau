@@ -24,6 +24,7 @@ ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
 	handle->unit_axioms = NULL;
 	handle->previously_saturated = 0;
 	handle->previously_selected = false;
+	handle->saturation_blocked = false;
 	//handle->mark = NULL;
 	handle->mark_int = 0;
 	handle->folded_up = 0;
@@ -79,6 +80,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	handle->arity = tab->arity;
 	handle->previously_saturated = tab->previously_saturated;
 	handle->previously_selected = false;
+	handle->saturation_blocked = false;
 	
 	char *info = DStrCopy(tab->info);
 	handle->info = DStrAlloc();
@@ -198,6 +200,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	handle->old_labels = PStackAlloc();
 	handle->old_folding_labels = PStackAlloc();
 	handle->previously_selected = false;
+	handle->saturation_blocked = false;
 
 	handle->tableaucontrol = NULL;
 	handle->tableau_variables = NULL;
@@ -329,6 +332,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->tableaucontrol = NULL;
 	handle->tableau_variables = NULL;
 	handle->previously_selected = false;
+	handle->saturation_blocked = false;
 	assert(parent);
 	assert(label);
 	parent->arity += 1;

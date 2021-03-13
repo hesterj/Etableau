@@ -23,7 +23,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 			return false;
 		}
 
-		Backtrack_p backtrack = BacktrackAlloc(tab, subst, 0, false);
+		Backtrack_p backtrack = BacktrackAlloc(tab, subst, 0, CLOSURE_RULE);
 		assert(BacktrackIsClosureStep(backtrack));
 		assert(tab->arity == 0);
 		PStackPushP(tab->backtracks, backtrack);
@@ -46,7 +46,8 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 			return false;
 		}
 		assert(tab->info);
-		tab->mark_int = tab->depth;
+		backtrack->completed = true;
+		//tab->mark_int = tab->depth;
 		SubstDStrPrint(tab->info, subst, tab->terms->sig, DEREF_NEVER);
 		DStrAppendStr(tab->info, " Reduction step with clause ");
 		DStrAppendInt(tab->info, tab->id);
@@ -151,7 +152,7 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		Clause_p tmp_unit_handle = ClauseCopyFresh(unit_handle, tab->master);
 		if ((subst = ClauseContradictsClause(tab, original_clause, tmp_unit_handle)))
 		{
-			tab->mark_int = 0; // Closing by a unit simulates an extension step
+			tab->mark_int = tab->depth;
 			tab->id = ClauseGetIdent(unit_handle);
 			// Marking the root would case some leaves to be folded up too high in one step, unsound.
 			ClauseFree(tmp_unit_handle);
@@ -192,14 +193,15 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 			{
 				//tab->mark_int = distance_up;
 				DStrAppendStr(tab->info, " Fold. ");
-				if (tab->depth == distance_up)
-				{
-					tab->mark_int = distance_up;
-				}
-				else
-				{
-					tab->mark_int = distance_up - 1; // Etableau reduction
-				}
+				tab->mark_int = distance_up;
+				//if (tab->depth == distance_up)
+				//{
+					//tab->mark_int = distance_up;
+				//}
+				//else
+				//{
+					//tab->mark_int = distance_up - 1; // Etableau reduction
+				//}
 				//fprintf(GlobalOut, "# Closed a branch using a folding label\n");
 				goto return_point;
 			}

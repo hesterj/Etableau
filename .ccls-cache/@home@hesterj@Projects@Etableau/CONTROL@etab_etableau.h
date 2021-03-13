@@ -60,4 +60,8 @@ ErrorCodes ProcessSpecificClauseStackWrapperNoCopy(ProofState_p state, ProofCont
 bool EtableauSaturateAllTableauxInStack(TableauControl_p tableaucontrol, TableauStack_p distinct_tableaux_stack, ClauseSet_p active, long maximum);
 Clause_p ClauseCopyAndPrepareForSaturation(Clause_p clause, TB_p bank, HCB_p hcb);
 long ClauseSetCopyInsertAndPrepareForSaturation(ClauseSet_p from, ClauseSet_p to, TB_p bank, HCB_p hcb, PStack_p branch_labels);
+
+long TermTreeUnbind(Term_p root);
+long TermCellStoreUnbindAll(TermCellStore_p store);
+long TermBankUnbindAll(TB_p bank);
 #endif

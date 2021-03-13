@@ -451,7 +451,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 
 	// Register the extension step that we are about to do with stack of backtracks we have available to us.
 
-	Backtrack_p backtrack = BacktrackAlloc(parent, subst, extension->head_lit_position, true);
+	Backtrack_p backtrack = BacktrackAlloc(parent, subst, extension->head_lit_position, EXTENSION_RULE);
 	PStackPushP(parent->backtracks, backtrack);
 	PStack_p position_copy = PStackCopy(backtrack->position);
 	PStackPushP(parent->master->master_backtracks, position_copy);
@@ -539,10 +539,6 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	SubstDStrPrint(parent->info, subst, sig, DEREF_NEVER);
 	ClauseTableauRegisterStep(parent);
 
-	//Backtrack_p backtrack = BacktrackAlloc(parent, subst, extension->head_lit_position);
-	//PStackPushP(parent->backtracks, backtrack);
-	//PStack_p position_copy = PStackCopy(backtrack->position);
-	//PStackPushP(parent->master->master_backtracks, position_copy);
 
 	SubstDelete(subst); // Extremely important.  The backtracks require information from the substitution.
 
@@ -627,7 +623,7 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 
 	// Register the extension step that we are about to do with stack of backtracks we have available to us.
 
-	Backtrack_p backtrack = BacktrackAlloc(parent, subst, extension->head_lit_position, true);
+	Backtrack_p backtrack = BacktrackAlloc(parent, subst, extension->head_lit_position, EXTENSION_RULE);
 	PStackPushP(parent->backtracks, backtrack);
 	PStack_p position_copy = PStackCopy(backtrack->position);
 	PStackPushP(parent->master->master_backtracks, position_copy);
@@ -716,11 +712,6 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 	DStrAppendStr(parent->info, " ");
 	SubstDStrPrint(parent->info, subst, sig, DEREF_NEVER);
 	ClauseTableauRegisterStep(parent);
-
-	//Backtrack_p backtrack = BacktrackAlloc(parent, subst, extension->head_lit_position);
-	//PStackPushP(parent->backtracks, backtrack);
-	//PStack_p position_copy = PStackCopy(backtrack->position);
-	//PStackPushP(parent->master->master_backtracks, position_copy);
 
 	SubstDelete(subst); // Extremely important.  The backtracks require information from the substitution.
 
