@@ -588,6 +588,7 @@ void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 	ClauseSetInsert(label_storage, new_label);
 	assert(new_label);
 	tab->label = new_label;
+	tab->saturation_blocked = false; // Since we are applying a nontrivial substitution to the node, we can try to saturate again
 	
 	if (tab->folding_labels)  // The edge labels that have been folded up if the pointer is non-NULL
 	{

@@ -165,7 +165,6 @@ void Backtrack(Backtrack_p bt)
     assert(position);
     assert(position->label);
     assert(position->id == bt->id);
-    assert(position->saturation_closed == false); // We do not roll back successfuly branch saturations
     if (BacktrackIsExtensionStep(bt) && bt->completed)
     {
         // delete the children
@@ -199,6 +198,8 @@ void Backtrack(Backtrack_p bt)
     }
     else if (BacktrackIsEtableauStep(bt))
     {
+        assert(position->arity == 0);
+        assert(position->set == NULL);
         assert(position->open == false);
         position->saturation_blocked = true;
         position->saturation_closed = false;

@@ -162,7 +162,7 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	PStack_p branch_labels = PStackAlloc();
 	ErrorCodes status = RESOURCE_OUT;
 	bool process_branch_clauses_first = true;
-	max_proc = 100;
+	//max_proc = 100;
 	assert(proofstate);
 	assert(proofcontrol);
 	PStack_p debug_branch_labels = NULL;
@@ -371,10 +371,9 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 				DStrAppendInt(handle->info, tableau_control->number_of_saturation_attempts);
 				successful_count++;
 				tableau_control->number_of_successful_saturation_attempts++;
-				handle = open_branches->anchor->succ;
 				//return 1;
-				fprintf(stdout, "# (%ld) Saturation attempt %ld successful\n", (long) getpid(), (long) tableau_control->number_of_saturation_attempts);
-				fflush(stdout);
+				//fprintf(stdout, "# (%ld) Saturation attempt %ld successful\n", (long) getpid(), (long) tableau_control->number_of_saturation_attempts);
+				//fflush(stdout);
 
 				// Create the backtrack for the etableau closure rule...
 				Subst_p empty_subst = SubstAlloc(); // No substitutions are applied to the tableau in Etableau closure rule applications
@@ -385,7 +384,9 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 				PStackPushP(handle->backtracks, backtrack);
 				PStack_p position_copy = PStackCopy(backtrack->position);
 				PStackPushP(handle->master->master_backtracks, position_copy);
+				assert(handle->set == NULL);
 
+				handle = open_branches->anchor->succ;
 				continue;
 			}
 			else if (branch_status == SATISFIABLE)
