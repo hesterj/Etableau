@@ -1737,6 +1737,7 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 		}
 		else
 		{
+			fclose(dot_output);
 			Warning("# Unable to print DOT graph...");
 		}
 		DStrFree(dot_output_location);

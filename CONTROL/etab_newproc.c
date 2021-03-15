@@ -486,7 +486,7 @@ ClauseTableau_p EtableauGetNextTableau(TableauStack_p distinct_tableaux_stack,
     {
         if (new_tableaux)
         {
-            fprintf(GlobalOut, "# Extending on a tableau from the new tableau stack while populating\n");
+            //fprintf(GlobalOut, "# Extending on a tableau from the new tableau stack while populating\n");
             //if (*current_new_tableaux_index_p == PStackGetSP(new_tableaux))
             if (PStackEmpty(new_tableaux))
             {
@@ -504,7 +504,7 @@ ClauseTableau_p EtableauGetNextTableau(TableauStack_p distinct_tableaux_stack,
         }
         if ( PStackEmpty(distinct_tableaux_stack) )
         {
-            fprintf(GlobalOut, "# Unable to get any tableaux...\n");
+            //fprintf(GlobalOut, "# Unable to get any tableaux...\n");
             return NULL;
         }
         *current_index_p = 0;
