@@ -295,6 +295,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	assert(new_leaf_clauses->members);
 	Clause_p open_branch_label = open_branch->label;
 
+//				//tab->mark_int = distance_up;
 #ifdef LOCAL
 	long num_local_variables = UpdateLocalVariables(open_branch);
 	if (num_local_variables)
@@ -310,6 +311,8 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		assert(open_branch->label->set);
 		//ClauseSetInsert(label_storage, open_branch_label);
 	}
+#else
+    long num_local_variables = 0;
 #endif
 	
 	Clause_p leaf_clause = new_leaf_clauses->anchor->succ;

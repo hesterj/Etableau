@@ -15,6 +15,22 @@ int Etableau_n0(TableauControl_p tableaucontrol,
     APRVerify();
     c_smoketest();
 
+#ifdef FOLD
+    fprintf(GlobalOut, "# The folding up rule is enabled...\n");
+#else
+    fprintf(GlobalOut, "# The folding up rule is disabled...\n");
+#endif
+#ifdef LOCAL
+    fprintf(GlobalOut, "# Local unification is enabled...\n");
+#else
+    fprintf(GlobalOut, "# Local unification is disabled...\n");
+#endif
+#ifdef SATURATION_USES_FOLDING_LABELS
+    fprintf(GlobalOut, "# Any saturation attempts will use folding labels...\n");
+#else
+    fprintf(GlobalOut, "# Any saturation attempts will not use folding labels...\n");
+#endif
+
     bool proof_found = false;
     problemType = PROBLEM_FO;
     FunCode max_var = ClauseSetGetMaxVar(active);
@@ -150,6 +166,7 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
     assert(master->label);
     assert(master->open_branches);
     //fprintf(GlobalOut, "# Current depth %d\n", current_depth);
+
 
     ClauseTableau_p (*branch_selection_function)(TableauSet_p, int, int, int*) = &branch_select;
 

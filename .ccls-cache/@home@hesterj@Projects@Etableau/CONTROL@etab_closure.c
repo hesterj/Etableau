@@ -123,8 +123,11 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 {
 	assert(tab);
 	assert(tab->label);
+	assert(original_clause->set);
 	Subst_p subst = NULL;
 	Clause_p temporary_label = NULL;
+	ClauseSet_p clause_storage = original_clause->set;
+	Clause_p local_variables_replaced = NULL;
 	
 #ifdef LOCAL
 	long num_local_variables = UpdateLocalVariables(tab);
@@ -133,14 +136,12 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		original_clause = ReplaceLocalVariablesWithFresh(tab, original_clause, tab->local_variables);
 		ClauseSetExtractEntry(tab->label);
 		ClauseFree(tab->label);
-		assert(original_clause->set);
-		//ClauseSetInsert(tab->master->tableaucontrol->label_storage, original_clause);
 		tab->label = original_clause;
+		original_clause = tab->label;
 	}
 #else
 	long num_local_variables = 0;
 #endif
-
 
 	// Check against the unit axioms
 	ClauseSet_p unit_axioms = tab->master->unit_axioms;
@@ -162,7 +163,7 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		unit_handle = unit_handle->succ;
 	}
 	//fprintf(GlobalOut, "  Done.\n");
-	
+
 	// Check against the tableau AND its edges
 	ClauseTableau_p temporary_tab = tab->parent;
 	int distance_up = 1;
@@ -191,18 +192,8 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		{
 			if ((subst = ClauseContradictsSet(temporary_tab, original_clause, temporary_tab->folding_labels, tab)))
 			{
-				//tab->mark_int = distance_up;
 				DStrAppendStr(tab->info, " Fold. ");
 				tab->mark_int = distance_up;
-				//if (tab->depth == distance_up)
-				//{
-					//tab->mark_int = distance_up;
-				//}
-				//else
-				//{
-					//tab->mark_int = distance_up - 1; // Etableau reduction
-				//}
-				//fprintf(GlobalOut, "# Closed a branch using a folding label\n");
 				goto return_point;
 			}
 		}
@@ -222,7 +213,10 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 
 Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set, ClauseTableau_p open_branch)
 {
+	assert(tab);
 	assert(set->anchor);
+	assert(open_branch);
+	assert(leaf);
 #ifdef LOCAL
 	bool use_local_variables = true;
 #else

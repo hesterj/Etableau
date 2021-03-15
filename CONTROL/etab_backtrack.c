@@ -168,10 +168,10 @@ void Backtrack(Backtrack_p bt)
     if (BacktrackIsExtensionStep(bt) && bt->completed)
     {
         // delete the children
-        //fprintf(GlobalOut, "# Backtracking extension %p (d%d) with %d children and whose parent is %p\n", position, position->depth, position->arity, position->parent);
         assert(position->arity > 1);
         for (int i=0; i<position->arity; i++)
         {
+            assert(position->children[i]);
             if (position->children[i]->set)
             {
                 assert(position->children[i]->open == true);
@@ -179,10 +179,6 @@ void Backtrack(Backtrack_p bt)
             }
             assert(position->children[i]->set == NULL);
             ClauseTableauFree(position->children[i]);
-            position->children[i]->label = NULL;
-            position->children[i]->parent = NULL;
-            position->children[i]->master = NULL;
-            position->children[i] = NULL;
         }
         ClauseTableauArgArrayFree(position->children, position->arity);
         position->children = NULL;

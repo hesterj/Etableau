@@ -164,6 +164,7 @@ Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause,
 	Clause_p new_clause = NULL;
 	assert(PStackGetSP(local_variables));
 	assert(clause->set);
+	assert(ClauseLiteralNumber(clause));
 	Subst_p subst = SubstAlloc();
 	ClauseSet_p label_storage = clause->set;
 	for (PStackPointer p = 0; p < PStackGetSP(local_variables); p++)
@@ -180,6 +181,8 @@ Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause,
 	new_clause = ClauseCopy(clause, master->terms);
 	ClauseSetInsert(label_storage, new_clause);
 	SubstDelete(subst);
+	assert(new_clause);
+	assert(new_clause->literals);
 	return new_clause;
 }
 

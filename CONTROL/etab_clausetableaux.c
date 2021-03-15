@@ -608,7 +608,11 @@ void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 
 Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 {
-	assert (tab && a && b);
+	assert(tab);
+	assert(a);
+	assert(b);
+	assert(a->literals);
+	assert(b->literals);
 	if (a==b) return NULL;  // Easy case...
 	if (!ClauseIsUnit(a) || !ClauseIsUnit(b)) return NULL;
 	Eqn_p a_eqn = a->literals;
