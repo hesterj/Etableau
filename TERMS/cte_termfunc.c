@@ -2048,13 +2048,8 @@ long TermCollectPropVariables(Term_p term, PTree_p *tree,
 long TermCollectVariables(Term_p term, PTree_p *tree)
 {
    long res = 0;
-   if (TermIsGround(term))
-   {
-      return res;
-   }
    PStack_p stack = PStackAlloc();
    int      i;
-
 
    PStackPushP(stack,term);
 
@@ -2072,7 +2067,6 @@ long TermCollectVariables(Term_p term, PTree_p *tree)
       {
          for(i=0; i<term->arity; i++)
          {
-            assert(term->args[i]);
             PStackPushP(stack,term->args[i]);
          }
       }

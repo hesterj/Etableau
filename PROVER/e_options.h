@@ -1427,62 +1427,60 @@ OptCell opts[] =
     NoArg, NULL,
     "Encodes terms in the proof state using applicative encoding, "
     "prints encoded input problem and exits."},
-    
-    {OPT_TABLEAU,
-		 '\0', "tableau",
-		 ReqArg, NULL,
-		 "0: Do not attempt creation of any tableaux."
-		 "1: Build a tableau at start of proof search."
-	 },
-	 {
-		 OPT_TABLEAU_DEPTH,
-		 '\0', "tableau-depth",
-		 OptArg, "10",
-		 "Specify an integer."
-		 "This is the max depth of tableaux used in proof search."
-		 "Default is 10."
-	 },
-	 {
-		 OPT_TABLEAU_EQUALITY,
-		 '\0', "tableau-equality",
-		 OptArg, "0",
-		 "Specify an integer."
-		 "The defualt 0 means that no equality axioms will be added."
-		 "If this is enabled, SRT equality axioms will be added as extension candidates."
-		 "This makes the search space larger, but is necessary on some problems."
-	 },
-	 {
-		 OPT_TABLEAU_SATURATION,
-		 '\0', "tableau-saturation",
-		 OptArg, "0",
-		 "Specify an integer."
-		 "The default 0 means that no tableau saturation will be done."
-		 "If this is enabled (1), local branches of tableaux may be saturated with the superposition calculus."
-	 },
-	 {
-		 OPT_TABLEAU_CORES,
-		 '\0', "tableau-cores",
-		 OptArg, "0",
-		 "Specify an integer."
-		 "The defualt 0 means that a single core will be used by Etableau."
-		 "1 will use all available cores.  Otherwise, the specified number of cores will be used."
-		 "Specifically, the prover will create n processes.  Do not use more processes than there are cores."
-	 },
-	 {
-		 OPT_TABLEAU_APR_DISTANCE,
-		 '\0', "apr",
-		 OptArg, "0",
-		 "Specify an integer."
-		 "The defualt 0 means that no alternating path relevance filtering will be done."
-		 "Otherwise, the argument determines the radius of the relevance neighborhood."
-	 },
-     {
-     OPT_TABLEAU_DOT_PRINT,
-     '\0', "tableau-dot-print",
-     ReqArg, NULL,
-     "Print a DOT graph of the closed tableau to a file in the specified directory."
-     },
 
+   {OPT_TABLEAU,
+    '\0', "tableau",
+    ReqArg, NULL,
+    "0: Do not attempt creation of any tableaux."
+    "1: Build a tableau at start of proof search."},
+   {
+    OPT_TABLEAU_DEPTH,
+    '\0', "tableau-depth",
+    OptArg, "1",
+    "Specify an intege."
+    "This is the max depth of tableaux used in proof searc."
+    "Default is 1."}
+    ,
+    {
+    OPT_TABLEAU_EQUALITY,
+    '\0', "tableau-equality",
+    OptArg, "0",
+    "Specify an intege."
+    "The defualt 0 means that no equality axioms will be added"
+    "If this is enabled, SRT equality axioms will be added as extension candidates"
+    "This makes the search space larger, but is necessary on some problems"}
+    ,
+    {
+    OPT_TABLEAU_SATURATION,
+    '\0', "tableau-saturation",
+    OptArg, "0",
+    "Specify an integer"
+    "The default 0 means that no tableau saturation will be done"
+    "If this is enabled (1), local branches of tableaux may be saturated with the superposition calculus"}
+    ,
+    {
+    OPT_TABLEAU_CORES,
+    '\0', "tableau-cores",
+    OptArg, "0",
+    "Specify an integer"
+    "The defualt 0 means that a single core will be used by Etableau"
+    "1 will use all available cores.  Otherwise, the specified number of cores will be used"
+    "Specifically, the prover will create n processes.  Do not use more processes than there are cores"}
+    ,
+    {
+    OPT_TABLEAU_APR_DISTANCE,
+    '\0', "apr",
+    OptArg, "0",
+    "Specify an integer"
+    "The defualt 0 means that no alternating path relevance filtering will be done"
+    "Otherwise, the argument determines the radius of the relevance neighborhood"
+    },
+    {
+    OPT_TABLEAU_DOT_PRINT,
+    '\0', "tableau-dot-print",
+    ReqArg, NULL,
+    "Print a DOT graph of the closed tableau to a file in the specified directory."
+    },
    {OPT_NOOPT,
     '\0', NULL,
     NoArg, NULL,

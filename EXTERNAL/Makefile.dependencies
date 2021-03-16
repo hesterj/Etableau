@@ -120,7 +120,7 @@ CSSCPA_filter.o: CSSCPA_filter.c /usr/include/stdc-predef.h \
  ../include/ccl_inferencedoc.h ../include/ccl_clausepos.h \
  ../include/cte_termpos.h ../include/cte_termbanks.h \
  ../include/clb_numtrees.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/cio_basicparser.h ../include/clb_ddarrays.h \
  ../include/cio_scanner.h ../include/cio_streams.h \
  ../include/cio_initio.h ../include/cio_fileops.h \
@@ -272,7 +272,7 @@ cex_csscpa.o: cex_csscpa.c /usr/include/stdc-predef.h cex_csscpa.h \
  ../include/ccl_inferencedoc.h ../include/ccl_clausepos.h \
  ../include/cte_termpos.h ../include/cte_termbanks.h \
  ../include/clb_numtrees.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/cio_basicparser.h ../include/clb_ddarrays.h \
  ../include/cio_scanner.h ../include/cio_streams.h \
  ../include/cio_initio.h ../include/cio_fileops.h \

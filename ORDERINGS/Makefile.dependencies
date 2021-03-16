@@ -115,13 +115,13 @@ cto_cmpcache.o: cto_cmpcache.c /usr/include/stdc-predef.h cto_cmpcache.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
- ../include/clb_os_wrapper.h /usr/include/execinfo.h \
- ../include/clb_avlgeneric.h ../include/cte_termbanks.h \
- ../include/clb_numtrees.h ../include/clb_dstrings.h \
- ../include/clb_memory.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
+ ../include/cte_termbanks.h ../include/clb_numtrees.h \
+ ../include/clb_dstrings.h ../include/clb_memory.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/cte_termvars.h ../include/clb_pdarrays.h \
@@ -249,7 +249,7 @@ cto_kbo.o: cto_kbo.c /usr/include/stdc-predef.h cto_kbo.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/cio_basicparser.h ../include/clb_ddarrays.h \
  ../include/cio_scanner.h ../include/cio_streams.h \
  ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
@@ -382,7 +382,7 @@ cto_kbolin.o: cto_kbolin.c /usr/include/stdc-predef.h cto_kbolin.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/cio_basicparser.h ../include/clb_ddarrays.h \
  ../include/cio_scanner.h ../include/cio_streams.h \
  ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
@@ -515,7 +515,7 @@ cto_lpo.o: cto_lpo.c /usr/include/stdc-predef.h cto_lpo.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/cio_basicparser.h ../include/clb_ddarrays.h \
  ../include/cio_scanner.h ../include/cio_streams.h \
  ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
@@ -648,7 +648,7 @@ cto_lpo_debug.o: cto_lpo_debug.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/cio_basicparser.h ../include/clb_ddarrays.h \
  ../include/cio_scanner.h ../include/cio_streams.h \
  ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
@@ -781,7 +781,7 @@ cto_ocb.o: cto_ocb.c /usr/include/stdc-predef.h cto_ocb.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/cio_basicparser.h ../include/clb_ddarrays.h \
  ../include/cio_scanner.h ../include/cio_streams.h \
  ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
@@ -915,7 +915,7 @@ cto_orderings.o: cto_orderings.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/cio_basicparser.h ../include/clb_ddarrays.h \
  ../include/cio_scanner.h ../include/cio_streams.h \
  ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \

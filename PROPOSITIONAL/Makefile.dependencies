@@ -115,7 +115,7 @@ cpr_dpll.o: cpr_dpll.c /usr/include/stdc-predef.h cpr_dpll.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/clb_pdarrays.h ../include/cpr_dpllformula.h \
  ../include/cpr_propclauses.h ../include/ccl_clauses.h \
  ../include/clb_fixdarrays.h ../include/ccl_neweval.h \
@@ -260,7 +260,7 @@ cpr_dpllformula.o: cpr_dpllformula.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/ccl_neweval.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/clb_ptrees.h ../include/clb_sysdate.h \
+ ../include/clb_ptrees.h ../include/clb_sysdate.h \
  ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
  ../include/clb_objtrees.h ../include/cte_termfunc.h \
  ../include/clb_numtrees.h ../include/clb_dstrings.h \
@@ -403,7 +403,7 @@ cpr_propclauses.o: cpr_propclauses.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/ccl_neweval.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/clb_ptrees.h ../include/clb_sysdate.h \
+ ../include/clb_ptrees.h ../include/clb_sysdate.h \
  ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
  ../include/clb_objtrees.h ../include/cte_termfunc.h \
  ../include/clb_numtrees.h ../include/clb_dstrings.h \
@@ -545,7 +545,7 @@ cpr_propsig.o: cpr_propsig.c /usr/include/stdc-predef.h cpr_propsig.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/clb_pdarrays.h
 cpr_varset.o: cpr_varset.c /usr/include/stdc-predef.h cpr_varset.h \
  ../include/cpr_propsig.h ../include/clb_stringtrees.h \
@@ -664,5 +664,5 @@ cpr_varset.o: cpr_varset.c /usr/include/stdc-predef.h cpr_varset.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/clb_pdarrays.h

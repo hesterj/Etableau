@@ -133,8 +133,6 @@ static QuadTree_p splay_tree(QuadTree_p tree, QuadKey_p key)
 /*                         Exported Functions                          */
 /*---------------------------------------------------------------------*/
 
-
-
 /*-----------------------------------------------------------------------
 //
 // Function: DoubleKeyCmp()

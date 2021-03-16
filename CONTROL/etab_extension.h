@@ -3,8 +3,8 @@
 
 //#include <foldingup.h>
 //#include <etab_etableau.h>
-#include <etab_backtrack.h>
-#include <etab_xgboost_interaction.h>
+#include "etab_backtrack.h"
+#include "etab_xgboost_interaction.h"
 
 /*  Storage type for potential extension steps to be done at a single node
  *  This is needed because there can be several extension steps to be done

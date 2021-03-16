@@ -559,9 +559,8 @@ Term_p  VarBankGetFreshVar(VarBank_p bank, Type_p t)
       //printf("# XXX %s %ld %d  ", bank->id, PStackGetSP(stack), v_count);
       bank->fresh_count+=2;
       res = VarBankVarAssertAlloc(bank, -(bank->fresh_count), t);
-      assert(res);
       //printf("=> %ld %d\n", PStackGetSP(stack), v_count);
-      //assert(PStackGetSP(stack)>v_count);
+      assert(PStackGetSP(stack)>v_count);
       if(bank->shadow)
       {
          bank->shadow->fresh_count = bank->fresh_count;

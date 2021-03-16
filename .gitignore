@@ -1,4 +1,5 @@
 Makefile.vars
+.ccls-cache
 .ccls-cache/
 *.ccls-cache*
 Makefile.dependencies

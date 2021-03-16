@@ -875,7 +875,7 @@ static Clause_p cleanup_unprocessed_clauses(ProofState_p state,
       {
          state->state_is_complete = false;
       }
-      GCCollect(state->terms->gc);  // Disabled by John!
+      GCCollect(state->terms->gc);
       current_storage = ProofStateStorage(state);
    }
    return unsatisfiable;
@@ -1168,49 +1168,6 @@ void ProofStateResetProcessedSet(ProofState_p state,
    }
 }
 
-/*-----------------------------------------------------------------------
-//
-// Function: ProofStateResetProcessedSetNoCopy()
-//
-//   Move all clauses from set into state->unprocessed.
-//
-// Global Variables: -
-//
-// Side Effects    : -
-//
-/----------------------------------------------------------------------*/
-
-void ProofStateResetProcessedSetNoCopy(ProofState_p state,
-                                 ProofControl_p control,
-                                       ClauseSet_p set,
-                                       PStack_p tableau_stack)
-{
-   Clause_p handle;
-
-   while((handle = ClauseSetExtractFirst(set)))
-   {
-      if(ClauseQueryProp(handle, CPIsGlobalIndexed))
-      {
-         GlobalIndicesDeleteClause(&(state->gindices), handle);
-      }
-      if(ProofObjectRecordsGCSelection)
-      {
-         ClausePushDerivation(handle, DCCnfEvalGC, NULL, NULL);
-      }
-      if(ClauseQueryProp(handle, CPIsTableauClause))
-      {
-         PStackPushP(tableau_stack, handle);
-      }
-      HCBClauseEvaluate(control->hcb, handle);
-      ClauseDelProp(handle, CPIsOriented);
-
-      if(control->heuristic_parms.prefer_initial_clauses)
-      {
-         EvalListChangePriority(handle->evaluations, -PrioLargestReasonable);
-      }
-      ClauseSetInsert(state->unprocessed, handle);
-   }
-}
 
 /*-----------------------------------------------------------------------
 //
@@ -1232,27 +1189,6 @@ void ProofStateResetProcessed(ProofState_p state, ProofControl_p control)
    ProofStateResetProcessedSet(state, control, state->processed_non_units);
 }
 
-
-/*-----------------------------------------------------------------------
-//
-// Function: ProofStateResetProcessedNoCopy()
-//
-//   Move all clauses from the processed clause sets to unprocessed.
-//   Does not create copies for archiving.
-//
-// Global Variables: -
-//
-// Side Effects    : -
-//
-/----------------------------------------------------------------------*/
-
-void ProofStateResetProcessedNoCopy(ProofState_p state, ProofControl_p control, PStack_p tableau_stack)
-{
-   ProofStateResetProcessedSetNoCopy(state, control, state->processed_pos_rules, tableau_stack);
-   ProofStateResetProcessedSetNoCopy(state, control, state->processed_pos_eqns, tableau_stack);
-   ProofStateResetProcessedSetNoCopy(state, control, state->processed_neg_units, tableau_stack);
-   ProofStateResetProcessedSetNoCopy(state, control, state->processed_non_units, tableau_stack);
-}
 
 /*-----------------------------------------------------------------------
 //
@@ -1634,7 +1570,7 @@ Clause_p ProcessClause(ProofState_p state, ProofControl_p control,
    ClauseFree(tmp_copy);
    if(TermCellStoreNodes(&(state->tmp_terms->term_store))>TMPBANK_GC_LIMIT)
    {
-      TBGCSweep(state->tmp_terms); // Disabled by John!
+      TBGCSweep(state->tmp_terms);
    }
 #ifdef PRINT_SHARING
    print_sharing_factor(state);
@@ -1741,7 +1677,7 @@ Clause_p Saturate(ProofState_p state, ProofControl_p control, long
 //   Process the clause. Return pointer to empty
 //   clause if it can be derived, NULL otherwise. This is the core of
 //   the main proof procedure.
-* 
+*
 * 	  This method calls cleanup_unprocessed_clauses at the end!
 *     (Copied and edited from ProcessClause(...))
 //
@@ -1759,7 +1695,7 @@ Clause_p ProcessSpecificClause(ProofState_p state, ProofControl_p control,
    FVPackedClause_p pclause;
    SysDate          clausedate;
 
-	
+
    if(!clause)
    {
       return NULL;
@@ -1773,7 +1709,7 @@ Clause_p ProcessSpecificClause(ProofState_p state, ProofControl_p control,
 
    ClauseSetExtractEntry(clause);
    ClauseRemoveEvaluations(clause);
-   
+
    // Orphans have been excluded during selection now
 
    ClauseSetProp(clause, CPIsProcessed);
@@ -1914,8 +1850,70 @@ Clause_p ProcessSpecificClause(ProofState_p state, ProofControl_p control,
    return NULL;
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: ProofStateResetProcessedNoCopy()
+//
+//   Move all clauses from the processed clause sets to unprocessed.
+//   Does not create copies for archiving.
+//
+// Global Variables: -
+//
+// Side Effects    : -
+//
+/----------------------------------------------------------------------*/
 
+void ProofStateResetProcessedNoCopy(ProofState_p state, ProofControl_p control, PStack_p tableau_stack)
+{
+   ProofStateResetProcessedSetNoCopy(state, control, state->processed_pos_rules, tableau_stack);
+   ProofStateResetProcessedSetNoCopy(state, control, state->processed_pos_eqns, tableau_stack);
+   ProofStateResetProcessedSetNoCopy(state, control, state->processed_neg_units, tableau_stack);
+   ProofStateResetProcessedSetNoCopy(state, control, state->processed_non_units, tableau_stack);
+}
 
+/*-----------------------------------------------------------------------
+//
+// Function: ProofStateResetProcessedSetNoCopy()
+//
+//   Move all clauses from set into state->unprocessed.
+//
+// Global Variables: -
+//
+// Side Effects    : -
+//
+/----------------------------------------------------------------------*/
+
+void ProofStateResetProcessedSetNoCopy(ProofState_p state,
+                                 ProofControl_p control,
+                                       ClauseSet_p set,
+                                       PStack_p tableau_stack)
+{
+   Clause_p handle;
+
+   while((handle = ClauseSetExtractFirst(set)))
+   {
+      if(ClauseQueryProp(handle, CPIsGlobalIndexed))
+      {
+         GlobalIndicesDeleteClause(&(state->gindices), handle);
+      }
+      if(ProofObjectRecordsGCSelection)
+      {
+         ClausePushDerivation(handle, DCCnfEvalGC, NULL, NULL);
+      }
+      if(ClauseQueryProp(handle, CPIsTableauClause))
+      {
+         PStackPushP(tableau_stack, handle);
+      }
+      HCBClauseEvaluate(control->hcb, handle);
+      ClauseDelProp(handle, CPIsOriented);
+
+      if(control->heuristic_parms.prefer_initial_clauses)
+      {
+         EvalListChangePriority(handle->evaluations, -PrioLargestReasonable);
+      }
+      ClauseSetInsert(state->unprocessed, handle);
+   }
+}
 
 /*---------------------------------------------------------------------*/
 /*                        End of File                                  */

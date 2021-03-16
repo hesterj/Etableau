@@ -39,7 +39,7 @@ typedef enum
    POGraph1,
    POGraph2,
    POGraph3,
-   POEtableau
+   POEtableau,
 }ProofOutput;
 
 
@@ -280,7 +280,6 @@ void DerivationPrint(FILE* out, Derivation_p derivation, char* frame);
 void DerivationDotPrint(FILE* out, Derivation_p derivation,
                         ProofOutput print_derivation);
 
-void DerivationPrintNoFrame(FILE* out, Derivation_p derivation);
 void DerivationPrintConditional(FILE* out, char* status, Derivation_p derivation,
                                 Sig_p sig, ProofOutput print_derivation,
                                 bool print_analysis);

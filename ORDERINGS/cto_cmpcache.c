@@ -75,6 +75,7 @@ static bool prepare_key(Term_p t1, DerefType d1, Term_p t2, DerefType
 /*                         Exported Functions                          */
 /*---------------------------------------------------------------------*/
 
+
 /*-----------------------------------------------------------------------
 //
 // Function: CmpCacheFind()

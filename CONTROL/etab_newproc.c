@@ -468,7 +468,11 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
                 break;
             }
             current_tableau = EtableauGetNextTableau(distinct_tableaux_stack, &current_tableau_index, new_tableaux, &current_new_tableaux_index);
-            if (current_tableau == NULL) break; // In case we ran out of tableaux...
+            if (current_tableau == NULL) // In case we ran out of tableaux...
+            {
+                fprintf(GlobalOut, "# Ran out of tableaux...\n");
+                break;
+            }
         }
     }
 
@@ -493,23 +497,29 @@ ClauseTableau_p EtableauGetNextTableau(TableauStack_p distinct_tableaux_stack,
                 //TSTPOUT(GlobalOut, "ResourceOut");
                 //fprintf(GlobalOut, "# There are %ld new_tableaux and %ld in distinct_tableaux_stack\n", PStackGetSP(new_tableaux), PStackGetSP(distinct_tableaux_stack));
                 //Error("Ran out of tableaux to extend on while populating", 10);
+                fprintf(stdout, "# Ran out of tableaux to extend on while populating\n");
+                fflush(stdout);
                 *current_index_p = 0;
                 new_current_tableau = PStackElementP(distinct_tableaux_stack, *current_index_p);
-                return new_current_tableau;
+                goto return_point;
             }
             assert(new_tableaux->current);
             new_current_tableau = PStackPopP(new_tableaux);
+            fprintf(stdout, "# Getting new_tableaux tableau...\n");
+            fflush(stdout);
             PStackPushP(distinct_tableaux_stack, new_current_tableau);
-            return new_current_tableau;
+            goto return_point;
         }
         if ( PStackEmpty(distinct_tableaux_stack) )
         {
-            //fprintf(GlobalOut, "# Unable to get any tableaux...\n");
+            fprintf(GlobalOut, "# Unable to get any tableaux...\n");
+            fflush(stdout);
             return NULL;
         }
         *current_index_p = 0;
     }
     assert(*current_index_p < distinct_tableaux_stack->current);
     new_current_tableau = PStackElementP(distinct_tableaux_stack, *current_index_p);
+    return_point:
     return new_current_tableau;
 }

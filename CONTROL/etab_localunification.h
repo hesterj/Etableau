@@ -1,7 +1,7 @@
 #ifndef LOCALUNI
 #define LOCALUNI
 
-#include <etab_clausetableaux.h>
+#include "etab_clausetableaux.h"
 
 long UpdateLocalVariables(ClauseTableau_p node);
 long CollectVariablesAtNode(ClauseTableau_p node, PTree_p *var_tree);

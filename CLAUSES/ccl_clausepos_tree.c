@@ -179,8 +179,7 @@ void ClauseTPosTreeFreeWrapper(void *junk)
 void ClauseTPosTreeInsertPos(ClauseTPosTree_p *tree, Clause_p clause,
                              CompactPos pos)
 {
-   ClauseTPos_p newnode = ClauseTPosAlloc(clause);
-   ClauseTPos_p old;
+   ClauseTPos_p old, newnode = ClauseTPosAlloc(clause);
    IntOrP dummy;
 
    dummy.i_val = 0;

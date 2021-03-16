@@ -115,8 +115,8 @@ cio_basicparser.o: cio_basicparser.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_output.h \
  ../include/clb_dstrings.h ../include/clb_memory.h \
  ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
@@ -471,7 +471,7 @@ cio_filevars.o: cio_filevars.c /usr/include/stdc-predef.h cio_filevars.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/cio_basicparser.h ../include/clb_ddarrays.h \
  ../include/cio_scanner.h ../include/cio_streams.h \
  ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
@@ -1101,7 +1101,7 @@ cio_scanner.o: cio_scanner.c /usr/include/stdc-predef.h cio_scanner.h \
  /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- ../include/clb_memory.h /usr/include/execinfo.h /usr/include/ctype.h
+ ../include/clb_memory.h /usr/include/ctype.h
 cio_signals.o: cio_signals.c /usr/include/stdc-predef.h cio_signals.h \
  /usr/include/signal.h /usr/include/features.h \
  /usr/include/x86_64-linux-gnu/sys/cdefs.h \
@@ -1223,8 +1223,7 @@ cio_signals.o: cio_signals.c /usr/include/stdc-predef.h cio_signals.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/cio_output.h \
  ../include/clb_dstrings.h ../include/clb_memory.h \
  ../include/cio_commandline.h ../include/clb_stringtrees.h \
- ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h
+ ../include/clb_avlgeneric.h ../include/clb_pstacks.h
 cio_simplestuff.o: cio_simplestuff.c /usr/include/stdc-predef.h \
  cio_simplestuff.h ../include/cio_output.h /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
@@ -1597,5 +1596,4 @@ cio_tempfile.o: cio_tempfile.c /usr/include/stdc-predef.h cio_tempfile.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/cio_output.h \
  ../include/clb_dstrings.h ../include/clb_memory.h \
  ../include/cio_commandline.h ../include/clb_stringtrees.h \
- ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h
+ ../include/clb_avlgeneric.h ../include/clb_pstacks.h

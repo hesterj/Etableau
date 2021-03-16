@@ -1,7 +1,7 @@
 #ifndef FOLDINGUP
 #define FOLDINGUP
 
-#include <etab_closure.h>
+#include "etab_closure.h"
 
 #define NO_CHILDREN_CLOSED_BY_SATURATION 0
 #define CHILD_CLOSED_BY_SATURATION 1

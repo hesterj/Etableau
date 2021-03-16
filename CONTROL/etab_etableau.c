@@ -1,5 +1,5 @@
-#include <etab_etableau.h>
-#include <etab_backtrack.h>
+#include "etab_etableau.h"
+#include "etab_backtrack.h"
 #include <omp.h>
 
 // Forward declaration
@@ -391,8 +391,8 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 			}
 			else if (branch_status == SATISFIABLE)
 			{
-				fprintf(stdout, "# Satisfiable branch found.\n");
-				fflush(stdout);
+				fprintf(GlobalOut, "# Satisfiable branch found.\n");
+				fflush(GlobalOut);
 				successful_count++;
 				assert(tableau_control->satisfiable);
 				DStrAppendStr(handle->info, " Satisfiable ");

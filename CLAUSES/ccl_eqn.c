@@ -583,8 +583,6 @@ bool eqn_parse_real(Scanner_p in, TB_p bank, Term_p *lref,
 Eqn_p EqnAlloc(Term_p lterm, Term_p rterm, TB_p bank,  bool positive)
 {
    Eqn_p handle = EqnCellAlloc();
-   assert(lterm);
-   assert(rterm);
 
    /* printf("Handle = %p\n", handle); */
 
@@ -595,17 +593,6 @@ Eqn_p EqnAlloc(Term_p lterm, Term_p rterm, TB_p bank,  bool positive)
    }
    if(rterm != bank->true_term)
    {
-      //fprintf(GlobalOut, "# lterm: ");
-      //TermPrint(GlobalOut, lterm, bank->sig, DEREF_ALWAYS);
-      //fprintf(GlobalOut, "\n# rterm: ");
-      //TermPrint(GlobalOut, rterm, bank->sig, DEREF_ALWAYS);
-      //fprintf(GlobalOut, " %ld\n", rterm->f_code);
-      //if (rterm->f_code == SIG_TRUE_CODE)
-      //{
-         //fprintf(GlobalOut, "# What the hell\n");
-         //TermPrint(GlobalOut, rterm, bank->sig, DEREF_ALWAYS);
-         //fprintf(GlobalOut, "\n");
-      //}
       assert(rterm->f_code!=SIG_TRUE_CODE);
       EqnSetProp(handle, EPIsEquLiteral);
    }
@@ -621,15 +608,6 @@ Eqn_p EqnAlloc(Term_p lterm, Term_p rterm, TB_p bank,  bool positive)
 #endif
       if(!TermIsVar(lterm) && !TermIsAppliedVar(lterm))
       {
-#ifndef DNDEBUG
-         if (lterm->f_code > bank->sig->f_count)
-         {
-            fprintf(GlobalOut, "# %ld <= %ld\n", lterm->f_code, bank->sig->f_count);
-            fprintf(GlobalOut, "# Error: Messed up terms\n");
-            TermPrint(GlobalOut, lterm, bank->sig, DEREF_NEVER);
-         }
-#endif
-         assert(lterm->f_code <= bank->sig->f_count);
          SigDeclareIsPredicate(bank->sig, lterm->f_code);
       }
 
@@ -653,31 +631,10 @@ Eqn_p EqnAlloc(Term_p lterm, Term_p rterm, TB_p bank,  bool positive)
    handle->lterm = lterm;
    handle->rterm = rterm;
 
-   /* EqnPrint(stdout, handle, false, true);
-      printf("\n"); */
-#ifndef DNDEBUG
-   Sig_p sig = bank->sig;
-   Func_p lfun = &sig->f_info[lterm->f_code];
-   Func_p rfun = &sig->f_info[rterm->f_code];
-   if (lterm->f_code > 0 && SigIsFixedType(sig, lterm->f_code))
-   {
-      if (rterm->f_code > 0 && SigIsFixedType(sig, rterm->f_code))
-      {
-         if (GetReturnSort(lfun->type) != GetReturnSort(rfun->type))
-         {
-            TypePrintTSTP(GlobalOut, sig->type_bank, GetReturnSort(lfun->type));
-            fprintf(GlobalOut, " != ");
-            TypePrintTSTP(GlobalOut, sig->type_bank, GetReturnSort(rfun->type));
-            fprintf(GlobalOut, "\n");
-            EqnPrint(GlobalOut, handle, false, true);
-            Error("! Type mismatch, exiting.", 1);
-         }
-      }
-   }
-#endif
-
    handle->occurrences = 0;
    handle->positive_occurrences = 0;
+   /* EqnPrint(stdout, handle, false, true);
+      printf("\n"); */
 
    return handle;
 }
@@ -704,8 +661,8 @@ void EqnFree(Eqn_p junk)
    TBDelete(junk->bank, junk->lterm);
    TermReleaseRef(&(junk->rterm));
    TBDelete(junk->bank, junk->rterm); */
-   //assert(TermIsShared(junk->lterm)); // added assertions to check whether
-   //assert(TermIsShared(junk->rterm)); // previous comment is true
+   assert(TermIsShared(junk->lterm)); // added assertions to check whether
+   assert(TermIsShared(junk->rterm)); // previous comment is true
    EqnCellFree(junk);
 }
 

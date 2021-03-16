@@ -691,7 +691,7 @@ clb_floattrees.o: clb_floattrees.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h
+ ../include/clb_pstacks.h ../include/clb_memory.h
 clb_intmap.o: clb_intmap.c /usr/include/stdc-predef.h clb_intmap.h \
  /usr/lib/gcc/x86_64-linux-gnu/9/include/limits.h \
  /usr/lib/gcc/x86_64-linux-gnu/9/include/syslimits.h \
@@ -809,7 +809,7 @@ clb_intmap.o: clb_intmap.c /usr/include/stdc-predef.h clb_intmap.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/clb_pdrangearrays.h ../include/clb_pdarrays.h
 clb_memory.o: clb_memory.c /usr/include/stdc-predef.h clb_memory.h \
  clb_verbose.h clb_error.h ../include/clb_defines.h /usr/include/assert.h \
@@ -1156,7 +1156,7 @@ clb_numtrees.o: clb_numtrees.c /usr/include/stdc-predef.h clb_numtrees.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h
+ ../include/clb_pstacks.h ../include/clb_memory.h
 clb_numxtrees.o: clb_numxtrees.c /usr/include/stdc-predef.h \
  clb_numxtrees.h ../include/clb_dstrings.h ../include/clb_memory.h \
  ../include/clb_verbose.h ../include/clb_error.h ../include/clb_defines.h \
@@ -1273,7 +1273,7 @@ clb_numxtrees.o: clb_numxtrees.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h
+ ../include/clb_pstacks.h ../include/clb_memory.h
 clb_objtrees.o: clb_objtrees.c /usr/include/stdc-predef.h clb_objtrees.h \
  ../include/clb_ptrees.h /usr/lib/gcc/x86_64-linux-gnu/9/include/stdint.h \
  /usr/include/stdint.h \
@@ -1390,8 +1390,7 @@ clb_objtrees.o: clb_objtrees.c /usr/include/stdc-predef.h clb_objtrees.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
- ../include/clb_os_wrapper.h /usr/include/execinfo.h \
- ../include/clb_avlgeneric.h
+ ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h
 clb_os_wrapper.o: clb_os_wrapper.c /usr/include/stdc-predef.h \
  /usr/include/unistd.h /usr/include/features.h \
  /usr/include/x86_64-linux-gnu/sys/cdefs.h \
@@ -2310,7 +2309,7 @@ clb_pstacks.o: clb_pstacks.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
- ../include/clb_os_wrapper.h /usr/include/execinfo.h
+ ../include/clb_os_wrapper.h
 clb_ptrees.o: clb_ptrees.c /usr/include/stdc-predef.h clb_ptrees.h \
  /usr/lib/gcc/x86_64-linux-gnu/9/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
@@ -2426,8 +2425,7 @@ clb_ptrees.o: clb_ptrees.c /usr/include/stdc-predef.h clb_ptrees.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
- ../include/clb_os_wrapper.h /usr/include/execinfo.h \
- ../include/clb_avlgeneric.h
+ ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h
 clb_quadtrees.o: clb_quadtrees.c /usr/include/stdc-predef.h \
  clb_quadtrees.h ../include/clb_ptrees.h \
  /usr/lib/gcc/x86_64-linux-gnu/9/include/stdint.h /usr/include/stdint.h \
@@ -2544,8 +2542,7 @@ clb_quadtrees.o: clb_quadtrees.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
- ../include/clb_os_wrapper.h /usr/include/execinfo.h \
- ../include/clb_avlgeneric.h
+ ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h
 clb_regmem.o: clb_regmem.c /usr/include/stdc-predef.h clb_regmem.h \
  ../include/clb_ptrees.h /usr/lib/gcc/x86_64-linux-gnu/9/include/stdint.h \
  /usr/include/stdint.h \
@@ -2662,8 +2659,7 @@ clb_regmem.o: clb_regmem.c /usr/include/stdc-predef.h clb_regmem.h \
  /usr/include/x86_64-linux-gnu/sys/resource.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
- ../include/clb_os_wrapper.h /usr/include/execinfo.h \
- ../include/clb_avlgeneric.h
+ ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h
 clb_simple_stuff.o: clb_simple_stuff.c /usr/include/stdc-predef.h \
  clb_simple_stuff.h /usr/include/string.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
@@ -2894,7 +2890,7 @@ clb_stringtrees.o: clb_stringtrees.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h
+ ../include/clb_pstacks.h ../include/clb_memory.h
 clb_sysdate.o: clb_sysdate.c /usr/include/stdc-predef.h clb_sysdate.h \
  /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \

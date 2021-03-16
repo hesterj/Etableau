@@ -135,8 +135,8 @@ che_axfilter.o: che_axfilter.c /usr/include/stdc-predef.h che_axfilter.h \
  ../include/cio_basicparser.h ../include/clb_ddarrays.h \
  ../include/clb_memory.h ../include/clb_verbose.h ../include/clb_error.h \
  ../include/clb_os_wrapper.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_output.h \
  ../include/clb_dstrings.h ../include/clb_memory.h \
  ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
@@ -260,7 +260,7 @@ che_axiomscan.o: che_axiomscan.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/cio_basicparser.h ../include/clb_ddarrays.h \
  ../include/cio_scanner.h ../include/cio_streams.h \
  ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
@@ -410,7 +410,7 @@ che_clausefeatures.o: che_clausefeatures.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/ccl_neweval.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/clb_ptrees.h ../include/clb_sysdate.h \
+ ../include/clb_ptrees.h ../include/clb_sysdate.h \
  ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
  ../include/clb_objtrees.h ../include/cte_termfunc.h \
  ../include/clb_numtrees.h ../include/clb_dstrings.h \
@@ -554,7 +554,7 @@ che_clausesetfeatures.o: che_clausesetfeatures.c \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/ccl_neweval.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/clb_ptrees.h ../include/clb_sysdate.h \
+ ../include/clb_ptrees.h ../include/clb_sysdate.h \
  ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
  ../include/clb_objtrees.h ../include/cte_termfunc.h \
  ../include/clb_numtrees.h ../include/clb_dstrings.h \
@@ -720,10 +720,10 @@ che_clauseweight.o: che_clauseweight.c /usr/include/stdc-predef.h \
  ../include/ccl_clausepos.h ../include/cte_termpos.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -882,10 +882,10 @@ che_diversityweight.o: che_diversityweight.c /usr/include/stdc-predef.h \
  ../include/ccl_clausepos.h ../include/cte_termpos.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -1039,7 +1039,7 @@ che_fcode_featurearrays.o: che_fcode_featurearrays.c \
  ../include/clb_memory.h ../include/clb_verbose.h ../include/clb_error.h \
  ../include/clb_os_wrapper.h ../include/ccl_neweval.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/clb_ptrees.h ../include/clb_sysdate.h \
+ ../include/clb_ptrees.h ../include/clb_sysdate.h \
  ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
  ../include/clb_objtrees.h ../include/cte_termfunc.h \
  ../include/clb_numtrees.h ../include/clb_dstrings.h \
@@ -1205,10 +1205,10 @@ che_fifo.o: che_fifo.c /usr/include/stdc-predef.h che_fifo.h \
  ../include/ccl_clausepos.h ../include/cte_termpos.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -1363,10 +1363,10 @@ che_funweights.o: che_funweights.c /usr/include/stdc-predef.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_dstrings.h ../include/clb_memory.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -1525,10 +1525,10 @@ che_hcb.o: che_hcb.c /usr/include/stdc-predef.h che_hcb.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_dstrings.h ../include/clb_memory.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -1710,10 +1710,10 @@ che_hcbadmin.o: che_hcbadmin.c /usr/include/stdc-predef.h che_hcbadmin.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_dstrings.h ../include/clb_memory.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -1894,11 +1894,10 @@ che_heuristics.o: che_heuristics.c /usr/include/stdc-predef.h \
  ../include/cte_termpos.h ../include/cte_termbanks.h \
  ../include/clb_numtrees.h ../include/clb_dstrings.h \
  ../include/clb_memory.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h /usr/include/execinfo.h \
- ../include/cio_basicparser.h ../include/clb_ddarrays.h \
- ../include/cio_scanner.h ../include/cio_streams.h \
- ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
- /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/clb_pstacks.h ../include/cio_basicparser.h \
+ ../include/clb_ddarrays.h ../include/cio_scanner.h \
+ ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
+ ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -2090,10 +2089,10 @@ che_learning.o: che_learning.c /usr/include/stdc-predef.h che_learning.h \
  ../include/ccl_clausepos.h ../include/cte_termpos.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -2255,10 +2254,10 @@ che_levweight.o: che_levweight.c /usr/include/stdc-predef.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_dstrings.h ../include/clb_memory.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -2420,10 +2419,10 @@ che_lifo.o: che_lifo.c /usr/include/stdc-predef.h che_lifo.h \
  ../include/ccl_clausepos.h ../include/cte_termpos.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -2575,7 +2574,7 @@ che_litselection.o: che_litselection.c /usr/include/stdc-predef.h \
  ../include/clb_memory.h ../include/clb_verbose.h ../include/clb_error.h \
  ../include/clb_os_wrapper.h ../include/ccl_neweval.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/clb_ptrees.h ../include/clb_sysdate.h \
+ ../include/clb_ptrees.h ../include/clb_sysdate.h \
  ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
  ../include/clb_objtrees.h ../include/cte_termfunc.h \
  ../include/clb_numtrees.h ../include/clb_dstrings.h \
@@ -2715,7 +2714,7 @@ che_normsubst.o: che_normsubst.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/cte_signature.h ../include/clb_stringtrees.h \
  ../include/clb_pdarrays.h ../include/clb_properties.h \
  ../include/cte_functypes.h ../include/clb_simple_stuff.h \
@@ -2852,10 +2851,10 @@ che_orientweight.o: che_orientweight.c /usr/include/stdc-predef.h \
  ../include/ccl_clausepos.h ../include/cte_termpos.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -3011,10 +3010,10 @@ che_prefixweight.o: che_prefixweight.c /usr/include/stdc-predef.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_dstrings.h ../include/clb_memory.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -3170,7 +3169,7 @@ che_prio_funs.o: che_prio_funs.c /usr/include/stdc-predef.h \
  ../include/clb_memory.h ../include/clb_verbose.h ../include/clb_error.h \
  ../include/clb_os_wrapper.h ../include/ccl_neweval.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/clb_ptrees.h ../include/clb_sysdate.h \
+ ../include/clb_ptrees.h ../include/clb_sysdate.h \
  ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
  ../include/clb_objtrees.h ../include/cte_termfunc.h \
  ../include/clb_numtrees.h ../include/clb_dstrings.h \
@@ -3313,11 +3312,10 @@ che_proofcontrol.o: che_proofcontrol.c /usr/include/stdc-predef.h \
  ../include/cte_termpos.h ../include/cte_termbanks.h \
  ../include/clb_numtrees.h ../include/clb_dstrings.h \
  ../include/clb_memory.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h /usr/include/execinfo.h \
- ../include/cio_basicparser.h ../include/clb_ddarrays.h \
- ../include/cio_scanner.h ../include/cio_streams.h \
- ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
- /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/clb_pstacks.h ../include/cio_basicparser.h \
+ ../include/clb_ddarrays.h ../include/cio_scanner.h \
+ ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
+ ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -3509,10 +3507,10 @@ che_random.o: che_random.c /usr/include/stdc-predef.h che_random.h \
  ../include/ccl_clausepos.h ../include/cte_termpos.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -3665,7 +3663,7 @@ che_rawspecfeatures.o: che_rawspecfeatures.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/ccl_neweval.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/clb_ptrees.h ../include/clb_sysdate.h \
+ ../include/clb_ptrees.h ../include/clb_sysdate.h \
  ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
  ../include/clb_objtrees.h ../include/cte_termfunc.h \
  ../include/clb_numtrees.h ../include/clb_dstrings.h \
@@ -3832,10 +3830,10 @@ che_refinedweight.o: che_refinedweight.c /usr/include/stdc-predef.h \
  ../include/ccl_clausepos.h ../include/cte_termpos.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -3993,10 +3991,10 @@ che_simweight.o: che_simweight.c /usr/include/stdc-predef.h \
  ../include/ccl_clausepos.h ../include/cte_termpos.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -4153,11 +4151,10 @@ che_specsigfeatures.o: che_specsigfeatures.c /usr/include/stdc-predef.h \
  ../include/ccl_clausepos.h ../include/cte_termpos.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- ../include/clb_memory.h /usr/include/execinfo.h \
- ../include/cio_basicparser.h ../include/clb_ddarrays.h \
- ../include/cio_scanner.h ../include/cio_streams.h \
- ../include/cio_initio.h ../include/cio_fileops.h \
- /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/clb_memory.h ../include/cio_basicparser.h \
+ ../include/clb_ddarrays.h ../include/cio_scanner.h \
+ ../include/cio_streams.h ../include/cio_initio.h \
+ ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -4313,10 +4310,10 @@ che_strucweight.o: che_strucweight.c /usr/include/stdc-predef.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_dstrings.h ../include/clb_memory.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -4475,10 +4472,10 @@ che_termweight.o: che_termweight.c /usr/include/stdc-predef.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_dstrings.h ../include/clb_memory.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -4637,10 +4634,10 @@ che_termweights.o: che_termweights.c /usr/include/stdc-predef.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_dstrings.h ../include/clb_memory.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -4800,10 +4797,10 @@ che_tfidfweight.o: che_tfidfweight.c /usr/include/stdc-predef.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_dstrings.h ../include/clb_memory.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -4961,11 +4958,10 @@ che_to_autoselect.o: che_to_autoselect.c /usr/include/stdc-predef.h \
  ../include/cte_termpos.h ../include/cte_termbanks.h \
  ../include/clb_numtrees.h ../include/clb_dstrings.h \
  ../include/clb_memory.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h /usr/include/execinfo.h \
- ../include/cio_basicparser.h ../include/clb_ddarrays.h \
- ../include/cio_scanner.h ../include/cio_streams.h \
- ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
- /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/clb_pstacks.h ../include/cio_basicparser.h \
+ ../include/clb_ddarrays.h ../include/cio_scanner.h \
+ ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
+ ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -5150,7 +5146,7 @@ che_to_params.o: che_to_params.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/cio_basicparser.h ../include/clb_ddarrays.h \
  ../include/cio_scanner.h ../include/cio_streams.h \
  ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
@@ -5284,7 +5280,7 @@ che_to_precgen.o: che_to_precgen.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/resource.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/clb_avlgeneric.h \
- ../include/clb_pstacks.h ../include/clb_memory.h /usr/include/execinfo.h \
+ ../include/clb_pstacks.h ../include/clb_memory.h \
  ../include/cio_basicparser.h ../include/clb_ddarrays.h \
  ../include/cio_scanner.h ../include/cio_streams.h \
  ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
@@ -5448,7 +5444,7 @@ che_to_weightgen.o: che_to_weightgen.c /usr/include/stdc-predef.h \
  ../include/clb_memory.h ../include/clb_verbose.h ../include/clb_error.h \
  ../include/clb_os_wrapper.h ../include/ccl_neweval.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/clb_ptrees.h ../include/clb_sysdate.h \
+ ../include/clb_ptrees.h ../include/clb_sysdate.h \
  ../include/ccl_eqnlist.h ../include/ccl_eqn.h ../include/cte_acterms.h \
  ../include/clb_objtrees.h ../include/cte_termfunc.h \
  ../include/clb_numtrees.h ../include/clb_dstrings.h \
@@ -5612,10 +5608,10 @@ che_treeweight.o: che_treeweight.c /usr/include/stdc-predef.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_dstrings.h ../include/clb_memory.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -5779,10 +5775,10 @@ che_varweights.o: che_varweights.c /usr/include/stdc-predef.h \
  ../include/ccl_clausepos.h ../include/cte_termpos.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -5941,10 +5937,10 @@ che_wfcb.o: che_wfcb.c /usr/include/stdc-predef.h che_wfcb.h \
  ../include/ccl_clausepos.h ../include/cte_termpos.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \
@@ -6103,10 +6099,10 @@ che_wfcbadmin.o: che_wfcbadmin.c /usr/include/stdc-predef.h \
  ../include/ccl_clausepos.h ../include/cte_termpos.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \
  ../include/clb_avlgeneric.h ../include/clb_pstacks.h \
- /usr/include/execinfo.h ../include/cio_basicparser.h \
- ../include/clb_ddarrays.h ../include/cio_scanner.h \
- ../include/cio_streams.h ../include/cio_initio.h \
- ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/cio_basicparser.h ../include/clb_ddarrays.h \
+ ../include/cio_scanner.h ../include/cio_streams.h \
+ ../include/cio_initio.h ../include/cio_fileops.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  /usr/include/ctype.h ../include/cte_varsets.h ../include/clb_objtrees.h \
  ../include/clb_ptrees.h ../include/cte_termvars.h \

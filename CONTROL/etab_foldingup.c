@@ -1,4 +1,4 @@
-#include <etab_foldingup.h>
+#include "etab_foldingup.h"
 
 /*  Returns true if all of the nodes below tableau are closed
  *  Closes nodes that have all children closed

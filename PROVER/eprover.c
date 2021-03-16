@@ -31,8 +31,8 @@
 #include <cte_simpletypes.h>
 #include <cco_scheduling.h>
 #include <e_version.h>
-//#include <etab_tableauproc.h>
-#include <etab_newproc.h>
+
+#include <etab_newproc.h> // Etableau
 
 
 /*---------------------------------------------------------------------*/
@@ -51,7 +51,6 @@ PERF_CTR_DEFINE(SatTimer);
 /*---------------------------------------------------------------------*/
 
 char              *outname = NULL;
-char              *tableau_dot_out = NULL;
 char              *watchlist_filename = NULL;
 HeuristicParms_p  h_parms;
 FVIndexParms_p    fvi_parms;
@@ -98,14 +97,15 @@ pid_t              pid = 0;
 
 FunctionProperties free_symb_prop = FPIgnoreProps;
 
-ProblemType problemType  = PROBLEM_NOT_INIT;
-
 int TableauOptions = 0; // Etableau stuff
 int TableauDepth = 2;
 int TableauEquality = 0;
 int TableauCores = 0;
 bool TableauSaturation = false;
 int AprDistance = 0;
+char  *tableau_dot_out = NULL;
+
+ProblemType problemType  = PROBLEM_NOT_INIT;
 
 /*---------------------------------------------------------------------*/
 /*                      Forward Declarations                           */
@@ -530,7 +530,7 @@ int main(int argc, char* argv[])
    {
       fprintf(GlobalOut, "# Preprocessing time       : %.3f s\n", preproc_time);
    }
-   if (proofcontrol->heuristic_parms.presat_interreduction)
+   if(proofcontrol->heuristic_parms.presat_interreduction)
    {
       LiteralSelectionFun sel_strat =
          proofcontrol->heuristic_parms.selection_strategy;
@@ -546,18 +546,6 @@ int main(int argc, char* argv[])
          ProofStateResetProcessed(proofstate, proofcontrol);
       }
    }
-
-#ifdef ENABLE_LFHO
-   // if the problem is HO -> we have to use KBO6
-   assert(problemType != PROBLEM_HO || proofcontrol->ocb->type == KBO6);
-#endif
-
-   // Moved here by John from just before main saturation
-   if(SigHasUnimplementedInterpretedSymbols(proofstate->signature))
-   {
-      inf_sys_complete = false;
-   }
-
    if (!success && TableauOptions == 1)
    {
       TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures,
@@ -612,15 +600,24 @@ int main(int argc, char* argv[])
       goto cleanuptableau;
    }
    PERF_CTR_ENTRY(SatTimer);
+
+#ifdef ENABLE_LFHO
+   // if the problem is HO -> we have to use KBO6
+   assert(problemType != PROBLEM_HO || proofcontrol->ocb->type == KBO6);
+#endif
+
    if(!success)
    {
-      printf("# Warning: Approaching standard saturation\n");
       success = Saturate(proofstate, proofcontrol, step_limit,
                          proc_limit, unproc_limit, total_limit,
                          generated_limit, tb_insert_limit, answer_limit);
    }
    PERF_CTR_EXIT(SatTimer);
 
+   if(SigHasUnimplementedInterpretedSymbols(proofstate->signature))
+   {
+      inf_sys_complete = false;
+   }
 
    out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
    if(filter_sat)
@@ -823,8 +820,8 @@ int main(int argc, char* argv[])
                      relevancy_pruned,
                      raw_clause_no,
                      preproc_removed);
+   cleanuptableau:
 
- cleanuptableau:
 #ifndef FAST_EXIT
 #ifdef FULL_MEM_STATS
    fprintf(GlobalOut,
@@ -940,53 +937,6 @@ CLState_p process_options(int argc, char* argv[])
    {
       switch(handle->option_code)
       {
-		case OPT_TABLEAU_APR_DISTANCE:
-			AprDistance  = CLStateGetIntArg(handle, arg);
-			break;
-		case OPT_TABLEAU_CORES:
-			TableauCores = CLStateGetIntArg(handle, arg);
-			break;
-		case OPT_TABLEAU_SATURATION:
-			if (strcmp(arg, "1") == 0)
-			{
-				TableauSaturation = true;
-				break;
-			}
-			break;
-		case OPT_TABLEAU_EQUALITY:
-			if (strcmp(arg, "1") == 0)
-			{
-				TableauEquality = true;
-				break;
-			}
-			break;
-		case OPT_TABLEAU:
-			if (strcmp(arg,"0") == 0)
-			{
-				TableauOptions = 0;
-				break;
-			}
-			else if (strcmp(arg, "1") == 0)
-			{
-				TableauOptions = 1;
-				break;
-			}
-			else if (strcmp(arg, "2") == 0)
-			{
-				TableauOptions = 2;
-				break;
-			}
-			else 
-			{
-				Error("Must provide an argument of 0,1, or 2 for tableau use.", OTHER_ERROR);
-				assert(false);
-			}
-		case OPT_TABLEAU_DEPTH:
-				TableauDepth = CLStateGetIntArg(handle, arg);
-				break;
-      case OPT_TABLEAU_DOT_PRINT:
-            tableau_dot_out = arg;
-            break;
       case OPT_VERBOSE:
             Verbose = CLStateGetIntArg(handle, arg);
             break;
@@ -1785,6 +1735,53 @@ CLState_p process_options(int argc, char* argv[])
             break;
       case OPT_APP_ENCODE:
             app_encode = true;
+            break;
+		case OPT_TABLEAU_APR_DISTANCE:
+			AprDistance  = CLStateGetIntArg(handle, arg);
+			break;
+		case OPT_TABLEAU_CORES:
+			TableauCores = CLStateGetIntArg(handle, arg);
+			break;
+		case OPT_TABLEAU_SATURATION:
+			if (strcmp(arg, "1") == 0)
+			{
+				TableauSaturation = true;
+				break;
+			}
+			break;
+		case OPT_TABLEAU_EQUALITY:
+			if (strcmp(arg, "1") == 0)
+			{
+				TableauEquality = true;
+				break;
+			}
+			break;
+		case OPT_TABLEAU:
+			if (strcmp(arg,"0") == 0)
+			{
+				TableauOptions = 0;
+				break;
+			}
+			else if (strcmp(arg, "1") == 0)
+			{
+				TableauOptions = 1;
+				break;
+			}
+			else if (strcmp(arg, "2") == 0)
+			{
+				TableauOptions = 2;
+				break;
+			}
+			else
+			{
+				Error("Must provide an argument of 0,1, or 2 for tableau use.", OTHER_ERROR);
+				assert(false);
+			}
+		case OPT_TABLEAU_DEPTH:
+				TableauDepth = CLStateGetIntArg(handle, arg);
+				break;
+      case OPT_TABLEAU_DOT_PRINT:
+            tableau_dot_out = arg;
             break;
       default:
             assert(false && "Unknown option");

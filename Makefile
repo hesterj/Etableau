@@ -110,8 +110,7 @@ top: E
 # Create symbolic links
 links: remove_links
 	@mkdir -p include
-	@cd include; ls -a;
-	@cd include; find .. -not -path '../include/*' -name "[^.]*.h" -exec $(LN) -f {} \;
+	@cd include; find .. -not -path '../include/*' -name "[^.]*.h" -exec $(LN) {} \;
 	@mkdir -p lib
 #	@cd lib;find .. -not -path '../lib/*' -name "[^.]*.a" -exec $(LN) {} \;
 	@cd lib;\
@@ -139,9 +138,7 @@ rebuild:
 config:
 	echo 'Configuring build system'
 	$(MAKE) links
-	echo 'Depend...'
 	$(MAKE) depend
-	echo 'Done with depend...'
 	cd CONTRIB; $(MAKE) config
 
 
@@ -202,7 +199,6 @@ man: E
 
 # Build the single libraries
 E: links
-	@echo 'E: links'
 	@for subdir in $(CODE); do\
 		cd $$subdir; touch Makefile.dependencies; $(MAKE); cd ..;\
 	done;

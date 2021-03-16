@@ -1,4 +1,4 @@
-#include <etab_localunification.h>
+#include "etab_localunification.h"
 
 /*  This method updates the local variables of the node.
  * This is intended to be used on the leaf node of a branch.

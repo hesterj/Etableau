@@ -198,7 +198,6 @@ void SigInsertInternalCodes(Sig_p sig)
 {
    assert((SigSupportLists && sig->internal_symbols == SIG_CONS_CODE) ||
           (!SigSupportLists && sig->internal_symbols == SIG_FALSE_CODE));
-   assert(sig);
 
    sig->eqn_code    = SigInsertId(sig, "$eq",   2, true);
    SigSetPolymorphic(sig, sig->eqn_code, true);
@@ -416,10 +415,6 @@ void SigFixType(Sig_p sig, FunCode f_code)
 bool SigIsPolymorphic(Sig_p sig, FunCode f_code)
 {
    assert(f_code > 0);
-   //if (f_code > sig->f_count)
-      //{
-         //printf("%d %d\n", f_code, sig->f_count);
-      //}
    assert(f_code <= sig->f_count);
 
    return FuncQueryProp(&(sig->f_info[f_code]), FPTypePoly);
@@ -1317,12 +1312,15 @@ void SigDeclareType(Sig_p sig, FunCode f, Type_p type)
       {
          if(SigIsFixedType(sig, f))
          {
-            fprintf(stderr, "# Type conflict for %s between ",
-            SigFindName(sig, f));
-            TypePrintTSTP(stderr, sig->type_bank, fun->type);
-            fprintf(stderr, " and ");
-            TypePrintTSTP(stderr, sig->type_bank, type);
-            fprintf(stderr, "\n");
+            if(Verbose>=3)
+            {
+               fprintf(stderr, "# Type conflict for %s between ",
+                       SigFindName(sig, f));
+               TypePrintTSTP(stderr, sig->type_bank, fun->type);
+               fprintf(stderr, " and ");
+               TypePrintTSTP(stderr, sig->type_bank, type);
+               fprintf(stderr, "\n");
+            }
             Error("type error", INPUT_SEMANTIC_ERROR);
          }
          else

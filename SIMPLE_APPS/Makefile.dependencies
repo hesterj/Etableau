@@ -231,10 +231,9 @@ term2dag.o: term2dag.c /usr/include/stdc-predef.h /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h \
  ../include/clb_os_wrapper.h ../include/cio_basicparser.h \
  ../include/clb_ddarrays.h ../include/clb_memory.h \
- ../include/clb_pstacks.h /usr/include/execinfo.h \
- ../include/cio_scanner.h ../include/cio_streams.h \
- ../include/cio_initio.h ../include/cio_output.h ../include/cio_fileops.h \
- /usr/include/x86_64-linux-gnu/sys/stat.h \
+ ../include/clb_pstacks.h ../include/cio_scanner.h \
+ ../include/cio_streams.h ../include/cio_initio.h ../include/cio_output.h \
+ ../include/cio_fileops.h /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h ../include/clb_stringtrees.h \
  ../include/clb_avlgeneric.h /usr/include/ctype.h \
  ../include/cte_termbanks.h ../include/clb_numtrees.h \

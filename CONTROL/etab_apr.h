@@ -3,7 +3,7 @@
 #define APR
 
 #include <ccl_relevance.h>
-#include <etab_clausetableaux.h>
+#include "etab_clausetableaux.h"
 
 /*  Alternating Path Relevance functions and struct
  *  These are functions for a directed graph for the purpose of 

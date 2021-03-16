@@ -342,14 +342,7 @@ char* tstp_get_clauseform_id(DerivationCode op, int select,
          if(DCOpHasCnfArg1(op))
          {
             clause = clauseform;
-            if (clause->ident < 0)
-            {
-               sprintf(result, "c_0_%ld", clause->ident - LONG_MIN);
-            }
-            else
-            {
-               sprintf(result, "c_0_%ld", clause->ident);
-            }
+            sprintf(result, "c_0_%ld", clause->ident);
          }
          else if(DCOpHasFofArg1(op))
          {
@@ -365,14 +358,7 @@ char* tstp_get_clauseform_id(DerivationCode op, int select,
          if(DCOpHasCnfArg2(op))
          {
             clause = clauseform;
-            if (clause->ident < 0)
-            {
-               sprintf(result, "c_0_%ld", clause->ident - LONG_MIN);
-            }
-            else
-            {
-               sprintf(result, "c_0_%ld", clause->ident);
-            }
+            sprintf(result, "c_0_%ld", clause->ident);
          }
          else if(DCOpHasFofArg2(op))
          {
@@ -2340,16 +2326,11 @@ void DerivationPrintConditional(FILE* out, char* status, Derivation_p derivation
                                 Sig_p sig, ProofOutput print_derivation,
                                 bool print_analysis)
 {
-
-	if (print_derivation == POEtableau)
-    {
-      DerivationPrintNoFrame(out, derivation);
-    }
-  else if(print_derivation == POList)
+   if(print_derivation == POList)
    {
       DerivationPrint(GlobalOut, derivation, status);
    }
-   else if(print_derivation >= POGraph1)
+   else if(print_derivation >= POGraph1 && print_derivation != POEtableau)
    {
       DerivationDotPrint(GlobalOut, derivation, print_derivation);
    }
@@ -2404,31 +2385,6 @@ void DerivationComputeAndPrint(FILE* out, char* status, PStack_p root_clauses,
    DerivationFree(derivation);
 }
 
-void DerivationPrintNoFrame(FILE* out, Derivation_p derivation)
-{
-   PStackPointer sp;
-   Derived_p     node;
-
-   assert(derivation->ordered);
-
-   for(sp=PStackGetSP(derivation->ordered_deriv)-1; sp>=0; sp--)
-   {
-      node = PStackElementP(derivation->ordered_deriv, sp);
-      switch(DocOutputFormat)
-      {
-      case pcl_format:
-            DerivedPCLPrint(out, derivation->sig, node);
-            break;
-      case tstp_format:
-            DerivedTSTPPrint(out, derivation->sig, node);
-            break;
-      default:
-            fprintf(out, "# Output format not implemented.");
-            break;
-      }
-      fprintf(out, "\n");
-   }
-}
 
 
 
