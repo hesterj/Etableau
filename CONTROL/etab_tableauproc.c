@@ -60,7 +60,7 @@ ClauseTableau_p branch_select2(TableauSet_p open_branches, int current_depth, in
 	}
 	if (previously_selected_branches == (int) open_branches->members)
 	{
-		fprintf(GlobalOut, "# All previously selected...\n");
+		//fprintf(GlobalOut, "# All previously selected...\n");
 		*depth_status = ALL_PREVIOUSLY_SELECTED;
 	}
 	if (deepest)

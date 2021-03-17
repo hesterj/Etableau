@@ -345,7 +345,7 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     if (PStackGetSP(new_tableaux) < num_cores_available)
     {
         fprintf(GlobalOut, "# %ld tableaux and %d cores\n", PStackGetSP(new_tableaux), num_cores_available);
-        Error("# Trying to fork with too few tableaux...", 1);
+        return proof_found;
     }
 
     EPCtrlSet_p process_set = EPCtrlSetAlloc();
@@ -490,31 +490,18 @@ ClauseTableau_p EtableauGetNextTableau(TableauStack_p distinct_tableaux_stack,
     {
         if (new_tableaux)
         {
-            //fprintf(GlobalOut, "# Extending on a tableau from the new tableau stack while populating\n");
-            //if (*current_new_tableaux_index_p == PStackGetSP(new_tableaux))
             if (PStackEmpty(new_tableaux))
             {
-                //TSTPOUT(GlobalOut, "ResourceOut");
-                //fprintf(GlobalOut, "# There are %ld new_tableaux and %ld in distinct_tableaux_stack\n", PStackGetSP(new_tableaux), PStackGetSP(distinct_tableaux_stack));
-                //Error("Ran out of tableaux to extend on while populating", 10);
-                fprintf(stdout, "# Ran out of tableaux to extend on while populating\n");
-                fflush(stdout);
-                *current_index_p = 0;
-                new_current_tableau = PStackElementP(distinct_tableaux_stack, *current_index_p);
                 goto return_point;
             }
             assert(new_tableaux->current);
             new_current_tableau = PStackPopP(new_tableaux);
-            fprintf(stdout, "# Getting new_tableaux tableau...\n");
-            fflush(stdout);
             PStackPushP(distinct_tableaux_stack, new_current_tableau);
             goto return_point;
         }
         if ( PStackEmpty(distinct_tableaux_stack) )
         {
-            fprintf(GlobalOut, "# Unable to get any tableaux...\n");
-            fflush(stdout);
-            return NULL;
+            goto return_point;
         }
         *current_index_p = 0;
     }
