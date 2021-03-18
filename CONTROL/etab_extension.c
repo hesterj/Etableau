@@ -304,11 +304,12 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		open_branch_label = ReplaceLocalVariablesWithFresh(open_branch->master,
 														   open_branch_label,
 														   open_branch->local_variables);
+		ClauseSetExtractEntry(open_branch_label);
 		//ClauseSet_p label_storage = tableau_control->label_storage;
-		ClauseSetExtractEntry(open_branch->label);
-		ClauseFree(open_branch->label);
-		open_branch->label = open_branch_label;
-		assert(open_branch->label->set);
+		//ClauseSetExtractEntry(open_branch->label);
+		//ClauseFree(open_branch->label);
+		//open_branch->label = open_branch_label;
+		//assert(open_branch->label->set);
 		//ClauseSetInsert(label_storage, open_branch_label);
 	}
 #else
@@ -388,11 +389,12 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		leaf_clause = leaf_clause->succ;
 	}
 
-	// Do not work here.  The tableau of open branch has been copied and worked on.
-	// The current open branch is now "old" and will only be used for other extensions.
-   
    //  OK We're done
    return_point:
+	if (num_local_variables)
+	{
+		ClauseFree(open_branch_label);
+	}
    ClauseSetFree(new_leaf_clauses);
    return extensions_done;
 }

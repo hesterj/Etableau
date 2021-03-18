@@ -1700,7 +1700,7 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 
 	//fprintf(GlobalOut, "# SZS output start CNFRefutation for %s\n", tableaucontrol->problem_name);
 	fprintf(GlobalOut, "# SZS output start for %s\n", tableaucontrol->problem_name);
-	if (tableaucontrol->clausification_buffer) // Disabled for sanity
+	if (false && tableaucontrol->clausification_buffer) // Disabled for sanity
 	{
 		fprintf(GlobalOut, "# Begin clausification derivation\n");
 		fprintf(GlobalOut, "%s\n", tableaucontrol->clausification_buffer);

@@ -96,7 +96,13 @@ int APRCreateInterClauseEdges(APRControl_p control,
 										PStack_p relevant, 
 										PStackPointer t1_iter, 
 										int distance);
-										
+
+ClauseSet_p APRClauseSetProcess(ProofState_p proofstate,
+								ClauseSet_p input,
+								int relevance,
+								bool equality,
+								bool print_apr_graph);
+
 static inline void APRVerify();
 
 static inline void APRVerify()

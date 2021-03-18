@@ -850,6 +850,18 @@ long TFormulaEstimateClauses(TB_p bank, TFormula_p form, bool pos)
          RETURN_IF_LARGE(negres2);
          res = posres1*negres2+negres1*posres2;
       }
+      else if(form->f_code == bank->sig->xor_code)
+      {
+         posres1 = TFormulaEstimateClauses(bank, form->args[0], true);
+         RETURN_IF_LARGE(posres1);
+         posres2 = TFormulaEstimateClauses(bank, form->args[1], true);
+         RETURN_IF_LARGE(posres2);
+         negres1 = TFormulaEstimateClauses(bank, form->args[0], false);
+         RETURN_IF_LARGE(negres1);
+         negres2 = TFormulaEstimateClauses(bank, form->args[1], false);
+         RETURN_IF_LARGE(negres2);
+         res = posres1*posres2+negres1*negres2;
+      }
       else if(form->f_code == bank->sig->not_code)
       {
          negres1 = TFormulaEstimateClauses(bank, form->args[0], false);
@@ -904,6 +916,18 @@ long TFormulaEstimateClauses(TB_p bank, TFormula_p form, bool pos)
          negres2 = TFormulaEstimateClauses(bank, form->args[1], false);
          RETURN_IF_LARGE(negres2);
          res = posres1*posres2+negres1*negres2;
+      }
+      else if(form->f_code == bank->sig->xor_code)
+      {
+         posres1 = TFormulaEstimateClauses(bank, form->args[0], true);
+         RETURN_IF_LARGE(posres1);
+         posres2 = TFormulaEstimateClauses(bank, form->args[1], true);
+         RETURN_IF_LARGE(posres2);
+         negres1 = TFormulaEstimateClauses(bank, form->args[0], false);
+         RETURN_IF_LARGE(negres1);
+         negres2 = TFormulaEstimateClauses(bank, form->args[1], false);
+         RETURN_IF_LARGE(negres2);
+         res = posres1*negres2+negres1*posres2;
       }
       else if(form->f_code == bank->sig->not_code)
       {

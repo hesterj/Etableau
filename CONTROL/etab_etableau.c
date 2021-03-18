@@ -125,6 +125,7 @@ ErrorCodes ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 		return PROOF_FOUND;
 	}
 
+	max_proc = 100;
 
 
 	proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver

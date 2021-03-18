@@ -788,11 +788,11 @@ PStack_p APRRelevanceList(APRControl_p control, PList_p list, int relevance)
 */
 
 PStack_p APRRelevanceNeighborhood(Sig_p sig, 
-											 ClauseSet_p set, 
-											 PList_p list, 
-											 int relevance, 
-											 bool equality, 
-											 bool print_graph)
+								  ClauseSet_p set,
+								  PList_p list,
+								  int relevance,
+								  bool equality,
+								  bool print_graph)
 {
 	assert(set);
 	assert(set->anchor);
@@ -1537,9 +1537,9 @@ void APRProofStateProcessTest(ProofState_p proofstate, int relevance, bool equal
 	PStack_p start_nodes = APRCollectNodesFromList(control, conjectures);
 	PStack_p relevant_stack = PStackAlloc();
    APRGraphUpdateEdgesFromListStack(control, NULL,
-													 start_nodes, 
-													 relevant_stack, 
-													 10);
+									start_nodes,
+									relevant_stack,
+									10);
 	printf("# Printing APR graph. %ld of %ld relevant.\n", PStackGetSP(relevant_stack), total_number);
 	APRGraphCreateDOTClausesLabeled(control);
 	PStackFree(relevant_stack);
@@ -1547,4 +1547,54 @@ void APRProofStateProcessTest(ProofState_p proofstate, int relevance, bool equal
 	APRControlFree(control);
 	PListFree(conjectures);
 	printf("# APR finished\n");
+}
+
+/*  Return a set of clauses (output) within relevance distance of conjectures of the ClauseSet input
+*/
+
+ClauseSet_p APRClauseSetProcess(ProofState_p proofstate,
+								ClauseSet_p input,
+								int relevance,
+								bool equality,
+								bool print_apr_graph)
+{
+	Warning("# This method is not implemented, currently is just a copy and mutates the proofstate");
+	PList_p conjectures = PListAlloc();
+	PList_p non_conjectures = PListAlloc();
+	ClauseSet_p output = ClauseSetAlloc();
+	ClauseSet_p original = ClauseSetCopy(proofstate->terms, proofstate->axioms);
+	ClauseSetSplitConjectures(original,
+							  conjectures,
+							  non_conjectures);
+	PListFree(non_conjectures);
+	if (!PListEmpty(conjectures))
+	{
+		PStack_p relevant = APRRelevanceNeighborhood(proofstate->signature,
+													 original,
+													 conjectures,
+													 relevance, equality,
+													 print_apr_graph);
+		fprintf(GlobalOut, "# Relevant axioms at relevance distance %d: %ld of %ld\n",
+				relevance,
+				PStackGetSP(relevant),
+				proofstate->axioms->members);
+		if (PStackGetSP(relevant) < proofstate->axioms->members)
+		{
+			proofstate->state_is_complete = false;
+		}
+		while (!PStackEmpty(relevant))
+		{
+			Clause_p relevant_clause = PStackPopP(relevant);
+			ClauseSetMoveClause(output, relevant_clause);
+		}
+		PStackFree(relevant);
+	}
+	else
+	{
+		fprintf(GlobalOut, "# There were no conjectures to inspect for relevance.\n");
+	}
+	ClauseSetFree(original);
+	printf("# New number of relevant: %ld\n", output->members);
+	PListFree(conjectures);
+	return output;
 }

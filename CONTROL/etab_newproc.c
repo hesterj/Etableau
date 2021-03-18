@@ -412,6 +412,8 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     }
     // Wait for the children to exit...
     proof_found = EtableauWait(num_cores_available, process_set);
+    fflush(stdout);
+    fflush(GlobalOut);
     while (!PStackEmpty(buckets))
     {
         TableauStack_p trash = PStackPopP(buckets);

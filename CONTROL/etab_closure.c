@@ -134,10 +134,10 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	if (num_local_variables)
 	{
 		original_clause = ReplaceLocalVariablesWithFresh(tab, original_clause, tab->local_variables);
-		ClauseSetExtractEntry(tab->label);
-		ClauseFree(tab->label);
-		tab->label = original_clause;
-		original_clause = tab->label;
+		ClauseSetExtractEntry(original_clause);
+		//ClauseFree(tab->label);
+		//tab->label = original_clause;
+		//original_clause = tab->label;
 	}
 #else
 	long num_local_variables = 0;
@@ -162,12 +162,11 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		ClauseFree(tmp_unit_handle);
 		unit_handle = unit_handle->succ;
 	}
-	//fprintf(GlobalOut, "  Done.\n");
 
 	// Check against the tableau AND its edges
 	ClauseTableau_p temporary_tab = tab->parent;
 	int distance_up = 1;
-	while (temporary_tab != tab->master)
+	while (temporary_tab)
 	{
 		if (num_local_variables == 0)
 		{
@@ -176,18 +175,18 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		else
 		{
 			temporary_label = ReplaceLocalVariablesWithFresh(tab->master, temporary_tab->label, tab->local_variables);
-			ClauseSetExtractEntry(temporary_tab->label);
-			ClauseFree(temporary_tab->label);
-			temporary_tab->label = temporary_label;
-			assert(temporary_label->set);
-			//ClauseSetInsert(tab->master->tableaucontrol->label_storage, temporary_tab->label);
+			ClauseSetExtractEntry(temporary_label);
 		}
 		if ((subst = ClauseContradictsClause(tab, temporary_label, original_clause)))
 		{
 			tab->mark_int = distance_up;
 			tab->id = ClauseGetIdent(temporary_tab->label);
+			if (num_local_variables) ClauseFree(temporary_label); // If there were local variables, a temporary label was allocated, and needs to be freed
 			goto return_point;
 		}
+		if (num_local_variables) ClauseFree(temporary_label); // If there were local variables, a temporary label was allocated, and needs to be freed
+
+		// Now we check the original clause against the folding labels of the node we are at.
 		if (temporary_tab->folding_labels)
 		{
 			if ((subst = ClauseContradictsSet(temporary_tab, original_clause, temporary_tab->folding_labels, tab)))
@@ -201,10 +200,11 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 		temporary_tab = temporary_tab->parent;
 	}
 		
-	return NULL;
-	
-	return_point: // Only accessed if a contradiction was found
-	
+	return_point:
+	if (num_local_variables)  // If local variables were found, the original_clause was replaced with a local copy, that must be free'd
+	{
+		ClauseFree(original_clause);
+	}
 	return subst;
 }
 
@@ -217,6 +217,7 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 	assert(set->anchor);
 	assert(open_branch);
 	assert(leaf);
+	Subst_p subst = NULL;
 #ifdef LOCAL
 	bool use_local_variables = true;
 #else
@@ -226,7 +227,6 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 	if ((use_local_variables) && (open_branch->local_variables) && (PStackGetSP(open_branch->local_variables) > 0))
 	{
 		Clause_p handle = set->anchor->succ;
-		Subst_p subst = NULL;
 		PStack_p refreshed_clauses = PStackAlloc();
 		while (handle != set->anchor)
 		{
@@ -235,29 +235,23 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 			PStackPushP(refreshed_clauses, handle_clause);
 			if ((subst = ClauseContradictsClause(tab, leaf, handle_clause)))
 			{
-				while (!PStackEmpty(refreshed_clauses))
-				{
-					Clause_p fresh = PStackPopP(refreshed_clauses);
-					//ClauseSetInsert(set, fresh);
-					ClauseFree(fresh);
-				}
-				PStackFree(refreshed_clauses);
 				open_branch->id = ClauseGetIdent(handle_clause);
-				return subst;
+				goto local_return;
 			}
 			handle = handle->succ;
 		}
+		local_return:
 		while (!PStackEmpty(refreshed_clauses))
 		{
 			Clause_p fresh = PStackPopP(refreshed_clauses);
 			ClauseFree(fresh);
 		}
 		PStackFree(refreshed_clauses);
+		return subst;
 	}
 	else // no local variables- easy situation
 	{
 		Clause_p handle = set->anchor->succ;
-		Subst_p subst = NULL;
 		while (handle != set->anchor)
 		{
 			if ((subst = ClauseContradictsClause(tab, leaf, handle)))
@@ -268,7 +262,7 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 			handle = handle->succ;
 		}
 	}
-	return NULL;
+	return subst;
 }
 
 Subst_p ClauseContradictsSetSubst(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set, ClauseTableau_p open_branch, Subst_p subst)
