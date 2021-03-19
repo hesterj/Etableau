@@ -239,6 +239,11 @@ void RollBackEveryNode(ClauseTableau_p tab)
         ClauseSetFree(tab->folding_labels);
         tab->folding_labels = new_folding_labels;
     }
+    if (tab->local_variables)
+    {
+        PStackFree(tab->local_variables);
+        tab->local_variables = NULL;
+    }
     assert(tab->label);
     for (int i=0; i<tab->arity; i++)
     {

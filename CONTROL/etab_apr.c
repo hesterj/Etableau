@@ -1550,6 +1550,7 @@ void APRProofStateProcessTest(ProofState_p proofstate, int relevance, bool equal
 }
 
 /*  Return a set of clauses (output) within relevance distance of conjectures of the ClauseSet input
+ *  The clauses of output will be COPIES of the clauses of input- input remains unchanged.
 */
 
 ClauseSet_p APRClauseSetProcess(ProofState_p proofstate,

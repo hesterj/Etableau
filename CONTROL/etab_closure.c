@@ -84,19 +84,16 @@ int AttemptClosureRuleOnAllOpenBranches(ClauseTableau_p tableau)
 	{
 		ClauseTableau_p next_open_branch = open_branch->succ;
 		assert(open_branch);
+		assert(next_open_branch);
 		if (ClauseTableauBranchClosureRuleWrapper(open_branch))
 		{
 			assert(PStackGetSP(open_branch->backtracks));
-			//fprintf(GlobalOut, "# Branch closed\n");
 			num_branches_closed += 1;
-			//open_branch->open = false;
 			open_branch = next_open_branch;
 			assert(open_branch);
-			//TableauSetExtractEntry(open_branch->pred);
 			ClauseTableauUpdateVariables(tableau->master);
 			if (open_branch == tableau->open_branches->anchor)
 			{
-				//open_branch = open_branch->succ;
 				break;
 			}
 			if (tableau->open_branches->members == 0)
@@ -106,7 +103,6 @@ int AttemptClosureRuleOnAllOpenBranches(ClauseTableau_p tableau)
 		}
 		else
 		{
-			//fprintf(GlobalOut, "# Branch not closed\n");
 			assert(open_branch->id == 0);
 			open_branch = next_open_branch;
 		}
@@ -116,6 +112,7 @@ int AttemptClosureRuleOnAllOpenBranches(ClauseTableau_p tableau)
 
 /*  Checks clause for contradiction against the nodes of tab
  *  Used to avoid allocating tableau children until we know there is a successful extension
+ *  Uses local variables!
  * 
 */
 
@@ -208,6 +205,71 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	return subst;
 }
 
+/*  Checks clause for contradiction against the nodes of tab
+ *  This is a version of ClauseContradictsBranch that does not deal with local variables.
+ *
+*/
+
+Subst_p ClauseContradictsBranchSimple(ClauseTableau_p tab, Clause_p original_clause)
+{
+	assert(tab);
+	assert(tab->label);
+	assert(original_clause->set);
+	Subst_p subst = NULL;
+	Clause_p temporary_label = NULL;
+	ClauseSet_p clause_storage = original_clause->set;
+
+	// Check against the unit axioms
+	ClauseSet_p unit_axioms = tab->master->unit_axioms;
+	assert(unit_axioms);
+	Clause_p unit_handle = unit_axioms->anchor->succ;
+	while (unit_handle != unit_axioms->anchor)
+	{
+		assert(unit_handle);
+		Clause_p tmp_unit_handle = ClauseCopyFresh(unit_handle, tab->master);
+		if ((subst = ClauseContradictsClause(tab, original_clause, tmp_unit_handle)))
+		{
+			tab->mark_int = tab->depth;
+			tab->id = ClauseGetIdent(unit_handle);
+			// Marking the root would case some leaves to be folded up too high in one step, unsound.
+			ClauseFree(tmp_unit_handle);
+			goto return_point;
+		}
+		ClauseFree(tmp_unit_handle);
+		unit_handle = unit_handle->succ;
+	}
+
+	// Check against the tableau AND its edges
+	ClauseTableau_p temporary_tab = tab->parent;
+	int distance_up = 1;
+	while (temporary_tab)
+	{
+		temporary_label = temporary_tab->label;
+		if ((subst = ClauseContradictsClause(tab, temporary_label, original_clause)))
+		{
+			tab->mark_int = distance_up;
+			tab->id = ClauseGetIdent(temporary_tab->label);
+			goto return_point;
+		}
+
+		// Now we check the original clause against the folding labels of the node we are at.
+		if (temporary_tab->folding_labels)
+		{
+			if ((subst = ClauseContradictsSetSimple(temporary_tab, original_clause, temporary_tab->folding_labels, tab)))
+			{
+				DStrAppendStr(tab->info, " Fold. ");
+				tab->mark_int = distance_up;
+				goto return_point;
+			}
+		}
+		distance_up += 1;
+		temporary_tab = temporary_tab->parent;
+	}
+
+	return_point:
+	return subst;
+}
+
 /*  Needs testing
 */
 
@@ -265,43 +327,69 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 	return subst;
 }
 
-Subst_p ClauseContradictsSetSubst(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set, ClauseTableau_p open_branch, Subst_p subst)
+/*
+** As ClauseContradictsSet, but does not deal with local variables at all.
+*/
+
+Subst_p ClauseContradictsSetSimple(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set, ClauseTableau_p open_branch)
 {
+	assert(tab);
 	assert(set->anchor);
-	Subst_p success_subst = NULL;
-	if (PStackGetSP(open_branch->local_variables) > 0)
+	assert(open_branch);
+	assert(leaf);
+	Subst_p subst = NULL;
+
+	Clause_p handle = set->anchor->succ;
+	while (handle != set->anchor)
 	{
-		Clause_p handle = set->anchor->succ;
-		while (handle != set->anchor)
+		if ((subst = ClauseContradictsClause(tab, leaf, handle)))
 		{
-			//Clause_p handle_clause = ReplaceLocalVariablesWithFresh(tab->master, handle, open_branch->local_variables);
-			Clause_p handle_clause = ReplaceLocalVariablesWithFreshSubst(tab->master, handle, open_branch->local_variables, subst);
-			if ((success_subst = ClauseContradictsClauseSubst(leaf, handle_clause, subst)))
-			{
-				ClauseFree(handle_clause);
-				return subst;
-			}
-			ClauseFree(handle_clause);
-			handle = handle->succ;
+			open_branch->id = ClauseGetIdent(handle);
+			return subst;
 		}
+		handle = handle->succ;
 	}
-	else // no local variables- easy situation
-	{
-		Clause_p handle = set->anchor->succ;
-		//Subst_p subst = NULL;
-		while (handle != set->anchor)
-		{
-			Clause_p handle_clause = handle;
-			if (PStackGetSP(open_branch->local_variables) > 0)
-			{
-			}
-			//if ((subst = ClauseContradictsClause(tab, leaf, handle_clause)))
-			if ((success_subst = ClauseContradictsClauseSubst(leaf, handle_clause, subst)))
-			{
-				return subst;
-			}
-			handle = handle->succ;
-		}
-	}
-	return NULL;
+
+	return subst;
 }
+
+//Subst_p ClauseContradictsSetSubst(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set, ClauseTableau_p open_branch, Subst_p subst)
+//{
+	//assert(set->anchor);
+	//Subst_p success_subst = NULL;
+	//if (PStackGetSP(open_branch->local_variables) > 0)
+	//{
+		//Clause_p handle = set->anchor->succ;
+		//while (handle != set->anchor)
+		//{
+			////Clause_p handle_clause = ReplaceLocalVariablesWithFresh(tab->master, handle, open_branch->local_variables);
+			//Clause_p handle_clause = ReplaceLocalVariablesWithFreshSubst(tab->master, handle, open_branch->local_variables, subst);
+			//if ((success_subst = ClauseContradictsClauseSubst(leaf, handle_clause, subst)))
+			//{
+				//ClauseFree(handle_clause);
+				//return subst;
+			//}
+			//ClauseFree(handle_clause);
+			//handle = handle->succ;
+		//}
+	//}
+	//else // no local variables- easy situation
+	//{
+		//Clause_p handle = set->anchor->succ;
+		////Subst_p subst = NULL;
+		//while (handle != set->anchor)
+		//{
+			//Clause_p handle_clause = handle;
+			//if (PStackGetSP(open_branch->local_variables) > 0)
+			//{
+			//}
+			////if ((subst = ClauseContradictsClause(tab, leaf, handle_clause)))
+			//if ((success_subst = ClauseContradictsClauseSubst(leaf, handle_clause, subst)))
+			//{
+				//return subst;
+			//}
+			//handle = handle->succ;
+		//}
+	//}
+	//return NULL;
+//}

@@ -20,6 +20,8 @@ long UpdateLocalVariables(ClauseTableau_p node)
 {
 	long num_variables = 0;
 	PTree_p local_variables_tree = NULL;
+	assert(NodeIsLeaf(node));
+	assert(node->set);
 	if (node->local_variables)
 	{
 		PStackFree(node->local_variables);

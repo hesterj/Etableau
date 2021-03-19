@@ -81,7 +81,7 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 
 	//SilentTimeOut = true;
 	proofcontrol->heuristic_parms.prefer_initial_clauses = true;
-	TermBankUnbindAll(branch->terms);
+	//TermBankUnbindAll(branch->terms);
 	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
 	EtableauProofStateResetClauseSets(proofstate);
 	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
@@ -96,7 +96,7 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 															  selected_number_of_clauses_to_process);
 
 	EtableauProofStateResetClauseSets(proofstate);
-	TermBankUnbindAll(branch->terms);
+	//TermBankUnbindAll(branch->terms);
 	TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
 	//// Are definition causing inconsistency?  If they were this should help...
 	//DefStoreFree(proofstate->definition_store);
@@ -125,7 +125,7 @@ ErrorCodes ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
 		return PROOF_FOUND;
 	}
 
-	max_proc = 100;
+	//max_proc = 100;
 
 
 	proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver
@@ -170,39 +170,6 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 
 	long number_found __attribute__((unused)) = ClauseTableauCollectBranchCopyLabels(branch, proofstate->unprocessed, debug_branch_labels);
 
-	//assert(number_found >= (long) branch->depth);
-	//assert(PStackEmpty(branch_labels));
-
-	//ClauseSetDeleteCopies(proofstate->unprocessed);
-
-    //long preproc_removed __attribute__((unused)) = ClauseSetPreprocess(proofstate->axioms,
-																	   //proofstate->watchlist,
-																	   //proofstate->archive,
-																	   //proofstate->tmp_terms);
-	//if (preproc_removed)
-	//{
-		//fprintf(stdout, "# %ld clauses removed during preprocessing of branch...\n", preproc_removed);
-		//fflush(stdout);
-	//}
-	//fprintf(stdout, "# Printing high unprocessed of attempt %ld\n", branch->tableaucontrol->number_of_saturation_attempts);
-	//Clause_p print_handle = proofstate->unprocessed->anchor->succ;
-	//while (print_handle != proofstate->unprocessed->anchor)
-	//{
-		//if (ClauseGetIdent(print_handle)> 1000)
-		//{
-			//ClausePrint(stdout, print_handle, true);
-			//fprintf(stdout, "\n");
-		//}
-		//print_handle = print_handle->succ;
-	//}
-	//fprintf(stdout, "# Done printing high unprocessed\n");
-
-	//fprintf(stdout, "# (%ld) Printing branch of depth %d...\n", (long) getpid(), (int) branch->depth);
-	//fflush(stdout);
-	//ClauseStackPrint(stdout, debug_branch_labels);
-	//fprintf(stdout, "# Done printing branch...\n");
-	//fflush(stdout);
-
 	// This is the interreduction step!
     LiteralSelectionFun sel_strat =
 		proofcontrol->heuristic_parms.selection_strategy;
@@ -216,11 +183,6 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
     {
 		assert(ProofStateProcCardinality(proofstate));
 		ProofStateResetProcessedNoCopy(proofstate, proofcontrol, branch_labels);
-
-		//fprintf(stdout, "# (%ld) branch labels stack...\n", (long) getpid());
-		//ClauseStackPrint(stdout, branch_labels);
-		//fprintf(stdout, "# Done printing branch labels\n");
-		//fflush(stdout);
 
 		assert(!ClauseSetEmpty(proofstate->unprocessed));
 		proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver
@@ -242,37 +204,7 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	}
 	else
 	{
-		//fprintf(stdout, "# (%ld) Proof found during interreduction on branch...\n", (long) getpid());
-		//ClauseSetPrint(stdout, debug_unprocessed, true);
-		//fprintf(stdout, "# Done printing intereduction branch with label ");
-		//ClausePrint(stdout, branch->label, true);
-		//fprintf(stdout, "\n");
-		//fflush(stdout);
 	}
-	//else if (ClauseSetEmpty(proofstate->unprocessed)) // This is a debugging else if that should be removed...
-	//{
-		//if (!success &&
-			//inf_sys_complete &&
-			//proofstate->state_is_complete &&
-			//!(proofstate->has_interpreted_symbols))
-		//{
-			//fprintf(stdout, "# Satisfiable branch...\n");
-		//}
-		//else if (!success)
-		//{
-			//fprintf(stdout, "%d %d %d\n", inf_sys_complete,
-					//proofstate->state_is_complete,
-					//!(proofstate->has_interpreted_symbols));
-			//fprintf(stdout, "One of the other conditions failed...\n");
-		//}
-		//else
-		//{
-			//assert(success);
-			//assert(ClauseIsEmpty(success));
-			//fflush(stdout);
-		//}
-		//fflush(stdout);
-	//}
 
 	bool out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
 	if (!success &&
@@ -291,33 +223,6 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 		Sig_p sig = proofstate->signature;
 		assert(ClauseLiteralNumber(success) == 0);
 		assert(success->derivation);
-		//fprintf(stdout, "# (%ld) Derivation stack after %ld processed: %ld\n", (long) getpid(), PStackGetSP(success->derivation), (long) ProofStateProcCardinality(proofstate));
-		//DerivationStackTSTPPrint(stdout, sig, success->derivation);
-		//fprintf(stdout, "\n# (%ld) Done printing derivation stack\n", (long) getpid());
-		//fflush(stdout);
-		//if (branch->open_branches->members == 1)
-		//{
-			//fprintf(stdout, "# Printing %ld unprocessed...\n", ClauseSetCardinality(debug_unprocessed));
-			//ClauseSetPrint(stdout, debug_unprocessed, true);
-			//fprintf(stdout, "# Done printing unprocessed.\n");
-		//}
-//#ifdef DEBUG
-		//if (branch->open_branches->members == 1)
-		//{
-			//fprintf(stdout, "# Printing branch...\n");
-			//ClauseStackPrint(stdout, debug_branch_labels);
-			//fprintf(stdout, "# Done printing branch...\n");
-			//fprintf(stdout, "# Printing %ld unprocessed...\n", ClauseSetCardinality(debug_unprocessed));
-			//ClauseSetPrint(stdout, debug_unprocessed, true);
-			//fprintf(stdout, "# Done printing unprocessed.\n");
-			//fprintf(stdout, "# (%ld) Contradiction found after %ld processed\n", (long) getpid(), (long) ProofStateProcCardinality(proofstate));
-			//fflush(stdout);
-		//}
-		//if (ClauseLiteralNumber(success) != 0)
-		//{
-			//Error("A nonempty clause was returned by saturate.", 10);
-		//}
-//#endif
 		status = PROOF_FOUND;
 	}
 	PStackFree(branch_labels); // The branch labels are free'd elsewhere, so no need to worry about losing the pointers to them.

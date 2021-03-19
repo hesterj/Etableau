@@ -1438,14 +1438,14 @@ OptCell opts[] =
     '\0', "tableau-depth",
     OptArg, "1",
     "Specify an intege."
-    "This is the max depth of tableaux used in proof searc."
+    "This is the max depth of tableaux used in proof search."
     "Default is 1."}
     ,
     {
     OPT_TABLEAU_EQUALITY,
     '\0', "tableau-equality",
     OptArg, "0",
-    "Specify an intege."
+    "Specify an integer."
     "The defualt 0 means that no equality axioms will be added"
     "If this is enabled, SRT equality axioms will be added as extension candidates"
     "This makes the search space larger, but is necessary on some problems"}

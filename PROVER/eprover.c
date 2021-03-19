@@ -546,6 +546,29 @@ int main(int argc, char* argv[])
          ProofStateResetProcessed(proofstate, proofcontrol);
       }
    }
+   if (AprDistance)
+   {
+      fprintf(GlobalOut, "# Creating an APR relevancy neighborhood of distance %d from any conjectures\n", AprDistance);
+      ClauseSet_p apr_relevant = APRClauseSetProcess(proofstate,
+                                                     proofstate->unprocessed,
+                                                     AprDistance,
+                                                     true,
+                                                     false);
+      fprintf(GlobalOut, "# Size of apr relevant set: %ld\n", apr_relevant->members);
+      if (!ClauseSetEmpty(apr_relevant))
+      {
+         fprintf(GlobalOut, "# Only using APR relevant clauses in unprocessed\n");
+         ClauseSetFreeClauses(proofstate->unprocessed);
+         assert(ClauseSetEmpty(proofstate->unprocessed));
+         ProofStateResetProcessedSet(proofstate, proofcontrol, apr_relevant);
+      }
+      else
+      {
+         fprintf(GlobalOut, "# No APR relevant clauses selected, using original unprocessed set\n");
+      }
+      assert(ClauseSetEmpty(apr_relevant));
+      ClauseSetFree(apr_relevant);
+   }
    if (!success && TableauOptions == 1)
    {
       TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures,
