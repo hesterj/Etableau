@@ -45,6 +45,9 @@ int Etableau_n0(TableauControl_p tableaucontrol,
         ClauseSetInsertSet(extension_candidates, equality_axioms);
         ClauseSetFree(equality_axioms);
     }
+
+    //long unbound = TermBankUnbindAll(bank);
+    //fprintf(GlobalOut, "# Unound %ld terms before tableau proof search...\n", unbound);
     ClauseSet_p start_rule_candidates = EtableauGetStartRuleCandidates(proofstate, extension_candidates);
     fprintf(GlobalOut, "# There are %ld start rule candidates:\n", start_rule_candidates->members);
     ClauseSet_p unit_axioms = ClauseSetAlloc();

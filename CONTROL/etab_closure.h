@@ -1,7 +1,7 @@
 #ifndef CLOSURE
 #define CLOSURE
 
-#include <etab_localunification.h>
+#include "etab_localunification.h"
 
 bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab);
 int AttemptClosureRuleOnAllOpenBranches(ClauseTableau_p tableau);

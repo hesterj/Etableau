@@ -232,7 +232,15 @@ int FoldUpAtNode(ClauseTableau_p node)
 	if (node->depth == 0) return 0;
 	// Do not fold up leaf nodes
 	if (NodeIsLeaf(node)) return 0;
+	// Do not fold up nodes that were previously leaves
+	if (node->folding_blocked)
+	{
+		//printf("# blocked bad fold\n");
+		//fflush(stdout);
+		return 0;
+	}
 	// Do not fold up nodes that are not superclosed
+
 	int child_saturation_closed = NO_CHILDREN_CLOSED_BY_SATURATION;
 	if (!ClauseTableauMarkClosedNodes(node, &child_saturation_closed))
 	{
@@ -320,6 +328,15 @@ int FoldUpAtNode(ClauseTableau_p node)
 			//assert(deepest != node);
 			assert(node->folded_up);
 			flipped_label = ClauseCopy(node->label, node->terms);
+			//if (ClauseGetIdent(flipped_label) == 100981)
+			//{
+				//fprintf(stdout, "# Folding up the bastard\n");
+				//if (ClauseContradictsSet(node, flipped_label, node->master->unit_axioms, node))
+				//{
+					//fprintf(stdout, "# Contradicts unit axioms...\n");
+				//}
+				//fflush(stdout);
+			//}
 			ClauseFlipLiteralSign(flipped_label, flipped_label->literals);
 			ClauseTableauEdgeInsert(deepest->parent, flipped_label);
 			//ClauseSetInsertSet(deepest->parent->folding_labels, node->folding_labels);

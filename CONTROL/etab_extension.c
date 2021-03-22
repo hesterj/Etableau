@@ -96,6 +96,7 @@ ClauseSet_p SplitClauseFresh(TB_p bank, ClauseTableau_p tableau, Clause_p clause
 	Eqn_p literals = EqnListCopy(fresh_clause->literals, bank);
 	Eqn_p lit = NULL;
 	Clause_p leaf_clause = NULL;
+	ClauseRecomputeLitCounts(fresh_clause);
 	short literal_number = ClauseLiteralNumber(fresh_clause);
 	for (short i=0; i < literal_number; i++)
 	{
@@ -356,6 +357,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 																		 extension_candidate,
 																		 new_tableaux);
 			TableauExtensionFree(extension_candidate);
+			//assert(TermBankUnbindAll(open_branch->terms));
 			if (extended) // extension may not happen due to regularity
 			{
 				extensions_done++;

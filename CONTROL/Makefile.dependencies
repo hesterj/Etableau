@@ -3011,7 +3011,7 @@ etab_backtrack.o: etab_backtrack.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
  /usr/include/x86_64-linux-gnu/bits/socket2.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
- ../include/etab_etableau.h ../include/etab_foldingup.h
+ ../include/etab_etableau.h
 etab_clausetableaux.o: etab_clausetableaux.c /usr/include/stdc-predef.h \
  etab_clausetableaux.h ../include/clb_os_wrapper.h /usr/include/assert.h \
  /usr/include/features.h /usr/include/x86_64-linux-gnu/sys/cdefs.h \
@@ -3234,7 +3234,7 @@ etab_clausetableaux.o: etab_clausetableaux.c /usr/include/stdc-predef.h \
  etab_backtrack.h ../include/etab_extension.h ../include/etab_backtrack.h \
  ../include/etab_xgboost_interaction.h ../include/etab_foldingup.h \
  ../include/etab_closure.h ../include/etab_localunification.h \
- ../include/etab_etableau.h ../include/etab_foldingup.h
+ ../include/etab_etableau.h
 etab_closure.o: etab_closure.c /usr/include/stdc-predef.h \
  ../include/etab_closure.h ../include/etab_localunification.h \
  ../include/etab_clausetableaux.h ../include/clb_os_wrapper.h \
@@ -3459,11 +3459,10 @@ etab_closure.o: etab_closure.c /usr/include/stdc-predef.h \
  ../include/etab_backtrack.h ../include/etab_extension.h \
  ../include/etab_backtrack.h ../include/etab_xgboost_interaction.h \
  ../include/etab_foldingup.h ../include/etab_closure.h \
- ../include/etab_etableau.h ../include/etab_foldingup.h
+ ../include/etab_etableau.h
 etab_etableau.o: etab_etableau.c /usr/include/stdc-predef.h \
- etab_etableau.h ../include/etab_foldingup.h ../include/etab_closure.h \
- ../include/etab_localunification.h ../include/etab_clausetableaux.h \
- ../include/clb_os_wrapper.h /usr/include/assert.h \
+ etab_etableau.h etab_foldingup.h etab_closure.h etab_localunification.h \
+ etab_clausetableaux.h ../include/clb_os_wrapper.h /usr/include/assert.h \
  /usr/include/features.h /usr/include/x86_64-linux-gnu/sys/cdefs.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
  /usr/include/x86_64-linux-gnu/bits/long-double.h \
@@ -3658,8 +3657,8 @@ etab_etableau.o: etab_etableau.c /usr/include/stdc-predef.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
  ../include/cco_proofproc.h ../include/cco_scheduling.h \
  /usr/include/x86_64-linux-gnu/sys/wait.h ../include/cco_proc_ctrl.h \
- ../include/etab_apr.h /usr/include/time.h \
- /usr/include/x86_64-linux-gnu/bits/time.h \
+ ../include/etab_apr.h ../include/etab_clausetableaux.h \
+ /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
@@ -3681,10 +3680,9 @@ etab_etableau.o: etab_etableau.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
  /usr/include/x86_64-linux-gnu/bits/socket2.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
- etab_xgboost_interaction.h etab_foldingup.h etab_backtrack.h \
- ../include/etab_extension.h ../include/etab_backtrack.h \
- ../include/etab_xgboost_interaction.h ../include/etab_etableau.h \
- /usr/lib/gcc/x86_64-linux-gnu/9/include/omp.h
+ etab_xgboost_interaction.h etab_backtrack.h ../include/etab_extension.h \
+ ../include/etab_backtrack.h ../include/etab_xgboost_interaction.h \
+ ../include/etab_etableau.h /usr/lib/gcc/x86_64-linux-gnu/9/include/omp.h
 etab_extension.o: etab_extension.c /usr/include/stdc-predef.h \
  etab_extension.h etab_backtrack.h ../include/cco_proofproc.h \
  ../include/clb_os_wrapper.h /usr/include/assert.h \
@@ -3907,13 +3905,11 @@ etab_extension.o: etab_extension.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
  /usr/include/x86_64-linux-gnu/bits/socket2.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
- ../include/etab_xgboost_interaction.h ../include/etab_foldingup.h \
- etab_xgboost_interaction.h
+ ../include/etab_xgboost_interaction.h etab_xgboost_interaction.h
 etab_foldingup.o: etab_foldingup.c /usr/include/stdc-predef.h \
- etab_foldingup.h etab_closure.h ../include/etab_localunification.h \
- ../include/etab_clausetableaux.h ../include/clb_os_wrapper.h \
- /usr/include/assert.h /usr/include/features.h \
- /usr/include/x86_64-linux-gnu/sys/cdefs.h \
+ etab_foldingup.h etab_closure.h etab_localunification.h \
+ etab_clausetableaux.h ../include/clb_os_wrapper.h /usr/include/assert.h \
+ /usr/include/features.h /usr/include/x86_64-linux-gnu/sys/cdefs.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
  /usr/include/x86_64-linux-gnu/bits/long-double.h \
  /usr/include/x86_64-linux-gnu/gnu/stubs.h \
@@ -4107,8 +4103,8 @@ etab_foldingup.o: etab_foldingup.c /usr/include/stdc-predef.h \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
  ../include/cco_proofproc.h ../include/cco_scheduling.h \
  /usr/include/x86_64-linux-gnu/sys/wait.h ../include/cco_proc_ctrl.h \
- ../include/etab_apr.h /usr/include/time.h \
- /usr/include/x86_64-linux-gnu/bits/time.h \
+ ../include/etab_apr.h ../include/etab_clausetableaux.h \
+ /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
@@ -4574,7 +4570,7 @@ etab_newproc.o: etab_newproc.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
  /usr/include/x86_64-linux-gnu/bits/socket2.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
- ../include/etab_xgboost_interaction.h ../include/etab_foldingup.h \
+ ../include/etab_xgboost_interaction.h \
  /usr/include/x86_64-linux-gnu/sys/sysinfo.h /usr/include/linux/kernel.h \
  /usr/include/linux/sysinfo.h /usr/include/linux/types.h \
  /usr/include/x86_64-linux-gnu/asm/types.h \
@@ -4803,7 +4799,7 @@ etab_tableauproc.o: etab_tableauproc.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
  /usr/include/x86_64-linux-gnu/bits/socket2.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
- ../include/etab_xgboost_interaction.h ../include/etab_foldingup.h \
+ ../include/etab_xgboost_interaction.h \
  /usr/include/x86_64-linux-gnu/sys/sysinfo.h /usr/include/linux/kernel.h \
  /usr/include/linux/sysinfo.h /usr/include/linux/types.h \
  /usr/include/x86_64-linux-gnu/asm/types.h \
@@ -4814,10 +4810,9 @@ etab_tableauproc.o: etab_tableauproc.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/fcntl2.h ../include/cpp_interface.h
 etab_xgboost_interaction.o: etab_xgboost_interaction.c \
  /usr/include/stdc-predef.h etab_xgboost_interaction.h etab_foldingup.h \
- etab_closure.h ../include/etab_localunification.h \
- ../include/etab_clausetableaux.h ../include/clb_os_wrapper.h \
- /usr/include/assert.h /usr/include/features.h \
- /usr/include/x86_64-linux-gnu/sys/cdefs.h \
+ etab_closure.h etab_localunification.h etab_clausetableaux.h \
+ ../include/clb_os_wrapper.h /usr/include/assert.h \
+ /usr/include/features.h /usr/include/x86_64-linux-gnu/sys/cdefs.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
  /usr/include/x86_64-linux-gnu/bits/long-double.h \
  /usr/include/x86_64-linux-gnu/gnu/stubs.h \
@@ -5011,8 +5006,8 @@ etab_xgboost_interaction.o: etab_xgboost_interaction.c \
  ../include/cco_paramodulation.h ../include/cco_interpreted.h \
  ../include/cco_proofproc.h ../include/cco_scheduling.h \
  /usr/include/x86_64-linux-gnu/sys/wait.h ../include/cco_proc_ctrl.h \
- ../include/etab_apr.h /usr/include/time.h \
- /usr/include/x86_64-linux-gnu/bits/time.h \
+ ../include/etab_apr.h ../include/etab_clausetableaux.h \
+ /usr/include/time.h /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \

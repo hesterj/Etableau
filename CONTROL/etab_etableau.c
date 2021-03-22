@@ -81,7 +81,8 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 
 	//SilentTimeOut = true;
 	proofcontrol->heuristic_parms.prefer_initial_clauses = true;
-	//TermBankUnbindAll(branch->terms);
+	//long unbound_terms = TermBankUnbindAll(branch->terms);
+    //fprintf(GlobalOut, "# Unound %ld terms before branch saturation...\n", unbound_terms);
 	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
 	EtableauProofStateResetClauseSets(proofstate);
 	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
@@ -96,7 +97,8 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 															  selected_number_of_clauses_to_process);
 
 	EtableauProofStateResetClauseSets(proofstate);
-	//TermBankUnbindAll(branch->terms);
+	//unbound_terms = TermBankUnbindAll(branch->terms);
+    //fprintf(GlobalOut, "# Unound %ld terms after branch saturation...\n", unbound_terms);
 	TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
 	//// Are definition causing inconsistency?  If they were this should help...
 	//DefStoreFree(proofstate->definition_store);
@@ -163,14 +165,23 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	PStack_p branch_labels = PStackAlloc();
 	ErrorCodes status = RESOURCE_OUT;
 	bool process_branch_clauses_first = true;
-	//max_proc = 100;
 	assert(proofstate);
 	assert(proofcontrol);
 	PStack_p debug_branch_labels = NULL;
 
+#ifdef QUICKSAT
+	max_proc = 100;
+#endif
+
 	long number_found __attribute__((unused)) = ClauseTableauCollectBranchCopyLabels(branch, proofstate->unprocessed, debug_branch_labels);
 
+	//fprintf(stdout, "# Clauses of pid (%ld)\n", (long) getpid());
+	//ClauseTableauPrintBranch(branch);
+	//fprintf(stdout, "\n");
+	//fflush(stdout);
+
 	// This is the interreduction step!
+
     LiteralSelectionFun sel_strat =
 		proofcontrol->heuristic_parms.selection_strategy;
 	proofcontrol->heuristic_parms.selection_strategy = SelectNoGeneration;
@@ -202,9 +213,6 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 							   LLONG_MAX, LONG_MAX);
 		}
 	}
-	else
-	{
-	}
 
 	bool out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
 	if (!success &&
@@ -221,8 +229,12 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	if (success)
 	{
 		Sig_p sig = proofstate->signature;
-		assert(ClauseLiteralNumber(success) == 0);
 		assert(success->derivation);
+		//fprintf(stdout, "# Derivation of pid (%ld)\n", (long) getpid());
+		//DerivationStackTSTPPrint(stdout, sig, success->derivation);
+		//fprintf(stdout, "\nDone.\n");
+		//fflush(stdout);
+		assert(ClauseLiteralNumber(success) == 0);
 		status = PROOF_FOUND;
 	}
 	PStackFree(branch_labels); // The branch labels are free'd elsewhere, so no need to worry about losing the pointers to them.

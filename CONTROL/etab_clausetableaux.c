@@ -25,6 +25,7 @@ ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
 	handle->previously_saturated = 0;
 	handle->previously_selected = false;
 	handle->saturation_blocked = false;
+	handle->folding_blocked = false;
 	//handle->mark = NULL;
 	handle->mark_int = 0;
 	handle->folded_up = 0;
@@ -81,6 +82,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	handle->previously_saturated = tab->previously_saturated;
 	handle->previously_selected = false;
 	handle->saturation_blocked = false;
+	handle->folding_blocked = tab->folding_blocked;
 	
 	char *info = DStrCopy(tab->info);
 	handle->info = DStrAlloc();
@@ -201,6 +203,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	handle->old_folding_labels = PStackAlloc();
 	handle->previously_selected = false;
 	handle->saturation_blocked = false;
+	handle->folding_blocked = tab->folding_blocked;
 
 	handle->tableaucontrol = NULL;
 	handle->tableau_variables = NULL;
@@ -333,6 +336,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->tableau_variables = NULL;
 	handle->previously_selected = false;
 	handle->saturation_blocked = false;
+	handle->folding_blocked = false;
 	assert(parent);
 	assert(label);
 	parent->arity += 1;
@@ -824,8 +828,12 @@ void ClauseTableauPrintBranch(ClauseTableau_p branch)
 		}
 		fprintf(stdout, "\n");
 		ClausePrint(stdout, depth_check->label, true);
-		
 		fprintf(stdout, "\n");
+		if (depth_check->folding_labels)
+		{
+			ClauseSetPrint(stdout, depth_check->folding_labels, true);
+		}
+		
 		depth_check = depth_check->parent;
 	}
 	assert(depth_check->depth == 0);
@@ -1227,7 +1235,7 @@ void ClauseTableauPrintDOTGraphToFile(FILE* dotgraph, ClauseTableau_p tab)
 		}
 	}
 	fprintf(dotgraph, "\\n");
-	fprintf(dotgraph, " %ld, f:%d\"]\n", root_id, folds);
+	fprintf(dotgraph, " %ld, f:%d, fail: %ld\"]\n", root_id, folds, PStackGetSP(tab->failures));
 	
 	for (int i=0; i < tab->arity; i++)
 	{	
@@ -1287,6 +1295,7 @@ void ClauseTableauPrintDOTGraphChildren(ClauseTableau_p tab, FILE* dotgraph)
 	fprintf(dotgraph, "m:%d ", tab_mark_int);
 	fprintf(dotgraph, "id:%ld ", tab->id);
 	fprintf(dotgraph, "fu: %ld ", (long) tab->folded_up);
+	fprintf(dotgraph, "fail: %ld ", PStackGetSP(tab->failures));
 	fprintf(dotgraph, " s:%d\"]\n ", tab_saturation_closed);
 	fprintf(dotgraph,"   %ld -> %ld\n", parent_ident, ident);
 	

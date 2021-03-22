@@ -46,6 +46,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 			return false;
 		}
 		assert(tab->info);
+		tab->folding_blocked = true;
 		backtrack->completed = true;
 		//tab->mark_int = tab->depth;
 		SubstDStrPrint(tab->info, subst, tab->terms->sig, DEREF_NEVER);
@@ -79,7 +80,6 @@ int AttemptClosureRuleOnAllOpenBranches(ClauseTableau_p tableau)
 	int num_branches_closed = 0;
 	ClauseTableau_p open_branch = tableau->open_branches->anchor->succ;
 	assert(open_branch);
-	ClauseTableauUpdateVariables(tableau->master);
 	while (open_branch != tableau->open_branches->anchor)
 	{
 		ClauseTableau_p next_open_branch = open_branch->succ;
@@ -91,7 +91,6 @@ int AttemptClosureRuleOnAllOpenBranches(ClauseTableau_p tableau)
 			num_branches_closed += 1;
 			open_branch = next_open_branch;
 			assert(open_branch);
-			ClauseTableauUpdateVariables(tableau->master);
 			if (open_branch == tableau->open_branches->anchor)
 			{
 				break;
@@ -125,16 +124,20 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	Clause_p temporary_label = NULL;
 	ClauseSet_p clause_storage = original_clause->set;
 	Clause_p local_variables_replaced = NULL;
-	
+
+	ClauseTableauUpdateVariables(tab->master);
 #ifdef LOCAL
 	long num_local_variables = UpdateLocalVariables(tab);
 	if (num_local_variables)
 	{
 		original_clause = ReplaceLocalVariablesWithFresh(tab, original_clause, tab->local_variables);
 		ClauseSetExtractEntry(original_clause);
+		//assert(tab->label->set);
+		//ClauseSetExtractEntry(tab->label);
 		//ClauseFree(tab->label);
 		//tab->label = original_clause;
 		//original_clause = tab->label;
+		//ClauseTableauUpdateVariables(tab->master);
 	}
 #else
 	long num_local_variables = 0;
@@ -143,6 +146,7 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	// Check against the unit axioms
 	ClauseSet_p unit_axioms = tab->master->unit_axioms;
 	assert(unit_axioms);
+	assert(unit_axioms->members);
 	Clause_p unit_handle = unit_axioms->anchor->succ;
 	while (unit_handle != unit_axioms->anchor)
 	{
@@ -303,12 +307,7 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 			handle = handle->succ;
 		}
 		local_return:
-		while (!PStackEmpty(refreshed_clauses))
-		{
-			Clause_p fresh = PStackPopP(refreshed_clauses);
-			ClauseFree(fresh);
-		}
-		PStackFree(refreshed_clauses);
+		ClauseStackFree(refreshed_clauses);
 		return subst;
 	}
 	else // no local variables- easy situation

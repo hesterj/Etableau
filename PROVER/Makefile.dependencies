@@ -3536,7 +3536,7 @@ eprover.o: eprover.c /usr/include/stdc-predef.h ../include/clb_defines.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
  /usr/include/x86_64-linux-gnu/bits/socket2.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
- ../include/etab_xgboost_interaction.h ../include/etab_foldingup.h \
+ ../include/etab_xgboost_interaction.h \
  /usr/include/x86_64-linux-gnu/sys/sysinfo.h /usr/include/linux/kernel.h \
  /usr/include/linux/sysinfo.h /usr/include/linux/types.h \
  /usr/include/x86_64-linux-gnu/asm/types.h \
