@@ -54,29 +54,30 @@ long UpdateLocalVariables(ClauseTableau_p node)
 	}
 	num_variables = PTreeToPStack(local_variables, local_variables_tree);
 	node->local_variables = local_variables;
-	
-	//if (num_variables)
-	//{
+
+#ifndef NDEBUG
+	if (num_variables)
+	{
 		//printf("%ld Local variables found! ", num_variables);
-		//for (PStackPointer p = 0; p<PStackGetSP(local_variables); p++)
-		//{
-			//Term_p local_variable = PStackElementP(local_variables, p);
-			////printf("# Local variable ");
-			////TermPrint(GlobalOut, local_variable, sig,DEREF_ALWAYS);
-			////TermPrint(GlobalOut, local_variable, node->terms->sig, DEREF_ALWAYS);printf(" ");
-			//if (PTreeFind(&temp_variable_tree, local_variable))
-			//{
-				//printf("Found local variable in other branches var tree...\n");
-				//printf("Root of temp_variable_tree: %7p\n", temp_variable_tree->key);
-				//printf("Able to delete? %d\n", PTreeDeleteEntry(&temp_variable_tree, local_variable));
-				//printf("Root of temp_variable_tree: %7p\n", temp_variable_tree->key);
-				//printf("%ld nodes in temp_variable_tree.\n", PTreeNodes(temp_variable_tree));
-				////TermPrint(GlobalOut, temp_variable_tree->key, node->terms->sig, DEREF_ALWAYS);printf("\n");
-				//Error("Found local variable in another branch...", 1);
-			//}
-		//
-		//}
-	//}
+		for (PStackPointer p = 0; p<PStackGetSP(local_variables); p++)
+		{
+			Term_p local_variable = PStackElementP(local_variables, p);
+			//printf("# Local variable ");
+			//TermPrint(GlobalOut, local_variable, sig,DEREF_ALWAYS);
+			//TermPrint(GlobalOut, local_variable, node->terms->sig, DEREF_ALWAYS);printf(" ");
+			if (PTreeFind(&temp_variable_tree, local_variable))
+			{
+				printf("Found local variable in other branches var tree...\n");
+				printf("Root of temp_variable_tree: %7p\n", temp_variable_tree->key);
+				printf("Able to delete? %d\n", PTreeDeleteEntry(&temp_variable_tree, local_variable));
+				printf("Root of temp_variable_tree: %7p\n", temp_variable_tree->key);
+				printf("%ld nodes in temp_variable_tree.\n", PTreeNodes(temp_variable_tree));
+				//TermPrint(GlobalOut, temp_variable_tree->key, node->terms->sig, DEREF_ALWAYS);printf("\n");
+				Error("Found local variable in another branch...", 1);
+			}
+		}
+	}
+#endif
 
 	PStackFree(other_branches_vars_stack);
 	PTreeFree(temp_variable_tree);
@@ -115,6 +116,12 @@ long CollectVariablesAtNode(ClauseTableau_p node, PTree_p *var_tree)
    assert(node->label);
    
    num_collected += ClauseCollectVariables(node->label, var_tree);
+
+   for (PStackPointer p=0; p<PStackGetSP(node->old_labels); p++)
+   {
+	   Clause_p old_label = (Clause_p) PStackElementP(node->old_labels, p);
+	   num_collected += ClauseCollectVariables(old_label, var_tree);
+   }
 	
    Clause_p handle;
    if (node->folding_labels)
@@ -125,8 +132,19 @@ long CollectVariablesAtNode(ClauseTableau_p node, PTree_p *var_tree)
 		  num_collected += ClauseCollectVariables(handle, var_tree);
 	   }
    }
-	
-	return num_collected;
+
+   for (PStackPointer p=0; p<PStackGetSP(node->old_folding_labels); p++)
+   {
+	   ClauseSet_p old_fold_label_set = (ClauseSet_p) PStackElementP(node->old_folding_labels, p);
+	   Clause_p fold_handle;
+	   for(fold_handle = old_fold_label_set->anchor->succ; fold_handle != old_fold_label_set->anchor; fold_handle =
+			  fold_handle->succ)
+	   {
+		  num_collected += ClauseCollectVariables(fold_handle, var_tree);
+	   }
+   }
+
+   return num_collected;
 }
 
 long ClauseCollectVariablesStack(Clause_p clause, PStack_p stack)
@@ -229,6 +247,8 @@ bool AllBranchesAreLocal(ClauseTableau_p master)
 	return true;
 }
 
+// Collects variables occurring in all OPEN branches.
+
 void ClauseTableauCollectVariables(ClauseTableau_p tab, PTree_p *variables)
 {
 	ClauseTableau_p branch = tab->open_branches->anchor->succ;
@@ -237,6 +257,25 @@ void ClauseTableauCollectVariables(ClauseTableau_p tab, PTree_p *variables)
 		CollectVariablesOfBranch(branch, variables, true);
 		branch = branch->succ;
 	}
+}
+
+// Collects variables occurring in ALL branches.
+
+void ClauseTableauCollectVariables2(ClauseTableau_p tab, PTree_p *variables)
+{
+	PStack_p leaves = PStackAlloc();
+	ClauseTableauCollectLeavesStack(tab->master, leaves);
+	for (PStackPointer p=0; p<PStackGetSP(leaves); p++)
+	{
+		ClauseTableau_p branch = PStackElementP(leaves, p);
+		CollectVariablesOfBranch(branch, variables, true);
+	}
+	//while (branch != tab->open_branches->anchor)
+	//{
+		//CollectVariablesOfBranch(branch, variables, true);
+		//branch = branch->succ;
+	//}
+	PStackFree(leaves);
 }
 
 /*
@@ -251,6 +290,7 @@ void ClauseTableauUpdateVariables(ClauseTableau_p tab)
 	{
 		PTreeFree(tab->tableau_variables);
 	}
-	ClauseTableauCollectVariables(tab, &tableau_variables);
+	//ClauseTableauCollectVariables(tab, &tableau_variables);
+	ClauseTableauCollectVariables2(tab, &tableau_variables);
 	tab->tableau_variables = tableau_variables;
 }

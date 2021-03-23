@@ -954,7 +954,7 @@ bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 	{
 		int exit_status = -1;
 		int return_status = -1;
-		fprintf(stdout, "# Waiting...\n");
+		//fprintf(stdout, "# Waiting...\n");
 		pid_t exited_child = wait(&exit_status);
 		if (WIFEXITED(exit_status))
 		{
@@ -1037,7 +1037,7 @@ bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set)
 			}
 			case RESOURCE_OUT:
 			{
-				fprintf(GlobalOut, "# A child has run out of resources, likely tableaux.  Allowing others to continue.\n");
+				//fprintf(GlobalOut, "# A child has run out of resources, likely tableaux.  Allowing others to continue.\n");
 				break;
 			}
 			case INCOMPLETE_PROOFSTATE:

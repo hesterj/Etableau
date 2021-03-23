@@ -361,6 +361,12 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			if (extended) // extension may not happen due to regularity
 			{
 				extensions_done++;
+				//if (open_branch->id == 62)
+				//{
+					//ClauseTableauPrintDOTGraph(open_branch->master);
+					//fprintf(stdout, "# Extended with clause 62\n");
+					//fflush(stdout);
+				//}
 				//fprintf(stdout, "#");
 				tableau_control->number_of_extensions++;
 				if (tableau_control->branch_saturation_enabled)
@@ -795,7 +801,7 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
             assert(new_tableaux || number_of_extensions == 1); // Always return after one extension
 			*extended += number_of_extensions;
             //fprintf(GlobalOut, "#  Extended on a branch at depth %d...\n", open_branch->depth);
-            if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= tableaucontrol->multiprocessing_active)
+            if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= DESIRED_NUMBER_OF_TABLEAUX)
 			{
 				break;
 			}

@@ -10,6 +10,8 @@
  *  This is needed because there can be several extension steps to be done
 */
 
+
+
 typedef struct tableau_extension_cell
 {
 	Clause_p selected; // the clause being split

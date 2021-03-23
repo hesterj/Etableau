@@ -46,7 +46,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 			return false;
 		}
 		assert(tab->info);
-		tab->folding_blocked = true;
+		//tab->folding_blocked = true;
 		backtrack->completed = true;
 		//tab->mark_int = tab->depth;
 		SubstDStrPrint(tab->info, subst, tab->terms->sig, DEREF_NEVER);
@@ -302,6 +302,15 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 			if ((subst = ClauseContradictsClause(tab, leaf, handle_clause)))
 			{
 				open_branch->id = ClauseGetIdent(handle_clause);
+				if (open_branch->id == 9306)
+				{
+					fprintf(stdout, "9306\n");
+					ClausePrint(stdout, handle_clause, true);
+					fprintf(stdout, "\n");
+					ClausePrint(stdout, leaf, true);
+					fprintf(stdout, "\n");
+					fflush(stdout);
+				}
 				goto local_return;
 			}
 			handle = handle->succ;
@@ -318,6 +327,15 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 			if ((subst = ClauseContradictsClause(tab, leaf, handle)))
 			{
 				open_branch->id = ClauseGetIdent(handle);
+				if (open_branch->id == 9306)
+				{
+					fprintf(stdout, "9306\n");
+					ClausePrint(stdout, handle, true);
+					fprintf(stdout, "\n");
+					ClausePrint(stdout, leaf, true);
+					fprintf(stdout, "\n");
+					fflush(stdout);
+				}
 				return subst;
 			}
 			handle = handle->succ;

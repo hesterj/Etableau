@@ -157,6 +157,7 @@ void Backtrack(Backtrack_p bt)
     ClauseTableau_p master = bt->master;
     assert(master);
     assert(master->label);
+    assert(master == master->master);
     ClauseTableau_p position = GetNodeFromPosition(master, bt->position);
 
     DStrFree(position->info);
@@ -222,6 +223,8 @@ void RollBackEveryNode(ClauseTableau_p tab)
     PStackPointer p_labels = PStackGetSP(tab->old_labels);
     PStackPointer p_folding = PStackGetSP(tab->old_folding_labels);
     GCAdmin_p gc = tab->terms->gc;
+
+    assert(p_labels);
     if (p_labels)
     {
         assert(tab->old_labels->current);
@@ -231,6 +234,8 @@ void RollBackEveryNode(ClauseTableau_p tab)
         ClauseFree(tab->label);
         tab->label = new_label;
     }
+
+    assert(p_folding);
     if (p_folding)
     {
         assert(tab->old_folding_labels->current);
@@ -239,6 +244,10 @@ void RollBackEveryNode(ClauseTableau_p tab)
         ClauseSetFree(tab->folding_labels);
         tab->folding_labels = new_folding_labels;
     }
+    //GCDeregisterClauseSet(gc, new_folding_labels);
+    //ClauseSetFree(new_folding_labels);
+    //tab->folding_labels = ClauseSetAlloc();
+
     if (tab->local_variables)
     {
         PStackFree(tab->local_variables);
@@ -310,6 +319,7 @@ bool ExtensionIsFailure(ClauseTableau_p tab, Subst_p subst, long extension_id, s
     {
         Backtrack_p bt = PStackElementP(failures, i);
         // The empty substitution is not a failure substitution...
+        //if (PStackGetSP(subst) && BacktrackContainsSubst(bt, subst))
         if (PStackGetSP(subst) && (bt->id == extension_id) && (head_literal_position == bt->head_lit_position) && BacktrackContainsSubst(bt, subst))
         {
             return true;
@@ -334,6 +344,8 @@ bool BindingOccursInSubst(Binding_p binding, Subst_p subst)
         Term_p binding_var = binding->variable;
         Term_p binding_bound = binding->bind;
         //if ((var == binding_var) && (bound_var == binding_bound)) // Should probably not just do pointer comparisons...
+
+        //if (true) // Terms are ALWAYS shared
         if (var == binding_var) // Terms are ALWAYS shared
         {
             Subst_p subst = SubstAlloc();
@@ -347,6 +359,7 @@ bool BindingOccursInSubst(Binding_p binding, Subst_p subst)
             }
             SubstDelete(subst);
         }
+
     }
     return false;
 }

@@ -182,6 +182,7 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
     TableauSet_p open_branches = master->open_branches;
     while (true)
     {
+        assert(&depth_status);
         open_branch = (*branch_selection_function)(open_branches, current_depth, max_depth, &depth_status);
         if (depth_status == ALL_DEPTHS_EXCEEDED) // All of the open branches exceed our maximum depth, so we must backtrack
         {
@@ -235,7 +236,7 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         {
             assert(tableaucontrol->multiprocessing_active);
             //fprintf(GlobalOut, "# There are %ld new tableaux.\n", PStackGetSP(new_tableaux));
-            if (PStackGetSP(new_tableaux) >= (long) tableaucontrol->multiprocessing_active)
+            if (PStackGetSP(new_tableaux) >= DESIRED_NUMBER_OF_TABLEAUX)
             {
                 *backtrack_status = RETURN_NOW;
                 break;
@@ -253,7 +254,7 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
                 break;
             }
         }
-        else if (UNLIKELY(extended && tableaucontrol->number_of_extensions % 100 == 0))
+        else if (UNLIKELY(!new_tableaux && extended && tableaucontrol->number_of_extensions % 100 == 0))
         {
             *backtrack_status = NEXT_TABLEAU;
             break;
@@ -300,6 +301,9 @@ ClauseTableau_p EtableauProofSearchAtDepth_n2(TableauControl_p tableaucontrol,
        }
        current_depth++;
    }
+
+   // If we have reached the maximum depth, we need to select the next tableau.
+   if (current_depth == max_depth) backtrack_status = NEXT_TABLEAU;
 
    return NULL;
 }
@@ -443,11 +447,11 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
     {
         //ClauseTableau_p closed_tableau = EtableauProofSearch_n(tableaucontrol, initial_example, extension_candidates, max_depth);
         ClauseTableau_p closed_tableau = EtableauProofSearchAtDepth_n2(tableaucontrol,
-                                                                      current_tableau,
-                                                                      extension_candidates,
-                                                                      max_depth,
-                                                                      &status,
-                                                                      new_tableaux);
+                                                                       current_tableau,
+                                                                       extension_candidates,
+                                                                       max_depth,
+                                                                       &status,
+                                                                       new_tableaux);
         if (closed_tableau || current_tableau->open_branches->members == 0)
         {
             fprintf(GlobalOut, "# Report status... proof found\n");
@@ -456,13 +460,22 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
         }
         else
         {
+            if (status == BACKTRACK_OK)
+            {
+                //// This was formerly an error statement, I think we may be out of tableaux here...
+                Warning("Returned from n2 with status BACKTRACK_OK...");
+                status = NEXT_TABLEAU;
+                PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
+                ClauseTableauFree(current_tableau);
+            }
             assert(status == BACKTRACK_FAILURE || status == NEXT_TABLEAU || status == RETURN_NOW);
             if (status == BACKTRACK_FAILURE)
             {
+                //fprintf(GlobalOut, "# Freeing tableau due to backtrack failure\n");
                 PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
                 ClauseTableauFree(current_tableau);
-                current_tableau = NULL;
-                current_tableau_index = 0;
+                //current_tableau = NULL;
+                //current_tableau_index = 0;
             }
             //else if (status == NEXT_TABLEAU)
             //{

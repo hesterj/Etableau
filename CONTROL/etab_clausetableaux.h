@@ -33,6 +33,8 @@ struct tableaucontrol_cell;
 #define ALL_DEPTHS_EXCEEDED 1
 #define ALL_PREVIOUSLY_SELECTED 2
 
+#define DESIRED_NUMBER_OF_TABLEAUX 100000
+
 typedef struct clausetableau 
 {
 	ProofState_p state;

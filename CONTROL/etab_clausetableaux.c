@@ -629,6 +629,22 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 	
 	if (EqnUnify(a_eqn, b_eqn, subst))
 	{
+#ifndef NDEBUG
+		//Clause_p a_test = ClauseCopyOpt(a);
+		//Clause_p b_test = ClauseCopyOpt(b);
+		//fprintf(stdout, "A: ");
+		//ClausePrint(stdout, a_test, true);
+		//fprintf(stdout, "\nB: ");
+		//ClausePrint(stdout, a_test, true);
+		//fprintf(stdout, "\n...\n");
+		//fflush(stdout);
+		//Subst_p empty_subst = SubstAlloc();
+		//assert(EqnUnify(a_test->literals, b_test->literals, empty_subst));
+		//assert(PStackEmpty(empty_subst) && "Nonempty substitution for clauses that should be identical after unification");
+		//SubstDelete(empty_subst);
+		//ClauseFree(a_test);
+		//ClauseFree(b_test);
+#endif
 		return subst;
 	}
 	
@@ -1296,6 +1312,7 @@ void ClauseTableauPrintDOTGraphChildren(ClauseTableau_p tab, FILE* dotgraph)
 	fprintf(dotgraph, "id:%ld ", tab->id);
 	fprintf(dotgraph, "fu: %ld ", (long) tab->folded_up);
 	fprintf(dotgraph, "fail: %ld ", PStackGetSP(tab->failures));
+	fprintf(dotgraph, "fb: %d ", tab->folding_blocked);
 	fprintf(dotgraph, " s:%d\"]\n ", tab_saturation_closed);
 	fprintf(dotgraph,"   %ld -> %ld\n", parent_ident, ident);
 	
