@@ -236,7 +236,7 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         {
             assert(tableaucontrol->multiprocessing_active);
             //fprintf(GlobalOut, "# There are %ld new tableaux.\n", PStackGetSP(new_tableaux));
-            if (PStackGetSP(new_tableaux) >= DESIRED_NUMBER_OF_TABLEAUX)
+            if (PStackGetSP(new_tableaux) >= GetDesiredNumberOfTableaux(tableaucontrol))
             {
                 *backtrack_status = RETURN_NOW;
                 break;

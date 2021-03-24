@@ -1490,6 +1490,12 @@ void ClauseTableauRegisterStep(ClauseTableau_p tab)
 	tab->step = tab->master->max_step;
 }
 
+void ClauseTableauDeregisterStep(ClauseTableau_p tab)
+{
+	tab->master->max_step--;
+	tab->step = 0;
+}
+
 int TableauStepCmp(const void* tab1_intorp, const void* tab2_intorp)
 {
 	const IntOrP* step1 = (const IntOrP*) tab1_intorp;
@@ -1882,3 +1888,25 @@ void ClauseStackPrint(FILE* out, PStack_p stack)
 		fflush(stdout);
 	}
 }
+
+// Return false if the two clauses share variables
+bool ClausesAreDisjoint(Clause_p a, Clause_p b)
+{
+	PTree_p a_tree = NULL;
+	PTree_p b_tree = NULL;
+
+	bool result = true;
+	ClauseCollectVariables(a, &a_tree);
+	ClauseCollectVariables(b, &b_tree);
+
+	if (a_tree && b_tree && PTreeSharedElement(&a_tree, b_tree))
+	{
+		result = false;
+	}
+
+	PTreeFree(a_tree);
+	PTreeFree(b_tree);
+	//PTreeDisjoint()
+	return result;
+}
+

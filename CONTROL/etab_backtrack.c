@@ -166,6 +166,10 @@ void Backtrack(Backtrack_p bt)
     assert(position);
     assert(position->label);
     assert(position->id == bt->id);
+    if (bt->completed)
+    {
+        ClauseTableauDeregisterStep(position);
+    }
     if (BacktrackIsExtensionStep(bt) && bt->completed)
     {
         // delete the children

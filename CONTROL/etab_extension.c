@@ -305,18 +305,18 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		open_branch_label = ReplaceLocalVariablesWithFresh(open_branch->master,
 														   open_branch_label,
 														   open_branch->local_variables);
-		ClauseSetExtractEntry(open_branch_label);
-		//ClauseSet_p label_storage = tableau_control->label_storage;
-		//ClauseSetExtractEntry(open_branch->label);
-		//ClauseFree(open_branch->label);
-		//open_branch->label = open_branch_label;
-		//assert(open_branch->label->set);
-		//ClauseSetInsert(label_storage, open_branch_label);
+		//ClauseSetExtractEntry(open_branch_label);
+		assert(open_branch->label->set);
+		ClauseSetExtractEntry(open_branch->label);
+		ClauseFree(open_branch->label);
+		open_branch->label = open_branch_label;
+		assert(open_branch->label->set);
 	}
 #else
     long num_local_variables = 0;
 #endif
-	
+
+
 	Clause_p leaf_clause = new_leaf_clauses->anchor->succ;
 	short position = 0; // This is the position of the current leaf clause in the split clause
 	while (leaf_clause != new_leaf_clauses->anchor)
@@ -333,11 +333,30 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		assert(leaf_clause->literals);
 		assert(open_branch_label->literals);
 		assert(selected);
+#ifndef NDEBUG
+		if (!ClausesAreDisjoint(open_branch_label, leaf_clause))
+		{
+			fprintf(GlobalOut, "# Shared variables between parent and leaf in extension rule attempt...\n");
+			ClausePrint(GlobalOut, open_branch_label, true);
+			fprintf(GlobalOut, "\n");
+			ClausePrint(GlobalOut, leaf_clause, true);
+			fprintf(GlobalOut, "\n");
+			assert(false && "Variables should not be shared between parent and leaf clauses in an attempted extension step");
+		}
+#endif
 		Subst_p subst = SubstAlloc();
 		Subst_p success_subst = NULL;
 		
 		//fprintf(GlobalOut, "Clause A (%ld): ", split_clause_ident);ClausePrint(GlobalOut, leaf_clause, true);printf("\n");
 		//fprintf(GlobalOut, "Clause B (branch): ");ClausePrint(GlobalOut, open_branch_label, true);printf("\n");
+		//if (open_branch->step == 3)
+		//{
+			//fprintf(GlobalOut, "# potential step 3 before unification attempt\n");
+			//ClausePrint(GlobalOut, open_branch_label, true);
+			//fprintf(GlobalOut, "\n");
+			//ClausePrint(GlobalOut, leaf_clause, true);
+			//fprintf(GlobalOut, "\n");
+		//}
 		
 		// Here we are only doing the first possible extension- need to create a list of all of the extensions and do them...
 		// The subst, leaf_clause, new_leaf_clauses, will have to be reset, but the open_branch can remain the same since we have not affected it.
@@ -360,14 +379,15 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			//assert(TermBankUnbindAll(open_branch->terms));
 			if (extended) // extension may not happen due to regularity
 			{
-				extensions_done++;
-				//if (open_branch->id == 62)
+				//if (open_branch->step == 3)
 				//{
-					//ClauseTableauPrintDOTGraph(open_branch->master);
-					//fprintf(stdout, "# Extended with clause 62\n");
-					//fflush(stdout);
+					//fprintf(GlobalOut, "# potential step 3 successful\n");
+					//ClausePrint(GlobalOut, open_branch_label, true);
+					//fprintf(GlobalOut, "\n");
+					//ClausePrint(GlobalOut, leaf_clause, true);
+					//fprintf(GlobalOut, "\n");
 				//}
-				//fprintf(stdout, "#");
+				extensions_done++;
 				tableau_control->number_of_extensions++;
 				if (tableau_control->branch_saturation_enabled)
 				{
@@ -401,7 +421,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
    return_point:
 	if (num_local_variables)
 	{
-		ClauseFree(open_branch_label);
+		//ClauseFree(open_branch_label);
 	}
    ClauseSetFree(new_leaf_clauses);
    return extensions_done;
@@ -801,7 +821,7 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
             assert(new_tableaux || number_of_extensions == 1); // Always return after one extension
 			*extended += number_of_extensions;
             //fprintf(GlobalOut, "#  Extended on a branch at depth %d...\n", open_branch->depth);
-            if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= DESIRED_NUMBER_OF_TABLEAUX)
+            if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= GetDesiredNumberOfTableaux(tableaucontrol))
 			{
 				break;
 			}

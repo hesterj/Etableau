@@ -131,12 +131,11 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	if (num_local_variables)
 	{
 		original_clause = ReplaceLocalVariablesWithFresh(tab, original_clause, tab->local_variables);
-		ClauseSetExtractEntry(original_clause);
-		//assert(tab->label->set);
-		//ClauseSetExtractEntry(tab->label);
-		//ClauseFree(tab->label);
-		//tab->label = original_clause;
-		//original_clause = tab->label;
+		//ClauseSetExtractEntry(original_clause);
+		assert(tab->label->set);
+		ClauseSetExtractEntry(tab->label);
+		ClauseFree(tab->label);
+		tab->label = original_clause;
 		//ClauseTableauUpdateVariables(tab->master);
 	}
 #else
@@ -204,7 +203,7 @@ Subst_p ClauseContradictsBranch(ClauseTableau_p tab, Clause_p original_clause)
 	return_point:
 	if (num_local_variables)  // If local variables were found, the original_clause was replaced with a local copy, that must be free'd
 	{
-		ClauseFree(original_clause);
+		//ClauseFree(original_clause);
 	}
 	return subst;
 }
@@ -302,15 +301,6 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 			if ((subst = ClauseContradictsClause(tab, leaf, handle_clause)))
 			{
 				open_branch->id = ClauseGetIdent(handle_clause);
-				if (open_branch->id == 9306)
-				{
-					fprintf(stdout, "9306\n");
-					ClausePrint(stdout, handle_clause, true);
-					fprintf(stdout, "\n");
-					ClausePrint(stdout, leaf, true);
-					fprintf(stdout, "\n");
-					fflush(stdout);
-				}
 				goto local_return;
 			}
 			handle = handle->succ;
@@ -327,15 +317,6 @@ Subst_p ClauseContradictsSet(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set
 			if ((subst = ClauseContradictsClause(tab, leaf, handle)))
 			{
 				open_branch->id = ClauseGetIdent(handle);
-				if (open_branch->id == 9306)
-				{
-					fprintf(stdout, "9306\n");
-					ClausePrint(stdout, handle, true);
-					fprintf(stdout, "\n");
-					ClausePrint(stdout, leaf, true);
-					fprintf(stdout, "\n");
-					fflush(stdout);
-				}
 				return subst;
 			}
 			handle = handle->succ;

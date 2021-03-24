@@ -33,8 +33,6 @@ struct tableaucontrol_cell;
 #define ALL_DEPTHS_EXCEEDED 1
 #define ALL_PREVIOUSLY_SELECTED 2
 
-#define DESIRED_NUMBER_OF_TABLEAUX 100000
-
 typedef struct clausetableau 
 {
 	ProofState_p state;
@@ -121,6 +119,7 @@ void HCBClauseSetEvaluate(HCB_p hcb, ClauseSet_p clauses);
 ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set);
 ClauseSet_p ClauseSetFlatCopy(TB_p bank, ClauseSet_p set);
 Clause_p ClauseFlatCopyFresh(Clause_p clause, ClauseTableau_p tableau);
+bool ClausesAreDisjoint(Clause_p a, Clause_p b);
 
 Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau);  // Major memory hog
 
@@ -140,6 +139,7 @@ bool ClauseTableauBranchContainsLiteral(ClauseTableau_p branch, Eqn_p literal);
 bool ClauseTableauIsLeafRegular(ClauseTableau_p tab);
 
 void ClauseTableauRegisterStep(ClauseTableau_p tab);
+void ClauseTableauDeregisterStep(ClauseTableau_p tab);
 
 void ClauseTableauPrintDOTGraphToFile(FILE* file, ClauseTableau_p tab);
 void ClauseTableauPrintDOTGraph(ClauseTableau_p tab);
@@ -253,5 +253,11 @@ void EtableauStatusReport(TableauControl_p tableaucontrol,
                           ClauseTableau_p resulting_tab);
 int ClauseCmpByIdent(const void* clause1, const void* clause2);
 void ClauseStackPrint(FILE* out, PStack_p stack);
+
+inline int GetDesiredNumberOfTableaux(TableauControl_p control);
+inline int GetDesiredNumberOfTableaux(TableauControl_p control)
+{
+	return 2*(control->multiprocessing_active);
+}
 
 #endif
