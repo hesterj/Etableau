@@ -57,7 +57,8 @@ typedef struct clausetableau
 	long previously_saturated;  // If  branch has already been saturated this amount or more, don't do it!
 	long max_var;     // f_code of the maximal variable in the tableau
 	DStr_p info;    // Contains the substitution used to close this node
-	PStack_p local_variables; // The variables of the tableau that are local to the branch.
+	//PStack_p local_variables; // The variables of the tableau that are local to the branch.
+	PTree_p local_variables;
 	
 	 // Only present at root.  Contains variables that are present in the tableau.
 	PTree_p tableau_variables;

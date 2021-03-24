@@ -39,7 +39,7 @@
 /*                  Data types                                         */
 /*---------------------------------------------------------------------*/
 
-#define NAME         "eprover"
+#define NAME         "etableau"
 
 PERF_CTR_DEFINE(SatTimer);
 
@@ -968,6 +968,7 @@ CLState_p process_options(int argc, char* argv[])
             exit(NO_ERROR);
       case OPT_VERSION:
             fprintf(stdout, "E %s %s (%s)\n", VERSION, E_NICKNAME, ECOMMITID);
+            fprintf(stdout, "Etableau %s\n", ETABLEAU_VERSION);
             exit(NO_ERROR);
       case OPT_OUTPUT:
             outname = arg;

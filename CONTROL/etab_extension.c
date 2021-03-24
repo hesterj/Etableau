@@ -296,24 +296,10 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	assert(new_leaf_clauses->members);
 	Clause_p open_branch_label = open_branch->label;
 
-//				//tab->mark_int = distance_up;
 #ifdef LOCAL
-	long num_local_variables = UpdateLocalVariables(open_branch);
-	if (num_local_variables)
-	{
-		assert(PStackGetSP(open_branch->local_variables) > 0);
-		open_branch_label = ReplaceLocalVariablesWithFresh(open_branch->master,
-														   open_branch_label,
-														   open_branch->local_variables);
-		//ClauseSetExtractEntry(open_branch_label);
-		assert(open_branch->label->set);
-		ClauseSetExtractEntry(open_branch->label);
-		ClauseFree(open_branch->label);
-		open_branch->label = open_branch_label;
-		assert(open_branch->label->set);
-	}
+	UpdateLocalVariables(open_branch);
 #else
-    long num_local_variables = 0;
+	assert(open_branch->local_variables == NULL);
 #endif
 
 
@@ -344,9 +330,9 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			assert(false && "Variables should not be shared between parent and leaf clauses in an attempted extension step");
 		}
 #endif
-		Subst_p subst = SubstAlloc();
-		Subst_p success_subst = NULL;
-		
+		//Subst_p subst = SubstAlloc();
+		Subst_p subst = NULL;
+
 		//fprintf(GlobalOut, "Clause A (%ld): ", split_clause_ident);ClausePrint(GlobalOut, leaf_clause, true);printf("\n");
 		//fprintf(GlobalOut, "Clause B (branch): ");ClausePrint(GlobalOut, open_branch_label, true);printf("\n");
 		//if (open_branch->step == 3)
@@ -360,13 +346,13 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		
 		// Here we are only doing the first possible extension- need to create a list of all of the extensions and do them...
 		// The subst, leaf_clause, new_leaf_clauses, will have to be reset, but the open_branch can remain the same since we have not affected it.
-		if ((success_subst = ClauseContradictsClauseSubst(leaf_clause, open_branch_label, subst))) // stricter extension step
+		if ((subst = ClauseContradictsClause(open_branch, leaf_clause, open_branch_label))) // stricter extension step
 		{
 			subst_completed++;
 			assert(open_branch->master->label);
 			Clause_p head_clause = leaf_clause;
 			TableauExtension_p extension_candidate = TableauExtensionAlloc(selected,
-																		   success_subst, 
+																		   subst,
 																		   head_clause, 
 																		   new_leaf_clauses, 
 																		   open_branch,
@@ -406,12 +392,12 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 				}
 			}
 		}
-		else
-		{
-			// If an extension is attempted, the substitution is free'd in that method
-			// Otherwise, we must free it here
-			SubstDelete(subst);
-		}
+		//else
+		//{
+			//// If an extension is attempted, the substitution is free'd in that method
+			//// Otherwise, we must free it here
+			//SubstDelete(subst);
+		//}
 		//fprintf(GlobalOut, "# Next leaf clause...\n");
 		position++;
 		leaf_clause = leaf_clause->succ;
@@ -419,10 +405,6 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 
    //  OK We're done
    return_point:
-	if (num_local_variables)
-	{
-		//ClauseFree(open_branch_label);
-	}
    ClauseSetFree(new_leaf_clauses);
    return extensions_done;
 }

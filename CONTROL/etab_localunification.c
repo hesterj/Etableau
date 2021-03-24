@@ -22,12 +22,15 @@ long UpdateLocalVariables(ClauseTableau_p node)
 	PTree_p local_variables_tree = NULL;
 	assert(NodeIsLeaf(node));
 	assert(node->set);
-	if (node->local_variables)
-	{
-		PStackFree(node->local_variables);
-	}
-	PStack_p local_variables = PStackAlloc();
+	PTreeFree(node->local_variables);
+	node->local_variables = NULL;
+	//if (node->local_variables)
+	//{
+		//PTreeFree(node->local_variables);
+	//}
+	//PStack_p local_variables = PStackAlloc();
 	// Collect the variables in the current branch
+	Warning("The logic of this function is fucked up, we shouldn't be returning the intersection of the trees");
 	
 	num_variables += CollectVariablesOfBranch(node, &local_variables_tree, true);
 	
@@ -43,45 +46,23 @@ long UpdateLocalVariables(ClauseTableau_p node)
 		}
 		branch_iterator = branch_iterator->succ;
 	}
-	PStack_p other_branches_vars_stack = PStackAlloc();
-	PTreeToPStack(other_branches_vars_stack, temp_variable_tree);
-	
-	// If a variable occurs in another branch, remove it from the tree of local variables
-	while (!PStackEmpty(other_branches_vars_stack))
-	{
-		Term_p other_branch_variable = PStackPopP(other_branches_vars_stack);
-		PTreeDeleteEntry(&local_variables_tree, other_branch_variable);
-	}
-	num_variables = PTreeToPStack(local_variables, local_variables_tree);
-	node->local_variables = local_variables;
 
-#ifndef NDEBUG
-	if (num_variables)
-	{
-		//printf("%ld Local variables found! ", num_variables);
-		for (PStackPointer p = 0; p<PStackGetSP(local_variables); p++)
-		{
-			Term_p local_variable = PStackElementP(local_variables, p);
-			//printf("# Local variable ");
-			//TermPrint(GlobalOut, local_variable, sig,DEREF_ALWAYS);
-			//TermPrint(GlobalOut, local_variable, node->terms->sig, DEREF_ALWAYS);printf(" ");
-			if (PTreeFind(&temp_variable_tree, local_variable))
-			{
-				printf("Found local variable in other branches var tree...\n");
-				printf("Root of temp_variable_tree: %7p\n", temp_variable_tree->key);
-				printf("Able to delete? %d\n", PTreeDeleteEntry(&temp_variable_tree, local_variable));
-				printf("Root of temp_variable_tree: %7p\n", temp_variable_tree->key);
-				printf("%ld nodes in temp_variable_tree.\n", PTreeNodes(temp_variable_tree));
-				//TermPrint(GlobalOut, temp_variable_tree->key, node->terms->sig, DEREF_ALWAYS);printf("\n");
-				Error("Found local variable in another branch...", 1);
-			}
-		}
-	}
-#endif
-
-	PStackFree(other_branches_vars_stack);
+	long num_removed __attribute__((unused)) = PTreeDestrIntersection(&(local_variables_tree), temp_variable_tree);
 	PTreeFree(temp_variable_tree);
-	PTreeFree(local_variables_tree);
+	node->local_variables = local_variables_tree;
+	//PStack_p other_branches_vars_stack = PStackAlloc();
+	//PTreeToPStack(other_branches_vars_stack, temp_variable_tree);
+	//
+	//// If a variable occurs in another branch, remove it from the tree of local variables
+	//while (!PStackEmpty(other_branches_vars_stack))
+	//{
+		//Term_p other_branch_variable = PStackPopP(other_branches_vars_stack);
+		//PTreeDeleteEntry(&local_variables_tree, other_branch_variable);
+	//}
+	//num_variables = PTreeToPStack(local_variables, local_variables_tree);
+	//node->local_variables = local_variables;
+
+	//PStackFree(other_branches_vars_stack);
 	return num_variables;
 }
 
@@ -157,22 +138,33 @@ long ClauseCollectVariablesStack(Clause_p clause, PStack_p stack)
  *  This method incorporates the replacement of replacements of variables with fresh ones into subst.
 */
 
-Clause_p ReplaceLocalVariablesWithFreshSubst(ClauseTableau_p master, Clause_p clause, PStack_p local_variables, Subst_p subst)
+long ReplaceLocalVariablesWithFreshSubst(ClauseTableau_p master, Clause_p clause, PTree_p local_variables, Subst_p subst)
 {
-	Clause_p new_clause = NULL;
-	assert(PStackGetSP(local_variables));
-	for (PStackPointer p = 0; p < PStackGetSP(local_variables); p++)
-	{
-		Term_p old_var = PStackElementP(local_variables, p);
-		assert(old_var);
-		assert(old_var->f_code < 0);
-		Term_p fresh_var = ClauseTableauGetFreshVar(master->master, old_var);
-		assert(old_var != fresh_var);
-		assert(old_var->f_code != fresh_var->f_code);
-		SubstAddBinding(subst, old_var, fresh_var);
-	}
-	new_clause = ClauseCopy(clause, master->terms);
-	return new_clause;
+	assert(local_variables);
+	//Clause_p new_clause = NULL;
+	//assert(PStackGetSP(local_variables));
+	//for (PStackPointer p = 0; p < PStackGetSP(local_variables); p++)
+	//{
+		//Term_p old_var = PStackElementP(local_variables, p);
+		//assert(old_var);
+		//assert(old_var->f_code < 0);
+		//Term_p fresh_var = ClauseTableauGetFreshVar(master->master, old_var);
+		//assert(old_var != fresh_var);
+		//assert(old_var->f_code != fresh_var->f_code);
+		//SubstAddBinding(subst, old_var, fresh_var);
+	//}
+	PTree_p clause_variables = NULL;
+	long number_of_clause_variables __attribute__((unused)) = ClauseCollectVariables(clause, &(clause_variables));
+	long number_of_nonlocal_in_clause __attribute__((unused))  = PTreeDestrIntersection(&(clause_variables), local_variables);
+	PTreeFree(clause_variables);
+	return number_of_nonlocal_in_clause;
+}
+
+// Only call this after the local variables of the tableau have been updated.
+
+bool VarIsLocal(ClauseTableau_p open_branch, Term_p variable)
+{
+	return false;
 }
 
 /*  Only call this method if the local variables of the tableau have been udpated!

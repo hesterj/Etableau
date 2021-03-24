@@ -43,7 +43,6 @@ ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
 	handle->control = NULL;
 	handle->state = NULL;
 	handle->succ = NULL;
-	handle->local_variables = NULL;
 	handle->open_branches = NULL;
 	handle->children = NULL;
 	handle->label = NULL;
@@ -51,6 +50,8 @@ ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
 	handle->parent = NULL;
 	handle->open = true;
 
+	//handle->local_variables = PStackAlloc();
+	handle->local_variables = NULL;
 	handle->old_labels = PStackAlloc();
 	handle->old_folding_labels = PStackAlloc();
 	handle->master_backtracks = PStackAlloc();
@@ -350,7 +351,6 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->label = label;
 	handle->id = 0;
 	handle->head_lit = false;
-	handle->local_variables = NULL;
 	handle->control = parent->control;
 	handle->max_var = parent->max_var;
 	handle->set = NULL;
@@ -374,6 +374,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->master_backtracks = NULL;
 	handle->backtracks = PStackAlloc();
 	handle->failures = PStackAlloc();
+	handle->local_variables = NULL;
 
 	return handle;
 }
@@ -414,10 +415,13 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	{
 		ClauseSetFree(trash->unit_axioms);
 	}
-	if (trash->local_variables)
-	{
-		PStackFree(trash->local_variables);
-	}
+	//assert(trash->local_variables);
+	PTreeFree(trash->local_variables);
+	//if (trash->local_variables)
+	//{
+		//PStackFree(trash->local_variables);
+		//PStackFree(trash->local_variables);
+	//}
 	if (trash->folding_labels)
 	{
 		GCDeregisterClauseSet(gc, trash->folding_labels);
@@ -624,9 +628,22 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 	
 	if (EqnIsPositive(a_eqn) && EqnIsPositive(b_eqn)) return NULL;
 	if (EqnIsNegative(a_eqn) && EqnIsNegative(b_eqn)) return NULL;
-	
+
 	Subst_p subst = SubstAlloc();
-	
+
+#ifdef LOCAL
+	assert(tab->local_variables);
+	ReplaceLocalVariablesWithFreshSubst(tab, a, tab->local_variables, subst);
+	a_eqn = EqnCopyOpt(a_eqn);
+
+	SubstBacktrack(subst);
+
+	ReplaceLocalVariablesWithFreshSubst(tab, b, tab->local_variables, subst);
+	b_eqn = EqnCopyOpt(b_eqn);
+
+#endif
+
+
 	if (EqnUnify(a_eqn, b_eqn, subst))
 	{
 #ifndef NDEBUG
@@ -645,43 +662,49 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 		//ClauseFree(a_test);
 		//ClauseFree(b_test);
 #endif
-		return subst;
+		goto return_point;
 	}
+
 	
 	SubstDelete(subst);
-	
-	return NULL;
+	subst = NULL;
+	return_point:
+#ifdef LOCAL
+		EqnListFree(a_eqn);
+		EqnListFree(b_eqn);
+#endif
+	return subst;
 }
 
-Subst_p ClauseContradictsClauseSubst(Clause_p a, Clause_p b, Subst_p subst)
-{
-	assert (a && b);
-	if (a==b) return NULL;  // Easy case...
-	//if (!ClauseIsUnit(a) || !ClauseIsUnit(b)) return 0;  // Should not happen
-	Eqn_p a_eqn = a->literals;
-	Eqn_p b_eqn = b->literals;
-	assert(a_eqn);
-	assert(b_eqn);
-	bool success = false;
-	
-	if (EqnIsPositive(a_eqn) && EqnIsPositive(b_eqn)) return NULL;
-	if (EqnIsNegative(a_eqn) && EqnIsNegative(b_eqn)) return NULL;
-	
-	if ((success = EqnUnify(a_eqn, b_eqn, subst)))
-	{
-		//for (PStackPointer p = 0; p < PStackGetSP(subst); p++)
-		//{
-			//Term_p var = PStackElementP(subst, p); 
-			//Type_p var_type = var->type;
-			//Term_p binding = var->binding;
-			//Type_p bind_type = binding->type;
-			//assert(var_type == bind_type);
-		//}
-		return subst;
-	}
-	
-	return NULL;
-}
+//Subst_p ClauseContradictsClauseSubst(Clause_p a, Clause_p b, Subst_p subst)
+//{
+	//assert (a && b);
+	//if (a==b) return NULL;  // Easy case...
+	////if (!ClauseIsUnit(a) || !ClauseIsUnit(b)) return 0;  // Should not happen
+	//Eqn_p a_eqn = a->literals;
+	//Eqn_p b_eqn = b->literals;
+	//assert(a_eqn);
+	//assert(b_eqn);
+	//bool success = false;
+//
+	//if (EqnIsPositive(a_eqn) && EqnIsPositive(b_eqn)) return NULL;
+	//if (EqnIsNegative(a_eqn) && EqnIsNegative(b_eqn)) return NULL;
+//
+	//if ((success = EqnUnify(a_eqn, b_eqn, subst)))
+	//{
+		////for (PStackPointer p = 0; p < PStackGetSP(subst); p++)
+		////{
+			////Term_p var = PStackElementP(subst, p);
+			////Type_p var_type = var->type;
+			////Term_p binding = var->binding;
+			////Type_p bind_type = binding->type;
+			////assert(var_type == bind_type);
+		////}
+		//return subst;
+	//}
+//
+	//return NULL;
+//}
 
 ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set)
 {
@@ -1488,6 +1511,24 @@ void ClauseTableauRegisterStep(ClauseTableau_p tab)
 {
 	tab->master->max_step++;
 	tab->step = tab->master->max_step;
+
+#ifdef PRINT_DOT_STEPS
+	DStr_p file_location = DStrAlloc();
+	DStrAppendStr(file_location, "/home/hesterj/Projects/Testing/DOT/step");
+	DStrAppendInt(file_location, (long) tab->step);
+	DStrAppendStr(file_location, ".dot");
+	FILE* after_extension = fopen(DStrView(file_location), "w+");
+	if (!after_extension)
+	{
+		Warning("Unable to open file for DOT graph");
+	}
+	else
+	{
+		ClauseTableauPrintDOTGraphToFile(after_extension, tab->master);
+	}
+	fclose(after_extension);
+	DStrFree(file_location);
+#endif
 }
 
 void ClauseTableauDeregisterStep(ClauseTableau_p tab)
