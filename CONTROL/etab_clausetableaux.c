@@ -711,16 +711,19 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 #ifdef LOCAL
 	if (tab->local_variables)
 	{
-		while (!PStackEmpty(a_local_variables))
+		if (subst)
 		{
-			Term_p local_variable = PStackPopP(a_local_variables);
-			Term_p fresh_variable = PStackPopP(a_fresh_variables);
-			if (CAN_DEREF(fresh_variable))
+			while (!PStackEmpty(a_local_variables))
 			{
-				SubstAddBinding(subst, local_variable, fresh_variable);
+				Term_p local_variable = PStackPopP(a_local_variables);
+				Term_p fresh_variable = PStackPopP(a_fresh_variables);
+				if (!local_variable->binding)
+				{
+					SubstAddBinding(subst, local_variable, fresh_variable);
+				}
 			}
+			assert(PStackEmpty(a_fresh_variables));
 		}
-		assert(PStackEmpty(a_fresh_variables));
 		PStackFree(a_local_variables);
 		PStackFree(a_fresh_variables);
 		EqnListFree(a_eqn);
@@ -729,36 +732,6 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 #endif
 	return subst;
 }
-
-//Subst_p ClauseContradictsClauseSubst(Clause_p a, Clause_p b, Subst_p subst)
-//{
-	//assert (a && b);
-	//if (a==b) return NULL;  // Easy case...
-	////if (!ClauseIsUnit(a) || !ClauseIsUnit(b)) return 0;  // Should not happen
-	//Eqn_p a_eqn = a->literals;
-	//Eqn_p b_eqn = b->literals;
-	//assert(a_eqn);
-	//assert(b_eqn);
-	//bool success = false;
-//
-	//if (EqnIsPositive(a_eqn) && EqnIsPositive(b_eqn)) return NULL;
-	//if (EqnIsNegative(a_eqn) && EqnIsNegative(b_eqn)) return NULL;
-//
-	//if ((success = EqnUnify(a_eqn, b_eqn, subst)))
-	//{
-		////for (PStackPointer p = 0; p < PStackGetSP(subst); p++)
-		////{
-			////Term_p var = PStackElementP(subst, p);
-			////Type_p var_type = var->type;
-			////Term_p binding = var->binding;
-			////Type_p bind_type = binding->type;
-			////assert(var_type == bind_type);
-		////}
-		//return subst;
-	//}
-//
-	//return NULL;
-//}
 
 ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set)
 {

@@ -235,7 +235,6 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         if (UNLIKELY(new_tableaux))
         {
             assert(tableaucontrol->multiprocessing_active);
-            //fprintf(GlobalOut, "# There are %ld new tableaux.\n", PStackGetSP(new_tableaux));
             if (PStackGetSP(new_tableaux) >= GetDesiredNumberOfTableaux(tableaucontrol))
             {
                 *backtrack_status = RETURN_NOW;
@@ -244,9 +243,6 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         }
         if (!new_tableaux && open_branch->set) // If the open branch is still in a set after the extension rule attempt, it means it was not able to be extended and so should be backtracked
         {
-            //fprintf(GlobalOut, "# Backtracking due to branch still open, %ld remaining\n", PStackGetSP(master->master_backtracks));
-            //DStrView(open_branch->info);
-            //fprintf(GlobalOut, "^ info\n" );
             bool backtrack_successful = BacktrackWrapper(master, true);
             if (!backtrack_successful)
             {
