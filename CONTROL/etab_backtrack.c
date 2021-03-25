@@ -219,7 +219,6 @@ void Backtrack(Backtrack_p bt)
     ClauseTableauUpdateVariables(master);
 
     assert(position->label);
-    assert(position->local_variables);
     return;
 }
 
@@ -253,7 +252,6 @@ void RollBackEveryNode(ClauseTableau_p tab)
     //ClauseSetFree(new_folding_labels);
     //tab->folding_labels = ClauseSetAlloc();
 
-    assert(tab->local_variables);
     PTreeFree(tab->local_variables);
     tab->local_variables = NULL;
 

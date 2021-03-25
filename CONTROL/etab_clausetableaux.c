@@ -630,17 +630,25 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 	if (EqnIsNegative(a_eqn) && EqnIsNegative(b_eqn)) return NULL;
 
 	Subst_p subst = SubstAlloc();
+	PStack_p a_local_variables = NULL;
+	PStack_p a_corresponding_bindings = NULL;
 
 #ifdef LOCAL
-	assert(tab->local_variables);
-	ReplaceLocalVariablesWithFreshSubst(tab, a, tab->local_variables, subst);
-	a_eqn = EqnCopyOpt(a_eqn);
+	if (tab->local_variables)
+	{
+		a_local_variables = PStackAlloc();
+		a_corresponding_bindings = PStackAlloc();
+		// This is still not correct
+		// There needs to be a way for the backtracked variables of a_eqn to be rebound
+		// They must be rebound to the appropriate fresh variables in b_eqn
+		// Probably have to think about positions here.
+		ReplaceLocalVariablesWithFreshSubst(tab, a, tab->local_variables, subst);
+		a_eqn = EqnCopyOpt(a_eqn);
 
-	SubstBacktrack(subst);
-
-	ReplaceLocalVariablesWithFreshSubst(tab, b, tab->local_variables, subst);
-	b_eqn = EqnCopyOpt(b_eqn);
-
+		SubstBacktrack(subst);
+		ReplaceLocalVariablesWithFreshSubst(tab, b, tab->local_variables, subst);
+		b_eqn = EqnCopyOpt(b_eqn);
+	}
 #endif
 
 
@@ -670,8 +678,13 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 	subst = NULL;
 	return_point:
 #ifdef LOCAL
+	if (tab->local_variables)
+	{
+		PStackFree(a_local_variables);
+		PStackFree(a_corresponding_bindings);
 		EqnListFree(a_eqn);
 		EqnListFree(b_eqn);
+	}
 #endif
 	return subst;
 }
@@ -1585,6 +1598,8 @@ void ClauseTableauTPTPPrint(ClauseTableau_p tab)
 Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var)
 {
 	assert(tab == tab->master);
+	assert(old_var);
+	assert(TermIsVar(old_var));
 	FunCode var_funcode = tab->max_var -2;
 	assert(var_funcode%2 == 0);
 	bool fresh_found = false;
@@ -1598,6 +1613,7 @@ Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var)
 		{
 			potential_fresh = VarBankVarAssertAlloc(varbank, var_funcode, old_var->type);
 		}
+		assert(potential_fresh);
 		PTree_p found = PTreeFind(&(tab->tableau_variables), potential_fresh);
 		if (!found)
 		{

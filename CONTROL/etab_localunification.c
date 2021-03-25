@@ -23,15 +23,8 @@ long UpdateLocalVariables(ClauseTableau_p node)
 	assert(NodeIsLeaf(node));
 	assert(node->set);
 	PTreeFree(node->local_variables);
-	node->local_variables = NULL;
-	//if (node->local_variables)
-	//{
-		//PTreeFree(node->local_variables);
-	//}
-	//PStack_p local_variables = PStackAlloc();
-	// Collect the variables in the current branch
-	Warning("The logic of this function is fucked up, we shouldn't be returning the intersection of the trees");
-	
+
+	// Collect the variables of our branch
 	num_variables += CollectVariablesOfBranch(node, &local_variables_tree, true);
 	
 	// Collect the variables of the other branches
@@ -41,29 +34,17 @@ long UpdateLocalVariables(ClauseTableau_p node)
 	{
 		if (branch_iterator != node)
 		{
-			//CollectVariablesOfBranch(branch_iterator, &temp_variable_tree, false);
 			CollectVariablesOfBranch(branch_iterator, &temp_variable_tree, true); // We need to include the root, otherwise branches could share variables there...
 		}
 		branch_iterator = branch_iterator->succ;
 	}
 
-	long num_removed __attribute__((unused)) = PTreeDestrIntersection(&(local_variables_tree), temp_variable_tree);
+	// Remove the variables of other branches from the tree of branch variables
+	PTreeComplement(&(local_variables_tree), temp_variable_tree);
 	PTreeFree(temp_variable_tree);
 	node->local_variables = local_variables_tree;
-	//PStack_p other_branches_vars_stack = PStackAlloc();
-	//PTreeToPStack(other_branches_vars_stack, temp_variable_tree);
-	//
-	//// If a variable occurs in another branch, remove it from the tree of local variables
-	//while (!PStackEmpty(other_branches_vars_stack))
-	//{
-		//Term_p other_branch_variable = PStackPopP(other_branches_vars_stack);
-		//PTreeDeleteEntry(&local_variables_tree, other_branch_variable);
-	//}
-	//num_variables = PTreeToPStack(local_variables, local_variables_tree);
-	//node->local_variables = local_variables;
 
-	//PStackFree(other_branches_vars_stack);
-	return num_variables;
+	return PTreeNodes(node->local_variables);
 }
 
 /*  Returns number of variables found
@@ -141,21 +122,22 @@ long ClauseCollectVariablesStack(Clause_p clause, PStack_p stack)
 long ReplaceLocalVariablesWithFreshSubst(ClauseTableau_p master, Clause_p clause, PTree_p local_variables, Subst_p subst)
 {
 	assert(local_variables);
-	//Clause_p new_clause = NULL;
-	//assert(PStackGetSP(local_variables));
-	//for (PStackPointer p = 0; p < PStackGetSP(local_variables); p++)
-	//{
-		//Term_p old_var = PStackElementP(local_variables, p);
-		//assert(old_var);
-		//assert(old_var->f_code < 0);
-		//Term_p fresh_var = ClauseTableauGetFreshVar(master->master, old_var);
-		//assert(old_var != fresh_var);
-		//assert(old_var->f_code != fresh_var->f_code);
-		//SubstAddBinding(subst, old_var, fresh_var);
-	//}
+
 	PTree_p clause_variables = NULL;
 	long number_of_clause_variables __attribute__((unused)) = ClauseCollectVariables(clause, &(clause_variables));
 	long number_of_nonlocal_in_clause __attribute__((unused))  = PTreeDestrIntersection(&(clause_variables), local_variables);
+
+	Term_p old_var = NULL;
+
+	while ((old_var = (Term_p) PTreeExtractRootKey(&clause_variables)))
+	{
+		assert(TermIsVar(old_var));
+		Term_p fresh_var = ClauseTableauGetFreshVar(master->master, old_var);
+		assert(old_var != fresh_var);
+		assert(old_var->f_code != fresh_var->f_code);
+		SubstAddBinding(subst, old_var, fresh_var);
+	}
+
 	PTreeFree(clause_variables);
 	return number_of_nonlocal_in_clause;
 }
@@ -164,6 +146,7 @@ long ReplaceLocalVariablesWithFreshSubst(ClauseTableau_p master, Clause_p clause
 
 bool VarIsLocal(ClauseTableau_p open_branch, Term_p variable)
 {
+	Warning("Not implemented (VarIsLocal)");
 	return false;
 }
 
@@ -208,12 +191,6 @@ bool BranchIsLocal(ClauseTableau_p branch)
 	PTree_p branch_vars = NULL;
 	long local_vars = UpdateLocalVariables(branch);
 	long num_vars = CollectVariablesOfBranch(branch, &branch_vars, true);
-	if (num_vars == 0)
-	{
-		PTree_p temp = NULL;
-		ClauseCollectVariables(branch->label, &temp);
-		PTreeFree(temp);
-	}
 	if (local_vars == num_vars)
 	{
 		return true;
@@ -285,4 +262,37 @@ void ClauseTableauUpdateVariables(ClauseTableau_p tab)
 	//ClauseTableauCollectVariables(tab, &tableau_variables);
 	ClauseTableauCollectVariables2(tab, &tableau_variables);
 	tab->tableau_variables = tableau_variables;
+}
+
+/*-----------------------------------------------------------------------
+//
+// Function: PTreeComplement()
+//
+// Find the complement of tree2 in tree1.
+// Remove the elements of tree1 that are found in tree2.
+// Changes tree1, does not affect tree2.
+//
+// Global Variables: -
+//
+// Side Effects    : Memory operations
+//
+/----------------------------------------------------------------------*/
+
+long PTreeComplement(PTree_p *tree1, PTree_p tree2)
+{
+   PTree_p tmp = NULL;
+   void* key;
+   long res = 0;
+
+   while((key = PTreeExtractRootKey(tree1)))
+   {
+      if(!PTreeFindBinary(tree2, key))
+      {
+         PTreeStore(&tmp, key);
+      }
+   }
+   assert(!(*tree1));
+   *tree1 = tmp;
+
+   return res;
 }

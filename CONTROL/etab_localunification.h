@@ -15,4 +15,6 @@ bool VarIsLocal(ClauseTableau_p open_branch, Term_p variable);
 void ClauseTableauCollectVariables(ClauseTableau_p tab, PTree_p *variables);
 void ClauseTableauUpdateVariables(ClauseTableau_p tab);
 
+long PTreeComplement(PTree_p *tree1, PTree_p tree2);
+
 #endif

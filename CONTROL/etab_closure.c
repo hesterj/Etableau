@@ -228,7 +228,7 @@ Subst_p ClauseContradictsBranchSimple(ClauseTableau_p open_branch, Clause_p orig
 	ClauseTableauUpdateVariables(open_branch->master);
 
 #ifdef LOCAL
-	assert(open_branch->local_variables);
+	//assert(open_branch->local_variables);
 	UpdateLocalVariables(open_branch);
 #endif
 
