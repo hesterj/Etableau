@@ -631,23 +631,50 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 
 	Subst_p subst = SubstAlloc();
 	PStack_p a_local_variables = NULL;
-	PStack_p a_corresponding_bindings = NULL;
+	PStack_p a_fresh_variables = NULL;
+
+	//Sig_p sig = tab->terms->sig;
+	//if (tab->master->max_step+1 == 6)
+	//{
+		//fprintf(stdout, "A: ");
+		//ClausePrint(stdout, a, true);
+		//fprintf(stdout, "\nB: ");
+		//ClausePrint(stdout, b, true);
+		//fprintf(stdout, "\n...\n");
+	//}
 
 #ifdef LOCAL
 	if (tab->local_variables)
 	{
 		a_local_variables = PStackAlloc();
-		a_corresponding_bindings = PStackAlloc();
-		// This is still not correct
-		// There needs to be a way for the backtracked variables of a_eqn to be rebound
-		// They must be rebound to the appropriate fresh variables in b_eqn
-		// Probably have to think about positions here.
+		a_fresh_variables = PStackAlloc();
+
 		ReplaceLocalVariablesWithFreshSubst(tab, a, tab->local_variables, subst);
 		a_eqn = EqnCopyOpt(a_eqn);
 
-		SubstBacktrack(subst);
+		//fprintf(GlobalOut, "# Subst before backtracking subst (step %d attempt)\n", tab->master->max_step + 1);
+		//SubstPrint(GlobalOut, subst, sig, DEREF_ALWAYS);
+		//fprintf(GlobalOut, "\n");
+
+		while (!PStackEmpty(subst)) // This backtracks the substitution in order to store the local binding so it can be reinstated later
+		{
+			Term_p local_variable = PStackPopP(subst);
+			Term_p fresh_variable = local_variable->binding;
+			assert(TermIsVar(local_variable));
+			assert(TermIsVar(fresh_variable));
+			local_variable->binding = NULL;
+			PStackPushP(a_local_variables, local_variable);
+			PStackPushP(a_fresh_variables, fresh_variable);
+		}
+		assert(PStackGetSP(a_local_variables) == PStackGetSP(a_fresh_variables));
+		//SubstBacktrack(subst);
+
 		ReplaceLocalVariablesWithFreshSubst(tab, b, tab->local_variables, subst);
 		b_eqn = EqnCopyOpt(b_eqn);
+
+		//fprintf(GlobalOut, "# Subst after backtracking subst (step %d attempt)\n", tab->master->max_step + 1);
+		//SubstPrint(GlobalOut, subst, sig, DEREF_ALWAYS);
+		//fprintf(GlobalOut, "\n");
 	}
 #endif
 
@@ -669,6 +696,10 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 		//SubstDelete(empty_subst);
 		//ClauseFree(a_test);
 		//ClauseFree(b_test);
+
+		//fprintf(GlobalOut, "# Subst after unification (step %d attempt)\n", tab->master->max_step + 1);
+		//SubstPrint(GlobalOut, subst, sig, DEREF_ALWAYS);
+		//fprintf(GlobalOut, "\n");
 #endif
 		goto return_point;
 	}
@@ -680,8 +711,18 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 #ifdef LOCAL
 	if (tab->local_variables)
 	{
+		while (!PStackEmpty(a_local_variables))
+		{
+			Term_p local_variable = PStackPopP(a_local_variables);
+			Term_p fresh_variable = PStackPopP(a_fresh_variables);
+			if (CAN_DEREF(fresh_variable))
+			{
+				SubstAddBinding(subst, local_variable, fresh_variable);
+			}
+		}
+		assert(PStackEmpty(a_fresh_variables));
 		PStackFree(a_local_variables);
-		PStackFree(a_corresponding_bindings);
+		PStackFree(a_fresh_variables);
 		EqnListFree(a_eqn);
 		EqnListFree(b_eqn);
 	}
