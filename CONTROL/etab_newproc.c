@@ -182,13 +182,11 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
     TableauSet_p open_branches = master->open_branches;
     while (true)
     {
-        assert(&depth_status);
         open_branch = (*branch_selection_function)(open_branches, current_depth, max_depth, &depth_status);
         if (depth_status == ALL_DEPTHS_EXCEEDED) // All of the open branches exceed our maximum depth, so we must backtrack
         {
             assert(!open_branch);
             //fprintf(stdout, "# Backtracking due to all depths exceeded, %ld remaining\n", PStackGetSP(master->master_backtracks));
-            //fflush(stdout);
             bool backtrack_successful = BacktrackWrapper(master, true);
             if (!backtrack_successful)
             {
@@ -299,7 +297,8 @@ ClauseTableau_p EtableauProofSearchAtDepth_n2(TableauControl_p tableaucontrol,
    }
 
    // If we have reached the maximum depth, we need to select the next tableau.
-   if (current_depth == max_depth) backtrack_status = NEXT_TABLEAU;
+
+  // if (current_depth == max_depth) backtrack_status = NEXT_TABLEAU;
 
    return NULL;
 }
@@ -438,48 +437,59 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
     PStackPointer current_tableau_index = 0;
     PStackPointer current_new_tableaux_index = 0;
     ClauseTableau_p current_tableau = PStackElementP(distinct_tableaux_stack, current_tableau_index);
-    BacktrackStatus status = BACKTRACK_OK;
     while (!proof_found)
     {
         //ClauseTableau_p closed_tableau = EtableauProofSearch_n(tableaucontrol, initial_example, extension_candidates, max_depth);
+        assert(current_tableau && "We must have a tableau for proof search...");
+        BacktrackStatus tableau_status = BACKTRACK_OK;
         ClauseTableau_p closed_tableau = EtableauProofSearchAtDepth_n2(tableaucontrol,
                                                                        current_tableau,
                                                                        extension_candidates,
                                                                        max_depth,
-                                                                       &status,
+                                                                       &tableau_status,
                                                                        new_tableaux);
         if (closed_tableau || current_tableau->open_branches->members == 0)
         {
-            fprintf(GlobalOut, "# Report status... proof found\n");
+            fprintf(GlobalOut, "# Reporting status, a proof was found.\n");
             EtableauStatusReport(tableaucontrol, active, closed_tableau);
             proof_found = true;
         }
         else
         {
-            if (status == BACKTRACK_OK)
+            switch (tableau_status)
             {
-                //// This was formerly an error statement, I think we may be out of tableaux here...
-                Warning("Returned from n2 with status BACKTRACK_OK...");
-                status = NEXT_TABLEAU;
-                PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
-                ClauseTableauFree(current_tableau);
-            }
-            assert(status == BACKTRACK_FAILURE || status == NEXT_TABLEAU || status == RETURN_NOW);
-            if (status == BACKTRACK_FAILURE)
-            {
-                //fprintf(GlobalOut, "# Freeing tableau due to backtrack failure\n");
-                PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
-                ClauseTableauFree(current_tableau);
-                //current_tableau = NULL;
-                //current_tableau_index = 0;
-            }
-            //else if (status == NEXT_TABLEAU)
-            //{
-                //fprintf(GlobalOut, "# Switching from a tableau with %ld open branches because of extension limit.\n", current_tableau->open_branches->members);
-            //}
-            if (status == RETURN_NOW)
-            {
-                break;
+                case BACKTRACK_OK: // This should only happen during population, when all possible extension up to a depth have been made on a tableau
+                {
+                    assert(new_tableaux);
+                    if (current_tableau_index < PStackGetSP(distinct_tableaux_stack))
+                    {
+                        assert(PStackElementP(distinct_tableaux_stack, current_tableau_index) == current_tableau);
+                        PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
+                    }
+                    ClauseTableauFree(current_tableau);
+                    break;
+                }
+                case BACKTRACK_FAILURE: // We never backtrack during population
+                {
+                    assert(!new_tableaux);
+                    assert(PStackElementP(distinct_tableaux_stack, current_tableau_index) == current_tableau);
+                    PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
+                    ClauseTableauFree(current_tableau);
+                    current_tableau_index = 0;
+                    break;
+                }
+                case NEXT_TABLEAU:
+                {
+                    break;
+                }
+                case RETURN_NOW:
+                {
+                    goto return_point;
+                }
+                default:
+                {
+                    Error("Unknown tableau status in n1", 100);
+                }
             }
             current_tableau = EtableauGetNextTableau(distinct_tableaux_stack, &current_tableau_index, new_tableaux, &current_new_tableaux_index);
             if (current_tableau == NULL) // In case we ran out of tableaux...
@@ -490,6 +500,7 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
         }
     }
 
+    return_point:
     return proof_found;
 }
 
@@ -513,12 +524,16 @@ ClauseTableau_p EtableauGetNextTableau(TableauStack_p distinct_tableaux_stack,
             PStackPushP(distinct_tableaux_stack, new_current_tableau);
             goto return_point;
         }
-        if ( PStackEmpty(distinct_tableaux_stack) )
+        else
         {
-            goto return_point;
+            if ( PStackEmpty(distinct_tableaux_stack) )
+            {
+                goto return_point;
+            }
+            *current_index_p = 0;
         }
-        *current_index_p = 0;
     }
+
     assert(*current_index_p < distinct_tableaux_stack->current);
     new_current_tableau = PStackElementP(distinct_tableaux_stack, *current_index_p);
     return_point:
