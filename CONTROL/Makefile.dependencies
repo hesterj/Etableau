@@ -3234,7 +3234,7 @@ etab_clausetableaux.o: etab_clausetableaux.c /usr/include/stdc-predef.h \
  etab_backtrack.h ../include/etab_extension.h ../include/etab_backtrack.h \
  ../include/etab_xgboost_interaction.h ../include/etab_foldingup.h \
  ../include/etab_closure.h ../include/etab_localunification.h \
- ../include/etab_etableau.h
+ ../include/etab_etableau.h etab_etableau.h
 etab_closure.o: etab_closure.c /usr/include/stdc-predef.h \
  ../include/etab_closure.h ../include/etab_localunification.h \
  ../include/etab_clausetableaux.h ../include/clb_os_wrapper.h \

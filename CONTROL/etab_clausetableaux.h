@@ -28,6 +28,7 @@ typedef PList_p TableauList_p;
 typedef PStack_p BacktrackStack_p; // Stack of Backtrack_p
 typedef PStack_p BindingStack_p; // Stack of Binding_p
 struct tableaucontrol_cell;
+struct backup_proofstate_cell;
 
 #define DEPTH_OK 0
 #define ALL_DEPTHS_EXCEEDED 1
@@ -209,6 +210,7 @@ typedef struct tableaucontrol_cell
 {
 	EPCtrl_p process_control;
 	ProofState_p proofstate;
+	struct backup_proofstate_cell* backup;
 	ProofControl_p proofcontrol;
 	TB_p terms;
 	bool branch_saturation_enabled; // Is branch saturation enabled?

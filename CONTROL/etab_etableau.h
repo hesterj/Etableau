@@ -67,12 +67,12 @@ long TermBankUnbindAll(TB_p bank);
 
 typedef struct backup_proofstate_cell
 {
-	long num_processed;
-   ClauseSet_p   processed_pos_rules;
-   ClauseSet_p   processed_pos_eqns;
-   ClauseSet_p   processed_neg_units;
-   ClauseSet_p   processed_non_units;
-   ClauseSet_p   unprocessed;
+    long num_processed;
+    ClauseSet_p   processed_pos_rules;
+    ClauseSet_p   processed_pos_eqns;
+    ClauseSet_p   processed_neg_units;
+    ClauseSet_p   processed_non_units;
+    ClauseSet_p   unprocessed;
 }BackupProofStateCell, *BackupProofState_p;
 
 #define BackupProofStateCellAlloc() (BackupProofStateCell*)SizeMalloc(sizeof(BackupProofStateCell))
@@ -81,7 +81,7 @@ typedef struct backup_proofstate_cell
 BackupProofState_p BackupProofstateAlloc(ProofState_p original);
 void BackupProofStateFree(BackupProofState_p junk);
 
-long BacktrackProofState(ProofState_p proofstate, BackupProofState_p backup);
+long BacktrackProofState(ProofState_p proofstate, ProofControl_p proofcontrol, BackupProofState_p backup);
 
 
 #endif

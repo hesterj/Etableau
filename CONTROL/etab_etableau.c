@@ -90,20 +90,23 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 	// Large number of clauses to process, for last ditch attempts
 	if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
 
-	//SilentTimeOut = true;
-	proofcontrol->heuristic_parms.prefer_initial_clauses = true;
+	//proofcontrol->heuristic_parms.prefer_initial_clauses = true;
 
-	//long unbound_terms = TermBankUnbindAll(branch->terms);
-    //fprintf(GlobalOut, "# Unound %ld terms before branch saturation...\n", unbound_terms);
-	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
-	EtableauProofStateResetClauseSets(proofstate);
-	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
-	TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
+	ClauseSet_p unprocessed = NULL;
+	bool old_reset = false;
+	if (old_reset)
+	{
+		// This is the old way of resetting the saturation proofstate
+		unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
+		EtableauProofStateResetClauseSets(proofstate);
+		ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
+		TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
+	}
+	else // Presaturated Etableau core
+	{
+		BacktrackProofState(proofstate, proofcontrol, tableau_control->backup);
+	}
 
-	//int branch_status = ECloseBranchProcessBranchFirstSerial(proofstate,
-															 //proofcontrol,
-															 //branch,
-															 //selected_number_of_clauses_to_process);
 	ErrorCodes branch_status = ECloseBranchWithInterreduction(proofstate,
 															  proofcontrol,
 															  branch,
@@ -113,7 +116,11 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 	//TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
 
 	branch->previously_saturated = selected_number_of_clauses_to_process;
-	ClauseSetFree(unprocessed);
+
+	if (unprocessed) // Needed if we are using the old style proof reset
+	{
+		ClauseSetFree(unprocessed);
+	}
 
 
 	return branch_status;
@@ -129,6 +136,8 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	PStack_p branch_labels = PStackAlloc();
 	ErrorCodes status = RESOURCE_OUT;
 	bool process_branch_clauses_first = true;
+	bool interreduction = false;
+	bool full_saturation = false;
 	assert(proofstate);
 	assert(proofcontrol);
 	PStack_p debug_branch_labels = NULL;
@@ -141,13 +150,16 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 
 	// This is the interreduction step!
 
-    LiteralSelectionFun sel_strat =
-		proofcontrol->heuristic_parms.selection_strategy;
-	proofcontrol->heuristic_parms.selection_strategy = SelectNoGeneration;
-    success = Saturate(proofstate, proofcontrol, LONG_MAX, // This is the interreduction
-                       LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
-                       LLONG_MAX, LONG_MAX);
-    proofcontrol->heuristic_parms.selection_strategy = sel_strat;
+	if (interreduction)
+	{
+		LiteralSelectionFun sel_strat =
+			proofcontrol->heuristic_parms.selection_strategy;
+		proofcontrol->heuristic_parms.selection_strategy = SelectNoGeneration;
+		success = Saturate(proofstate, proofcontrol, LONG_MAX, // This is the interreduction
+						   LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
+						   LLONG_MAX, LONG_MAX);
+		proofcontrol->heuristic_parms.selection_strategy = sel_strat;
+	}
 
     if(LIKELY(!success)) // First we will process the clauses of the branch, and then the full saturation
     {
@@ -165,7 +177,7 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 			assert(success_ref);
 			success = success_ref;
 		}
-		else // Now do the full branch saturation
+		else if (full_saturation) // Now do the full branch saturation
 		{
 			success = Saturate(proofstate, proofcontrol, max_proc,
 							   LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
@@ -702,7 +714,23 @@ void BackupProofStateFree(BackupProofState_p junk)
 	BackupProofStateFree(junk);
 }
 
-long BacktrackProofState(ProofState_p proofstate, BackupProofState_p backup)
+long BacktrackProofState(ProofState_p proofstate, ProofControl_p proofcontrol, BackupProofState_p backup)
 {
-
+	assert(proofstate);
+	assert(proofcontrol);
+	assert(backup);
+	ClauseSet_p unprocessed = ClauseSetCopyOpt(backup->unprocessed);
+	EtableauProofStateResetClauseSets(proofstate);
+	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
+	ClauseSetFree(proofstate->processed_neg_units);
+	ClauseSetFree(proofstate->processed_non_units);
+	ClauseSetFree(proofstate->processed_pos_eqns);
+	ClauseSetFree(proofstate->processed_pos_rules);
+	proofstate->processed_neg_units = ClauseSetCopyOpt(backup->processed_neg_units);
+	proofstate->processed_non_units = ClauseSetCopyOpt(backup->processed_non_units);
+	proofstate->processed_pos_eqns = ClauseSetCopyOpt(backup->processed_pos_eqns);
+	proofstate->processed_pos_rules = ClauseSetCopyOpt(backup->processed_pos_rules);
+	TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
+	assert(ProofStateProcCardinality(proofstate));
+	return 0;
 }

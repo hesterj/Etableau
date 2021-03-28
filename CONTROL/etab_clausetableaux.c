@@ -1,5 +1,6 @@
 #include "etab_clausetableaux.h"
 #include "etab_backtrack.h"
+#include "etab_etableau.h"
 
 int clausesetallocs_counter = 1;  
 
@@ -1472,6 +1473,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 									 long quicksat)
 {
 	TableauControl_p handle = TableauControlCellAlloc();
+	handle->backup = BackupProofstateAlloc(proofstate);
 	handle->terms = NULL; // The termbank for this tableau control..
 	handle->number_of_extensions = 0;  // Total number of extensions done
 	handle->number_of_saturation_attempts = 0;
@@ -1500,6 +1502,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 
 void TableauControlFree(TableauControl_p trash)
 {
+	BackupProofStateFree(trash->backup);
 	ClauseSetFree(trash->label_storage);
 	PStackFree(trash->tableaux_trash);
 	TableauStackFree(trash->max_depth_tableaux);
