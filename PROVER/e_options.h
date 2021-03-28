@@ -194,6 +194,7 @@ typedef enum
    OPT_TABLEAU_CORES,
    OPT_TABLEAU_APR_DISTANCE,
    OPT_TABLEAU_DOT_PRINT,
+   OPT_TABLEAU_QUICKSAT,
    OPT_DUMMY
 }OptionCodes;
 
@@ -1480,6 +1481,14 @@ OptCell opts[] =
     '\0', "tableau-dot-print",
     ReqArg, NULL,
     "Print a DOT graph of the closed tableau to a file in the specified directory."
+    },
+    {
+    OPT_TABLEAU_QUICKSAT,
+    '\0', "quicksat",
+    OptArg, "100",
+    "No argument"
+    "All local branch saturations will process no more than the specified number of clauess."
+    "The default value is 100."
     },
    {OPT_NOOPT,
     '\0', NULL,

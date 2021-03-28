@@ -39,13 +39,6 @@ Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, short head_l
         PStackPushInt(backtrack->position, (long) handle->position);
         handle = handle->parent;
     }
-//#ifndef DNDEBUG
-    //assert(GetNodeFromPosition(position->master, backtrack->position) == position);
-    //if (PStackGetSP(backtrack->position) != position->depth)
-    //{
-        //Warning("Recorded a position of depth %d with %d steps to reach it...", position->depth, PStackGetSP(backtrack->position));
-    //}
-//#endif
 
     backtrack->bindings = SubstRecordBindings(subst);
     return backtrack;
@@ -79,12 +72,6 @@ ClauseTableau_p GetNodeFromPosition(ClauseTableau_p master, PStack_p position)
 {
     assert(master);
     assert(position);
-
-    //#ifndef DNDEBUG
-    //fprintf(GlobalOut, "# Printing position stack: ");
-    //PStackPrintInt(GlobalOut, " %ld ", position);
-    //fprintf(GlobalOut, "\n");
-    //#endif
 
     ClauseTableau_p handle = master;
     for (PStackPointer p = PStackGetSP(position)-1; p >= 0; p--)

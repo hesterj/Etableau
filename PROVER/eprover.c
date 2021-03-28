@@ -97,10 +97,11 @@ pid_t              pid = 0;
 
 FunctionProperties free_symb_prop = FPIgnoreProps;
 
-int TableauOptions = 0; // Etableau stuff
-int TableauDepth = 2;
-int TableauEquality = 0;
-int TableauCores = 0;
+long TableauOptions = 0; // Etableau stuff
+long TableauDepth = 2;
+long TableauEquality = 0;
+long TableauCores = 0;
+long TableauQuicksat = 0;
 bool TableauSaturation = false;
 int AprDistance = 0;
 char  *tableau_dot_out = NULL;
@@ -577,7 +578,8 @@ int main(int argc, char* argv[])
                                                             proofstate,
                                                             proofcontrol,
                                                             TableauSaturation,
-                                                            TableauCores);
+                                                            TableauCores,
+                                                            TableauQuicksat);
       fprintf(GlobalOut, "# Number of axioms: %ld Number of unprocessed: %ld\n",
               proofstate->axioms->members,
               proofstate->unprocessed->members);
@@ -1806,6 +1808,9 @@ CLState_p process_options(int argc, char* argv[])
 				break;
       case OPT_TABLEAU_DOT_PRINT:
             tableau_dot_out = arg;
+            break;
+      case OPT_TABLEAU_QUICKSAT:
+            TableauQuicksat = CLStateGetIntArg(handle,arg);
             break;
       default:
             assert(false && "Unknown option");

@@ -21,9 +21,9 @@ void process_branch(ProofState_p proofstate,
 // Function definitions 
 
 BranchSaturation_p BranchSaturationAlloc(ProofState_p proofstate, 
-													  ProofControl_p proofcontrol, 
-													  ClauseTableau_p master,
-													  long max_proc)
+										 ProofControl_p proofcontrol,
+										 ClauseTableau_p master,
+										 long max_proc)
 {
 	BranchSaturation_p branch_sat = BranchSaturationCellAlloc();
 	branch_sat->proofstate = proofstate;
@@ -49,23 +49,31 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 	long previously_saturated = branch->previously_saturated; 
 	assert(branch);
 
-	// Process more clauses on tableaux with fewer open branches
-	switch (branch->open_branches->members)
+	if (tableau_control->quicksat)
 	{
-		case 1:
+		fprintf(stdout, "# Processing %ld clauses\n", tableau_control->quicksat);
+		selected_number_of_clauses_to_process = tableau_control->quicksat;
+	}
+	else
+	// Process more clauses on tableaux with fewer open branches
+	{
+		switch (branch->open_branches->members)
 		{
-			selected_number_of_clauses_to_process = 10000;
-			break;
-		}
-		case 2:
-		{
-			selected_number_of_clauses_to_process = 1000;
-			break;
-		}
-		default:
-		{
-			selected_number_of_clauses_to_process = 100;
-			break;
+			case 1:
+			{
+				selected_number_of_clauses_to_process = 1000*branch->depth;
+				break;
+			}
+			case 2:
+			{
+				selected_number_of_clauses_to_process = 100*branch->depth;
+				break;
+			}
+			default:
+			{
+				selected_number_of_clauses_to_process = 100;
+				break;
+			}
 		}
 	}
 
@@ -322,7 +330,7 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 	}
 	if (open_branches->members == 0 || branch_status == SATISFIABLE)
 	{
-#ifndef DNDEBUG
+#ifndef NDEBUG
 		fprintf(stdout, "# (%ld) Found closed tableau\n", (long) getpid());
 		fflush(stdout);
 #endif

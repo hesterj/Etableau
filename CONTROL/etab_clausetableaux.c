@@ -1449,7 +1449,8 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 									 ProofState_p proofstate,
 									 ProofControl_p proofcontrol,
 									 bool branch_saturation_enabled,
-									 int num_cores_to_use)
+									 long num_cores_to_use,
+									 long quicksat)
 {
 	TableauControl_p handle = TableauControlCellAlloc();
 	handle->terms = NULL; // The termbank for this tableau control..
@@ -1457,6 +1458,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->number_of_saturation_attempts = 0;
 	handle->number_of_successful_saturation_attempts = 0;
 	handle->number_of_nodes_freed = 0;
+	handle->quicksat = quicksat;
 	handle->closed_tableau = NULL;
 	handle->branch_saturation_enabled = branch_saturation_enabled;
 	handle->satisfiable = false;

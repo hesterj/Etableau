@@ -127,150 +127,6 @@ bool ClauseTableauExtensionIsRegular(ClauseTableau_p branch, Clause_p clause)
 }
 
 
-/*  Actually does an extension rule application.  head_literal_location is the PStackPointer corresponding of the head clause in 
- * 	new_leaf_clauses.  literal_number is the number of literals in the clause that is being split in the extension rule application.
- *  This method is only called by ClauseTableauExtensionRuleAttempt.  If this method is called there is likely a Subst_p active!
- * 
- *  Does not modify the old tableau!  A copy of it is made, which is then extended.
-f *  This is because we may need the old unmodified tableau for other extension steps,
- *  or undo the work if the extension is irregular.  Irregular extensions are 
- *  detected after the work is done.
-*/
-
-ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
-														 TableauSet_p distinct_tableaux, 
-														 TableauExtension_p extension, 
-														 PStack_p new_tableaux)
-{
-	TB_p bank = extension->parent->terms;
-	Clause_p head_literal_clause = NULL;
-	ClauseSet_p new_leaf_clauses_set = ClauseSetAlloc(); // Copy the clauses of the extension
-	Subst_p subst = extension->subst;
-	// failure caching check here?
-	for (Clause_p handle = extension->other_clauses->anchor->succ;
-					  handle != extension->other_clauses->anchor;
-					  handle = handle->succ)
-	{
-		if (ClauseTableauBranchContainsLiteral(extension->parent, handle->literals))
-		{
-			ClauseSetFree(new_leaf_clauses_set);
-			SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
-			return NULL;  // REGULARITY CHECKING!
-		}
-		Clause_p subst_applied = ClauseCopy(handle, bank);
-		ClauseSetInsert(new_leaf_clauses_set, subst_applied);
-		if (extension->head_clause == handle)
-		{
-			head_literal_clause = subst_applied;
-		}
-	}
-	long number_of_children = new_leaf_clauses_set->members;
-	// Create a copy of the master tableau of the extension rule's tableau.
-	// Insert the newly created master tableau in to the distinct_tableaux. 
-	ClauseTableau_p old_tableau_master = extension->parent->master;
-	old_tableau_master->active_branch = extension->parent;
-	ClauseTableau_p tableau_copy = ClauseTableauMasterCopy(old_tableau_master);  //there may be a subst active
-	Sig_p sig = tableau_copy->terms->sig;
-	assert(extension->parent->id == 0);
-	assert(old_tableau_master->parent == NULL);
-	assert(tableau_copy->open_branches);
-	assert(tableau_copy->open_branches->members != 0);
-	assert(tableau_copy->active_branch);
-	assert(tableau_copy->master == tableau_copy);
-	assert(extension->selected);
-	// Do the extension rule on the active branch of the newly created tableau
-	
-	ClauseTableau_p parent = tableau_copy->active_branch;
-	tableau_copy->active_branch = NULL; // We have the handle where we are working, so set this to NULL to indicate this.
-	
-	parent->id = ClauseGetIdent(extension->selected);
-	
-	
-	assert(head_literal_clause);
-	assert(number_of_children == extension->other_clauses->members);
-	assert(head_literal_clause->set == new_leaf_clauses_set);
-	
-	parent->children = ClauseTableauArgArrayAlloc(number_of_children);
-	Clause_p leaf_clause = NULL;
-	// Create children tableau for the leaf labels.  The head literal is labelled as closed.
-	for (long p=0; p < number_of_children; p++)
-	{
-		leaf_clause = ClauseSetExtractFirst(new_leaf_clauses_set);
-		//if (regular && ClauseTableauBranchContainsLiteral(parent, leaf_clause->literals))
-		//{
-			//regular = false;  // REGULARITY CHECKING!
-		//}
-		assert(leaf_clause);
-		parent->children[p] = ClauseTableauChildLabelAlloc(parent, leaf_clause, p);
-		assert(parent->children[p]->label);
-		assert(parent->children[p]->label->set);
-		if (leaf_clause == head_literal_clause)
-		{
-			parent->children[p]->open = false; 
-			parent->children[p]->mark_int = 1;
-			parent->children[p]->head_lit = true;
-			//SubstDStrPrint(parent->children[p]->info, extension->subst, sig, DEREF_ONCE); 
-		}
-		else
-		{
-			TableauSetInsert(parent->open_branches, parent->children[p]);
-			parent->children[p]->open = true;
-		}
-	}
-	
-	// Now that the parent has been extended on, it should be removed from the collection of open leaves.
-	// Important to do this now, as otherwise folding up or branch saturation may not work correctly.
-	
-	assert(parent != parent->master);
-	if (parent->set == parent->open_branches)
-	{
-		TableauSetExtractEntry(parent);
-	}
-	assert(parent->master);
-	PStackPushP(new_tableaux, parent->master);
-
-	// The copying is done, we can delete the subst and print it to the info
-	DStrAppendStr(parent->info, " Expansion with clause ");
-	DStrAppendInt(parent->info, parent->id);
-	DStrAppendStr(parent->info, " ");
-	SubstDStrPrint(parent->info, subst, sig, DEREF_NEVER);
-	ClauseTableauRegisterStep(parent);
-	SubstDelete(subst); // Extremely important!
-
-	// Protect the unit axioms from the dirty substitution by copying them now...
-	parent->master->unit_axioms = ClauseSetCopy(parent->master->terms, old_tableau_master->unit_axioms);
-	
-	// The work is done- try to close the remaining branches
-	
-	FoldUpCloseCycle(parent->master);
-	
-	
-	// The parent may have been completely closed and extracted
-	// from the collection of open branches during the foldup close
-	// cycle, or during E saturation proof search on a local branch.
-	
-	if (parent->open_branches->members == 0)
-	{
-		//printf("# Closed tableau found.\n");
-		//ClauseTableauPrintDOTGraph(parent->master);
-		tableau_control->closed_tableau = parent->master;
-		ClauseSetFree(new_leaf_clauses_set);
-		return parent->master;
-	}
-	
-	assert(parent->master->state);
-	assert(parent->master->control);
-	assert(number_of_children == parent->arity);
-	assert(parent->arity == number_of_children);
-	assert(new_leaf_clauses_set->members == 0);
-	assert(parent->master->open_branches);
-	assert(parent->master->label);
-	
-	// There is no need to apply the substitution to the tablaeu, it has already been done by copying labels.
-	// In fact, the substitution should be free'd before this function ever returns.
-	ClauseSetFree(new_leaf_clauses_set);
-	return parent->master;
-}
 
 /*  Do all of the extension rules possible with the selected clause.
  *  There may be multiple literals extension can be done with.
@@ -333,17 +189,6 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		//Subst_p subst = SubstAlloc();
 		Subst_p subst = NULL;
 
-		//fprintf(GlobalOut, "Clause A (%ld): ", split_clause_ident);ClausePrint(GlobalOut, leaf_clause, true);printf("\n");
-		//fprintf(GlobalOut, "Clause B (branch): ");ClausePrint(GlobalOut, open_branch_label, true);printf("\n");
-		//if (open_branch->step == 3)
-		//{
-			//fprintf(GlobalOut, "# potential step 3 before unification attempt\n");
-			//ClausePrint(GlobalOut, open_branch_label, true);
-			//fprintf(GlobalOut, "\n");
-			//ClausePrint(GlobalOut, leaf_clause, true);
-			//fprintf(GlobalOut, "\n");
-		//}
-		
 		// Here we are only doing the first possible extension- need to create a list of all of the extensions and do them...
 		// The subst, leaf_clause, new_leaf_clauses, will have to be reset, but the open_branch can remain the same since we have not affected it.
 		if ((subst = ClauseContradictsClause(open_branch, leaf_clause, open_branch_label))) // stricter extension step
@@ -365,14 +210,6 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			//assert(TermBankUnbindAll(open_branch->terms));
 			if (extended) // extension may not happen due to regularity
 			{
-				//if (open_branch->step == 3)
-				//{
-					//fprintf(GlobalOut, "# potential step 3 successful\n");
-					//ClausePrint(GlobalOut, open_branch_label, true);
-					//fprintf(GlobalOut, "\n");
-					//ClausePrint(GlobalOut, leaf_clause, true);
-					//fprintf(GlobalOut, "\n");
-				//}
 				extensions_done++;
 				tableau_control->number_of_extensions++;
 				if (tableau_control->branch_saturation_enabled)
@@ -392,13 +229,6 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 				}
 			}
 		}
-		//else
-		//{
-			//// If an extension is attempted, the substitution is free'd in that method
-			//// Otherwise, we must free it here
-			//SubstDelete(subst);
-		//}
-		//fprintf(GlobalOut, "# Next leaf clause...\n");
 		position++;
 		leaf_clause = leaf_clause->succ;
 	}
@@ -798,11 +628,12 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
             //fprintf(GlobalOut, "# Success\n");
             break;
         }
-        else if (number_of_extensions > 0)
+        else if (number_of_extensions > 0) // If we extended on the tableau, we have to return and select another branch, unless we are populating
         {
             assert(new_tableaux || number_of_extensions == 1); // Always return after one extension
 			*extended += number_of_extensions;
-            //fprintf(GlobalOut, "#  Extended on a branch at depth %d...\n", open_branch->depth);
+
+            // If we are in normal proof search (new_tableaux == NULL) or we have enough tableaux, return.
             if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= GetDesiredNumberOfTableaux(tableaucontrol))
 			{
 				break;

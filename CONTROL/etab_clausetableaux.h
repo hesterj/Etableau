@@ -206,27 +206,28 @@ long          SubstDStrPrint(DStr_p str, Subst_p subst, Sig_p sig, DerefType der
 
 typedef struct tableaucontrol_cell
 {
+	EPCtrl_p process_control;
 	ProofState_p proofstate;
 	ProofControl_p proofcontrol;
-	int number_of_extensions;
+	TB_p terms;
+	bool branch_saturation_enabled; // Is branch saturation enabled?
+	bool satisfiable;
+	long quicksat; // Maximum number of processed clauess in saturation attempts
+	long number_of_extensions;
 	long number_of_saturation_attempts;
 	long number_of_successful_saturation_attempts;
 	long neg_conjectures;
 	long number_of_nodes_freed;
 	char *problem_name;
 	char *dot_output;
+	char *clausification_buffer;
+	long multiprocessing_active;  // Have we reached enough tableaux to break the problem in to forks?
 	PStack_p new_tableaux;
 	ClauseTableau_p closed_tableau;
 	ClauseSet_p unprocessed;
 	ClauseSet_p label_storage; // This is to ensure that terms occurring in the tableau are not free'd by the gc
-	TB_p terms;
-	bool branch_saturation_enabled; // Is branch saturation enabled?
-	int multiprocessing_active;  // Have we reached enough tableaux to break the problem in to forks?
-	bool satisfiable;
 	TableauStack_p tableaux_trash;
 	TableauStack_p max_depth_tableaux;
-	char *clausification_buffer;
-	EPCtrl_p process_control;
 	PObjTree_p feature_tree;
 	PList_p feature_list;
 }TableauControlCell, *TableauControl_p;
@@ -241,7 +242,8 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 									 ProofState_p proofstate,
 									 ProofControl_p proofcontrol,
 									 bool branch_saturation_enabled,
-									 int num_cores_to_use);
+									 long num_cores_to_use,
+									 long quicksat);
 void TableauControlFree(TableauControl_p trash);
 void EqnRepFree(void *eqn_p);
 
