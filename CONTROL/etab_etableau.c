@@ -51,7 +51,7 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 
 	if (tableau_control->quicksat)
 	{
-		fprintf(stdout, "# Processing %ld clauses\n", tableau_control->quicksat);
+		//fprintf(stdout, "# Processing %ld clauses\n", tableau_control->quicksat);
 		selected_number_of_clauses_to_process = tableau_control->quicksat;
 	}
 	else
@@ -61,16 +61,19 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 		{
 			case 1:
 			{
-				selected_number_of_clauses_to_process = 1000*branch->depth;
+				//selected_number_of_clauses_to_process = 1000*branch->depth;
+				selected_number_of_clauses_to_process = 10000;
 				break;
 			}
 			case 2:
 			{
-				selected_number_of_clauses_to_process = 100*branch->depth;
+				//selected_number_of_clauses_to_process = 100*branch->depth;
+				selected_number_of_clauses_to_process = 1000;
 				break;
 			}
 			default:
 			{
+				//selected_number_of_clauses_to_process = 100;
 				selected_number_of_clauses_to_process = 100;
 				break;
 			}
@@ -89,11 +92,13 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 
 	//SilentTimeOut = true;
 	proofcontrol->heuristic_parms.prefer_initial_clauses = true;
+
 	//long unbound_terms = TermBankUnbindAll(branch->terms);
     //fprintf(GlobalOut, "# Unound %ld terms before branch saturation...\n", unbound_terms);
 	ClauseSet_p unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
 	EtableauProofStateResetClauseSets(proofstate);
 	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
+	TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
 
 	//int branch_status = ECloseBranchProcessBranchFirstSerial(proofstate,
 															 //proofcontrol,
@@ -104,63 +109,14 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 															  branch,
 															  selected_number_of_clauses_to_process);
 
-	EtableauProofStateResetClauseSets(proofstate);
-	//unbound_terms = TermBankUnbindAll(branch->terms);
-    //fprintf(GlobalOut, "# Unound %ld terms after branch saturation...\n", unbound_terms);
-	TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
-	//// Are definition causing inconsistency?  If they were this should help...
-	//DefStoreFree(proofstate->definition_store);
-	//proofstate->definition_store = DefStoreAlloc(proofstate->terms);
+	//EtableauProofStateResetClauseSets(proofstate);
+	//TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
 
 	branch->previously_saturated = selected_number_of_clauses_to_process;
 	ClauseSetFree(unprocessed);
 
 
 	return branch_status;
-}
-
-
-ErrorCodes ECloseBranchProcessBranchFirstSerial(ProofState_p proofstate,
-												ProofControl_p proofcontrol,
-												ClauseTableau_p branch,
-												long max_proc)
-{
-	Clause_p success = NULL;
-	assert(proofstate);
-	assert(proofcontrol);
-	
-	int early_return_status = EtableauInsertBranchClausesIntoUnprocessed(proofstate, proofcontrol, branch);
-	if (early_return_status == PROOF_FOUND) // Maybe a contradiction can be found via superposition within the branch...
-	{
-		return PROOF_FOUND;
-	}
-
-	//max_proc = 100;
-
-
-	proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver
-	success = Saturate(proofstate, proofcontrol, max_proc,
-							 LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
-							 LLONG_MAX, LONG_MAX);
-	bool out_of_clauses = ClauseSetEmpty(proofstate->unprocessed);
-	if (!success &&
-		out_of_clauses &&
-		inf_sys_complete &&
-		proofstate->state_is_complete &&
-		!(proofstate->has_interpreted_symbols))
-	{
-		fprintf(stdout, "# Ran out of clauses on local branch saturation...\n");
-		fflush(stdout);
-		branch->master->tableaucontrol->satisfiable = true;
-		return SATISFIABLE;
-	}
-	if (success)
-	{
-		//fprintf(stdout, "# Branch contradiction found\n");
-		return PROOF_FOUND;
-	}
-    //GCCollect(proofstate->terms->gc);
-	return RESOURCE_OUT;
 }
 
 ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
@@ -182,11 +138,6 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 #endif
 
 	long number_found __attribute__((unused)) = ClauseTableauCollectBranchCopyLabels(branch, proofstate->unprocessed, debug_branch_labels);
-
-	//fprintf(stdout, "# Clauses of pid (%ld)\n", (long) getpid());
-	//ClauseTableauPrintBranch(branch);
-	//fprintf(stdout, "\n");
-	//fflush(stdout);
 
 	// This is the interreduction step!
 
@@ -542,7 +493,7 @@ void TermTreeDeleteRWLinks(Term_p root)
 //
 // Function: TermCellStoreDeleteRWLinks()
 //
-//   Free the trees in a term cell storage.
+//   Delete the rewrite links in the term cell storage.
 //
 // Global Variables: -
 //
@@ -727,4 +678,31 @@ long TermCellStoreUnbindAll(TermCellStore_p store)
 long TermBankUnbindAll(TB_p bank)
 {
 	return TermCellStoreUnbindAll(&(bank->term_store));
+}
+
+BackupProofState_p BackupProofstateAlloc(ProofState_p original)
+{
+	BackupProofState_p backup = BackupProofStateCellAlloc();
+	backup->num_processed = ProofStateProcCardinality(original);
+	backup->processed_neg_units = ClauseSetCopyOpt(original->processed_neg_units);
+	backup->processed_non_units = ClauseSetCopyOpt(original->processed_non_units);
+	backup->processed_pos_eqns = ClauseSetCopyOpt(original->processed_pos_eqns);
+	backup->processed_pos_rules = ClauseSetCopyOpt(original->processed_pos_rules);
+	backup->unprocessed = ClauseSetCopyOpt(original->unprocessed);
+	return backup;
+
+}
+void BackupProofStateFree(BackupProofState_p junk)
+{
+	ClauseSetFree(junk->processed_neg_units);
+	ClauseSetFree(junk->processed_non_units);
+	ClauseSetFree(junk->processed_pos_eqns);
+	ClauseSetFree(junk->processed_pos_rules);
+	ClauseSetFree(junk->unprocessed);
+	BackupProofStateFree(junk);
+}
+
+long BacktrackProofState(ProofState_p proofstate, BackupProofState_p backup)
+{
+
 }

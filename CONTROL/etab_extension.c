@@ -636,6 +636,7 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
             // If we are in normal proof search (new_tableaux == NULL) or we have enough tableaux, return.
             if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= GetDesiredNumberOfTableaux(tableaucontrol))
 			{
+				ClauseSetMoveClause(extension_candidates, selected); // If we just extended with a clause, move it to the end of the extension candidates list.
 				break;
 			}
         }

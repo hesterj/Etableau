@@ -766,6 +766,25 @@ ClauseSet_p ClauseSetFlatCopy(TB_p bank, ClauseSet_p set)
 	return new;
 }
 
+ClauseSet_p ClauseSetCopyOpt(ClauseSet_p set)
+{
+	Clause_p handle, temp;
+	assert(set);
+	ClauseSet_p new = ClauseSetAlloc();
+	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
+	{
+		assert(handle);
+		//temp = ClauseCopy(handle,bank);
+		temp = ClauseCopyOpt(handle);
+#ifdef DEBUG
+		ClauseRecomputeLitCounts(temp);
+		assert(ClauseLiteralNumber(temp));
+#endif
+		ClauseSetInsert(new, temp);
+	}
+	return new;
+}
+
 /*
 */
 
