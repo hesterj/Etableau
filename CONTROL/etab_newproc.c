@@ -88,8 +88,9 @@ int Etableau_n0(TableauControl_p tableaucontrol,
        Error("Initial tableau has no label!", 10);
    }
 
+   bool saturate_start_rules = false;
 // Do a branch saturation on the original problem before diving in to the tableaux proofsearch
-   if (!proof_found && tableaucontrol->branch_saturation_enabled)
+   if (saturate_start_rules && !proof_found && tableaucontrol->branch_saturation_enabled)
    {
        // The maximum number of tableaux to attmept to saturate before moving on is the last paramater of the below function
        proof_found = EtableauSaturateAllTableauxInStack(tableaucontrol, distinct_tableaux_stack, active, 30);
@@ -241,6 +242,11 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         }
         if (!new_tableaux && open_branch->set) // If the open branch is still in a set after the extension rule attempt, it means it was not able to be extended and so should be backtracked
         {
+            assert(!extended);
+#ifndef NDEBUG
+            printf("open branch still in set, %ld backtracks remaining (%ld)\n", PStackGetSP(master->master_backtracks), (long) getpid());
+            fflush(stdout);
+#endif
             bool backtrack_successful = BacktrackWrapper(master, true);
             if (!backtrack_successful)
             {
@@ -327,6 +333,7 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
         if (resulting_tab)
         {
             fprintf(GlobalOut, "# Found closed tableau during pool population.\n");
+            fflush(GlobalOut);
             EtableauStatusReport(tableaucontrol, tableaucontrol->unprocessed, resulting_tab);
             TableauStackFree(new_tableaux);
             return true;
@@ -343,12 +350,22 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     }
     ///////////
 
-
-    if (PStackGetSP(new_tableaux) < num_cores_available)
+#ifndef NDEBUG
+    printf("printing hashes of tableaux\n");
+    for (PStackPointer p=0; p<PStackGetSP(new_tableaux); p++)
     {
-        fprintf(GlobalOut, "# %ld tableaux and %d cores\n", PStackGetSP(new_tableaux), num_cores_available);
-        return proof_found;
+        ClauseTableau_p new_t = PStackElementP(new_tableaux, p);
+        printf("%ld\n", ClauseTableauHash(new_t));
     }
+    printf("done printing hashes\n");
+    fflush(stdout);
+#endif
+
+    //if (PStackGetSP(new_tableaux) < num_cores_available)
+    //{
+        //fprintf(GlobalOut, "# %ld tableaux and %d cores\n", PStackGetSP(new_tableaux), num_cores_available);
+        //return proof_found;
+    //}
 
     EPCtrlSet_p process_set = EPCtrlSetAlloc();
     PStack_p buckets = PStackAlloc();
@@ -380,8 +397,11 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
         {
             SilentTimeOut = true;
             TableauStack_p new_tableaux = PStackElementP(buckets, i);
+#ifndef NDEBUG
+            printf("%ld tableaux in new process %d\n", PStackGetSP(new_tableaux), i);
+            fflush(stdout);
+#endif
             assert(!PStackEmpty(new_tableaux));
-            //TableauSetMoveClauses(distinct_tableaux_set, process_starting_tableaux);
 
             // should be good to go...
             proc->pipe = fdopen(pipefd[1], "w");
@@ -423,6 +443,9 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     }
     PStackFree(buckets);
     TableauStackFree(new_tableaux);
+#ifndef NDEBUG
+    printf("# My mother is a fish\n");
+#endif
     return proof_found;
 }
 
@@ -433,6 +456,12 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
                                          int max_depth,
                                          TableauStack_p new_tableaux)
 {
+    assert(tableaucontrol);
+    assert(distinct_tableaux_stack);
+    assert(PStackGetSP(distinct_tableaux_stack));
+    assert(active);
+    assert(extension_candidates);
+    assert(!ClauseSetEmpty(extension_candidates));
     bool proof_found = false;
     PStackPointer current_tableau_index = 0;
     PStackPointer current_new_tableaux_index = 0;
@@ -471,6 +500,10 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
                 }
                 case BACKTRACK_FAILURE: // We never backtrack during population
                 {
+#ifndef NDEBUG
+                    printf("btf %ld\n", (long) getpid());
+                    fflush(stdout);
+#endif
                     assert(!new_tableaux);
                     assert(PStackElementP(distinct_tableaux_stack, current_tableau_index) == current_tableau);
                     PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
@@ -494,7 +527,8 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
             current_tableau = EtableauGetNextTableau(distinct_tableaux_stack, &current_tableau_index, new_tableaux, &current_new_tableaux_index);
             if (current_tableau == NULL) // In case we ran out of tableaux...
             {
-                fprintf(GlobalOut, "# Ran out of tableaux...\n");
+                fprintf(stdout, "# Ran out of tableaux...\n");
+                fflush(stdout);
                 break;
             }
         }

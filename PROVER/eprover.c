@@ -570,8 +570,16 @@ int main(int argc, char* argv[])
          ProofStateResetProcessed(proofstate, proofcontrol);
       }
    }
+
+   // Etableau zone
    if (!success && TableauOptions == 1)
    {
+      bool presaturation = true;
+      if (presaturation)
+      {
+         success = Saturate(proofstate, proofcontrol, LONG_MAX, 100, LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX);
+         if (success) goto normal_eprover;
+      }
       TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures,
                                                             argv[argc-1], // the problem file
                                                             tableau_dot_out,
@@ -624,6 +632,10 @@ int main(int argc, char* argv[])
       TableauControlFree(tableaucontrol);
       goto cleanuptableau;
    }
+
+
+   normal_eprover:
+   // Normal Eprover below...
    PERF_CTR_ENTRY(SatTimer);
 
 #ifdef ENABLE_LFHO

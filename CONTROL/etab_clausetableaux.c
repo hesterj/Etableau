@@ -8,11 +8,23 @@ int clausesetallocs_counter = 1;
 
 void DTreeFree(void *trash);
 
+unsigned long hash(unsigned char *str);
 /*  The open branches for each distinct tableau MUST be initialized on creation,
  *  not by this method.
  * 
  * 
-*/
+ */
+
+unsigned long hash(unsigned char *str)
+{
+    unsigned long hash = 5381;
+    int c;
+
+    while ((c = *str++))
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+    return hash;
+}
 
 ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
 {
@@ -188,6 +200,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 		PStack_p copied_position = PStackCopy(old_position);
 		PStackPushP(handle->master_backtracks, copied_position);
 	}
+	assert(PStackGetSP(handle->master_backtracks) == PStackGetSP(tab->master_backtracks));
 	handle->backtracks = BacktrackStackCopy(tab->backtracks, handle->master);
 	handle->failures = BacktrackStackCopy(tab->failures, handle->master);
 
@@ -748,6 +761,8 @@ ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set)
 		ClauseRecomputeLitCounts(temp);
 		assert(ClauseLiteralNumber(temp));
 #endif
+		ClauseDelProp(temp, CPIsDIndexed);
+		ClauseDelProp(temp, CPIsSIndexed);
 		ClauseSetInsert(new, temp);
 	}
 	return new;
@@ -762,6 +777,8 @@ ClauseSet_p ClauseSetFlatCopy(TB_p bank, ClauseSet_p set)
 	{
 		assert(handle);
 		temp = ClauseFlatCopy(handle);
+		ClauseDelProp(temp, CPIsDIndexed);
+		ClauseDelProp(temp, CPIsSIndexed);
 		ClauseSetInsert(new, temp);
 	}
 	return new;
@@ -781,6 +798,8 @@ ClauseSet_p ClauseSetCopyOpt(ClauseSet_p set)
 		ClauseRecomputeLitCounts(temp);
 		assert(ClauseLiteralNumber(temp));
 #endif
+		ClauseDelProp(temp, CPIsDIndexed);
+		ClauseDelProp(temp, CPIsSIndexed);
 		ClauseSetInsert(new, temp);
 	}
 	return new;
@@ -2005,3 +2024,22 @@ bool ClausesAreDisjoint(Clause_p a, Clause_p b)
 	return result;
 }
 
+long ClauseTableauHash(ClauseTableau_p tableau)
+{
+	DStr_p string = DStrAlloc();
+
+	ClauseTableauCreateID(tableau, string);
+
+	long hash_value = hash((unsigned char*) DStrView(string));
+	DStrFree(string);
+	return hash_value;
+}
+
+void ClauseTableauCreateID(ClauseTableau_p tableau, DStr_p str)
+{
+	DStrAppendInt(str, tableau->id);
+	for (int i=0; i<tableau->arity; i++)
+	{
+		ClauseTableauCreateID(tableau->children[i], str);
+	}
+}

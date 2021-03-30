@@ -266,4 +266,7 @@ inline int GetDesiredNumberOfTableaux(TableauControl_p control)
 	return 2*(control->multiprocessing_active);
 }
 
+long ClauseTableauHash(ClauseTableau_p tableau);
+void ClauseTableauCreateID(ClauseTableau_p tableau, DStr_p str);
+
 #endif

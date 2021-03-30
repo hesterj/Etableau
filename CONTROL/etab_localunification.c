@@ -22,29 +22,35 @@ long UpdateLocalVariables(ClauseTableau_p node)
 	PTree_p local_variables_tree = NULL;
 	assert(NodeIsLeaf(node));
 	assert(node->set);
+    assert(node->set == node->open_branches);
+
 	PTreeFree(node->local_variables);
 
-	// Collect the variables of our branch
-	num_variables += CollectVariablesOfBranch(node, &local_variables_tree, true);
-	
-	// Collect the variables of the other branches
-	ClauseTableau_p branch_iterator = node->open_branches->anchor->succ;
-	PTree_p temp_variable_tree = NULL;
-	while (branch_iterator != node->open_branches->anchor)
-	{
-		if (branch_iterator != node)
-		{
-			CollectVariablesOfBranch(branch_iterator, &temp_variable_tree, true); // We need to include the root, otherwise branches could share variables there...
-		}
-		branch_iterator = branch_iterator->succ;
-	}
+    // Collect the variables of our branch
+    num_variables += CollectVariablesOfBranch(node, &local_variables_tree, true);
 
-	// Remove the variables of other branches from the tree of branch variables
-	PTreeComplement(&(local_variables_tree), temp_variable_tree);
-	PTreeFree(temp_variable_tree);
-	node->local_variables = local_variables_tree;
+    // Collect the variables of the other branches
+    ClauseTableau_p branch_iterator = node->open_branches->anchor->succ;
+    PTree_p temp_variable_tree = NULL;
+    while (branch_iterator != node->open_branches->anchor)
+    {
+        //if ((int) floor(GetTotalCPUTime())%2 == 0)
+        //{
+            //printf("iter %p %f\n", node, GetTotalCPUTime());
+        //}
+        if (branch_iterator != node)
+        {
+            CollectVariablesOfBranch(branch_iterator, &temp_variable_tree, true); // We need to include the root, otherwise branches could share variables there...
+        }
+        branch_iterator = branch_iterator->succ;
+    }
 
-	return PTreeNodes(node->local_variables);
+// Remove the variables of other branches from the tree of branch variables
+    PTreeComplement(&(local_variables_tree), temp_variable_tree);
+    PTreeFree(temp_variable_tree);
+    node->local_variables = local_variables_tree;
+
+    return PTreeNodes(node->local_variables);
 }
 
 /*  Returns number of variables found

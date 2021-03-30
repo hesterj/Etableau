@@ -279,7 +279,6 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 
 	//if (SubstIsFailure(extension->parent, subst))
 	//{
-		//fprintf(GlobalOut, "# Failure substitution!\n");
 		//SubstDelete(subst);
 		//return NULL;
 	//}

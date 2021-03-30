@@ -308,11 +308,14 @@ bool ExtensionIsFailure(ClauseTableau_p tab, Subst_p subst, long extension_id, s
     {
         Backtrack_p bt = PStackElementP(failures, i);
         // The empty substitution is not a failure substitution...
-        //if (PStackGetSP(subst) && BacktrackContainsSubst(bt, subst))
         if (PStackGetSP(subst) && (bt->id == extension_id) && (head_literal_position == bt->head_lit_position) && BacktrackContainsSubst(bt, subst))
         {
             return true;
         }
+        //if (bt->id == extension_id && head_literal_position == bt->head_lit_position)
+        //{
+            //return true;
+        //}
     }
     return false;
 }

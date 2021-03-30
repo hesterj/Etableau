@@ -76,12 +76,12 @@ typedef struct backup_proofstate_cell
 }BackupProofStateCell, *BackupProofState_p;
 
 #define BackupProofStateCellAlloc() (BackupProofStateCell*)SizeMalloc(sizeof(BackupProofStateCell))
-#define BackupProofStateCellFree() SizeFree(junk, sizeof(BackupProofStateCell))
+#define BackupProofStateCellFree(junk) SizeFree(junk, sizeof(BackupProofStateCell))
 
 BackupProofState_p BackupProofstateAlloc(ProofState_p original);
 void BackupProofStateFree(BackupProofState_p junk);
 
-long BacktrackProofState(ProofState_p proofstate, ProofControl_p proofcontrol, BackupProofState_p backup);
+long BacktrackProofState(ProofState_p proofstate, ProofControl_p proofcontrol, TableauControl_p tableaucontrol, BackupProofState_p backup);
 
 
 #endif
