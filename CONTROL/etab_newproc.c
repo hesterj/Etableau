@@ -51,8 +51,14 @@ int Etableau_n0(TableauControl_p tableaucontrol,
     ClauseSet_p start_rule_candidates = EtableauGetStartRuleCandidates(proofstate, extension_candidates);
     fprintf(GlobalOut, "# There are %ld start rule candidates:\n", start_rule_candidates->members);
     ClauseSet_p unit_axioms = ClauseSetAlloc();
+
     ClauseSetMoveUnits(extension_candidates, unit_axioms);
     ClauseSetCopyUnits(bank, start_rule_candidates, unit_axioms);
+    ClauseSetCopyUnits(bank, proofstate->processed_neg_units, unit_axioms);
+    ClauseSetCopyUnits(bank, proofstate->processed_pos_eqns, unit_axioms);
+    ClauseSetCopyUnits(bank, proofstate->processed_pos_rules, unit_axioms);
+
+    printf("# Found %ld unit axioms.\n", ClauseSetCardinality(unit_axioms));
 
     GCRegisterClauseSet(gc, unit_axioms);
     GCRegisterClauseSet(gc, extension_candidates);
@@ -100,8 +106,9 @@ int Etableau_n0(TableauControl_p tableaucontrol,
         fprintf(GlobalOut, "# NOT attempting initial tableau saturation\n");
    }
 
-   ClauseSetFreeUnits(start_rule_candidates);
+   //ClauseSetFreeUnits(start_rule_candidates);
    ClauseSetInsertSet(extension_candidates, start_rule_candidates);  // Now that all of the start rule tableaux have been created, non-unit start_rules can be made extension candidates.
+   assert(ClauseSetEmpty(start_rule_candidates));
    ClauseSetFree(start_rule_candidates);
    fprintf(GlobalOut, "# %ld start rule tableaux created.\n", PStackGetSP(distinct_tableaux_stack));
    fprintf(GlobalOut, "# %ld extension rule candidate clauses\n", extension_candidates->members);
@@ -187,7 +194,7 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         if (depth_status == ALL_DEPTHS_EXCEEDED) // All of the open branches exceed our maximum depth, so we must backtrack
         {
             assert(!open_branch);
-            //fprintf(stdout, "# Backtracking due to all depths exceeded, %ld remaining\n", PStackGetSP(master->master_backtracks));
+            fprintf(stdout, "# Backtracking due to all depths exceeded, %ld remaining\n", PStackGetSP(master->master_backtracks));
             bool backtrack_successful = BacktrackWrapper(master, true);
             if (!backtrack_successful)
             {
@@ -243,10 +250,6 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         if (!new_tableaux && open_branch->set) // If the open branch is still in a set after the extension rule attempt, it means it was not able to be extended and so should be backtracked
         {
             assert(!extended);
-#ifndef NDEBUG
-            printf("open branch still in set, %ld backtracks remaining (%ld)\n", PStackGetSP(master->master_backtracks), (long) getpid());
-            fflush(stdout);
-#endif
             bool backtrack_successful = BacktrackWrapper(master, true);
             if (!backtrack_successful)
             {
@@ -350,22 +353,18 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     }
     ///////////
 
-#ifndef NDEBUG
-    printf("printing hashes of tableaux\n");
-    for (PStackPointer p=0; p<PStackGetSP(new_tableaux); p++)
-    {
-        ClauseTableau_p new_t = PStackElementP(new_tableaux, p);
-        printf("%ld\n", ClauseTableauHash(new_t));
-    }
-    printf("done printing hashes\n");
-    fflush(stdout);
-#endif
-
-    //if (PStackGetSP(new_tableaux) < num_cores_available)
+//#ifndef NDEBUG
+    //printf("printing hashes of tableaux\n");
+    //printf("there are %ld starting tableaux\n", PStackGetSP(starting_tableaux));
+    //for (PStackPointer p=0; p<PStackGetSP(new_tableaux); p++)
     //{
-        //fprintf(GlobalOut, "# %ld tableaux and %d cores\n", PStackGetSP(new_tableaux), num_cores_available);
-        //return proof_found;
+        //ClauseTableau_p new_t = PStackElementP(new_tableaux, p);
+        //assert(new_t->master == new_t);
+        //printf("%ld %ld %f\n", ClauseTableauHash(new_t), PStackGetSP(new_t->master->master_backtracks), ClauseTableauGetAverageDepth(new_t));
     //}
+    //printf("done printing hashes\n");
+    //fflush(stdout);
+//#endif
 
     EPCtrlSet_p process_set = EPCtrlSetAlloc();
     PStack_p buckets = PStackAlloc();
@@ -397,10 +396,10 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
         {
             SilentTimeOut = true;
             TableauStack_p new_tableaux = PStackElementP(buckets, i);
-#ifndef NDEBUG
-            printf("%ld tableaux in new process %d\n", PStackGetSP(new_tableaux), i);
-            fflush(stdout);
-#endif
+//#ifndef NDEBUG
+            //printf("%ld tableaux in new process %d\n", PStackGetSP(new_tableaux), i);
+            //fflush(stdout);
+//#endif
             assert(!PStackEmpty(new_tableaux));
 
             // should be good to go...
@@ -500,10 +499,10 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
                 }
                 case BACKTRACK_FAILURE: // We never backtrack during population
                 {
-#ifndef NDEBUG
-                    printf("btf %ld\n", (long) getpid());
-                    fflush(stdout);
-#endif
+//#ifndef NDEBUG
+                    //printf("btf %ld\n", (long) getpid());
+                    //fflush(stdout);
+//#endif
                     assert(!new_tableaux);
                     assert(PStackElementP(distinct_tableaux_stack, current_tableau_index) == current_tableau);
                     PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
@@ -517,6 +516,14 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
                 }
                 case RETURN_NOW:
                 {
+                    if (new_tableaux)
+                    {
+                        while (!PStackEmpty(distinct_tableaux_stack))
+                        {
+                            ClauseTableau_p start = PStackPopP(distinct_tableaux_stack);
+                            PStackPushP(new_tableaux, start);
+                        }
+                    }
                     goto return_point;
                 }
                 default:

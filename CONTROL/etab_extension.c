@@ -431,6 +431,7 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 	old_master->active_branch = NULL;
 
 	assert(extension->parent->id == 0);
+	assert(parent->master == master);
 	assert(master->parent == NULL);
 	assert(parent);
 	assert(parent->arity == 0);
@@ -487,8 +488,8 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 			//fprintf(GlobalOut, "# Irregular extension stopped at parent\n");
 			ClauseSetFree(new_leaf_clauses_set);
 			SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
-			__attribute__((unused)) bool backtracked = BacktrackWrapper(master, false);
-			assert(backtracked);
+			// There is no need to backtrack a tableau we are about to free.
+			// __attribute__((unused)) bool backtracked = BacktrackWrapper(master, false);
 			ClauseTableauFree(master);
 			return NULL;  // REGULARITY CHECKING!
 		}
@@ -505,8 +506,9 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 		//fprintf(GlobalOut, "# Irregular extension stopped at non-parent\n");
 		ClauseSetFree(new_leaf_clauses_set);
 		SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
-		__attribute__((unused)) bool backtracked = BacktrackWrapper(master, false);
-		assert(backtracked);
+		// There is no need to backtrack a tableau we are about to free.
+		//__attribute__((unused)) bool backtracked = BacktrackWrapper(master, false);
+		//assert(backtracked);
 		ClauseTableauFree(master);
 		return NULL;  // REGULARITY CHECKING!
 
@@ -565,6 +567,7 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 	FoldUpCloseCycle(parent->master);
 
 	PStackPushP(new_tableaux, master);
+
 	// The parent may have been completely closed and extracted
 	// from the collection of open branches during the foldup close
 	// cycle, or during E saturation proof search on a local branch.
@@ -577,6 +580,8 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 	// There is no need to apply the substitution to the tablaeu, it has already been done by copying labels.
 	// In fact, the substitution should be free'd before this function ever returns.
 	assert(PStackGetSP(parent->backtracks));
+	assert(parent->master == master);
+	assert(PStackGetSP(parent->master->master_backtracks));
 	return parent->master;
 }
 
@@ -631,6 +636,7 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
         {
             assert(new_tableaux || number_of_extensions == 1); // Always return after one extension
 			*extended += number_of_extensions;
+			number_of_extensions = 0;
 
             // If we are in normal proof search (new_tableaux == NULL) or we have enough tableaux, return.
             if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= GetDesiredNumberOfTableaux(tableaucontrol))

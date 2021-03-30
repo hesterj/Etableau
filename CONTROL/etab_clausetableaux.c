@@ -1657,7 +1657,8 @@ Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var)
 	assert(tab == tab->master);
 	assert(old_var);
 	assert(TermIsVar(old_var));
-	FunCode var_funcode = tab->max_var -2;
+	//FunCode var_funcode = tab->max_var -2;
+	FunCode var_funcode = -2;
 	assert(var_funcode%2 == 0);
 	bool fresh_found = false;
 	VarBank_p varbank = tab->terms->vars;
@@ -2042,4 +2043,21 @@ void ClauseTableauCreateID(ClauseTableau_p tableau, DStr_p str)
 	{
 		ClauseTableauCreateID(tableau->children[i], str);
 	}
+}
+
+double ClauseTableauGetAverageDepth(ClauseTableau_p tableau)
+{
+	long depth_sum = ClauseTableauAddDepths(tableau);
+	double average = (double) depth_sum / (double) (tableau->open_branches->members);
+	return average;
+}
+
+long ClauseTableauAddDepths(ClauseTableau_p tab)
+{
+	long depth_sum = 0;
+	for (int i=0; i<tab->arity; i++)
+	{
+		depth_sum += ClauseTableauAddDepths(tab->children[i]);
+	}
+	return depth_sum + (long) tab->depth;
 }

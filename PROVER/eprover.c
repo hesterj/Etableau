@@ -577,7 +577,7 @@ int main(int argc, char* argv[])
       bool presaturation = true;
       if (presaturation)
       {
-         success = Saturate(proofstate, proofcontrol, LONG_MAX, 100, LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX);
+         success = Saturate(proofstate, proofcontrol, LONG_MAX, 1000, LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX);
          if (success) goto normal_eprover;
       }
       TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures,
@@ -591,7 +591,8 @@ int main(int argc, char* argv[])
       fprintf(GlobalOut, "# Number of axioms: %ld Number of unprocessed: %ld\n",
               proofstate->axioms->members,
               proofstate->unprocessed->members);
-      ClauseSet_p new_axioms = ClauseSetCopy(proofstate->terms, proofstate->unprocessed);
+      //ClauseSet_p new_axioms = ClauseSetCopy(proofstate->terms, proofstate->unprocessed);
+      ClauseSet_p new_axioms = ClauseSetCopy(proofstate->terms, proofstate->axioms);
       ClauseSet_p *source = &proofstate->unprocessed;
       if (ClauseSetEmpty(new_axioms))
       {

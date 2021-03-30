@@ -152,14 +152,15 @@ long ClauseSetMoveUnits(ClauseSet_p set, ClauseSet_p units)
 
    assert(set);
    assert(units);
-   assert(!set->demod_index);
-   assert(!set->demod_index);
+   //assert(!set->demod_index);
+   //assert(!set->demod_index);
 
    handle = set->anchor->succ;
    long count = 0;
    //printf("%p\n", set->anchor);
    while(handle != set->anchor)
    {
+	   ClauseRecomputeLitCounts(handle);
 		assert(handle);
       if(ClauseLiteralNumber(handle) == 1)
       {
@@ -196,14 +197,14 @@ long ClauseSetCopyUnits(TB_p bank, ClauseSet_p set, ClauseSet_p units)
 
    assert(set);
    assert(units);
-   assert(!set->demod_index);
-   assert(!set->demod_index);
+   //assert(!set->demod_index);
 
    handle = set->anchor->succ;
    long count = 0;
    while(handle != set->anchor)
    {
 		assert(handle);
+		ClauseRecomputeLitCounts(handle);
       if(ClauseLiteralNumber(handle) == 1)
       {
 			count++;

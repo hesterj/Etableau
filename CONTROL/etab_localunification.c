@@ -18,13 +18,13 @@
 
 long UpdateLocalVariables(ClauseTableau_p node)
 {
-	long num_variables = 0;
-	PTree_p local_variables_tree = NULL;
-	assert(NodeIsLeaf(node));
-	assert(node->set);
+    long num_variables = 0;
+    PTree_p local_variables_tree = NULL;
+    assert(NodeIsLeaf(node));
+    assert(node->set);
     assert(node->set == node->open_branches);
 
-	PTreeFree(node->local_variables);
+    PTreeFree(node->local_variables);
 
     // Collect the variables of our branch
     num_variables += CollectVariablesOfBranch(node, &local_variables_tree, true);
