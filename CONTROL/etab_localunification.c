@@ -127,25 +127,22 @@ long ClauseCollectVariablesStack(Clause_p clause, PStack_p stack)
 
 long ReplaceLocalVariablesWithFreshSubst(ClauseTableau_p master, Clause_p clause, PTree_p local_variables, Subst_p subst)
 {
-	assert(local_variables);
+    assert(local_variables);
+    assert(master->master == master);
 
-	PTree_p clause_variables = NULL;
-	long number_of_clause_variables __attribute__((unused)) = ClauseCollectVariables(clause, &(clause_variables));
-	long number_of_nonlocal_in_clause __attribute__((unused))  = PTreeDestrIntersection(&(clause_variables), local_variables);
+    PTree_p clause_variables = NULL;
+    long number_of_clause_variables __attribute__((unused)) = ClauseCollectVariables(clause, &(clause_variables));
+    long number_of_nonlocal_in_clause __attribute__((unused))  = PTreeDestrIntersection(&(clause_variables), local_variables);
 
-	Term_p old_var = NULL;
+    Term_p old_var = NULL;
 
-	while ((old_var = (Term_p) PTreeExtractRootKey(&clause_variables)))
-	{
-		assert(TermIsVar(old_var));
-		Term_p fresh_var = ClauseTableauGetFreshVar(master->master, old_var);
-		assert(old_var != fresh_var);
-		assert(old_var->f_code != fresh_var->f_code);
-		SubstAddBinding(subst, old_var, fresh_var);
-	}
+    while ((old_var = (Term_p) PTreeExtractRootKey(&clause_variables)))
+    {
+        ClauseTableauBindFreshVar(master, subst, old_var);
+    }
 
-	PTreeFree(clause_variables);
-	return number_of_nonlocal_in_clause;
+    PTreeFree(clause_variables);
+    return number_of_nonlocal_in_clause;
 }
 
 // Only call this after the local variables of the tableau have been updated.
@@ -162,30 +159,27 @@ bool VarIsLocal(ClauseTableau_p open_branch, Term_p variable)
 
 Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause, PStack_p local_variables)
 {
-	Clause_p new_clause = NULL;
-	assert(PStackGetSP(local_variables));
-	assert(clause->set);
-	assert(ClauseLiteralNumber(clause));
-	Subst_p subst = SubstAlloc();
-	//ClauseTableauUpdateVariables(master);
-	ClauseSet_p label_storage = clause->set;
-	for (PStackPointer p = 0; p < PStackGetSP(local_variables); p++)
-	{
-		Term_p old_var = PStackElementP(local_variables, p);
-		assert(old_var);
-		assert(old_var->f_code < 0);
-		assert(!(old_var->binding));
-		Term_p fresh_var = ClauseTableauGetFreshVar(master->master, old_var);
-		assert(fresh_var != old_var);
-		assert(old_var->f_code != fresh_var->f_code);
-		SubstAddBinding(subst, old_var, fresh_var);
-	}
-	new_clause = ClauseCopy(clause, master->terms);
-	ClauseSetInsert(label_storage, new_clause);
-	SubstDelete(subst);
-	assert(new_clause);
-	assert(new_clause->literals);
-	return new_clause;
+    assert(master->master == master);
+    assert(PStackGetSP(local_variables));
+    assert(clause->set);
+    assert(ClauseLiteralNumber(clause));
+    Clause_p new_clause = NULL;
+    Subst_p subst = SubstAlloc();
+    ClauseSet_p label_storage = clause->set;
+    for (PStackPointer p = 0; p < PStackGetSP(local_variables); p++)
+    {
+        Term_p old_var = PStackElementP(local_variables, p);
+        assert(old_var);
+        assert(old_var->f_code < 0);
+        assert(!(old_var->binding));
+        ClauseTableauBindFreshVar(master, subst, old_var);
+    }
+    new_clause = ClauseCopy(clause, master->terms);
+    ClauseSetInsert(label_storage, new_clause);
+    SubstDelete(subst);
+    assert(new_clause);
+    assert(new_clause->literals);
+    return new_clause;
 }
 
 /*  Return true if the branch is local

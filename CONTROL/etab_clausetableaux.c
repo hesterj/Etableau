@@ -663,7 +663,7 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 		a_local_variables = PStackAlloc();
 		a_fresh_variables = PStackAlloc();
 
-		ReplaceLocalVariablesWithFreshSubst(tab, a, tab->local_variables, subst);
+		ReplaceLocalVariablesWithFreshSubst(tab->master, a, tab->local_variables, subst);
 		a_eqn = EqnCopyOpt(a_eqn);
 
 		//fprintf(GlobalOut, "# Subst before backtracking subst (step %d attempt)\n", tab->master->max_step + 1);
@@ -683,7 +683,7 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 		assert(PStackGetSP(a_local_variables) == PStackGetSP(a_fresh_variables));
 		//SubstBacktrack(subst);
 
-		ReplaceLocalVariablesWithFreshSubst(tab, b, tab->local_variables, subst);
+		ReplaceLocalVariablesWithFreshSubst(tab->master, b, tab->local_variables, subst);
 		b_eqn = EqnCopyOpt(b_eqn);
 
 		//fprintf(GlobalOut, "# Subst after backtracking subst (step %d attempt)\n", tab->master->max_step + 1);
@@ -906,13 +906,7 @@ void ClauseTableauPrintBranch(ClauseTableau_p branch)
 {
 	ClauseTableau_p depth_check = branch;
 	assert(depth_check);
-	//fprintf(GlobalOut, "# Depth: %d ", depth_check->depth);
-	//if (branch->open && branch->arity == 0)
-	//{
-		//fprintf(GlobalOut, "OPEN");
-	//}
-	//fprintf(GlobalOut, "\n");
-	//printf("\033[1;33m");
+
 	while (depth_check->depth != 0)
 	{
 		assert(depth_check->label);
@@ -1022,34 +1016,47 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
 	assert(tableau->master->terms->vars);
 	assert(clause);
 	PTree_p variable_tree = NULL;
-	PStack_p variables;
-	PStackPointer p;
-	Subst_p subst;
-	Term_p old_var, fresh_var;
-	Clause_p handle;
+	PStack_p variables = NULL;
+	PStackPointer p = NULL;
+	Subst_p subst = NULL;
+	Clause_p handle = NULL;
 
 	variables = PStackAlloc();
 	subst = SubstAlloc();
 
 	ClauseCollectVariables(clause, &variable_tree);
-	PTreeToPStack(variables, variable_tree);
-	PTreeFree(variable_tree);
 
-	for (p = 0; p < PStackGetSP(variables); p++)
+	PStack_p iter = PTreeTraverseInit(variable_tree);
+	PTree_p tree_cell = NULL;
+
+	while ((tree_cell = PTreeTraverseNext(iter)))
 	{
-		old_var = PStackElementP(variables, p);
-		fresh_var = ClauseTableauGetFreshVar(tableau->master, old_var); // new
-		assert(fresh_var != old_var);
-		assert(fresh_var->f_code != old_var->f_code);
-		SubstAddBinding(subst, old_var, fresh_var);
+		ClauseTableauBindFreshVar(tableau->master, subst, tree_cell->key);
 	}
 
 	handle = ClauseCopy(clause, tableau->terms);
 
+	PTreeTraverseExit(iter);
+	PTreeFree(variable_tree);
 	SubstDelete(subst);
-	PStackFree(variables);
 
 	return handle;
+}
+
+/*
+** Bind old_var to a variable fresh to the tableau.
+** If the old variable is already fresh (does not occur anywhere on the tableau),
+** then do not bind it.
+ */
+
+void ClauseTableauBindFreshVar(ClauseTableau_p master, Subst_p subst, Term_p old_var)
+{
+	assert(master->master == master);
+	assert(TermIsVar(old_var));
+	Term_p fresh_var = ClauseTableauGetFreshVar(master, old_var); // new
+	assert(fresh_var);
+	assert(fresh_var != old_var);
+	SubstAddBinding(subst, old_var, fresh_var);
 }
 
 ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
@@ -1657,35 +1664,38 @@ Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var)
 	assert(tab == tab->master);
 	assert(old_var);
 	assert(TermIsVar(old_var));
-	//FunCode var_funcode = tab->max_var -2;
-	FunCode var_funcode = -2;
-	assert(var_funcode%2 == 0);
-	bool fresh_found = false;
 	VarBank_p varbank = tab->terms->vars;
-	//int v_count = PDArrayElementInt(varbank->v_counts, old_var->type->type_uid);
-	while (!fresh_found)
+	Term_p potential_fresh = NULL;
+
+	// Store the old variable so that it doesn't get bound to later.
+	PTreeStore(&(tab->tableau_variables), old_var);
+
+	//while (!fresh_found)
+	for (FunCode var_funcode = -2; ; var_funcode -= 2)
 	{
-		//printf("# %ld\n", var_funcode);
-		Term_p potential_fresh = VarBankFCodeFind(varbank, var_funcode);
-		if (UNLIKELY(!potential_fresh)) //hasn't been created yet
-		{
-			potential_fresh = VarBankVarAssertAlloc(varbank, var_funcode, old_var->type);
-		}
-		assert(potential_fresh);
+		potential_fresh = VarBankVarAssertAlloc(varbank, var_funcode, old_var->type);
 		PTree_p found = PTreeFind(&(tab->tableau_variables), potential_fresh);
 		if (!found)
 		{
-			assert(TermIsVar(potential_fresh));
 			PTreeStore(&(tab->tableau_variables), potential_fresh);
-			assert(PTreeFind(&(tab->tableau_variables), potential_fresh));
-			//v_count++;
-			//PDArrayAssignInt(varbank->v_counts, old_var->type->type_uid, v_count);
-			return potential_fresh;
+			break;
 		}
-		var_funcode -= 2;
+#ifndef NDEBUG
+		{
+			if (var_funcode < -1000000)
+			{
+				Error("Ludicrously large variable, are the variable trees of the tableau getting reset?", 100);
+			}
+		}
+#endif
 	}
-	Error("# Could not find a fresh variable...", 1);
-	return NULL;
+	assert(TermIsVar(potential_fresh));
+	assert(PTreeFind(&(tab->tableau_variables), potential_fresh));
+	assert(potential_fresh != old_var);
+	assert(potential_fresh && "NULL variable being returned in ClauseTableauGetFreshVar");
+	assert(potential_fresh->f_code < 0);
+	assert(potential_fresh->f_code % 2 == 0);
+	return potential_fresh;
 }
 
 PList_p ClauseSetToPList(ClauseSet_p set)
@@ -2060,4 +2070,20 @@ long ClauseTableauAddDepths(ClauseTableau_p tab)
 		depth_sum += ClauseTableauAddDepths(tab->children[i]);
 	}
 	return depth_sum + (long) tab->depth;
+}
+
+
+void TermTreePrintCodes(FILE* out, PTree_p tree)
+{
+	PStack_p iter = PTreeTraverseInit(tree);
+	PTree_p handle = NULL;
+
+	while ((handle = PTreeTraverseNext(iter)))
+	{
+		Term_p term = (Term_p) handle->key;
+		fprintf(out, "%ld ", term->f_code);
+	}
+	fprintf(out, "\n");
+
+	PTreeTraverseExit(iter);
 }

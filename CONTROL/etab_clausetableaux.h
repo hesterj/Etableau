@@ -198,6 +198,7 @@ void ClauseTableauCollectLeavesStack(ClauseTableau_p tab, PStack_p leaves);
 bool TableauDominatesNode(ClauseTableau_p tab, ClauseTableau_p node);
 
 Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var);
+void ClauseTableauBindFreshVar(ClauseTableau_p master, Subst_p subst, Term_p old_var);
 long ClauseGetIdent(Clause_p clause);
 long          SubstDStrPrint(DStr_p str, Subst_p subst, Sig_p sig, DerefType deref);
 
@@ -270,5 +271,6 @@ long ClauseTableauHash(ClauseTableau_p tableau);
 void ClauseTableauCreateID(ClauseTableau_p tableau, DStr_p str);
 long ClauseTableauAddDepths(ClauseTableau_p tab);
 double ClauseTableauGetAverageDepth(ClauseTableau_p tableau);
+void TermTreePrintCodes(FILE* out, PTree_p tree);
 
 #endif
