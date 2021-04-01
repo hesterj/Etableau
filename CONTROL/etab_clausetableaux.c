@@ -805,6 +805,27 @@ ClauseSet_p ClauseSetCopyOpt(ClauseSet_p set)
 	return new;
 }
 
+ClauseSet_p ClauseSetCopyIndexedOpt(ClauseSet_p set)
+{
+	Clause_p handle, temp;
+	assert(set);
+	ClauseSet_p new = ClauseSetAlloc();
+	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
+	{
+		assert(handle);
+		//temp = ClauseCopy(handle,bank);
+		temp = ClauseCopyOpt(handle);
+		temp->weight = ClauseStandardWeight(temp);
+#ifdef DEBUG
+		ClauseRecomputeLitCounts(temp);
+		assert(ClauseLiteralNumber(temp));
+#endif
+		ClauseDelProp(temp, CPIsDIndexed);
+		ClauseDelProp(temp, CPIsSIndexed);
+		ClauseSetIndexedInsertClause(new, temp);
+	}
+	return new;
+}
 /*
 */
 
@@ -1016,12 +1037,9 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
 	assert(tableau->master->terms->vars);
 	assert(clause);
 	PTree_p variable_tree = NULL;
-	PStack_p variables = NULL;
-	PStackPointer p = NULL;
 	Subst_p subst = NULL;
 	Clause_p handle = NULL;
 
-	variables = PStackAlloc();
 	subst = SubstAlloc();
 
 	ClauseCollectVariables(clause, &variable_tree);
@@ -1819,7 +1837,9 @@ void ClauseStackFree(ClauseStack_p trash)
 
 void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, ClauseTableau_p resulting_tab)
 {
+	assert(tableaucontrol->proofstate->status_reported == false);
 
+	fprintf(GlobalOut, "# There were %ld successful branch saturations.\n", tableaucontrol->number_of_successful_saturation_attempts);
 	if (!resulting_tab)
 	{
 		TSTPOUT(GlobalOut, "ResourceOut");
@@ -1900,6 +1920,8 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 		DStrFree(dot_output_location);
 	}
 	fflush(GlobalOut);
+
+	tableaucontrol->proofstate->status_reported = true;
 	return;
 }
 

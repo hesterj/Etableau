@@ -103,10 +103,6 @@ ClauseTableau_p branch_select(TableauSet_p open_branches, int current_depth, int
 	}
 	if (depth_status && num_max_depth_branches == (int) open_branches->members) // All of the branches are at the maximum depth
 	{
-#ifndef NDEBUG
-		printf("all depths exceeded, d:%d (%ld)\n", max_depth, (long) getpid());
-		fflush(stdout);
-#endif
 		*depth_status = ALL_DEPTHS_EXCEEDED;
 	}
 	return deepest;

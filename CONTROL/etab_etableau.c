@@ -51,8 +51,6 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 
 	if (tableau_control->quicksat)
 	{
-		fprintf(stdout, "# Processing %ld clauses\n", tableau_control->quicksat);
-		fflush(stdout);
 		selected_number_of_clauses_to_process = tableau_control->quicksat;
 	}
 	else
@@ -84,29 +82,11 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 	// Do not duplicate work.
 	if (previously_saturated >= selected_number_of_clauses_to_process)
 	{
-		//fprintf(stdout, "# (%ld) Do not replicate work...\n", (long) getpid());
 		return RESOURCE_OUT;
 	}
 
 	// Large number of clauses to process, for last ditch attempts
 	if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
-
-	//proofcontrol->heuristic_parms.prefer_initial_clauses = true;
-
-	//ClauseSet_p unprocessed = NULL;
-	//bool old_reset = false;
-	//if (old_reset)
-	//{
-		//// This is the old way of resetting the saturation proofstate
-		//unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
-		//EtableauProofStateResetClauseSets(proofstate);
-		//ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
-		//TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
-	//}
-	//else // Presaturated Etableau core
-	//{
-		//BacktrackProofState(proofstate, proofcontrol, tableau_control, tableau_control->backup);
-	//}
 
 	BacktrackProofState(proofstate, proofcontrol, tableau_control, tableau_control->backup);
 
@@ -115,19 +95,100 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 															  branch,
 															  selected_number_of_clauses_to_process);
 
-	//EtableauProofStateResetClauseSets(proofstate);
-	//TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
-
 	branch->previously_saturated = selected_number_of_clauses_to_process;
-
-	//if (unprocessed) // Needed if we are using the old style proof reset
-	//{
-		//ClauseSetFree(unprocessed);
-	//}
-
 
 	return branch_status;
 }
+
+//ErrorCodes OLD_ECloseBranchWrapper(ProofState_p proofstate,
+							   //ProofControl_p proofcontrol,
+							   //ClauseTableau_p branch,
+							   //TableauControl_p tableau_control,
+							   //long max_proc)
+//{
+	//long selected_number_of_clauses_to_process = max_proc;
+	//long previously_saturated = branch->previously_saturated;
+	//assert(branch);
+//
+	//if (tableau_control->quicksat)
+	//{
+		//fprintf(stdout, "# Processing %ld clauses\n", tableau_control->quicksat);
+		//fflush(stdout);
+		//selected_number_of_clauses_to_process = tableau_control->quicksat;
+	//}
+	//else
+	//// Process more clauses on tableaux with fewer open branches
+	//{
+		//switch (branch->open_branches->members)
+		//{
+			//case 1:
+			//{
+				////selected_number_of_clauses_to_process = 1000*branch->depth;
+				//selected_number_of_clauses_to_process = 10000;
+				//break;
+			//}
+			//case 2:
+			//{
+				////selected_number_of_clauses_to_process = 100*branch->depth;
+				//selected_number_of_clauses_to_process = 1000;
+				//break;
+			//}
+			//default:
+			//{
+				////selected_number_of_clauses_to_process = 100;
+				//selected_number_of_clauses_to_process = 100;
+				//break;
+			//}
+		//}
+	//}
+//
+	//// Do not duplicate work.
+	//if (previously_saturated >= selected_number_of_clauses_to_process)
+	//{
+		////fprintf(stdout, "# (%ld) Do not replicate work...\n", (long) getpid());
+		//return RESOURCE_OUT;
+	//}
+//
+	//// Large number of clauses to process, for last ditch attempts
+	//if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
+//
+	////proofcontrol->heuristic_parms.prefer_initial_clauses = true;
+//
+	////ClauseSet_p unprocessed = NULL;
+	////bool old_reset = false;
+	////if (old_reset)
+	////{
+		////// This is the old way of resetting the saturation proofstate
+		////unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
+		////EtableauProofStateResetClauseSets(proofstate);
+		////ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
+		////TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
+	////}
+	////else // Presaturated Etableau core
+	////{
+		////BacktrackProofState(proofstate, proofcontrol, tableau_control, tableau_control->backup);
+	////}
+//
+	//BacktrackProofState(proofstate, proofcontrol, tableau_control, tableau_control->backup);
+//
+	//ErrorCodes branch_status = ECloseBranchWithInterreduction(proofstate,
+															  //proofcontrol,
+															  //branch,
+															  //selected_number_of_clauses_to_process);
+//
+	////EtableauProofStateResetClauseSets(proofstate);
+	////TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
+//
+	//branch->previously_saturated = selected_number_of_clauses_to_process;
+//
+	////if (unprocessed) // Needed if we are using the old style proof reset
+	////{
+		////ClauseSetFree(unprocessed);
+	////}
+//
+//
+	//return branch_status;
+//}
 
 ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 										  ProofControl_p proofcontrol,
@@ -721,10 +782,13 @@ void BackupProofStateFree(BackupProofState_p junk)
 long BacktrackProofState(ProofState_p proofstate, ProofControl_p proofcontrol, TableauControl_p tableaucontrol, BackupProofState_p backup)
 {
 	//printf("start backtracking %ld\n", tableaucontrol->number_of_saturation_attempts);
+	ClauseSet_p unprocessed = NULL;
 	assert(proofstate);
 	assert(proofcontrol);
 	assert(backup);
-	ClauseSet_p unprocessed = NULL;
+	assert(tableaucontrol);
+
+
 	if (ClauseSetCardinality(backup->unprocessed))
 	{
 		unprocessed = ClauseSetCopyOpt(backup->unprocessed);
@@ -733,21 +797,38 @@ long BacktrackProofState(ProofState_p proofstate, ProofControl_p proofcontrol, T
 	{
 		unprocessed = ClauseSetCopyOpt(tableaucontrol->unprocessed);
 	}
+
+
+
 	EtableauProofStateResetClauseSets(proofstate);
-	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
-	assert(ClauseSetEmpty(unprocessed));
+
+	//ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
+	//
+	proofstate->state_is_complete = false;
+	//assert(ClauseSetEmpty(unprocessed));
+
 	ClauseSetFree(unprocessed);
 	ClauseSetFree(proofstate->processed_neg_units);
 	ClauseSetFree(proofstate->processed_non_units);
 	ClauseSetFree(proofstate->processed_pos_eqns);
 	ClauseSetFree(proofstate->processed_pos_rules);
-	proofstate->processed_neg_units = ClauseSetCopyOpt(backup->processed_neg_units);
-	proofstate->processed_non_units = ClauseSetCopyOpt(backup->processed_non_units);
-	proofstate->processed_pos_eqns = ClauseSetCopyOpt(backup->processed_pos_eqns);
-	proofstate->processed_pos_rules = ClauseSetCopyOpt(backup->processed_pos_rules);
+
+	proofstate->processed_neg_units = ClauseSetCopyIndexedOpt(backup->processed_neg_units);
+	proofstate->processed_non_units = ClauseSetCopyIndexedOpt(backup->processed_non_units);
+	proofstate->processed_pos_eqns  = ClauseSetCopyIndexedOpt(backup->processed_pos_eqns);
+	proofstate->processed_pos_rules = ClauseSetCopyIndexedOpt(backup->processed_pos_rules);
+
+	proofstate->processed_pos_rules->demod_index = PDTreeAlloc(proofstate->terms);
+	proofstate->processed_pos_eqns->demod_index  = PDTreeAlloc(proofstate->terms);
+	proofstate->processed_neg_units->demod_index = PDTreeAlloc(proofstate->terms);
+
+	proofstate->demods[0]            = proofstate->processed_pos_rules;
+	proofstate->demods[1]            = proofstate->processed_pos_eqns;
+	proofstate->demods[2]            = NULL;
+
 	TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
 	//assert(ProofStateProcCardinality(proofstate));
-	assert(ClauseSetCardinality(proofstate->unprocessed));
+	//assert(ClauseSetCardinality(proofstate->unprocessed));
 	//printf("done backtracking %ld\n", tableaucontrol->number_of_saturation_attempts);
 	return 0;
 }

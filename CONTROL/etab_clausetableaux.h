@@ -121,6 +121,7 @@ void HCBClauseSetEvaluate(HCB_p hcb, ClauseSet_p clauses);
 ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set);
 ClauseSet_p ClauseSetFlatCopy(TB_p bank, ClauseSet_p set);
 ClauseSet_p ClauseSetCopyOpt(ClauseSet_p set);
+ClauseSet_p ClauseSetCopyIndexedOpt(ClauseSet_p set);
 Clause_p ClauseFlatCopyFresh(Clause_p clause, ClauseTableau_p tableau);
 bool ClausesAreDisjoint(Clause_p a, Clause_p b);
 

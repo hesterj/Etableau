@@ -175,18 +175,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		assert(leaf_clause->literals);
 		assert(open_branch_label->literals);
 		assert(selected);
-#ifndef NDEBUG
-		if (!ClausesAreDisjoint(open_branch_label, leaf_clause))
-		{
-			fprintf(GlobalOut, "# Shared variables between parent and leaf in extension rule attempt...\n");
-			ClausePrint(GlobalOut, open_branch_label, true);
-			fprintf(GlobalOut, "\n");
-			ClausePrint(GlobalOut, leaf_clause, true);
-			fprintf(GlobalOut, "\n");
-			assert(false && "Variables should not be shared between parent and leaf clauses in an attempted extension step");
-		}
-#endif
-		//Subst_p subst = SubstAlloc();
+
 		Subst_p subst = NULL;
 
 		// Here we are only doing the first possible extension- need to create a list of all of the extensions and do them...
@@ -207,26 +196,23 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 																		 extension_candidate,
 																		 new_tableaux);
 			TableauExtensionFree(extension_candidate);
-			//assert(TermBankUnbindAll(open_branch->terms));
 			if (extended) // extension may not happen due to regularity
 			{
 				extensions_done++;
 				tableau_control->number_of_extensions++;
 				if (tableau_control->branch_saturation_enabled)
 				{
-					//fprintf(GlobalOut, "# Saturating branch\n");
-					BranchSaturation_p branch_sat = BranchSaturationAlloc(tableau_control->proofstate, 
+					BranchSaturation_p branch_sat = BranchSaturationAlloc(tableau_control->proofstate,
 																		  tableau_control->proofcontrol,
 																		  extended->master,
 																		  10000);
 					AttemptToCloseBranchesWithSuperpositionSerial(tableau_control, branch_sat);
 					BranchSaturationFree(branch_sat);
-					//fprintf(GlobalOut, "# Saturation done\n");
 				}
-				if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= tableau_control->multiprocessing_active) // If we extended on a tableau without copying it, return.
-				{
-					goto return_point;
-				}
+			}
+			if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= tableau_control->multiprocessing_active) // If we extended on a tableau without copying it, return.
+			{
+				goto return_point;
 			}
 		}
 		position++;
@@ -566,6 +552,7 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 
 	FoldUpCloseCycle(parent->master);
 
+	assert(master->master == master);
 	PStackPushP(new_tableaux, master);
 
 	// The parent may have been completely closed and extracted
