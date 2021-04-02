@@ -1,7 +1,12 @@
 #include<etab_newproc.h>
 
 extern void c_smoketest();
-void assert_all_tableaux_in_stack_are_root(TableauStack_p stack);
+bool all_tableaux_in_stack_are_root(TableauStack_p stack);
+ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_stack,
+                                            PStackPointer *current_index_p,
+                                            TableauStack_p new_tableaux);
+ClauseTableau_p get_next_tableau(TableauStack_p distinct_tableaux_stack,
+                                 PStackPointer *current_index_p);
 
 int Etableau_n0(TableauControl_p tableaucontrol,
                ProofState_p proofstate,
@@ -115,9 +120,7 @@ int Etableau_n0(TableauControl_p tableaucontrol,
    fprintf(GlobalOut, "# %ld extension rule candidate clauses\n", extension_candidates->members);
    printf("\n");
 
-#ifndef NDEBUG
-   assert_all_tableaux_in_stack_are_root(distinct_tableaux_stack);
-#endif
+   assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
    // Now do proof search...
 
    if (!proof_found && tableaucontrol->multiprocessing_active != 0)
@@ -131,12 +134,11 @@ int Etableau_n0(TableauControl_p tableaucontrol,
    }
    else if (!proof_found)
    {
-       proof_found = EtableauProofSearchAtDepthWrapper_n1(tableaucontrol,
-                                                         distinct_tableaux_stack,
-                                                         active,
-                                                         extension_candidates,
-                                                         max_depth,
-                                                         NULL);
+       proof_found = EtableauProofSearch_n1(tableaucontrol,
+                                            distinct_tableaux_stack,
+                                            active,
+                                            extension_candidates,
+                                            max_depth);
    }
 
    // Proof search is over
@@ -176,8 +178,7 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
                                       ClauseSet_p extension_candidates,
                                       int current_depth,
                                       int max_depth,
-                                      BacktrackStatus_p backtrack_status,
-                                      TableauStack_p new_tableaux)
+                                      BacktrackStatus_p backtrack_status)
 {
     assert(tableaucontrol);
     assert(master);
@@ -189,18 +190,13 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
     //fprintf(GlobalOut, "# Current depth %d\n", current_depth);
 
 
-    ClauseTableau_p (*branch_selection_function)(TableauSet_p, int, int, int*) = &branch_select;
-
-    if ((UNLIKELY(new_tableaux))) branch_selection_function = &branch_select2; // If we are still populating, we cannot extend on previously extended branches
-    //fprintf(stdout, " %p %d %d ", master, tableaucontrol->number_of_extensions, current_depth);
-
     int extensions_done = 0; // This allows us to keep track of the number of extensions done since the last backtrack
     int depth_status = DEPTH_OK;
     ClauseTableau_p open_branch = NULL, result = NULL;
     TableauSet_p open_branches = master->open_branches;
     while (true)
     {
-        open_branch = (*branch_selection_function)(open_branches, current_depth, max_depth, &depth_status);
+        open_branch = branch_select(open_branches, current_depth, max_depth, &depth_status);
         if (depth_status == ALL_DEPTHS_EXCEEDED) // All of the open branches exceed our maximum depth, so we must backtrack
         {
             assert(!open_branch);
@@ -214,9 +210,86 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
             depth_status = DEPTH_OK;
             continue; // We backtracked, try again
         }
-        if (UNLIKELY(new_tableaux && depth_status == ALL_PREVIOUSLY_SELECTED))
+        else if (!open_branch) // All of the open branches exceed our current depth, so we must break and return in order to increase it
         {
-            //fprintf(GlobalOut, "# Moving to next tableau for population because all the possible branches were already extended\n");
+            break;
+        }
+        //fprintf(GlobalOut, "# Selected open branch %p, %d extensions done so far, current depth %d\n", open_branch, tableaucontrol->number_of_extensions, current_depth);
+        int extended = 0;
+        assert(open_branch);
+        assert(open_branch->id == 0);
+        assert(open_branch->backtracks);
+        assert(open_branch->depth < current_depth);
+        assert(open_branch->failures);
+        assert(open_branch->parent);
+        assert(open_branch->parent->backtracks);
+        assert(open_branch->master == master);
+        assert(depth_status == DEPTH_OK);
+
+        result = ClauseTableauSearchForPossibleExtension(tableaucontrol,
+                                                         open_branch,
+                                                         extension_candidates,
+                                                         current_depth,
+                                                         &extended,
+                                                         NULL);
+        extensions_done += extended;
+        assert(open_branch->master == master);
+
+        if (result || (open_branches->members == 0)) // We have found a closed tableau
+        {
+            assert(tableaucontrol->closed_tableau == result);
+            break;
+        }
+        if (open_branch->set) // If the open branch is still in a set after the extension rule attempt, it means it was not able to be extended and so should be backtracked
+        {
+            assert(!extended);
+            bool backtrack_successful = BacktrackWrapper(master, true);
+            if (!backtrack_successful)
+            {
+                *backtrack_status = BACKTRACK_FAILURE; // Failed backtrack, this tableau is no good.
+                break;
+            }
+        }
+        else if (tableaucontrol->number_of_extensions % 100 == 0)
+        {
+            *backtrack_status = NEXT_TABLEAU;
+            break;
+        }
+    }
+
+    assert(open_branches);
+    assert(master->open_branches == open_branches);
+
+    assert(master->master == master);
+    return result;
+}
+
+ClauseTableau_p EtableauPopulate_n3(TableauControl_p tableaucontrol,
+                                    ClauseTableau_p master,
+                                    ClauseSet_p extension_candidates,
+                                    int current_depth,
+                                    int max_depth,
+                                    BacktrackStatus_p backtrack_status,
+                                    TableauStack_p new_tableaux)
+{
+    assert(new_tableaux);
+    assert(tableaucontrol);
+    assert(master);
+    assert(master->master == master);
+    assert(extension_candidates);
+    assert(current_depth);
+    assert(master->label);
+    assert(master->open_branches);
+
+    int extensions_done = 0; // This allows us to keep track of the number of extensions done since the last backtrack
+    int depth_status = DEPTH_OK;
+    ClauseTableau_p open_branch = NULL, result = NULL;
+    TableauSet_p open_branches = master->open_branches;
+    while (true)
+    {
+        open_branch = branch_select2(open_branches, current_depth, max_depth, &depth_status);
+        if (depth_status == ALL_PREVIOUSLY_SELECTED || depth_status == ALL_DEPTHS_EXCEEDED)
+        {
             *backtrack_status = NEXT_TABLEAU;
             break;
         }
@@ -233,7 +306,9 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         assert(open_branch->failures);
         assert(open_branch->parent);
         assert(open_branch->parent->backtracks);
+        assert(open_branch->master == master);
         assert(depth_status == DEPTH_OK);
+        assert(tableaucontrol->multiprocessing_active);
 
         result = ClauseTableauSearchForPossibleExtension(tableaucontrol,
                                                          open_branch,
@@ -242,72 +317,60 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
                                                          &extended,
                                                          new_tableaux);
         extensions_done += extended;
+        assert(open_branch->master == master);
 
         if (result || (open_branches->members == 0)) // We have found a closed tableau
         {
             assert(tableaucontrol->closed_tableau == result);
             break;
         }
-        if (UNLIKELY(new_tableaux))
+        if (PStackGetSP(new_tableaux) >= GetDesiredNumberOfTableaux(tableaucontrol))
         {
-            assert(tableaucontrol->multiprocessing_active);
-            if (PStackGetSP(new_tableaux) >= GetDesiredNumberOfTableaux(tableaucontrol))
-            {
-                *backtrack_status = RETURN_NOW;
-                break;
-            }
-        }
-        if (!new_tableaux && open_branch->set) // If the open branch is still in a set after the extension rule attempt, it means it was not able to be extended and so should be backtracked
-        {
-            assert(!extended);
-            bool backtrack_successful = BacktrackWrapper(master, true);
-            if (!backtrack_successful)
-            {
-                *backtrack_status = BACKTRACK_FAILURE; // Failed backtrack, this tableau is no good.
-                break;
-            }
-        }
-        else if (UNLIKELY(!new_tableaux && extended && tableaucontrol->number_of_extensions % 100 == 0))
-        {
-            *backtrack_status = NEXT_TABLEAU;
+            *backtrack_status = RETURN_NOW;
             break;
         }
     }
 
-    if (UNLIKELY(new_tableaux)) ClauseTableauDeselectBranches(open_branches);
-    //fprintf(stdout," %d\n", extensions_done);
-    fflush(stdout);
+    assert(open_branches);
+    assert(master->open_branches == open_branches);
 
+    ClauseTableauDeselectBranches(open_branches);
+
+    assert(master->master == master);
+    assert(all_tableaux_in_stack_are_root(new_tableaux));
     return result;
 }
 
-ClauseTableau_p EtableauProofSearchAtDepth_n2(TableauControl_p tableaucontrol,
-                                             ClauseTableau_p master,
-                                             ClauseSet_p extension_candidates,
-                                             int max_depth,
-                                             BacktrackStatus_p status,
-                                             TableauStack_p new_tableaux)
+ClauseTableau_p EtableauPopulate_n2(TableauControl_p tableaucontrol,
+                                    ClauseTableau_p master,
+                                    ClauseSet_p extension_candidates,
+                                    int max_depth,
+                                    BacktrackStatus_p status,
+                                    TableauStack_p new_tableaux)
 {
    // Root is depth 0, initial start rule is depth 1, so first depth should be 2
    BacktrackStatus backtrack_status = BACKTRACK_OK;
+   ClauseTableau_p result = NULL;
    int current_depth = ClauseTableauGetShallowestBranch(master);
-   //for (int current_depth = 2; current_depth < max_depth; current_depth++)
+   assert(master->master == master);
    while (current_depth < max_depth)
    {
        //fprintf(GlobalOut, "# Current depth %d\n", current_depth);
        assert(master->master == master);
-       ClauseTableau_p result = EtableauProofSearch_n3(tableaucontrol,
-                                                      master,
-                                                      extension_candidates,
-                                                      current_depth,
-                                                      max_depth,
-                                                      &backtrack_status,
-                                                      new_tableaux);
+       result = EtableauPopulate_n3(tableaucontrol,
+                                       master,
+                                       extension_candidates,
+                                       current_depth,
+                                       max_depth,
+                                       &backtrack_status,
+                                       new_tableaux);
        *status = backtrack_status;
+       assert(master->master == master);
        if (result || master->open_branches->members == 0)
        {
            assert(tableaucontrol->closed_tableau == result);
-           return result;
+           assert(master->master == master);
+           break;
        }
        if (backtrack_status == BACKTRACK_FAILURE || backtrack_status == NEXT_TABLEAU || backtrack_status == RETURN_NOW)
        {
@@ -315,12 +378,58 @@ ClauseTableau_p EtableauProofSearchAtDepth_n2(TableauControl_p tableaucontrol,
        }
        current_depth++;
    }
+   assert(master->master == master);
+   assert(all_tableaux_in_stack_are_root(new_tableaux));
 
    // If we have reached the maximum depth, we need to select the next tableau.
 
   // if (current_depth == max_depth) backtrack_status = NEXT_TABLEAU;
 
-   return NULL;
+   return result;
+}
+
+ClauseTableau_p EtableauProofSearch_n2(TableauControl_p tableaucontrol,
+                                       ClauseTableau_p master,
+                                       ClauseSet_p extension_candidates,
+                                       int max_depth,
+                                       BacktrackStatus_p status)
+{
+   // Root is depth 0, initial start rule is depth 1, so first depth should be 2
+   BacktrackStatus backtrack_status = BACKTRACK_OK;
+   ClauseTableau_p result = NULL;
+   int current_depth = ClauseTableauGetShallowestBranch(master);
+   assert(master->master == master);
+   while (current_depth < max_depth)
+   {
+       //fprintf(GlobalOut, "# Current depth %d\n", current_depth);
+       assert(master->master == master);
+       result = EtableauProofSearch_n3(tableaucontrol,
+                                       master,
+                                       extension_candidates,
+                                       current_depth,
+                                       max_depth,
+                                       &backtrack_status);
+       *status = backtrack_status;
+       assert(master->master == master);
+       if (result || master->open_branches->members == 0)
+       {
+           assert(tableaucontrol->closed_tableau == result);
+           assert(master->master == master);
+           break;
+       }
+       if (backtrack_status == BACKTRACK_FAILURE || backtrack_status == NEXT_TABLEAU || backtrack_status == RETURN_NOW)
+       {
+           break;
+       }
+       current_depth++;
+   }
+   assert(master->master == master);
+
+   // If we have reached the maximum depth, we need to select the next tableau.
+
+  // if (current_depth == max_depth) backtrack_status = NEXT_TABLEAU;
+
+   return result;
 }
 
 bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
@@ -336,12 +445,12 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     if (PStackGetSP(starting_tableaux) < num_cores_available)
     {
         fprintf(GlobalOut, "# There are not enough tableaux to fork, creating more\n");
-        proof_found = EtableauProofSearchAtDepthWrapper_n1(tableaucontrol,
-                                                          starting_tableaux,
-                                                          active,
-                                                          extension_candidates,
-                                                          max_depth,
-                                                          new_tableaux);
+        proof_found = EtableauPopulate_n1(tableaucontrol,
+                                          starting_tableaux,
+                                          active,
+                                          extension_candidates,
+                                          max_depth,
+                                          new_tableaux);
         fprintf(GlobalOut, "# We now have %ld tableaux to operate on\n", PStackGetSP(new_tableaux));
         if (proof_found)
         {
@@ -412,19 +521,17 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
             //printf("%ld tableaux in new process %d\n", PStackGetSP(new_tableaux), i);
             //fflush(stdout);
 //#endif
-            assert(!PStackEmpty(new_tableaux));
 
             // should be good to go...
             proc->pipe = fdopen(pipefd[1], "w");
             GlobalOut = proc->pipe;
             close(pipefd[0]);
             tableaucontrol->process_control = proc;
-            proof_found = EtableauProofSearchAtDepthWrapper_n1(tableaucontrol,
-                                                               new_tableaux,
-                                                               active,
-                                                               extension_candidates,
-                                                               max_depth,
-                                                               NULL);
+            proof_found = EtableauProofSearch_n1(tableaucontrol,
+                                                 new_tableaux,
+                                                 active,
+                                                 extension_candidates,
+                                                 max_depth);
             TableauStackFree(new_tableaux);
             if (proof_found) exit(PROOF_FOUND);
             else exit(RESOURCE_OUT);
@@ -460,42 +567,44 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     return proof_found;
 }
 
-bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
-                                         TableauStack_p distinct_tableaux_stack,
-                                          ClauseSet_p active,
-                                         ClauseSet_p extension_candidates,
-                                         int max_depth,
-                                         TableauStack_p new_tableaux)
+bool EtableauProofSearch_n1(TableauControl_p tableaucontrol,
+                            TableauStack_p distinct_tableaux_stack,
+                            ClauseSet_p active,
+                            ClauseSet_p extension_candidates,
+                            int max_depth)
 {
+    if (PStackEmpty(distinct_tableaux_stack))
+    {
+        Warning("No tableaux for proof search...");
+        return false;
+    }
     assert(tableaucontrol);
     assert(distinct_tableaux_stack);
-    assert(PStackGetSP(distinct_tableaux_stack));
     assert(active);
     assert(extension_candidates);
     assert(!ClauseSetEmpty(extension_candidates));
     bool proof_found = false;
-    PStackPointer current_tableau_index = 0;
-    PStackPointer current_new_tableaux_index = 0;
-    ClauseTableau_p current_tableau = PStackElementP(distinct_tableaux_stack, current_tableau_index);
-    assert(current_tableau->master == current_tableau);
-    while (!proof_found)
+    PStackPointer current_tableau_index = -1;
+    ClauseTableau_p current_tableau = NULL;
+    //while (!proof_found)
+    while ((current_tableau = get_next_tableau(distinct_tableaux_stack,
+                                               &current_tableau_index)))
     {
         assert(current_tableau && "We must have a tableau for proof search...");
         assert(current_tableau->master == current_tableau && "The current tableau must be the root node of the tableau");
-#ifndef NDEBUG
-        assert_all_tableaux_in_stack_are_root(distinct_tableaux_stack);
-#endif
+        //printf("iter %ld:%ld\n", current_tableau_index, PStackGetSP(distinct_tableaux_stack));
+        assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
         BacktrackStatus tableau_status = BACKTRACK_OK;
-        ClauseTableau_p closed_tableau = EtableauProofSearchAtDepth_n2(tableaucontrol,
-                                                                       current_tableau,
-                                                                       extension_candidates,
-                                                                       max_depth,
-                                                                       &tableau_status,
-                                                                       new_tableaux);
+        ClauseTableau_p closed_tableau = EtableauProofSearch_n2(tableaucontrol,
+                                                                current_tableau,
+                                                                extension_candidates,
+                                                                max_depth,
+                                                                &tableau_status);
+        assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
         if (closed_tableau || current_tableau->open_branches->members == 0)
         {
             assert(tableaucontrol->closed_tableau == closed_tableau);
-            fprintf(GlobalOut, "# Reporting status (n1), a proof was found.\n");
+            //fprintf(GlobalOut, "# Reporting status (n1), a proof was found.\n");
             EtableauStatusReport(tableaucontrol, active, closed_tableau);
             proof_found = true;
             break;
@@ -507,62 +616,34 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
             {
                 case BACKTRACK_OK: // This should only happen during population, when all possible extension up to a depth have been made on a tableau
                 {
-                    assert(new_tableaux);
-                    if (current_tableau_index < PStackGetSP(distinct_tableaux_stack))
-                    {
-                        assert(PStackElementP(distinct_tableaux_stack, current_tableau_index) == current_tableau);
-                        PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
-                    }
-                    ClauseTableauFree(current_tableau);
+                    assert(false && "Backtrack OK should not happen during normal proof search");
                     break;
                 }
                 case BACKTRACK_FAILURE: // We never backtrack during population
                 {
-//#ifndef NDEBUG
-                    //printf("btf %ld\n", (long) getpid());
-                    //fflush(stdout);
-//#endif
-                    assert(!new_tableaux);
+                    assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
                     assert(PStackElementP(distinct_tableaux_stack, current_tableau_index) == current_tableau);
                     PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
                     ClauseTableauFree(current_tableau);
                     current_tableau_index = 0;
+                    assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
+                    printf("got signal btf in normal proof search\n");
                     break;
                 }
                 case NEXT_TABLEAU:
                 {
+                    assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
                     break;
                 }
                 case RETURN_NOW:
                 {
-                    if (new_tableaux)
-                    {
-                        while (!PStackEmpty(distinct_tableaux_stack))
-                        {
-                            ClauseTableau_p start = PStackPopP(distinct_tableaux_stack);
-                            assert(start->master == start);
-                            PStackPushP(new_tableaux, start);
-                        }
-                    }
+                    printf("About to give up...\n");
                     goto return_point;
                 }
                 default:
                 {
                     Error("Unknown tableau status in n1", 100);
                 }
-            }
-#ifndef NDEBUG
-            assert_all_tableaux_in_stack_are_root(distinct_tableaux_stack);
-#endif
-            current_tableau = EtableauGetNextTableau(distinct_tableaux_stack, &current_tableau_index, new_tableaux, &current_new_tableaux_index);
-#ifndef NDEBUG
-            assert_all_tableaux_in_stack_are_root(distinct_tableaux_stack);
-#endif
-            if (current_tableau == NULL) // In case we ran out of tableaux...
-            {
-                fprintf(stdout, "# Ran out of tableaux...\n");
-                fflush(stdout);
-                break;
             }
         }
     }
@@ -571,48 +652,170 @@ bool EtableauProofSearchAtDepthWrapper_n1(TableauControl_p tableaucontrol,
     return proof_found;
 }
 
-ClauseTableau_p EtableauGetNextTableau(TableauStack_p distinct_tableaux_stack,
-                                       PStackPointer *current_index_p,
-                                       TableauStack_p new_tableaux,
-                                       PStackPointer *current_new_tableaux_index_p)
+bool EtableauPopulate_n1(TableauControl_p tableaucontrol,
+                         TableauStack_p distinct_tableaux_stack,
+                         ClauseSet_p active,
+                         ClauseSet_p extension_candidates,
+                         int max_depth,
+                         TableauStack_p new_tableaux)
 {
-    ClauseTableau_p new_current_tableau = NULL;
-    (*current_index_p)++;
-    if (*current_index_p >= PStackGetSP(distinct_tableaux_stack))
+    assert(new_tableaux);
+    if (PStackEmpty(distinct_tableaux_stack))
     {
-        if (new_tableaux)
+        Warning("No tableaux for proof search...");
+        return false;
+    }
+    assert(tableaucontrol);
+    assert(distinct_tableaux_stack);
+    assert(active);
+    assert(extension_candidates);
+    assert(!ClauseSetEmpty(extension_candidates));
+    bool proof_found = false;
+    PStackPointer current_tableau_index = -1;
+    ClauseTableau_p current_tableau = NULL;
+    //while (!proof_found)
+    while ((current_tableau = get_next_tableau_population(distinct_tableaux_stack,
+                                                          &current_tableau_index,
+                                                          new_tableaux)))
+    {
+        assert(current_tableau && "We must have a tableau for proof search...");
+        assert(current_tableau->master == current_tableau && "The current tableau must be the root node of the tableau");
+        //printf("iter %ld:%ld\n", current_tableau_index, PStackGetSP(distinct_tableaux_stack));
+        assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
+        BacktrackStatus tableau_status = BACKTRACK_OK;
+        ClauseTableau_p closed_tableau = EtableauPopulate_n2(tableaucontrol,
+                                                             current_tableau,
+                                                             extension_candidates,
+                                                             max_depth,
+                                                             &tableau_status,
+                                                             new_tableaux);
+        assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
+        if (UNLIKELY(current_tableau_index >= 10000)) tableau_status = RETURN_NOW;
+        if (closed_tableau || current_tableau->open_branches->members == 0)
         {
-            if (PStackEmpty(new_tableaux))
-            {
-                goto return_point;
-            }
-            assert(new_tableaux->current);
-            new_current_tableau = PStackPopP(new_tableaux);
-            assert(new_current_tableau->master == new_current_tableau);
-            PStackPushP(distinct_tableaux_stack, new_current_tableau);
-            goto return_point;
+            assert(tableaucontrol->closed_tableau == closed_tableau);
+            //fprintf(GlobalOut, "# Reporting status (n1), a proof was found.\n");
+            EtableauStatusReport(tableaucontrol, active, closed_tableau);
+            proof_found = true;
+            break;
         }
         else
         {
-            if ( PStackEmpty(distinct_tableaux_stack) )
+            assert(current_tableau->master == current_tableau);
+            switch (tableau_status)
             {
-                goto return_point;
+                case BACKTRACK_OK: // This should only happen during population, when all possible extension up to a depth have been made on a tableau
+                {
+                    assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
+                    assert(new_tableaux);
+                    if (current_tableau_index < PStackGetSP(distinct_tableaux_stack))
+                    {
+                        assert(PStackElementP(distinct_tableaux_stack, current_tableau_index) == current_tableau);
+                        PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
+                    }
+                    ClauseTableauFree(current_tableau);
+                    assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
+                    printf("got signal btok\n");
+                    break;
+                }
+                case BACKTRACK_FAILURE: // We never backtrack during population
+                {
+                    assert(false && "btf in populate");
+                }
+                case NEXT_TABLEAU:
+                {
+                    assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
+                    break;
+                }
+                case RETURN_NOW:
+                {
+                    printf("got signal return now\n");
+                    while (!PStackEmpty(distinct_tableaux_stack))
+                    {
+                        ClauseTableau_p start = PStackPopP(distinct_tableaux_stack);
+                        assert(start->master == start);
+                        PStackPushP(new_tableaux, start);
+                    }
+                    goto return_point;
+                }
+                default:
+                {
+                    Error("Unknown tableau status in n1", 100);
+                }
             }
-            *current_index_p = 0;
         }
     }
 
-    assert(*current_index_p < distinct_tableaux_stack->current);
-    new_current_tableau = PStackElementP(distinct_tableaux_stack, *current_index_p);
     return_point:
+    return proof_found;
+}
+
+ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_stack,
+                                            PStackPointer *current_index_p,
+                                            TableauStack_p new_tableaux)
+{
+    ClauseTableau_p new_current_tableau = NULL;
+    (*current_index_p)++;
+    assert(*current_index_p >= 0);
+    if (*current_index_p >= PStackGetSP(distinct_tableaux_stack))
+    {
+        if (new_tableaux && !PStackEmpty(new_tableaux))
+        {
+            new_current_tableau = PStackPopP(new_tableaux);
+            assert(new_current_tableau->master == new_current_tableau);
+        }
+        else if (!new_tableaux && !PStackEmpty(distinct_tableaux_stack) )
+        {
+            *current_index_p = 0;
+            new_current_tableau = PStackElementP(distinct_tableaux_stack, *current_index_p);
+            assert(new_current_tableau->master == new_current_tableau);
+        }
+    }
+    else
+    {
+        new_current_tableau = PStackElementP(distinct_tableaux_stack, *current_index_p);
+        assert(new_current_tableau->master == new_current_tableau);
+    }
+
     return new_current_tableau;
 }
 
-void assert_all_tableaux_in_stack_are_root(TableauStack_p stack)
+ClauseTableau_p get_next_tableau(TableauStack_p distinct_tableaux_stack,
+                                 PStackPointer *current_index_p)
 {
+    ClauseTableau_p new_current_tableau = NULL;
+    (*current_index_p)++;
+    assert(*current_index_p >= 0);
+    if (*current_index_p >= PStackGetSP(distinct_tableaux_stack))
+    {
+        if (!PStackEmpty(distinct_tableaux_stack) )
+        {
+            *current_index_p = 0;
+            new_current_tableau = PStackElementP(distinct_tableaux_stack, *current_index_p);
+            assert(new_current_tableau->master == new_current_tableau);
+        }
+    }
+    else
+    {
+        new_current_tableau = PStackElementP(distinct_tableaux_stack, *current_index_p);
+        assert(new_current_tableau->master == new_current_tableau);
+    }
+
+    return new_current_tableau;
+}
+
+bool all_tableaux_in_stack_are_root(TableauStack_p stack)
+{
+    if (!stack) return true;
     for (PStackPointer p=0; p< PStackGetSP(stack); p++)
     {
         ClauseTableau_p tab = PStackElementP(stack, p);
-        assert(tab->master == tab);
+        if (tab->master != tab)
+        {
+            printf("failure at %ld\n", p);
+            printf("%ld d:%d %ld\n", ClauseTableauHash(tab), tab->depth, ClauseTableauHash(tab->master));
+            return false;
+        }
     }
+    return true;
 }
