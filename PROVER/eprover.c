@@ -99,7 +99,7 @@ FunctionProperties free_symb_prop = FPIgnoreProps;
 
 long TableauOptions = 0; // Etableau stuff
 long TableauDepth = 2;
-long TableauEquality = 0;
+bool TableauEquality = false;
 long TableauCores = 0;
 long TableauQuicksat = 0;
 bool TableauSaturation = false;
@@ -620,14 +620,19 @@ int main(int argc, char* argv[])
       PStackReset(proofstate->extract_roots);
       fclose(clausification_stream);
       tableaucontrol->clausification_buffer = buf;
+      if (!TableauEquality && ClauseSetIsEquational(new_axioms))
+      {
+         fprintf(GlobalOut, "# Automatically enabled equality axioms after equality was detected\n");
+         TableauEquality = true;
+      }
 // This is the entry point for tableaux proof search
       Etableau_n0(tableaucontrol,
-                 proofstate,
-                 proofcontrol,
-                 proofstate->terms,
-                 new_axioms,
-                 TableauDepth,
-                 TableauEquality);
+                  proofstate,
+                  proofcontrol,
+                  proofstate->terms,
+                  new_axioms,
+                  TableauDepth,
+                  TableauEquality);
       free(buf); // Do not free buf until the search is done
       ClauseSetFree(new_axioms);
       TableauControlFree(tableaucontrol);

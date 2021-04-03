@@ -85,11 +85,11 @@ long CollectVariablesAtNode(ClauseTableau_p node, PTree_p *var_tree)
    
    num_collected += ClauseCollectVariables(node->label, var_tree);
 
-   for (PStackPointer p=0; p<PStackGetSP(node->old_labels); p++)
-   {
-	   Clause_p old_label = (Clause_p) PStackElementP(node->old_labels, p);
-	   num_collected += ClauseCollectVariables(old_label, var_tree);
-   }
+   //for (PStackPointer p=0; p<PStackGetSP(node->old_labels); p++)
+   //{
+	   //Clause_p old_label = (Clause_p) PStackElementP(node->old_labels, p);
+	   //num_collected += ClauseCollectVariables(old_label, var_tree);
+   //}
 	
    Clause_p handle;
    if (node->folding_labels)
@@ -101,16 +101,16 @@ long CollectVariablesAtNode(ClauseTableau_p node, PTree_p *var_tree)
 	   }
    }
 
-   for (PStackPointer p=0; p<PStackGetSP(node->old_folding_labels); p++)
-   {
-	   ClauseSet_p old_fold_label_set = (ClauseSet_p) PStackElementP(node->old_folding_labels, p);
-	   Clause_p fold_handle;
-	   for(fold_handle = old_fold_label_set->anchor->succ; fold_handle != old_fold_label_set->anchor; fold_handle =
-			  fold_handle->succ)
-	   {
-		  num_collected += ClauseCollectVariables(fold_handle, var_tree);
-	   }
-   }
+   //for (PStackPointer p=0; p<PStackGetSP(node->old_folding_labels); p++)
+   //{
+	   //ClauseSet_p old_fold_label_set = (ClauseSet_p) PStackElementP(node->old_folding_labels, p);
+	   //Clause_p fold_handle;
+	   //for(fold_handle = old_fold_label_set->anchor->succ; fold_handle != old_fold_label_set->anchor; fold_handle =
+			  //fold_handle->succ)
+	   //{
+		  //num_collected += ClauseCollectVariables(fold_handle, var_tree);
+	   //}
+   //}
 
    return num_collected;
 }
@@ -220,31 +220,32 @@ bool AllBranchesAreLocal(ClauseTableau_p master)
 
 void ClauseTableauCollectVariables(ClauseTableau_p tab, PTree_p *variables)
 {
-	ClauseTableau_p branch = tab->open_branches->anchor->succ;
-	while (branch != tab->open_branches->anchor)
-	{
-		CollectVariablesOfBranch(branch, variables, true);
-		branch = branch->succ;
-	}
+    ClauseTableau_p branch = tab->open_branches->anchor->succ;
+    while (branch != tab->open_branches->anchor)
+    {
+        CollectVariablesOfBranch(branch, variables, true);
+        branch = branch->succ;
+    }
 }
 
 // Collects variables occurring in ALL branches.
 
 void ClauseTableauCollectVariables2(ClauseTableau_p tab, PTree_p *variables)
 {
-	PStack_p leaves = PStackAlloc();
-	ClauseTableauCollectLeavesStack(tab->master, leaves);
-	for (PStackPointer p=0; p<PStackGetSP(leaves); p++)
-	{
-		ClauseTableau_p branch = PStackElementP(leaves, p);
-		CollectVariablesOfBranch(branch, variables, true);
-	}
-	//while (branch != tab->open_branches->anchor)
-	//{
-		//CollectVariablesOfBranch(branch, variables, true);
-		//branch = branch->succ;
-	//}
-	PStackFree(leaves);
+    PStack_p leaves = PStackAlloc();
+    ClauseTableau_p branch = tab->open_branches->anchor->succ;
+    //ClauseTableauCollectLeavesStack(tab->master, leaves);
+    //for (PStackPointer p=0; p<PStackGetSP(leaves); p++)
+    //{
+        //ClauseTableau_p branch = PStackElementP(leaves, p);
+        //CollectVariablesOfBranch(branch, variables, true);
+    //}
+    while (branch != tab->open_branches->anchor)
+    {
+        CollectVariablesOfBranch(branch, variables, true);
+        branch = branch->succ;
+    }
+    PStackFree(leaves);
 }
 
 /*
@@ -253,15 +254,11 @@ void ClauseTableauCollectVariables2(ClauseTableau_p tab, PTree_p *variables)
 
 void ClauseTableauUpdateVariables(ClauseTableau_p tab)
 {
-	assert(tab);
-	PTree_p tableau_variables = NULL;
-	if (tab->tableau_variables)
-	{
-		PTreeFree(tab->tableau_variables);
-	}
-	//ClauseTableauCollectVariables(tab, &tableau_variables);
-	ClauseTableauCollectVariables2(tab, &tableau_variables);
-	tab->tableau_variables = tableau_variables;
+    assert(tab);
+    PTree_p tableau_variables = NULL;
+    PTreeFree(tab->tableau_variables);
+    ClauseTableauCollectVariables2(tab, &tableau_variables);
+    tab->tableau_variables = tableau_variables;
 }
 
 /*-----------------------------------------------------------------------

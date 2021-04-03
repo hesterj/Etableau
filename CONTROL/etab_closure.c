@@ -40,7 +40,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 		if (!ClauseTableauIsLeafRegular(tab->master))
 		{
 			//fprintf(GlobalOut, "# Backtracking after closure step violated regularity\n");
-			__attribute__((unused)) bool backtracked = BacktrackWrapper(tab->master, false);
+			__attribute__((unused)) bool backtracked = BacktrackWrapper(tab->master);
 			assert(backtracked);
 			assert(tab->mark_int == 0);
 			assert(tab->id == 0);

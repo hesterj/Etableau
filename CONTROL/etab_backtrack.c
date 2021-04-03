@@ -382,14 +382,16 @@ bool BacktrackContainsSubst(Backtrack_p backtrack, Subst_p subst)
 ** Otherwise, return false.  This can happen if there are no more possible backtracks (failure tableau)
 */
 
-bool BacktrackWrapper(ClauseTableau_p master, bool delete_info)
+bool BacktrackWrapper(ClauseTableau_p master)
 {
+    bool success = true;
     assert(master == master->master);
     PStack_p master_backtracks = master->master_backtracks;
     //fprintf(GlobalOut, "# We need to backtrack... There are %ld known previous steps we can backtrack\n", PStackGetSP(master_backtracks));
     if (PStackGetSP(master_backtracks) == 0)
     {
-        return false;
+        success = false;
+        goto return_point;
     }
     PStack_p bt_position = (PStack_p) PStackPopP(master_backtracks); // bt_position is a stack indicating a location in the tableau
     ClauseTableau_p backtrack_location = GetNodeFromPosition(master, bt_position);
@@ -400,8 +402,17 @@ bool BacktrackWrapper(ClauseTableau_p master, bool delete_info)
     assert(bt->master);
 
     Backtrack(bt);
-
-    //fprintf(GlobalOut, "# Backtracking completed...\n");
     PStackFree(bt_position);
-    return true;
+
+    // IF we just backtracked an Etableau closure rule, it was only possible because of an application of another
+    // (bad) rule previously that made that step possible!
+    // This means that we need to backtrack AGAIN.
+
+    if (BacktrackIsEtableauStep(bt))
+    {
+        success = BacktrackWrapper(master);
+    }
+
+    return_point:
+    return success;
 }

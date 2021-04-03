@@ -100,7 +100,7 @@ int Etableau_n0(TableauControl_p tableaucontrol,
        Error("Initial tableau has no label!", 10);
    }
 
-   bool saturate_start_rules = false;
+   bool saturate_start_rules = true;
 // Do a branch saturation on the original problem before diving in to the tableaux proofsearch
    if (saturate_start_rules && !proof_found && tableaucontrol->branch_saturation_enabled)
    {
@@ -201,7 +201,7 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         {
             assert(!open_branch);
             //fprintf(stdout, "# Backtracking due to all depths exceeded, %ld remaining\n", PStackGetSP(master->master_backtracks));
-            bool backtrack_successful = BacktrackWrapper(master, true);
+            bool backtrack_successful = BacktrackWrapper(master);
             if (!backtrack_successful)
             {
                 *backtrack_status = BACKTRACK_FAILURE; // Failed backtrack, this tableau is no good.
@@ -243,7 +243,8 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         if (open_branch->set) // If the open branch is still in a set after the extension rule attempt, it means it was not able to be extended and so should be backtracked
         {
             assert(!extended);
-            bool backtrack_successful = BacktrackWrapper(master, true);
+            //printf("backtracking due to extension failure\n");
+            bool backtrack_successful = BacktrackWrapper(master);
             if (!backtrack_successful)
             {
                 *backtrack_status = BACKTRACK_FAILURE; // Failed backtrack, this tableau is no good.
@@ -586,14 +587,11 @@ bool EtableauProofSearch_n1(TableauControl_p tableaucontrol,
     bool proof_found = false;
     PStackPointer current_tableau_index = -1;
     ClauseTableau_p current_tableau = NULL;
-    //while (!proof_found)
     while ((current_tableau = get_next_tableau(distinct_tableaux_stack,
                                                &current_tableau_index)))
     {
         assert(current_tableau && "We must have a tableau for proof search...");
         assert(current_tableau->master == current_tableau && "The current tableau must be the root node of the tableau");
-        //printf("iter %ld:%ld\n", current_tableau_index, PStackGetSP(distinct_tableaux_stack));
-        assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
         BacktrackStatus tableau_status = BACKTRACK_OK;
         ClauseTableau_p closed_tableau = EtableauProofSearch_n2(tableaucontrol,
                                                                 current_tableau,
@@ -604,7 +602,6 @@ bool EtableauProofSearch_n1(TableauControl_p tableaucontrol,
         if (closed_tableau || current_tableau->open_branches->members == 0)
         {
             assert(tableaucontrol->closed_tableau == closed_tableau);
-            //fprintf(GlobalOut, "# Reporting status (n1), a proof was found.\n");
             EtableauStatusReport(tableaucontrol, active, closed_tableau);
             proof_found = true;
             break;
@@ -627,7 +624,7 @@ bool EtableauProofSearch_n1(TableauControl_p tableaucontrol,
                     ClauseTableauFree(current_tableau);
                     current_tableau_index = 0;
                     assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
-                    printf("got signal btf in normal proof search\n");
+                    //printf("got signal btf in normal proof search\n");
                     break;
                 }
                 case NEXT_TABLEAU:
@@ -637,7 +634,7 @@ bool EtableauProofSearch_n1(TableauControl_p tableaucontrol,
                 }
                 case RETURN_NOW:
                 {
-                    printf("About to give up...\n");
+                    //printf("About to give up...\n");
                     goto return_point;
                 }
                 default:
@@ -715,7 +712,7 @@ bool EtableauPopulate_n1(TableauControl_p tableaucontrol,
                     }
                     ClauseTableauFree(current_tableau);
                     assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
-                    printf("got signal btok\n");
+                    //printf("got signal btok\n");
                     break;
                 }
                 case BACKTRACK_FAILURE: // We never backtrack during population
@@ -729,7 +726,8 @@ bool EtableauPopulate_n1(TableauControl_p tableaucontrol,
                 }
                 case RETURN_NOW:
                 {
-                    printf("got signal return now\n");
+                    //printf("got signal return now\n");
+                    assert(all_tableaux_in_stack_are_root(new_tableaux));
                     while (!PStackEmpty(distinct_tableaux_stack))
                     {
                         ClauseTableau_p start = PStackPopP(distinct_tableaux_stack);
