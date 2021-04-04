@@ -1488,17 +1488,20 @@ bool ClauseTableauBranchContainsLiteral(ClauseTableau_p branch, Eqn_p literal)
 		}
 		else if (EqnUnify(literal, node_literal, subst))
 		{
-			//~ printf("Potentially irregular extension:\n");
-			//~ EqnTSTPPrint(GlobalOut,node_literal , true);printf("\n");
-			//~ EqnTSTPPrint(GlobalOut,literal , true);printf("\n");
+			printf("Potentially irregular extension:\n");
+			EqnTSTPPrint(GlobalOut,node_literal , true);printf("\n");
+			EqnTSTPPrint(GlobalOut,literal , true);printf("\n");
 			if (SubstIsRenaming(subst))
 			{
+				ClauseTableauPrintDOTGraph(branch->master);
+				assert(false);
 				//printf("Node clause:\n");
 				//ClausePrint(GlobalOut, label, true);printf("\n");
 				SubstDelete(subst);
 				//printf("# Branch contains literal... irregular\n");
 				return true;
 			}
+			//printf("# It's ok...\n");
 		}
 		SubstBacktrack(subst);
 		node = node->parent;

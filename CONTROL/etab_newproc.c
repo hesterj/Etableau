@@ -352,9 +352,11 @@ ClauseTableau_p EtableauPopulate_n2(TableauControl_p tableaucontrol,
    // Root is depth 0, initial start rule is depth 1, so first depth should be 2
    BacktrackStatus backtrack_status = BACKTRACK_OK;
    ClauseTableau_p result = NULL;
-   int current_depth = ClauseTableauGetShallowestBranch(master);
+   //int current_depth = ClauseTableauGetShallowestBranch(master);
+   int current_depth = max_depth-1;
    assert(master->master == master);
-   while (current_depth < max_depth)
+   //while (current_depth < max_depth)
+   while (true)
    {
        //fprintf(GlobalOut, "# Current depth %d\n", current_depth);
        assert(master->master == master);
@@ -445,7 +447,7 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     TableauStack_p new_tableaux = PStackAlloc();
     if (PStackGetSP(starting_tableaux) < num_cores_available)
     {
-        fprintf(GlobalOut, "# There are not enough tableaux to fork, creating more\n");
+        fprintf(GlobalOut, "# There are not enough tableaux to fork, creating more from the initial %ld\n", PStackGetSP(starting_tableaux));
         proof_found = EtableauPopulate_n1(tableaucontrol,
                                           starting_tableaux,
                                           active,
@@ -703,21 +705,13 @@ bool EtableauPopulate_n1(TableauControl_p tableaucontrol,
             {
                 case BACKTRACK_OK: // This should only happen during population, when all possible extension up to a depth have been made on a tableau
                 {
-                    assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
-                    assert(new_tableaux);
-                    if (current_tableau_index < PStackGetSP(distinct_tableaux_stack))
-                    {
-                        assert(PStackElementP(distinct_tableaux_stack, current_tableau_index) == current_tableau);
-                        PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
-                    }
-                    ClauseTableauFree(current_tableau);
-                    assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
-                    //printf("got signal btok\n");
+                    assert(false && "We should not get BACKTRACK_OK status in population");
                     break;
                 }
                 case BACKTRACK_FAILURE: // We never backtrack during population
                 {
-                    assert(false && "btf in populate");
+                    assert(false && "We should not get BACKTRACK_FAILURE status in population");
+                    break;
                 }
                 case NEXT_TABLEAU:
                 {
@@ -726,14 +720,6 @@ bool EtableauPopulate_n1(TableauControl_p tableaucontrol,
                 }
                 case RETURN_NOW:
                 {
-                    //printf("got signal return now\n");
-                    assert(all_tableaux_in_stack_are_root(new_tableaux));
-                    while (!PStackEmpty(distinct_tableaux_stack))
-                    {
-                        ClauseTableau_p start = PStackPopP(distinct_tableaux_stack);
-                        assert(start->master == start);
-                        PStackPushP(new_tableaux, start);
-                    }
                     goto return_point;
                 }
                 default:
@@ -744,6 +730,16 @@ bool EtableauPopulate_n1(TableauControl_p tableaucontrol,
         }
     }
 
+    printf("Returning from population with %ld new_tableaux and %ld remaining starting tableaux.\n",
+            PStackGetSP(new_tableaux),
+            PStackGetSP(distinct_tableaux_stack));
+    assert(all_tableaux_in_stack_are_root(new_tableaux));
+    while (!PStackEmpty(distinct_tableaux_stack))
+    {
+        ClauseTableau_p start = PStackPopP(distinct_tableaux_stack);
+        assert(start->master == start);
+        PStackPushP(new_tableaux, start);
+    }
     return_point:
     return proof_found;
 }
@@ -753,19 +749,14 @@ ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_sta
                                             TableauStack_p new_tableaux)
 {
     ClauseTableau_p new_current_tableau = NULL;
+    assert(new_tableaux);
     (*current_index_p)++;
     assert(*current_index_p >= 0);
     if (*current_index_p >= PStackGetSP(distinct_tableaux_stack))
     {
-        if (new_tableaux && !PStackEmpty(new_tableaux))
+        if (!PStackEmpty(new_tableaux))
         {
             new_current_tableau = PStackPopP(new_tableaux);
-            assert(new_current_tableau->master == new_current_tableau);
-        }
-        else if (!new_tableaux && !PStackEmpty(distinct_tableaux_stack) )
-        {
-            *current_index_p = 0;
-            new_current_tableau = PStackElementP(distinct_tableaux_stack, *current_index_p);
             assert(new_current_tableau->master == new_current_tableau);
         }
     }
@@ -773,6 +764,15 @@ ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_sta
     {
         new_current_tableau = PStackElementP(distinct_tableaux_stack, *current_index_p);
         assert(new_current_tableau->master == new_current_tableau);
+    }
+
+    if (!new_current_tableau)
+    {
+        printf("no new tableau...\n");
+    }
+    else
+    {
+        printf("found new tableau, %ld new remaining, %ld distinct\n", PStackGetSP(new_tableaux), PStackGetSP(distinct_tableaux_stack));
     }
 
     return new_current_tableau;

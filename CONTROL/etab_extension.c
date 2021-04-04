@@ -125,7 +125,8 @@ bool ClauseTableauExtensionIsRegular(ClauseTableau_p branch, Clause_p clause)
 	{
 		if (ClauseTableauBranchContainsLiteral(branch, lit))
 		{
-			//printf("Irregular extension: ");ClausePrint(GlobalOut, clause, true);printf("\n");
+			//printf("Irregular extension\n ");
+			//ClausePrint(GlobalOut, clause, true);printf("\n");
 			//ClauseTableauPrintBranch(branch);
 			return false;
 		}
@@ -243,6 +244,11 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 												 TableauExtension_p extension)
 {
 	Subst_p subst = extension->subst;
+	if (ExtensionIsFailure(extension->parent, subst, ClauseGetIdent(extension->selected), extension->head_lit_position))
+	{
+		SubstDelete(subst);
+		return NULL;
+	}
 	ClauseTableau_p parent = extension->parent;
 	ClauseTableau_p master = parent->master;
 	TB_p bank = extension->parent->terms;
@@ -270,17 +276,6 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	**  If this extension has already been performed at this node and failed, it must be prevented.
 	*/
 
-	//if (SubstIsFailure(extension->parent, subst))
-	//{
-		//SubstDelete(subst);
-		//return NULL;
-	//}
-	if (ExtensionIsFailure(extension->parent, subst, ClauseGetIdent(extension->selected), extension->head_lit_position))
-	{
-		//fprintf(GlobalOut, "# Failure substitution in extension!\n");
-		SubstDelete(subst);
-		return NULL;
-	}
 
 	ClauseTableauApplySubstitution(master, subst);
 	TableauSetExtractEntry(parent); // Remove the parent from the collection of open branches
@@ -409,7 +404,18 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 											   TableauStack_p new_tableaux,
 											   TableauExtension_p extension)
 {
+
+	/*
+	**  If this extension has already been performed at this node and failed, it must be prevented.
+	*/
 	Subst_p subst = extension->subst;
+	if (ExtensionIsFailure(extension->parent, subst, ClauseGetIdent(extension->selected), extension->head_lit_position))
+	{
+		//fprintf(GlobalOut, "# Failure substitution in extension!\n");
+		SubstDelete(subst);
+		return NULL;
+	}
+
 	ClauseTableau_p old_parent = extension->parent;
 	ClauseTableau_p old_master = old_parent->master;
 	TB_p bank = extension->parent->terms;
@@ -441,18 +447,6 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 	assert(parent->set == parent->open_branches);
 	assert(parent->label);
 	assert(parent->label->set);
-
-	/*
-	**  If this extension has already been performed at this node and failed, it must be prevented.
-	*/
-
-	if (ExtensionIsFailure(extension->parent, subst, ClauseGetIdent(extension->selected), extension->head_lit_position))
-	{
-		//fprintf(GlobalOut, "# Failure substitution in extension!\n");
-		SubstDelete(subst);
-		ClauseTableauFree(master);
-		return NULL;
-	}
 
 	ClauseTableauApplySubstitution(master, subst);
 
