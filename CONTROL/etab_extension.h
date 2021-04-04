@@ -27,7 +27,7 @@ typedef struct tableau_extension_cell
 void ClauseSetFreeAnchor(ClauseSet_p junk);
 ClauseSet_p ClauseStackToClauseSet(ClauseStack_p stack);
 
-bool ClauseTableauExtensionIsRegular(ClauseTableau_p branch, Clause_p clause);
+//bool ClauseTableauExtensionIsRegular(ClauseTableau_p branch, Clause_p clause);
 
 
 #define TableauExtensionCellAlloc() (TableauExtension*)SizeMalloc(sizeof(TableauExtension))

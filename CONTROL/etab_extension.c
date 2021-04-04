@@ -119,20 +119,20 @@ ClauseSet_p SplitClauseFresh(TB_p bank, ClauseTableau_p tableau, Clause_p clause
 
 // Check to see if the literals of clause occur in the branch already.
 
-bool ClauseTableauExtensionIsRegular(ClauseTableau_p branch, Clause_p clause)
-{
-	for (Eqn_p lit = clause->literals; lit; lit = lit->next)
-	{
-		if (ClauseTableauBranchContainsLiteral(branch, lit))
-		{
-			//printf("Irregular extension\n ");
-			//ClausePrint(GlobalOut, clause, true);printf("\n");
-			//ClauseTableauPrintBranch(branch);
-			return false;
-		}
-	}
-	return true;
-}
+//bool ClauseTableauExtensionIsRegular(ClauseTableau_p branch, Clause_p clause)
+//{
+	//for (Eqn_p lit = clause->literals; lit; lit = lit->next)
+	//{
+		//if (ClauseTableauBranchContainsLiteral(branch, lit))
+		//{
+			////printf("Irregular extension\n ");
+			////ClausePrint(GlobalOut, clause, true);printf("\n");
+			////ClauseTableauPrintBranch(branch);
+			//return false;
+		//}
+	//}
+	//return true;
+//}
 
 
 

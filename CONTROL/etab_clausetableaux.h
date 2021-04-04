@@ -139,7 +139,7 @@ int ClauseTableauGetShallowestBranch(ClauseTableau_p tab);
 ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start);
 int ClauseTableauAssertCheck(ClauseTableau_p tab);
 
-bool ClauseTableauBranchContainsLiteral(ClauseTableau_p branch, Eqn_p literal);
+bool ClauseTableauBranchContainsLiteral(ClauseTableau_p parent, Eqn_p literal);
 bool ClauseTableauIsLeafRegular(ClauseTableau_p tab);
 
 void ClauseTableauRegisterStep(ClauseTableau_p tab);

@@ -475,6 +475,8 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
         }
     }
     ///////////
+    ///////////
+    assert(false);
 
 //#ifndef NDEBUG
     //printf("printing hashes of tableaux\n");

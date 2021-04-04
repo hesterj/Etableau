@@ -1464,13 +1464,13 @@ bool ClauseTableauIsLeafRegular(ClauseTableau_p tab)
 // Attempt to unify the literal with the nodes on the branch above.
 // If one can be unified, the expansion would no longer be regular.
 
-bool ClauseTableauBranchContainsLiteral(ClauseTableau_p branch, Eqn_p literal)
+bool ClauseTableauBranchContainsLiteral(ClauseTableau_p parent, Eqn_p literal)
 {
-	Clause_p label = branch->label;
+	Clause_p label = parent->label;
 	Eqn_p node_literal = label->literals;
-	ClauseTableau_p node = branch;
+	ClauseTableau_p node = parent;
 	Subst_p subst = SubstAlloc();
-	while (node != branch->master) // climb the tableau until we hit the root.  do not check root for regularity
+	while (node != parent->master) // climb the tableau until we hit the root.  do not check root for regularity
 	{
 		label = node->label;
 		node_literal = label->literals;
@@ -1488,13 +1488,12 @@ bool ClauseTableauBranchContainsLiteral(ClauseTableau_p branch, Eqn_p literal)
 		}
 		else if (EqnUnify(literal, node_literal, subst))
 		{
-			printf("Potentially irregular extension:\n");
+			printf("Potentially irregular extension %d %d:\n", parent->depth+1, node->depth);
 			EqnTSTPPrint(GlobalOut,node_literal , true);printf("\n");
 			EqnTSTPPrint(GlobalOut,literal , true);printf("\n");
 			if (SubstIsRenaming(subst))
 			{
-				ClauseTableauPrintDOTGraph(branch->master);
-				assert(false);
+				ClauseTableauPrintDOTGraph(parent->master);
 				//printf("Node clause:\n");
 				//ClausePrint(GlobalOut, label, true);printf("\n");
 				SubstDelete(subst);
