@@ -574,6 +574,7 @@ int main(int argc, char* argv[])
    // Etableau zone
    if (!success && TableauOptions == 1)
    {
+      ClauseSet_p new_axioms = ClauseSetCopy(proofstate->terms, proofstate->unprocessed);
       bool presaturation = true;
       if (presaturation)
       {
@@ -591,8 +592,14 @@ int main(int argc, char* argv[])
       fprintf(GlobalOut, "# Number of axioms: %ld Number of unprocessed: %ld\n",
               proofstate->axioms->members,
               proofstate->unprocessed->members);
-      //ClauseSet_p new_axioms = ClauseSetCopy(proofstate->terms, proofstate->unprocessed);
-      ClauseSet_p new_axioms = ClauseSetCopy(proofstate->terms, proofstate->axioms);
+      //ClauseSet_p new_axioms = NULL;
+      //if (!presaturation)
+      //{
+      //}
+      //else
+      //{
+         //new_axioms = ClauseSetCopy(proofstate->terms, proofstate->axioms);
+      //}
       ClauseSet_p *source = &proofstate->unprocessed;
       if (ClauseSetEmpty(new_axioms))
       {

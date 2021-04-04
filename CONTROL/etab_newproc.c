@@ -8,13 +8,14 @@ ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_sta
 ClauseTableau_p get_next_tableau(TableauStack_p distinct_tableaux_stack,
                                  PStackPointer *current_index_p);
 
+
 int Etableau_n0(TableauControl_p tableaucontrol,
-               ProofState_p proofstate,
-               ProofControl_p proofcontrol,
-               TB_p bank,
-               ClauseSet_p active,
-               int max_depth,
-               int tableauequality)
+                ProofState_p proofstate,
+                ProofControl_p proofcontrol,
+                TB_p bank,
+                ClauseSet_p active,
+                int max_depth,
+                int tableauequality)
 {
     if(geteuid() == 0) Error("# Please do not run Etableau as root.", 1);
     ClauseSetFreeClauses(proofstate->archive);
@@ -476,7 +477,6 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     }
     ///////////
     ///////////
-    assert(false);
 
 //#ifndef NDEBUG
     //printf("printing hashes of tableaux\n");
@@ -566,9 +566,6 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     }
     PStackFree(buckets);
     TableauStackFree(new_tableaux);
-#ifndef NDEBUG
-    printf("# My mother is a fish\n");
-#endif
     return proof_found;
 }
 
@@ -732,7 +729,7 @@ bool EtableauPopulate_n1(TableauControl_p tableaucontrol,
         }
     }
 
-    printf("Returning from population with %ld new_tableaux and %ld remaining starting tableaux.\n",
+    printf("# Returning from population with %ld new_tableaux and %ld remaining starting tableaux.\n",
             PStackGetSP(new_tableaux),
             PStackGetSP(distinct_tableaux_stack));
     assert(all_tableaux_in_stack_are_root(new_tableaux));
@@ -766,15 +763,6 @@ ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_sta
     {
         new_current_tableau = PStackElementP(distinct_tableaux_stack, *current_index_p);
         assert(new_current_tableau->master == new_current_tableau);
-    }
-
-    if (!new_current_tableau)
-    {
-        printf("no new tableau...\n");
-    }
-    else
-    {
-        printf("found new tableau, %ld new remaining, %ld distinct\n", PStackGetSP(new_tableaux), PStackGetSP(distinct_tableaux_stack));
     }
 
     return new_current_tableau;

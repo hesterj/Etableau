@@ -336,7 +336,7 @@ ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate, ClauseSet_p 
    ClauseSet_p start_rule_candidates = NULL;
    long number_of_conjs = 0;
    
-   number_of_conjs = ClauseSetSplitConjectures(active, conjectures, non_conjectures);
+   ClauseSetSplitConjectures(active, conjectures, non_conjectures);
 
    
    if (PListEmpty(conjectures))
@@ -344,7 +344,7 @@ ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate, ClauseSet_p 
 		fprintf(GlobalOut, "# No conjectures after preprocessing.  Attempting to resurrect them from ax_archive.\n");
 		ClauseSet_p axiom_archive = proofstate->ax_archive;
 		assert(axiom_archive);
-		number_of_conjs = ClauseSetSplitConjectures(axiom_archive, conjectures, non_conjectures);
+		ClauseSetSplitConjectures(axiom_archive, conjectures, non_conjectures);
 		if (PListEmpty(conjectures))
 		{
 			fprintf(GlobalOut, "# No conjectures.\n");
@@ -354,7 +354,7 @@ ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate, ClauseSet_p 
 		}
 	}
 	assert(!PListEmpty(conjectures));
-	fprintf(GlobalOut, "# Creating start rules for all %ld conjectures.\n", number_of_conjs);
+	fprintf(GlobalOut, "# Creating start rules for all conjectures.\n");
 	start_rule_candidates = ClauseSetAlloc();
 	PList_p handle;
 	for(handle=conjectures->succ;

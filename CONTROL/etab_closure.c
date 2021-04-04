@@ -200,11 +200,6 @@ Subst_p ClauseContradictsSetSimple(ClauseTableau_p tab, Clause_p leaf, ClauseSet
 	Clause_p handle = set->anchor->succ;
 	while (handle != set->anchor)
 	{
-		//fprintf(GlobalOut, "# potential folding closure step before unification attempt\n");
-		//ClausePrint(GlobalOut, leaf, true);
-		//fprintf(GlobalOut, "\n");
-		//ClausePrint(GlobalOut, handle, true);
-		//fprintf(GlobalOut, "\n");
 		if ((subst = ClauseContradictsClause(open_branch, leaf, handle)))
 		{
 			open_branch->id = ClauseGetIdent(handle);

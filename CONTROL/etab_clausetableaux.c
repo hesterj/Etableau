@@ -1488,12 +1488,12 @@ bool ClauseTableauBranchContainsLiteral(ClauseTableau_p parent, Eqn_p literal)
 		}
 		else if (EqnUnify(literal, node_literal, subst))
 		{
-			printf("Potentially irregular extension %d %d:\n", parent->depth+1, node->depth);
-			EqnTSTPPrint(GlobalOut,node_literal , true);printf("\n");
-			EqnTSTPPrint(GlobalOut,literal , true);printf("\n");
+			//printf("Potentially irregular extension %d %d:\n", parent->depth+1, node->depth);
+			//EqnTSTPPrint(GlobalOut,node_literal , true);printf("\n");
+			//EqnTSTPPrint(GlobalOut,literal , true);printf("\n");
 			if (SubstIsRenaming(subst))
 			{
-				ClauseTableauPrintDOTGraph(parent->master);
+				//ClauseTableauPrintDOTGraph(parent->master);
 				//printf("Node clause:\n");
 				//ClausePrint(GlobalOut, label, true);printf("\n");
 				SubstDelete(subst);
