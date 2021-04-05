@@ -244,7 +244,7 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         if (open_branch->set) // If the open branch is still in a set after the extension rule attempt, it means it was not able to be extended and so should be backtracked
         {
             assert(!extended);
-            //printf("backtracking due to extension failure\n");
+            printf("backtracking due to extension failure\n");
             bool backtrack_successful = BacktrackWrapper(master);
             if (!backtrack_successful)
             {
@@ -399,13 +399,13 @@ ClauseTableau_p EtableauProofSearch_n2(TableauControl_p tableaucontrol,
                                        BacktrackStatus_p status)
 {
    // Root is depth 0, initial start rule is depth 1, so first depth should be 2
-   BacktrackStatus backtrack_status = BACKTRACK_OK;
    ClauseTableau_p result = NULL;
    int current_depth = ClauseTableauGetShallowestBranch(master);
    assert(master->master == master);
    while (current_depth < max_depth)
    {
-       //fprintf(GlobalOut, "# Current depth %d\n", current_depth);
+       fprintf(GlobalOut, "# Current depth %d\n", current_depth);
+       BacktrackStatus backtrack_status = BACKTRACK_OK;
        assert(master->master == master);
        result = EtableauProofSearch_n3(tableaucontrol,
                                        master,
@@ -425,13 +425,10 @@ ClauseTableau_p EtableauProofSearch_n2(TableauControl_p tableaucontrol,
        {
            break;
        }
-       current_depth++;
+       //current_depth *= 2;
+       current_depth = current_depth << 1;
    }
    assert(master->master == master);
-
-   // If we have reached the maximum depth, we need to select the next tableau.
-
-  // if (current_depth == max_depth) backtrack_status = NEXT_TABLEAU;
 
    return result;
 }
@@ -617,7 +614,7 @@ bool EtableauProofSearch_n1(TableauControl_p tableaucontrol,
                     assert(false && "Backtrack OK should not happen during normal proof search");
                     break;
                 }
-                case BACKTRACK_FAILURE: // We never backtrack during population
+                case BACKTRACK_FAILURE:
                 {
                     assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
                     assert(PStackElementP(distinct_tableaux_stack, current_tableau_index) == current_tableau);
