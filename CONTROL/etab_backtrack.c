@@ -48,6 +48,7 @@ Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, short head_l
 void BacktrackFree(Backtrack_p trash)
 {
     assert(trash);
+    assert(trash->position);
     PStackFree(trash->position);
     BindingStackFree(trash->bindings);
 
@@ -425,6 +426,18 @@ bool BacktrackWrapper(ClauseTableau_p master)
 
 void DeleteAllBacktrackInformation(ClauseTableau_p tableau)
 {
+    while (!PStackEmpty(tableau->old_labels))
+    {
+        Clause_p trash_label = PStackPopP(tableau->old_labels);
+        ClauseSetExtractEntry(trash_label);
+        ClauseFree(trash_label);
+    }
+    while (!PStackEmpty(tableau->old_folding_labels))
+    {
+        ClauseSet_p trash_label_set = PStackPopP(tableau->old_folding_labels);
+        GCDeregisterClauseSet(tableau->terms->gc, trash_label_set);
+        ClauseSetFree(trash_label_set);
+    }
     assert(PStackEmpty(tableau->old_labels));
     assert(PStackEmpty(tableau->old_folding_labels));
     BacktrackStackDeleteInformation(tableau->master_backtracks);

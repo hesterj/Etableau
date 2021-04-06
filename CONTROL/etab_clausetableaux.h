@@ -59,10 +59,7 @@ typedef struct clausetableau
 	Sig_p         signature;
 	bool open;
 	bool saturation_closed;
-	//bool previously_selected;
 	bool head_lit;    // If this node was made as a head literal in an extension step, it is true.  Otherwise false.
-	//bool saturation_blocked;
-	//bool folding_blocked;
 	short max_step;   // The number of expansion/closure steps done on the tableaux so far.  Nonzero at root node.
 	short step;       // Nodes are marked in the order they were expanded/closed on.
 	short depth;		// depth of the node in the tableau

@@ -2083,6 +2083,6 @@ void ClauseTableauDeleteAllProps(ClauseTableau_p tab)
 	tab->properties = 0;
 	for (int i=0; i<tab->arity; i++)
 	{
-		ClauseTableauDeleteAllProps(tab);
+		ClauseTableauDeleteAllProps(tab->children[i]);
 	}
 }
