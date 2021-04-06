@@ -36,7 +36,6 @@ ClauseSet_p ClauseStackToClauseSet(ClauseStack_p stack);
 ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableaucontrol,
 														ClauseTableau_p open_branch,
 														ClauseSet_p extension_candidates,
-														int max_depth,
 														int *extended,
 														TableauStack_p new_tableaux);
 int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p control,

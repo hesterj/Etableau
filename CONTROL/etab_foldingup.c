@@ -233,7 +233,8 @@ int FoldUpAtNode(ClauseTableau_p node)
 	// Do not fold up leaf nodes
 	if (NodeIsLeaf(node)) return 0;
 	// Do not fold up nodes that were previously leaves
-	if (node->folding_blocked)
+	//if (node->folding_blocked)
+	if (ClauseTableauQueryProp(node, TUPFoldingBlocked))
 	{
 		//printf("# blocked bad fold\n");
 		//fflush(stdout);

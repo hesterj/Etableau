@@ -61,6 +61,8 @@ bool BacktrackContainsSubst(Backtrack_p backtrack, Subst_p subst);
 bool BacktrackWrapper(ClauseTableau_p master);
 void Backtrack(Backtrack_p bt);
 void RollBackEveryNode(ClauseTableau_p master);
+void DeleteAllBacktrackInformation(ClauseTableau_p tableau);
+void BacktrackStackDeleteInformation(BacktrackStack_p trash);
 
 
 // Binding stuff, this is only used for failure substitutions!

@@ -22,91 +22,144 @@ extern void c_smoketest();
 ** This branch selection function will not select previously selected branches.
 */
 
-ClauseTableau_p branch_select2(TableauSet_p open_branches, int current_depth, int max_depth, int *depth_status)
+//ClauseTableau_p branch_select2(TableauSet_p open_branches, int current_depth, int max_depth, int *depth_status)
+//{
+	//assert(open_branches);
+	//assert(current_depth <= max_depth);
+	//int deepest_depth = 0;
+	//int num_max_depth_branches = 0;
+	//int previously_selected_branches = 0;
+	//ClauseTableau_p deepest = NULL;
+	//ClauseTableau_p branch = open_branches->anchor->succ;
+	////fprintf(GlobalOut, "# %ld open branches\n", open_branches->members);
+	//while (branch != open_branches->anchor)
+	//{
+		//assert(branch);
+		//assert(branch->label);
+		//assert(branch->arity == 0);
+		//assert(branch->children == NULL);
+		//if (!branch->previously_selected && branch->depth > deepest_depth && branch->depth < current_depth)
+		//{
+			//deepest_depth = branch->depth;
+			//deepest = branch;
+		//}
+		//if (branch->depth >= max_depth-1)
+		//{
+			//num_max_depth_branches++;
+		//}
+		//if (branch->previously_selected)
+		//{
+			//previously_selected_branches++;
+		//}
+		//assert(branch->label);
+		//branch = branch->succ;
+	//}
+	//if (depth_status && num_max_depth_branches == (int) open_branches->members) // All of the branches are at the maximum depth
+	//{
+		//*depth_status = ALL_DEPTHS_EXCEEDED;
+	//}
+	//if (previously_selected_branches == (int) open_branches->members)
+	//{
+		////fprintf(GlobalOut, "# All previously selected...\n");
+		//*depth_status = ALL_PREVIOUSLY_SELECTED;
+	//}
+	//if (deepest)
+	//{
+		//deepest->previously_selected = true;
+	//}
+	//return deepest;
+//}
+//
+///*
+//** This branch selection function has been modified to not care about previously selected branches
+//*/
+//
+//ClauseTableau_p branch_select(TableauSet_p open_branches, int current_depth, int max_depth, int *depth_status)
+//{
+	//assert(open_branches);
+	//assert(current_depth <= max_depth);
+	//int deepest_depth = 0;
+	//int num_max_depth_branches = 0;
+	//ClauseTableau_p deepest = NULL;
+	//ClauseTableau_p branch = open_branches->anchor->succ;
+	////fprintf(GlobalOut, "# %ld open branches\n", open_branches->members);
+	//while (branch != open_branches->anchor)
+	//{
+		//assert(branch);
+		//assert(branch->label);
+		//assert(branch->arity == 0);
+		//assert(branch->children == NULL);
+		//if (branch->depth > deepest_depth && branch->depth < current_depth)
+		//{
+			//deepest_depth = branch->depth;
+			//deepest = branch;
+		//}
+		//if (branch->depth >= max_depth-1)
+		//{
+			//num_max_depth_branches++;
+		//}
+		//assert(branch->label);
+		//branch = branch->succ;
+	//}
+	//if (depth_status && num_max_depth_branches == (int) open_branches->members) // All of the branches are at the maximum depth
+	//{
+		//*depth_status = ALL_DEPTHS_EXCEEDED;
+	//}
+	//return deepest;
+//}
+
+
+/*
+** This selection function returns the first branch found shallower than max depth.
+*/
+
+ClauseTableau_p branch_select3(TableauSet_p open_branches, int max_depth)
 {
 	assert(open_branches);
-	assert(current_depth <= max_depth);
-	int deepest_depth = 0;
-	int num_max_depth_branches = 0;
-	int previously_selected_branches = 0;
-	ClauseTableau_p deepest = NULL;
+	ClauseTableau_p selected = NULL;
 	ClauseTableau_p branch = open_branches->anchor->succ;
-	//fprintf(GlobalOut, "# %ld open branches\n", open_branches->members);
 	while (branch != open_branches->anchor)
 	{
 		assert(branch);
 		assert(branch->label);
 		assert(branch->arity == 0);
 		assert(branch->children == NULL);
-		if (!branch->previously_selected && branch->depth > deepest_depth && branch->depth < current_depth)
-		{
-			deepest_depth = branch->depth;
-			deepest = branch;
-		}
-		if (branch->depth >= max_depth-1)
-		{
-			num_max_depth_branches++;
-		}
-		if (branch->previously_selected)
-		{
-			previously_selected_branches++;
-		}
 		assert(branch->label);
+		if (branch->depth < max_depth)
+		{
+			return branch;
+		}
 		branch = branch->succ;
 	}
-	if (depth_status && num_max_depth_branches == (int) open_branches->members) // All of the branches are at the maximum depth
-	{
-		*depth_status = ALL_DEPTHS_EXCEEDED;
-	}
-	if (previously_selected_branches == (int) open_branches->members)
-	{
-		//fprintf(GlobalOut, "# All previously selected...\n");
-		*depth_status = ALL_PREVIOUSLY_SELECTED;
-	}
-	if (deepest)
-	{
-		deepest->previously_selected = true;
-	}
-	return deepest;
+	return selected;
 }
 
 /*
-** This branch selection function has been modified to not care about previously selected branches
+** This selection function returns the first branch found shallower than max depth that has not been previously selected.
 */
 
-ClauseTableau_p branch_select(TableauSet_p open_branches, int current_depth, int max_depth, int *depth_status)
+ClauseTableau_p branch_select4(TableauSet_p open_branches, int max_depth)
 {
 	assert(open_branches);
-	assert(current_depth <= max_depth);
-	int deepest_depth = 0;
-	int num_max_depth_branches = 0;
-	ClauseTableau_p deepest = NULL;
+	ClauseTableau_p selected = NULL;
 	ClauseTableau_p branch = open_branches->anchor->succ;
-	//fprintf(GlobalOut, "# %ld open branches\n", open_branches->members);
 	while (branch != open_branches->anchor)
 	{
 		assert(branch);
 		assert(branch->label);
 		assert(branch->arity == 0);
 		assert(branch->children == NULL);
-		if (branch->depth > deepest_depth && branch->depth < current_depth)
-		{
-			deepest_depth = branch->depth;
-			deepest = branch;
-		}
-		if (branch->depth >= max_depth-1)
-		{
-			num_max_depth_branches++;
-		}
 		assert(branch->label);
+		if (branch->depth < max_depth && !ClauseTableauQueryProp(branch, TUPHasBeenPreviouslySelected))
+		{
+			ClauseTableauSetProp(branch, TUPHasBeenPreviouslySelected);
+			return branch;
+		}
 		branch = branch->succ;
 	}
-	if (depth_status && num_max_depth_branches == (int) open_branches->members) // All of the branches are at the maximum depth
-	{
-		*depth_status = ALL_DEPTHS_EXCEEDED;
-	}
-	return deepest;
+	return selected;
 }
+
 /*-----------------------------------------------------------------------
 //
 // Function: tableau_select()
@@ -388,11 +441,13 @@ ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate, ClauseSet_p 
 /----------------------------------------------------------------------*/
 
 TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
-												  ProofControl_p proofcontrol,
-												  TB_p bank,
-												  FunCode max_var,
-												  ClauseSet_p unit_axioms,
-												  ClauseSet_p start_rule_candidates, TableauControl_p tableaucontrol)
+									  ProofControl_p proofcontrol,
+									  TB_p bank,
+									  FunCode max_var,
+									  ClauseSet_p unit_axioms,
+									  ClauseSet_p start_rule_candidates,
+									  TableauControl_p tableaucontrol,
+									  unsigned long maximum_depth)
 
 {
    ClauseTableau_p initial_tab = ClauseTableauAlloc(tableaucontrol);
@@ -407,6 +462,7 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
    initial_tab->state = proofstate;
    initial_tab->control = proofcontrol;
    initial_tab->unit_axioms = NULL;
+   initial_tab->maximum_depth = maximum_depth;
 
 	ClauseTableau_p beginning_tableau = NULL;
 	TableauSet_p distinct_tableaux_set = TableauSetAlloc();
@@ -434,7 +490,8 @@ TableauStack_p EtableauCreateStartRulesStack(ProofState_p proofstate,
 											 FunCode max_var,
 											 ClauseSet_p unit_axioms,
 											 ClauseSet_p start_rule_candidates,
-											 TableauControl_p tableaucontrol)
+											 TableauControl_p tableaucontrol,
+											 unsigned long maximum_depth)
 {
 	PStack_p stack = PStackAlloc();
 	TableauSet_p dt = EtableauCreateStartRules(proofstate,
@@ -443,7 +500,8 @@ TableauStack_p EtableauCreateStartRulesStack(ProofState_p proofstate,
 											   max_var,
 											   unit_axioms,
 											   start_rule_candidates,
-											   tableaucontrol);
+											   tableaucontrol,
+											   maximum_depth);
 	while (!TableauSetEmpty(dt))
 	{
 		ClauseTableau_p tab = TableauSetExtractFirst(dt);

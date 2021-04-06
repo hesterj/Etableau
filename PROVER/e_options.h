@@ -1437,10 +1437,10 @@ OptCell opts[] =
    {
     OPT_TABLEAU_DEPTH,
     '\0', "tableau-depth",
-    OptArg, "1",
-    "Specify an intege."
-    "This is the max depth of tableaux used in proof search."
-    "Default is 1."}
+    OptArg, "4",
+    "Specify an integer."
+    "This is the starting max depth of tableaux used in proof search."
+    "Default is 4."}
     ,
     {
     OPT_TABLEAU_EQUALITY,

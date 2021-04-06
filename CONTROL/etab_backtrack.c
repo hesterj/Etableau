@@ -189,7 +189,8 @@ void Backtrack(Backtrack_p bt)
         assert(position->arity == 0);
         assert(position->set == NULL);
         assert(position->open == false);
-        position->saturation_blocked = true;
+        //position->saturation_blocked = true;
+        ClauseTableauSetProp(position, TUPSaturationBlocked);
         position->saturation_closed = false;
     }
     //bt->id = position->id;
@@ -420,4 +421,28 @@ bool BacktrackWrapper(ClauseTableau_p master)
 
     return_point:
     return success;
+}
+
+void DeleteAllBacktrackInformation(ClauseTableau_p tableau)
+{
+    assert(PStackEmpty(tableau->old_labels));
+    assert(PStackEmpty(tableau->old_folding_labels));
+    BacktrackStackDeleteInformation(tableau->master_backtracks);
+    BacktrackStackDeleteInformation(tableau->backtracks);
+    BacktrackStackDeleteInformation(tableau->failures);
+    for (int i=0; i<tableau->arity; i++)
+    {
+        DeleteAllBacktrackInformation(tableau->children[i]);
+    }
+}
+
+void BacktrackStackDeleteInformation(BacktrackStack_p trash)
+{
+    if (!trash) return;
+    while (!PStackEmpty(trash))
+    {
+        Backtrack_p trash_bt = (Backtrack_p) PStackPopP(trash);
+        assert(trash_bt);
+        BacktrackFree(trash_bt);
+    }
 }

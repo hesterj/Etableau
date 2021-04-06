@@ -91,17 +91,22 @@ TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
                                       FunCode max_var,
                                       ClauseSet_p unit_axioms,
                                       ClauseSet_p start_rule_candidates,
-                                      TableauControl_p tableaucontrol);
+                                      TableauControl_p tableaucontrol,
+                                      unsigned long maximum_depth);
 TableauStack_p EtableauCreateStartRulesStack(ProofState_p proofstate,
-                                      ProofControl_p proofcontrol,
-                                      TB_p bank,
-                                      FunCode max_var,
-                                      ClauseSet_p unit_axioms,
-                                      ClauseSet_p start_rule_candidates,
-                                      TableauControl_p tableaucontrol);
+                                             ProofControl_p proofcontrol,
+                                             TB_p bank,
+                                             FunCode max_var,
+                                             ClauseSet_p unit_axioms,
+                                             ClauseSet_p start_rule_candidates,
+                                             TableauControl_p tableaucontrol,
+                                             unsigned long maximum_depth);
 
 ClauseTableau_p tableau_select(TableauControl_p tableaucontrol, TableauSet_p set);
+
 ClauseTableau_p branch_select(TableauSet_p open_branches, int current_depth, int max_depth, int *depth_status);
 ClauseTableau_p branch_select2(TableauSet_p open_branches, int current_depth, int max_depth, int *depth_status);
+ClauseTableau_p branch_select3(TableauSet_p open_branches, int max_depth);
+ClauseTableau_p branch_select4(TableauSet_p open_branches, int max_depth);
 
 #endif

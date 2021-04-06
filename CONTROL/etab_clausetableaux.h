@@ -34,19 +34,35 @@ struct backup_proofstate_cell;
 #define ALL_DEPTHS_EXCEEDED 1
 #define ALL_PREVIOUSLY_SELECTED 2
 
+typedef enum
+{
+   TUPIgnoreProps = 0,
+   TUPOpen,
+   TUPSaturationClosed,
+   TUPFoldingBlocked,
+   TUPSaturationBlocked,
+   TUPHeadLiteral,
+   TUPBacktrackedDueToMaxDepth,
+   TUPBacktrackedDueToExtensionFailure,
+   TUPBacktracked = TUPBacktrackedDueToMaxDepth | TUPBacktrackedDueToExtensionFailure,
+   TUPHasBeenExtendedOn,
+   TUPHasBeenPreviouslySelected
+} TableauProperties;
+
 typedef struct clausetableau 
 {
 	ProofState_p state;
 	ProofControl_p control;
 	struct tableaucontrol_cell* tableaucontrol;
+	TableauProperties properties;
 	TB_p          terms;
 	Sig_p         signature;
 	bool open;
 	bool saturation_closed;
-	bool previously_selected;
+	//bool previously_selected;
 	bool head_lit;    // If this node was made as a head literal in an extension step, it is true.  Otherwise false.
-	bool saturation_blocked;
-	bool folding_blocked;
+	//bool saturation_blocked;
+	//bool folding_blocked;
 	short max_step;   // The number of expansion/closure steps done on the tableaux so far.  Nonzero at root node.
 	short step;       // Nodes are marked in the order they were expanded/closed on.
 	short depth;		// depth of the node in the tableau
@@ -57,6 +73,7 @@ typedef struct clausetableau
 	long id;  		   // If a clause was split on a node, this is the id of the clause used to split.
 	long previously_saturated;  // If  branch has already been saturated this amount or more, don't do it!
 	long max_var;     // f_code of the maximal variable in the tableau
+	unsigned long maximum_depth; // The maximum depth that this tableau is allowed to search
 	DStr_p info;    // Contains the substitution used to close this node
 	//PStack_p local_variables; // The variables of the tableau that are local to the branch.
 	PTree_p local_variables;
@@ -98,6 +115,12 @@ typedef int TableauStepType;
 #define ClauseTableauCellFree(junk) SizeFree(junk, sizeof(ClauseTableau))
 #define ClauseTableauArgArrayAlloc(arity) ((ClauseTableau_p*)SizeMalloc((arity)*sizeof(ClauseTableau_p)))
 #define ClauseTableauArgArrayFree(junk, arity) SizeFree((junk),(arity)*sizeof(ClauseTableau_p))
+#define ClauseTableauSetProp(clause, prop) SetProp((clause), (prop))
+#define ClauseTableauDelProp(clause, prop) DelProp((clause), (prop))
+#define ClauseTableauGiveProps(clause, prop) GiveProps((clause), (prop))
+#define ClauseTableauQueryProp(clause, prop) QueryProp((clause), (prop))
+void ClauseTableauDeleteAllProps(ClauseTableau_p tab);
+
 ClauseTableau_p ClauseTableauAlloc(struct tableaucontrol_cell* tableaucontrol);
 void ClauseTableauInitialize(ClauseTableau_p handle, ProofState_p state);
 void ClauseTableauFree(ClauseTableau_p trash);
@@ -156,6 +179,8 @@ void AssertAllOldLabelsAreInSet(ClauseTableau_p tab);
 #define NodeIsLeaf(tab) (tab->arity == 0)
 #define NodeIsNonLeaf(tab) (tab->arity != 0)
 #define NodeIsHeadLiteral(tab) (tab->head_lit)
+#define BranchIsOpen(tab) (tab->set)
+#define MaximumDepth(tab) (tab->master->maximum_depth)
 
 
 /*  Now for tableau sets...

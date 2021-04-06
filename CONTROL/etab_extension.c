@@ -105,6 +105,8 @@ ClauseSet_p SplitClauseFresh(TB_p bank, ClauseTableau_p tableau, Clause_p clause
 	Clause_p leaf_clause = NULL;
 	ClauseRecomputeLitCounts(fresh_clause);
 	short literal_number = ClauseLiteralNumber(fresh_clause);
+	assert(literal_number);
+	assert(literal_number > 1);
 	for (short i=0; i < literal_number; i++)
 	{
 		lit = EqnListExtractFirst(&literals);
@@ -158,6 +160,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	ClauseTableauUpdateVariables(open_branch->master);
 	ClauseSet_p new_leaf_clauses = SplitClauseFresh(open_branch->terms, open_branch->master, selected);
 	assert(new_leaf_clauses->members);
+	assert(new_leaf_clauses->members > 1);
 	Clause_p open_branch_label = open_branch->label;
 
 #ifdef LOCAL
@@ -217,11 +220,15 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 					AttemptToCloseBranchesWithSuperpositionSerial(tableau_control, branch_sat);
 					BranchSaturationFree(branch_sat);
 				}
+				if (LIKELY(!new_tableaux)) // If the tableau has been extended on, we must go back and select another branch
+				{
+					goto return_point;
+				}
 			}
-			if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= tableau_control->multiprocessing_active) // If we extended on a tableau without copying it, return.
-			{
-				goto return_point;
-			}
+			//if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= tableau_control->multiprocessing_active) // If we extended on a tableau without copying it, return.
+			//{
+				//goto return_point;
+			//}
 		}
 		position++;
 		leaf_clause = leaf_clause->succ;
@@ -591,7 +598,6 @@ ClauseTableau_p ClauseTableauExtensionRuleWrapper(TableauControl_p tableau_contr
 ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableaucontrol,
 														ClauseTableau_p open_branch,
 														ClauseSet_p extension_candidates,
-														int max_depth,
 														int *extended,
 														TableauStack_p new_tableaux)
 {
@@ -606,6 +612,7 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
     while (selected != extension_candidates->anchor) // iterate over the clauses we can split on the branch
     {
         //fprintf(GlobalOut, "# Attempting to expand with clause...\n");
+        assert(ClauseLiteralNumber(selected) > 1);
         assert(selected);
         number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranch(tableaucontrol,
                                                                           open_branch,
@@ -625,11 +632,12 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
 			number_of_extensions = 0;
 
             // If we are in normal proof search (new_tableaux == NULL) or we have enough tableaux, return.
-            if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= GetDesiredNumberOfTableaux(tableaucontrol))
-			{
-				//ClauseSetMoveClause(extension_candidates, selected); // If we just extended with a clause, move it to the end of the extension candidates list.
-				break;
-			}
+            if (LIKELY(!new_tableaux)) break;
+            //if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= GetDesiredNumberOfTableaux(tableaucontrol))
+			//{
+				////ClauseSetMoveClause(extension_candidates, selected); // If we just extended with a clause, move it to the end of the extension candidates list.
+				//break;
+			//}
         }
         selected = selected->succ;
     }

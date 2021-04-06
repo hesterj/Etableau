@@ -98,7 +98,7 @@ pid_t              pid = 0;
 FunctionProperties free_symb_prop = FPIgnoreProps;
 
 long TableauOptions = 0; // Etableau stuff
-long TableauDepth = 2;
+unsigned long TableauDepth = 4;
 bool TableauEquality = false;
 long TableauCores = 0;
 long TableauQuicksat = 0;
@@ -592,14 +592,6 @@ int main(int argc, char* argv[])
       fprintf(GlobalOut, "# Number of axioms: %ld Number of unprocessed: %ld\n",
               proofstate->axioms->members,
               proofstate->unprocessed->members);
-      //ClauseSet_p new_axioms = NULL;
-      //if (!presaturation)
-      //{
-      //}
-      //else
-      //{
-         //new_axioms = ClauseSetCopy(proofstate->terms, proofstate->axioms);
-      //}
       ClauseSet_p *source = &proofstate->unprocessed;
       if (ClauseSetEmpty(new_axioms))
       {

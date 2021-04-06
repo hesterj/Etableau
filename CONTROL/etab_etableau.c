@@ -300,7 +300,7 @@ int AttemptToCloseBranchesWithSuperpositionSerial(TableauControl_p tableau_contr
 		assert(handle);
 		assert(handle != master->open_branches->anchor);
 		assert(handle->info);
-		if ((!handle->saturation_blocked) && ((open_branches->members == 1) || BranchIsLocal(handle)))
+		if ((!ClauseTableauQueryProp(handle, TUPSaturationBlocked)) && ((open_branches->members == 1) || BranchIsLocal(handle)))
 		{
 			num_local_branches++;
 			tableau_control->number_of_saturation_attempts++;
@@ -826,7 +826,8 @@ long BacktrackProofState(ProofState_p proofstate, ProofControl_p proofcontrol, T
 	proofstate->demods[1]            = proofstate->processed_pos_eqns;
 	proofstate->demods[2]            = NULL;
 
-	TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
+	//TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
+
 	//assert(ProofStateProcCardinality(proofstate));
 	//assert(ClauseSetCardinality(proofstate->unprocessed));
 	//printf("done backtracking %ld\n", tableaucontrol->number_of_saturation_attempts);

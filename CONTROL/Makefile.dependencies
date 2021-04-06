@@ -4346,12 +4346,11 @@ etab_localunification.o: etab_localunification.c \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
  /usr/include/x86_64-linux-gnu/bits/socket2.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h
-etab_newproc.o: etab_newproc.c /usr/include/stdc-predef.h \
- ../include/etab_newproc.h ../include/etab_tableauproc.h \
- ../include/etab_extension.h ../include/etab_backtrack.h \
- ../include/cco_proofproc.h ../include/clb_os_wrapper.h \
- /usr/include/assert.h /usr/include/features.h \
- /usr/include/x86_64-linux-gnu/sys/cdefs.h \
+etab_newproc.o: etab_newproc.c /usr/include/stdc-predef.h etab_newproc.h \
+ ../include/etab_tableauproc.h ../include/etab_extension.h \
+ ../include/etab_backtrack.h ../include/cco_proofproc.h \
+ ../include/clb_os_wrapper.h /usr/include/assert.h \
+ /usr/include/features.h /usr/include/x86_64-linux-gnu/sys/cdefs.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
  /usr/include/x86_64-linux-gnu/bits/long-double.h \
  /usr/include/x86_64-linux-gnu/gnu/stubs.h \

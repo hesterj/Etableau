@@ -9,6 +9,7 @@ int clausesetallocs_counter = 1;
 void DTreeFree(void *trash);
 
 unsigned long hash(unsigned char *str);
+ClauseTableau_p empty_tableau_alloc();
 /*  The open branches for each distinct tableau MUST be initialized on creation,
  *  not by this method.
  * 
@@ -26,31 +27,32 @@ unsigned long hash(unsigned char *str)
     return hash;
 }
 
-ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
+ClauseTableau_p empty_tableau_alloc()
 {
 	ClauseTableau_p handle = ClauseTableauCellAlloc();
-	handle->tableaucontrol = tableaucontrol;
+	handle->properties = TUPIgnoreProps;
+	handle->maximum_depth = 0;
+	handle->tableaucontrol = NULL;
 	handle->tableau_variables = NULL;
 	handle->depth = 0;
 	handle->position = 0;
 	handle->arity = 0;
 	handle->unit_axioms = NULL;
 	handle->previously_saturated = 0;
-	handle->previously_selected = false;
-	handle->saturation_blocked = false;
-	handle->folding_blocked = false;
-	//handle->mark = NULL;
+	//handle->previously_selected = false;
+	//handle->saturation_blocked = false;
+	//handle->folding_blocked = false;
 	handle->mark_int = 0;
 	handle->folded_up = 0;
 	handle->step = 0;
 	handle->max_step = 0;
-	handle->folding_labels = ClauseSetAlloc();;
+	handle->folding_labels = NULL;
 	handle->set = NULL;
 	handle->head_lit = false;
 	handle->saturation_closed = false;
 	handle->id = 0;
 	handle->max_var = 0;
-	handle->info = DStrAlloc();
+	handle->info = NULL;
 	handle->active_branch = NULL;
 	handle->pred = NULL;
 	handle->control = NULL;
@@ -59,12 +61,29 @@ ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
 	handle->open_branches = NULL;
 	handle->children = NULL;
 	handle->label = NULL;
-	handle->master = handle;
+	handle->master = NULL;
 	handle->parent = NULL;
-	handle->open = true;
+	handle->open = false;
 
 	//handle->local_variables = PStackAlloc();
 	handle->local_variables = NULL;
+	handle->old_labels = NULL;
+	handle->old_folding_labels = NULL;
+	handle->master_backtracks = NULL;
+	handle->backtracks = NULL;
+	handle->failures = NULL;
+
+	return handle;
+}
+
+ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
+{
+	ClauseTableau_p handle = empty_tableau_alloc();
+	handle->tableaucontrol = tableaucontrol;
+	handle->folding_labels = ClauseSetAlloc();
+	handle->info = DStrAlloc();
+	handle->master = handle;
+	handle->open = true;
 	handle->old_labels = PStackAlloc();
 	handle->old_folding_labels = PStackAlloc();
 	handle->master_backtracks = PStackAlloc();
@@ -83,20 +102,19 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 {
 	assert(tab->master == tab);  // Masters have themselves as master
 	TB_p bank = tab->terms;
-	ClauseTableau_p handle = ClauseTableauCellAlloc();
+	ClauseTableau_p handle = empty_tableau_alloc();
 
+	handle->properties = tab->properties;
+	handle->maximum_depth = tab->maximum_depth;
 	handle->old_labels = PStackAlloc();
 	handle->old_folding_labels = PStackAlloc();
 
 	GCAdmin_p gc = tab->state->gc_terms;
 	ClauseSet_p label_storage = tab->tableaucontrol->label_storage;
 	handle->tableaucontrol = tab->tableaucontrol;
-	handle->tableau_variables = NULL;
 	handle->arity = tab->arity;
 	handle->previously_saturated = tab->previously_saturated;
-	handle->previously_selected = false;
-	handle->saturation_blocked = false;
-	handle->folding_blocked = tab->folding_blocked;
+	//handle->folding_blocked = tab->folding_blocked;
 	
 	char *info = DStrCopy(tab->info);
 	handle->info = DStrAlloc();
@@ -107,9 +125,6 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	handle->position = tab->position;
 
 	// Do NOT copy the unit axioms because there may be a subst active!!
-	handle->unit_axioms = NULL;
-	handle->set = NULL;
-	handle->pred = NULL;
 	handle->id = tab->id;
 	handle->mark_int = tab->mark_int;
 	handle->step = tab->step;
@@ -133,15 +148,14 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 		handle->folding_labels = ClauseSetAlloc();
 	}
 	handle->head_lit = tab->head_lit;
-	handle->succ = NULL;
 	handle->saturation_closed = tab->saturation_closed;
 	handle->max_var = tab->max_var;
 	handle->open_branches = TableauSetAlloc();
 	handle->terms = tab->terms;
 	handle->control = tab->control;
 	handle->state = tab->state;
-	handle->local_variables = NULL;
-	
+
+	//assert(tab->label);
 	if (tab->label)
 	{
 		handle->label = ClauseCopy(tab->label, bank);
@@ -158,13 +172,8 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 		}
 		//PStackPushP(handle->old_labels, ClauseFlatCopy(tab->label));
 	}
-	else 
-	{
-		handle->label = NULL;
-	}
 	handle->master = handle;
-	handle->parent = NULL;
-	
+
 	if (tab->arity == 0) // tab does not have children
 	{
 		//assert(0);
@@ -183,10 +192,6 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 		{
 			handle->children[i] = ClauseTableauChildCopy(tab->children[i], handle);
 		}
-	}
-	else 
-	{
-		handle->children = NULL;
 	}
 
 	assert(tab->depth == 0);
@@ -212,17 +217,12 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	assert(tab);
 	assert(parent);
 	TB_p bank = tab->terms; //Copy tableau tab
-	ClauseTableau_p handle = ClauseTableauCellAlloc();
+	ClauseTableau_p handle = empty_tableau_alloc();
 
+	handle->properties = tab->properties;
 	handle->old_labels = PStackAlloc();
 	handle->old_folding_labels = PStackAlloc();
-	handle->previously_selected = false;
-	handle->saturation_blocked = false;
-	handle->folding_blocked = tab->folding_blocked;
 
-	handle->tableaucontrol = NULL;
-	handle->tableau_variables = NULL;
-	handle->unit_axioms = NULL;
 	GCAdmin_p gc = tab->state->gc_terms;
 	ClauseSet_p label_storage = parent->master->tableaucontrol->label_storage;
 	
@@ -233,14 +233,12 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	
 	handle->open_branches = parent->open_branches;
 	handle->control = parent->control;
-	handle->set = NULL;
 	handle->previously_saturated = tab->previously_saturated;
 	handle->id = tab->id;
 	handle->step = tab->step;
 	handle->max_step = tab->max_step;
 	handle->head_lit = tab->head_lit;
 	handle->max_var = parent->max_var;
-	handle->active_branch = NULL;
 	handle->signature = parent->signature;
 	handle->terms = parent->terms;
 	handle->mark_int = tab->mark_int;
@@ -255,7 +253,6 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	handle->state = parent->state;
 	handle->open = tab->open;
 	handle->arity = tab->arity;
-	handle->local_variables = NULL;
 	if (tab->folding_labels)
 	{
 		handle->folding_labels = ClauseSetCopy(bank, tab->folding_labels);
@@ -297,10 +294,6 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 		//Clause_p old_label = ClauseFlatCopy(tab->label);
 		//PStackPushP(handle->old_labels, old_label);
 	}
-	else
-	{
-		handle->label = NULL;
-	}
 	if ((handle->arity == 0) && (handle->open)) // If one of the open branches is found during copying, add it to the collection of open branches
 	{
 		TableauSetInsert(handle->open_branches, handle);
@@ -315,15 +308,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 			handle->children[i] = ClauseTableauChildCopy(tab->children[i], handle);
 		}
 	}
-	else 
-	{
-		handle->children = NULL;
-	}
-
-	handle->master_backtracks = NULL;
-	//handle->backtracks = PStackAlloc();
 	handle->backtracks = BacktrackStackCopy(tab->backtracks, handle->master);
-	//handle->failures = PStackAlloc();
 	handle->failures = BacktrackStackCopy(tab->failures, handle->master);
 	
 	return handle;
@@ -339,7 +324,7 @@ void ClauseTableauInitialize(ClauseTableau_p handle, ProofState_p initial)
 
 ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p label, int position)
 {
-	ClauseTableau_p handle = ClauseTableauCellAlloc();
+	ClauseTableau_p handle = empty_tableau_alloc();
 
 	handle->old_labels = PStackAlloc();
 	handle->old_folding_labels = PStackAlloc();
@@ -347,48 +332,27 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	__attribute__((unused)) GCAdmin_p gc = parent->state->gc_terms;
 	ClauseSet_p label_storage = parent->master->tableaucontrol->label_storage;
 	ClauseSetInsert(label_storage, label); // For gc
-	handle->tableaucontrol = NULL;
-	handle->tableau_variables = NULL;
-	handle->previously_selected = false;
-	handle->saturation_blocked = false;
-	handle->folding_blocked = false;
 	assert(parent);
 	assert(label);
 	parent->arity += 1;
 	handle->step = -1;
-	handle->max_step = 0;
 	handle->depth = parent->depth + 1;
 	handle->position = position;
-	handle->previously_saturated = 0;
-	handle->unit_axioms = NULL;
 	handle->open_branches = parent->open_branches;
 	handle->label = label;
-	handle->id = 0;
-	handle->head_lit = false;
 	handle->control = parent->control;
 	handle->max_var = parent->max_var;
-	handle->set = NULL;
-	handle->mark_int = 0;
-	handle->folded_up = 0;
 	handle->folding_labels = ClauseSetAlloc();
 	handle->info = DStrAlloc();
-	handle->active_branch = NULL;
-	handle->pred = NULL;
-	handle->succ = NULL;
 	handle->signature = parent->signature;
-	handle->children = NULL;
 	handle->terms = parent->terms;
 	handle->parent = parent;
 	handle->master = parent->master;
 	handle->state = parent->state;
 	handle->open = true;
-	handle->arity = 0;
-	handle->saturation_closed = false;
 
-	handle->master_backtracks = NULL;
 	handle->backtracks = PStackAlloc();
 	handle->failures = PStackAlloc();
-	handle->local_variables = NULL;
 
 	return handle;
 }
@@ -610,7 +574,8 @@ void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 	ClauseSetInsert(label_storage, new_label);
 	assert(new_label);
 	tab->label = new_label;
-	tab->saturation_blocked = false; // Since we are applying a nontrivial substitution to the node, we can try to saturate again
+	ClauseTableauDelProp(tab, TUPSaturationClosed);
+	//tab->saturation_blocked = false; // Since we are applying a nontrivial substitution to the node, we can try to saturate again
 	
 	if (tab->folding_labels)  // The edge labels that have been folded up if the pointer is non-NULL
 	{
@@ -1426,7 +1391,7 @@ void ClauseTableauPrintDOTGraphChildren(ClauseTableau_p tab, FILE* dotgraph)
 	fprintf(dotgraph, "id:%ld ", tab->id);
 	fprintf(dotgraph, "fu: %ld ", (long) tab->folded_up);
 	fprintf(dotgraph, "fail: %ld ", PStackGetSP(tab->failures));
-	fprintf(dotgraph, "fb: %d ", tab->folding_blocked);
+	fprintf(dotgraph, "fb: %d ", ClauseTableauQueryProp(tab, TUPFoldingBlocked));
 	fprintf(dotgraph, " s:%d\"]\n ", tab_saturation_closed);
 	fprintf(dotgraph,"   %ld -> %ld\n", parent_ident, ident);
 	
@@ -1939,7 +1904,8 @@ void ClauseTableauDeselectBranches(TableauSet_p open_branches)
 	ClauseTableau_p handle = open_branches->anchor->succ;
 	while (handle!= open_branches->anchor)
 	{
-		handle->previously_selected = false;
+		//handle->previously_selected = false;
+		ClauseTableauDelProp(handle, TUPHasBeenPreviouslySelected);
 		handle = handle->succ;
 	}
 }
@@ -2110,4 +2076,13 @@ void TermTreePrintCodes(FILE* out, PTree_p tree)
 	fprintf(out, "\n");
 
 	PTreeTraverseExit(iter);
+}
+
+void ClauseTableauDeleteAllProps(ClauseTableau_p tab)
+{
+	tab->properties = 0;
+	for (int i=0; i<tab->arity; i++)
+	{
+		ClauseTableauDeleteAllProps(tab);
+	}
 }
