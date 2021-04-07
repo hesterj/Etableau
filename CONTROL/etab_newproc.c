@@ -640,9 +640,6 @@ bool EtableauPopulate_n1(TableauControl_p tableaucontrol,
     }
 
     return_point:
-    printf("# Returning from population with %ld new_tableaux and %ld remaining starting tableaux.\n",
-            PStackGetSP(new_tableaux),
-            PStackGetSP(distinct_tableaux_stack));
     assert(all_tableaux_in_stack_are_root(new_tableaux));
     while (!PStackEmpty(distinct_tableaux_stack))
     {
@@ -658,6 +655,9 @@ bool EtableauPopulate_n1(TableauControl_p tableaucontrol,
             PStackPushP(new_tableaux, start);
         }
     }
+    printf("# Returning from population with %ld new_tableaux and %ld remaining starting tableaux.\n",
+            PStackGetSP(new_tableaux),
+            PStackGetSP(distinct_tableaux_stack));
     return proof_found;
 }
 

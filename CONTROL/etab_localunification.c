@@ -72,8 +72,27 @@ long CollectVariablesOfBranch(ClauseTableau_p branch, PTree_p *branch_vars, bool
 	return num_variables;
 }
 
+/*  Returns number of variables found
+ *
+*/
+
+long CollectVariablesOfBranchArray(ClauseTableau_p branch, PDArray_p array, bool include_root)
+{
+    long num_variables = 0;
+    ClauseTableau_p iterator = branch;
+    while (iterator)
+    {
+        if ((iterator != branch->master) || (include_root))
+        {
+            num_variables += CollectVariablesAtNodeArray(iterator, array);
+        }
+        iterator = iterator->parent;
+    }
+    return num_variables;
+}
+
 /*  At a node in a tableau, there are folding_labels, the label itself, and 
- * unit axioms at the root node.  This method collects all the variables of the aforementioned in to stack.  The number of
+ * unit axioms at the root node.  This method collects all the variables of the aforementioned in to tree.  The number of
  * variables found is returned.
 */
 
@@ -85,40 +104,45 @@ long CollectVariablesAtNode(ClauseTableau_p node, PTree_p *var_tree)
    
    num_collected += ClauseCollectVariables(node->label, var_tree);
 
-   //for (PStackPointer p=0; p<PStackGetSP(node->old_labels); p++)
-   //{
-	   //Clause_p old_label = (Clause_p) PStackElementP(node->old_labels, p);
-	   //num_collected += ClauseCollectVariables(old_label, var_tree);
-   //}
-	
    Clause_p handle;
    if (node->folding_labels)
    {
-	   for(handle = node->folding_labels->anchor->succ; handle!= node->folding_labels->anchor; handle =
-			  handle->succ)
-	   {
-		  num_collected += ClauseCollectVariables(handle, var_tree);
-	   }
+       for(handle = node->folding_labels->anchor->succ;
+           handle!= node->folding_labels->anchor;
+           handle = handle->succ)
+       {
+           num_collected += ClauseCollectVariables(handle, var_tree);
+       }
    }
-
-   //for (PStackPointer p=0; p<PStackGetSP(node->old_folding_labels); p++)
-   //{
-	   //ClauseSet_p old_fold_label_set = (ClauseSet_p) PStackElementP(node->old_folding_labels, p);
-	   //Clause_p fold_handle;
-	   //for(fold_handle = old_fold_label_set->anchor->succ; fold_handle != old_fold_label_set->anchor; fold_handle =
-			  //fold_handle->succ)
-	   //{
-		  //num_collected += ClauseCollectVariables(fold_handle, var_tree);
-	   //}
-   //}
 
    return num_collected;
 }
 
-long ClauseCollectVariablesStack(Clause_p clause, PStack_p stack)
+/*  At a node in a tableau, there are folding_labels, the label itself, and
+ * unit axioms at the root node.  This method collects all the variables of the aforementioned in to array.  The number of
+ * variables found is returned.
+*/
+
+long CollectVariablesAtNodeArray(ClauseTableau_p node, PDArray_p array)
 {
-	assert(false);
-	return 0;
+   long num_collected = 0;
+   assert(node);
+   assert(node->label);
+
+   num_collected += ClauseCollectVariablesArray(node->label, array);
+
+   Clause_p handle;
+   if (node->folding_labels)
+   {
+       for(handle = node->folding_labels->anchor->succ;
+           handle!= node->folding_labels->anchor;
+           handle = handle->succ)
+       {
+           num_collected += ClauseCollectVariablesArray(handle, array);
+       }
+   }
+
+   return num_collected;
 }
 
 /*  Only call this method if the local variables of the tableau have been udpated!
@@ -230,49 +254,30 @@ void ClauseTableauCollectVariables(ClauseTableau_p tab, PTree_p *variables)
 
 // Collects variables occurring in ALL branches.
 
-void ClauseTableauCollectVariables2(ClauseTableau_p tab, PTree_p *variables)
+void ClauseTableauUpdateVariablesArray(ClauseTableau_p tab)
 {
-    PStack_p leaves = PStackAlloc();
+    assert(tab == tab->master);
+    PDArray_p array = tab->tableau_variables_array;
     ClauseTableau_p branch = tab->open_branches->anchor->succ;
-    //ClauseTableauCollectLeavesStack(tab->master, leaves);
-    //for (PStackPointer p=0; p<PStackGetSP(leaves); p++)
-    //{
-        //ClauseTableau_p branch = PStackElementP(leaves, p);
-        //CollectVariablesOfBranch(branch, variables, true);
-    //}
     while (branch != tab->open_branches->anchor)
     {
-        CollectVariablesOfBranch(branch, variables, true);
+        CollectVariablesOfBranchArray(branch, array, true);
         branch = branch->succ;
     }
-    PStackFree(leaves);
 }
 
 /*
 ** Update the local variables of tab
 */
 
-void ClauseTableauUpdateVariables(ClauseTableau_p tab)
-{
-    assert(tab);
-    PTree_p tableau_variables = NULL;
-    PTreeFree(tab->tableau_variables);
-    ClauseTableauCollectVariables2(tab, &tableau_variables);
-    tab->tableau_variables = tableau_variables;
-}
-
-/*
-** Update the local variables of tab using an array rather than a tree
-*/
-
-void ClauseTableauUpdateVariablesArray(ClauseTableau_p tab)
-{
-    assert(tab);
-    PTree_p tableau_variables = NULL;
-    PTreeFree(tab->tableau_variables);
-    ClauseTableauCollectVariables2(tab, &tableau_variables);
-    tab->tableau_variables = tableau_variables;
-}
+//void ClauseTableauUpdateVariables(ClauseTableau_p tab)
+//{
+    //assert(tab);
+    //PTree_p tableau_variables = NULL;
+    //PTreeFree(tab->tableau_variables);
+    //ClauseTableauCollectVariables(tab, &tableau_variables);
+    //tab->tableau_variables = tableau_variables;
+//}
 
 /*-----------------------------------------------------------------------
 //

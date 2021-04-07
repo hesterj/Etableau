@@ -90,6 +90,7 @@ void      PDArrayElementDeleteInt(PDArray_p array, long idx);
 
 long      PDArrayMembers(PDArray_p array);
 long      PDArrayFirstUnused(PDArray_p array);
+long      PDArrayFirstUnused2(PDArray_p array);
 long      PDArrayStore(PDArray_p array, IntOrP value);
 long      PDArrayStoreP(PDArray_p array, void* value);
 long      PDArrayStoreInt(PDArray_p array, long value);

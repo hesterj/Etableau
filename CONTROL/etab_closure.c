@@ -125,7 +125,8 @@ Subst_p ClauseContradictsBranchSimple(ClauseTableau_p open_branch, Clause_p orig
 	Subst_p subst = NULL;
 	Clause_p temporary_label = NULL;
 
-	ClauseTableauUpdateVariables(open_branch->master);
+	//ClauseTableauUpdateVariables(open_branch->master);
+	ClauseTableauUpdateVariablesArray(open_branch->master);
 
 #ifdef LOCAL
 	//assert(open_branch->local_variables);

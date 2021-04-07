@@ -143,6 +143,7 @@ void    TermComputeFunctionRanks(Term_p term, long *rank_array, long *count);
 long    TermCollectPropVariables(Term_p term, PTree_p *tree,
                                  TermProperties prop);
 long    TermCollectVariables(Term_p term, PTree_p *tree);
+long    TermCollectVariablesArray(Term_p term, PDArray_p array);
 
 long    TermAddFunOcc(Term_p term, PDArray_p f_occur, PStack_p res_stack);
 

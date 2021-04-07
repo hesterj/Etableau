@@ -79,9 +79,10 @@ typedef struct clausetableau
 	//PStack_p local_variables; // The variables of the tableau that are local to the branch.
 	PTree_p local_variables;
 	
-	 // Only present at root.  Contains variables that are present in the tableau.
-	 // This should probably be done with an array to prevent constant splaying
-	PTree_p tableau_variables;
+	//PTree_p tableau_variables;
+
+	// Only present at root.  Contains variables that are present in the tableau.
+	PDArray_p tableau_variables_array;
 
 	// A stacks of previous steps.
 	PositionStack_p master_backtracks; // This is present at the master only.  At the top is the most recent action taken anywhere in the tableau.  This is a PStack_p of PStack_p.

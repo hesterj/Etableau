@@ -33,7 +33,8 @@ ClauseTableau_p empty_tableau_alloc()
 	handle->properties = TUPIgnoreProps;
 	handle->maximum_depth = 0;
 	handle->tableaucontrol = NULL;
-	handle->tableau_variables = NULL;
+	//handle->tableau_variables = NULL;
+	handle->tableau_variables_array = NULL;
 	handle->depth = 0;
 	handle->position = 0;
 	handle->arity = 0;
@@ -76,6 +77,7 @@ ClauseTableau_p empty_tableau_alloc()
 ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
 {
 	ClauseTableau_p handle = empty_tableau_alloc();
+	handle->tableau_variables_array = PDArrayAlloc(4, 4);
 	handle->tableaucontrol = tableaucontrol;
 	handle->folding_labels = ClauseSetAlloc();
 	handle->info = DStrAlloc();
@@ -101,6 +103,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	TB_p bank = tab->terms;
 	ClauseTableau_p handle = empty_tableau_alloc();
 
+	handle->tableau_variables_array = PDArrayCopy(tab->tableau_variables_array);
 	handle->properties = tab->properties;
 	handle->maximum_depth = tab->maximum_depth;
 	handle->old_labels = PStackAlloc();
@@ -374,10 +377,14 @@ void ClauseTableauFree(ClauseTableau_p trash)
 		TableauSetExtractEntry(trash);
 		//assert(false);
 	}
-	if (trash->depth == 0 && trash->tableau_variables)
+	//if (trash->depth == 0 && trash->tableau_variables)
+	//{
+		////PStackFree(trash->derivation);
+		//PTreeFree(trash->tableau_variables);
+	//}
+	if (trash->depth == 0)
 	{
-		//PStackFree(trash->derivation);
-		PTreeFree(trash->tableau_variables);
+		PDArrayFree(trash->tableau_variables_array);
 	}
 	if (trash->label)
 	{
@@ -1642,37 +1649,47 @@ Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var)
 	assert(old_var);
 	assert(TermIsVar(old_var));
 	VarBank_p varbank = tab->terms->vars;
+	PDArray_p tableau_variables_array = tab->tableau_variables_array;
 	Term_p potential_fresh = NULL;
 
 	// Store the old variable so that it doesn't get bound to later.
-	PTreeStore(&(tab->tableau_variables), old_var);
+	 //PTreeStore(&(tab->tableau_variables), old_var);
+	 FunCode old_var_funcode = old_var->f_code;
+	 assert(old_var_funcode %2 == 0);
+	 long old_var_index = (-old_var_funcode)/2;
+	 PDArrayAssignP(tableau_variables_array, old_var_index, old_var);
 
 	//while (!fresh_found)
-	for (FunCode var_funcode = -2; ; var_funcode -= 2)
-	{
-		potential_fresh = VarBankVarAssertAlloc(varbank, var_funcode, old_var->type);
-		PTree_p found = PTreeFind(&(tab->tableau_variables), potential_fresh);
-		if (!found)
-		{
-			PTreeStore(&(tab->tableau_variables), potential_fresh);
-			break;
-		}
-#ifndef NDEBUG
-		{
-			if (var_funcode < -1000000)
-			{
-				Error("Ludicrously large variable, are the variable trees of the tableau getting reset?", 100);
-			}
-		}
-#endif
-	}
-	assert(TermIsVar(potential_fresh));
-	assert(PTreeFind(&(tab->tableau_variables), potential_fresh));
-	assert(potential_fresh != old_var);
-	assert(potential_fresh && "NULL variable being returned in ClauseTableauGetFreshVar");
-	assert(potential_fresh->f_code < 0);
-	assert(potential_fresh->f_code % 2 == 0);
-	return potential_fresh;
+	//for (FunCode var_funcode = -2; ; var_funcode -= 2)
+	//{
+		//potential_fresh = VarBankVarAssertAlloc(varbank, var_funcode, old_var->type);
+		//PTree_p found = PTreeFind(&(tab->tableau_variables), potential_fresh);
+		//if (!found)
+		//{
+			//PTreeStore(&(tab->tableau_variables), potential_fresh);
+			//break;
+		//}
+//#ifndef NDEBUG
+		//{
+			//if (var_funcode < -1000000)
+			//{
+				//Error("Ludicrously large variable, are the variable trees of the tableau getting reset?", 100);
+			//}
+		//}
+//#endif
+	//}
+
+
+	 long first_unused_index = PDArrayFirstUnused2(tableau_variables_array);
+	 long fresh_var_funcode = -(2*first_unused_index);
+	 potential_fresh = VarBankVarAssertAlloc(varbank, fresh_var_funcode, old_var->type);
+	 PDArrayAssignP(tableau_variables_array, first_unused_index, potential_fresh);
+	 assert(TermIsVar(potential_fresh));
+	 assert(potential_fresh != old_var);
+	 assert(potential_fresh && "NULL variable being returned in ClauseTableauGetFreshVar");
+	 assert(potential_fresh->f_code < 0);
+	 assert(potential_fresh->f_code % 2 == 0);
+	 return potential_fresh;
 }
 
 PList_p ClauseSetToPList(ClauseSet_p set)

@@ -2077,6 +2077,50 @@ long TermCollectVariables(Term_p term, PTree_p *tree)
 }
 
 
+/*-----------------------------------------------------------------------
+//
+// Function: TermCollectVariablesArray()
+//
+//   Insert all variables in term into
+//   the array.  Since all non-temporary variables have f
+//   codes that are 0 modulo two, divide the f code by two.
+//   Returns the TOTAL number of variables found, with possible repeats.
+//
+// Global Variables: -
+//
+// Side Effects    : Memory operations
+//
+/----------------------------------------------------------------------*/
+
+long TermCollectVariablesArray(Term_p term, PDArray_p array)
+{
+   long res = 0;
+   PStack_p stack = PStackAlloc();
+   int      i;
+
+   PStackPushP(stack,term);
+
+   while(!PStackEmpty(stack))
+   {
+      term = PStackPopP(stack);
+      if(TermIsVar(term))
+      {
+         assert((term->f_code)%2 == 0);
+         PDArrayAssignP(array, -(term->f_code/2), term);
+         res++;
+      }
+      else
+      {
+         for(i=0; i<term->arity; i++)
+         {
+            PStackPushP(stack,term->args[i]);
+         }
+      }
+   }
+   PStackFree(stack);
+
+   return res;
+}
 
 /*-----------------------------------------------------------------------
 //

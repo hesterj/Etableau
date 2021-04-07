@@ -397,6 +397,10 @@ void    EqnAddSymbolFeatures(Eqn_p eq, PStack_p mod_stack, long *feature_array);
    (TermCollectVariables((eqn)->lterm,(tree))+  \
     TermCollectVariables((eqn)->rterm,(tree)))
 
+#define EqnCollectVariablesArray(eqn, array)          \
+   (TermCollectVariablesArray((eqn)->lterm,(array))+  \
+    TermCollectVariablesArray((eqn)->rterm,(array)))
+
 #define EqnCollectPropVariables(eqn, tree, prop)                \
    (TermCollectPropVariables((eqn)->lterm,(tree), (prop))+      \
     TermCollectPropVariables((eqn)->rterm,(tree), (prop)))

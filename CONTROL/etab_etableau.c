@@ -272,7 +272,7 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	}
 	if (success)
 	{
-		Sig_p sig = proofstate->signature;
+		//Sig_p sig = proofstate->signature;
 		assert(success->derivation);
 		//fprintf(stdout, "# Derivation of pid (%ld)\n", (long) getpid());
 		//DerivationStackTSTPPrint(stdout, sig, success->derivation);

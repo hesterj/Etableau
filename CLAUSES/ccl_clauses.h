@@ -411,6 +411,9 @@ Clause_p ClauseNormalizeVars(Clause_p clause, VarBank_p fresh_vars);
 #define  ClauseCollectVariables(clause,tree)                    \
    EqnListCollectVariables((clause)->literals,(tree))
 
+#define  ClauseCollectVariablesArray(clause,array)                    \
+   EqnListCollectVariablesArray((clause)->literals,(array))
+
 #define  ClauseAddFunOccs(clause, f_occur, res_stack)                   \
    EqnListAddFunOccs((clause)->literals, (f_occur), (res_stack))
 

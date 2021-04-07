@@ -212,7 +212,9 @@ void Backtrack(Backtrack_p bt)
     {
         RollBackEveryNode(master);
     }
-    ClauseTableauUpdateVariables(master);
+
+    // Shouldn't need to update variables here because they are updated before any potential inference rule.
+    ClauseTableauUpdateVariablesArray(master);
 
     assert(position->label);
     return;

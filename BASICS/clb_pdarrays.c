@@ -305,6 +305,34 @@ long PDArrayFirstUnused(PDArray_p array)
    return i;
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: PDArrayFirstUnused()
+//
+//   Return the index of the first index > 1 with NULL pointer in array (0
+//   if the array is empty).
+//
+// Global Variables: -
+//
+// Side Effects    : -
+//
+/----------------------------------------------------------------------*/
+
+long PDArrayFirstUnused2(PDArray_p array)
+{
+   long i;
+
+   assert(array);
+
+   for(i=1; i<array->size; i++)
+   {
+      if(!PDArrayElementP(array, i))
+      {
+         break;
+      }
+   }
+   return i;
+}
 
 /*-----------------------------------------------------------------------
 //

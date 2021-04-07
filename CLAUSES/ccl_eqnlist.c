@@ -1565,6 +1565,30 @@ long EqnListCollectVariables(Eqn_p list, PTree_p *tree)
    return res;
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: EqnListCollectVariablesArray()
+//
+//   Add all variables in list to tree. Return number of distinct
+//   variables.
+//
+// Global Variables: -
+//
+// Side Effects    : Memory operations
+//
+/----------------------------------------------------------------------*/
+
+long EqnListCollectVariablesArray(Eqn_p list, PDArray_p array)
+{
+   long res = 0;
+
+   while(list)
+   {
+      res+=EqnCollectVariablesArray(list, array);
+      list = list->next;
+   }
+   return res;
+}
 
 /*-----------------------------------------------------------------------
 //

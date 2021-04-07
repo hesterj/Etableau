@@ -157,7 +157,8 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	//if (split_clause_ident == open_branch->parent->id) return 0; // Don't split the same clause twice
 	
 	//  SplitClauseFresh here is a major performance offender.
-	ClauseTableauUpdateVariables(open_branch->master);
+	//ClauseTableauUpdateVariables(open_branch->master);
+	ClauseTableauUpdateVariablesArray(open_branch->master);
 	ClauseSet_p new_leaf_clauses = SplitClauseFresh(open_branch->terms, open_branch->master, selected);
 	assert(new_leaf_clauses->members);
 	assert(new_leaf_clauses->members > 1);
