@@ -196,11 +196,11 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
     while (true)
     {
         //open_branch = branch_select(open_branches, current_depth, max_depth, &depth_status);
-        selected_branch = branch_select3(open_branches, MaximumDepth(master));
+        //selected_branch = branch_select3(open_branches, MaximumDepth(master));
+        selected_branch = branch_select5(open_branches, MaximumDepth(master));
         //if (depth_status == ALL_DEPTHS_EXCEEDED) // All of the open branches exceed our maximum depth, so we must backtrack
         if (!selected_branch)
         {
-            fprintf(stdout, "# %p backtracking due to all depths exceeded, %ld remaining\n", master, PStackGetSP(master->master_backtracks));
             ClauseTableauSetProp(master, TUPBacktrackedDueToMaxDepth);
             bool backtrack_successful = BacktrackWrapper(master);
             if (!backtrack_successful)
@@ -230,6 +230,8 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
                                                          extension_candidates,
                                                          &extended,
                                                          NULL);
+
+
         extensions_done += extended;
         assert(selected_branch->master == master);
 
@@ -241,7 +243,6 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         if (BranchIsOpen(selected_branch)) // If the open branch is still open after the extension rule attempt, it means it was not able to be extended and so we need to backtrack
         {
             assert(!extended);
-            printf("%p backtracking due to extension failure, %ld\n", master, PStackGetSP(master->master_backtracks));
             ClauseTableauSetProp(master, TUPBacktrackedDueToExtensionFailure);
             bool backtrack_successful = BacktrackWrapper(master);
             if (!backtrack_successful)
@@ -334,96 +335,6 @@ ClauseTableau_p EtableauPopulate_n3(TableauControl_p tableaucontrol,
     return result;
 }
 
-//ClauseTableau_p EtableauPopulate_n2(TableauControl_p tableaucontrol,
-                                    //ClauseTableau_p master,
-                                    //ClauseSet_p extension_candidates,
-                                    //unsigned long max_depth,
-                                    //BacktrackStatus_p status,
-                                    //TableauStack_p new_tableaux)
-//{
-   //// Root is depth 0, initial start rule is depth 1, so first depth should be 2
-   //BacktrackStatus backtrack_status = BACKTRACK_OK;
-   //ClauseTableau_p result = NULL;
-   ////int current_depth = ClauseTableauGetShallowestBranch(master);
-   //int current_depth = max_depth-1;
-   //assert(master->master == master);
-   ////while (current_depth < max_depth)
-   //while (true)
-   //{
-       ////fprintf(GlobalOut, "# Current depth %d\n", current_depth);
-       //assert(master->master == master);
-       //result = EtableauPopulate_n3(tableaucontrol,
-                                       //master,
-                                       //extension_candidates,
-                                       //&backtrack_status,
-                                       //new_tableaux);
-       //*status = backtrack_status;
-       //assert(master->master == master);
-       //if (result || master->open_branches->members == 0)
-       //{
-           //assert(tableaucontrol->closed_tableau == result);
-           //assert(master->master == master);
-           //break;
-       //}
-       //if (backtrack_status == BACKTRACK_FAILURE || backtrack_status == NEXT_TABLEAU || backtrack_status == RETURN_NOW)
-       //{
-           //break;
-       //}
-       //current_depth++;
-   //}
-   //assert(master->master == master);
-   //assert(all_tableaux_in_stack_are_root(new_tableaux));
-//
-   //// If we have reached the maximum depth, we need to select the next tableau.
-//
-  //// if (current_depth == max_depth) backtrack_status = NEXT_TABLEAU;
-//
-   //return result;
-//}
-
-//ClauseTableau_p EtableauProofSearch_n2(TableauControl_p tableaucontrol,
-                                       //ClauseTableau_p master,
-                                       //ClauseSet_p extension_candidates,
-                                       //int max_depth,
-                                       //BacktrackStatus_p status)
-//{
-   //// Root is depth 0, initial start rule is depth 1, so first depth should be 2
-   //ClauseTableau_p result = NULL;
-   ////int current_depth = ClauseTableauGetShallowestBranch(master);
-   //int current_depth = max_depth - 1;
-   //assert(master->master == master);
-   //while (current_depth < max_depth)
-   //{
-       //fprintf(GlobalOut, "# Current depth %d\n", current_depth);
-       //BacktrackStatus backtrack_status = BACKTRACK_OK;
-       //assert(master->master == master);
-       //result = EtableauProofSearch_n3(tableaucontrol,
-                                       //master,
-                                       //extension_candidates,
-                                       //current_depth,
-                                       //max_depth,
-                                       //&backtrack_status);
-       //*status = backtrack_status;
-       //assert(master->master == master);
-       //if (result || master->open_branches->members == 0)
-       //{
-           //assert(tableaucontrol->closed_tableau == result);
-           //assert(master->master == master);
-           //break;
-       //}
-       //if (backtrack_status == BACKTRACK_FAILURE || backtrack_status == NEXT_TABLEAU || backtrack_status == RETURN_NOW)
-       //{
-           //break;
-       //}
-       //current_depth++;
-       ////current_depth *= 2;
-       ////current_depth = current_depth << 1;
-   //}
-   //assert(master->master == master);
-//
-   //return result;
-//}
-
 bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
                             TableauStack_p starting_tableaux,
                             ClauseSet_p active,
@@ -462,21 +373,19 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
             PStackPushP(new_tableaux, start);
         }
     }
-    ///////////
-    ///////////
 
-//#ifndef NDEBUG
-    //printf("printing hashes of tableaux\n");
-    //printf("there are %ld starting tableaux\n", PStackGetSP(starting_tableaux));
-    //for (PStackPointer p=0; p<PStackGetSP(new_tableaux); p++)
-    //{
-        //ClauseTableau_p new_t = PStackElementP(new_tableaux, p);
-        //assert(new_t->master == new_t);
-        //printf("%ld %ld %f\n", ClauseTableauHash(new_t), PStackGetSP(new_t->master->master_backtracks), ClauseTableauGetAverageDepth(new_t));
-    //}
-    //printf("done printing hashes\n");
-    //fflush(stdout);
-//#endif
+#ifndef NDEBUG
+    printf("printing hashes of tableaux\n");
+    printf("there are %ld starting tableaux\n", PStackGetSP(starting_tableaux));
+    for (PStackPointer p=0; p<PStackGetSP(new_tableaux); p++)
+    {
+        ClauseTableau_p new_t = PStackElementP(new_tableaux, p);
+        assert(new_t->master == new_t);
+        printf("%ld %ld %f\n", ClauseTableauHash(new_t), PStackGetSP(new_t->master->master_backtracks), ClauseTableauGetAverageDepth(new_t));
+    }
+    printf("done printing hashes\n");
+    fflush(stdout);
+#endif
 
     EPCtrlSet_p process_set = EPCtrlSetAlloc();
     PStack_p buckets = PStackAlloc();
@@ -490,9 +399,9 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
         tableaux_distributor = tableaux_distributor % num_cores_available;
         assert(new_tableaux->current);
         ClauseTableau_p tab = PStackPopP(new_tableaux);
+        assert(tab->master == tab);
         ClauseTableauDeleteAllProps(tab);
         DeleteAllBacktrackInformation(tab);
-        assert(tab->master == tab);
         TableauStack_p process_bucket = PStackElementP(buckets, tableaux_distributor);
         PStackPushP(process_bucket, tab);
         tableaux_distributor++;
@@ -606,10 +515,13 @@ bool EtableauProofSearch_n1(TableauControl_p tableaucontrol,
                 }
                 case BACKTRACK_FAILURE:
                 {
+                    printf("# %p BTF %lu\n", current_tableau, MaximumDepth(current_tableau));
                     assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
                     assert(PStackElementP(distinct_tableaux_stack, current_tableau_index) == current_tableau);
                     assert(current_tableau->master == current_tableau);
                     assert(current_tableau->arity); // We need to ensure we still have the result of a start rule
+                    //assert(ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToExtensionFailure) || ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToMaxDepth));
+                    //assert(IsAnyPropSet(current_tableau, TUPBacktracked));
 
                     DeleteAllBacktrackInformation(current_tableau);
                     if (!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToMaxDepth))
@@ -617,14 +529,17 @@ bool EtableauProofSearch_n1(TableauControl_p tableaucontrol,
                         PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
                         ClauseTableauFree(current_tableau);
                         current_tableau_index = 0;
+                        printf("# %p deleted %lu\n", current_tableau, MaximumDepth(current_tableau));
+                        break;
                     }
                     MaximumDepth(current_tableau) = MaximumDepth(current_tableau) << (unsigned long) 1;
                     printf("# %p INCREASED DEPTH %lu\n", current_tableau, MaximumDepth(current_tableau));
                     //ClauseTableauSetProp(current_tableau, TUPIgnoreProps);
+                    //assert(ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToExtensionFailure));
                     ClauseTableauDelProp(current_tableau, TUPBacktracked);
-                    assert(!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToMaxDepth));
-                    assert(!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToExtensionFailure));
-                    assert(!ClauseTableauQueryProp(current_tableau, TUPBacktracked));
+                    //assert(!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToMaxDepth));
+                    //assert(!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToExtensionFailure));
+                    //assert(!ClauseTableauQueryProp(current_tableau, TUPBacktracked));
                     break;
                 }
                 case NEXT_TABLEAU:

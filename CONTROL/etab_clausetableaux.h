@@ -27,6 +27,7 @@ typedef PStack_p ClauseRep_p;
 typedef PList_p TableauList_p;
 typedef PStack_p BacktrackStack_p; // Stack of Backtrack_p
 typedef PStack_p BindingStack_p; // Stack of Binding_p
+typedef PStack_p PositionStack_p;
 struct tableaucontrol_cell;
 struct backup_proofstate_cell;
 
@@ -37,16 +38,19 @@ struct backup_proofstate_cell;
 typedef enum
 {
    TUPIgnoreProps = 0,
-   TUPOpen,
-   TUPSaturationClosed,
-   TUPFoldingBlocked,
-   TUPSaturationBlocked,
-   TUPHeadLiteral,
-   TUPBacktrackedDueToMaxDepth,
-   TUPBacktrackedDueToExtensionFailure,
+   TUPOpen = 1,
+   TUPSaturationClosedInterreduction = 2*TUPOpen,
+   TUPSaturationClosedOnBranch = 2*TUPSaturationClosedInterreduction,
+   TUPSaturationClosedAfterBranch = 2*TUPSaturationClosedOnBranch,
+   TUPSaturationClosed = TUPSaturationClosedOnBranch | TUPSaturationClosedAfterBranch | TUPSaturationClosedInterreduction,
+   TUPFoldingBlocked = 2*TUPSaturationClosedAfterBranch,
+   TUPSaturationBlocked = 2*TUPFoldingBlocked,
+   TUPHeadLiteral = 2*TUPSaturationBlocked,
+   TUPBacktrackedDueToMaxDepth = 2*TUPHeadLiteral,
+   TUPBacktrackedDueToExtensionFailure = 2*TUPBacktrackedDueToMaxDepth,
+   TUPHasBeenExtendedOn = 2*TUPBacktrackedDueToExtensionFailure,
    TUPBacktracked = TUPBacktrackedDueToMaxDepth | TUPBacktrackedDueToExtensionFailure,
-   TUPHasBeenExtendedOn,
-   TUPHasBeenPreviouslySelected
+   TUPHasBeenPreviouslySelected = 2*TUPHasBeenExtendedOn
 } TableauProperties;
 
 typedef struct clausetableau 
@@ -76,10 +80,11 @@ typedef struct clausetableau
 	PTree_p local_variables;
 	
 	 // Only present at root.  Contains variables that are present in the tableau.
+	 // This should probably be done with an array to prevent constant splaying
 	PTree_p tableau_variables;
 
 	// A stacks of previous steps.
-	PStack_p master_backtracks; // This is present at the master only.  At the top is the most recent action taken anywhere in the tableau.  This is a PStack_p of PStack_p.
+	PositionStack_p master_backtracks; // This is present at the master only.  At the top is the most recent action taken anywhere in the tableau.  This is a PStack_p of PStack_p.
 	BacktrackStack_p backtracks;  // This is present at every node.  This is a stack of Backtrack_p, most recent action is at the top.
 	BacktrackStack_p failures; // This is present at every node.  If a node is unable to be extended on, the most recent substitution is added to this.
 	// The failures can be interpreted as failure substitutions with an associated position in the tableau where the work was done.
@@ -172,6 +177,7 @@ void ClauseTableauPrintDerivation(FILE* out, ClauseTableau_p final_tableau, Tabl
 
 void AssertClauseStackMembersAreInSet(ClauseStack_p stack);
 void AssertAllOldLabelsAreInSet(ClauseTableau_p tab);
+void PositionStackFreePositions(PositionStack_p positions);
 
 #define NodeIsLeaf(tab) (tab->arity == 0)
 #define NodeIsNonLeaf(tab) (tab->arity != 0)

@@ -222,6 +222,10 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 		success = Saturate(proofstate, proofcontrol, LONG_MAX, // This is the interreduction
 						   LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
 						   LLONG_MAX, LONG_MAX);
+		if (success)
+		{
+			ClauseTableauSetProp(branch, TUPSaturationClosedInterreduction);
+		}
 		proofcontrol->heuristic_parms.selection_strategy = sel_strat;
 		assert(ProofStateProcCardinality(proofstate));
 		ProofStateResetProcessedNoCopy(proofstate, proofcontrol, branch_labels);
@@ -238,6 +242,7 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 		if (UNLIKELY(status == PROOF_FOUND)) // A contradiction was found while processing the branch clauses
 		{
 			assert(success_ref);
+			ClauseTableauSetProp(branch, TUPSaturationClosedOnBranch);
 			success = success_ref;
 		}
 		else if (full_saturation) // Now do the full branch saturation
@@ -246,6 +251,10 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 			success = Saturate(proofstate, proofcontrol, max_proc,
 							   LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
 							   LLONG_MAX, LONG_MAX);
+			if (success)
+			{
+				ClauseTableauSetProp(branch, TUPSaturationClosedAfterBranch);
+			}
 		}
 	}
 

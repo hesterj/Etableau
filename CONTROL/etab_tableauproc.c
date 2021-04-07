@@ -18,96 +18,6 @@ extern void c_smoketest();
 /*  Function Definitions
 */
 
-/*
-** This branch selection function will not select previously selected branches.
-*/
-
-//ClauseTableau_p branch_select2(TableauSet_p open_branches, int current_depth, int max_depth, int *depth_status)
-//{
-	//assert(open_branches);
-	//assert(current_depth <= max_depth);
-	//int deepest_depth = 0;
-	//int num_max_depth_branches = 0;
-	//int previously_selected_branches = 0;
-	//ClauseTableau_p deepest = NULL;
-	//ClauseTableau_p branch = open_branches->anchor->succ;
-	////fprintf(GlobalOut, "# %ld open branches\n", open_branches->members);
-	//while (branch != open_branches->anchor)
-	//{
-		//assert(branch);
-		//assert(branch->label);
-		//assert(branch->arity == 0);
-		//assert(branch->children == NULL);
-		//if (!branch->previously_selected && branch->depth > deepest_depth && branch->depth < current_depth)
-		//{
-			//deepest_depth = branch->depth;
-			//deepest = branch;
-		//}
-		//if (branch->depth >= max_depth-1)
-		//{
-			//num_max_depth_branches++;
-		//}
-		//if (branch->previously_selected)
-		//{
-			//previously_selected_branches++;
-		//}
-		//assert(branch->label);
-		//branch = branch->succ;
-	//}
-	//if (depth_status && num_max_depth_branches == (int) open_branches->members) // All of the branches are at the maximum depth
-	//{
-		//*depth_status = ALL_DEPTHS_EXCEEDED;
-	//}
-	//if (previously_selected_branches == (int) open_branches->members)
-	//{
-		////fprintf(GlobalOut, "# All previously selected...\n");
-		//*depth_status = ALL_PREVIOUSLY_SELECTED;
-	//}
-	//if (deepest)
-	//{
-		//deepest->previously_selected = true;
-	//}
-	//return deepest;
-//}
-//
-///*
-//** This branch selection function has been modified to not care about previously selected branches
-//*/
-//
-//ClauseTableau_p branch_select(TableauSet_p open_branches, int current_depth, int max_depth, int *depth_status)
-//{
-	//assert(open_branches);
-	//assert(current_depth <= max_depth);
-	//int deepest_depth = 0;
-	//int num_max_depth_branches = 0;
-	//ClauseTableau_p deepest = NULL;
-	//ClauseTableau_p branch = open_branches->anchor->succ;
-	////fprintf(GlobalOut, "# %ld open branches\n", open_branches->members);
-	//while (branch != open_branches->anchor)
-	//{
-		//assert(branch);
-		//assert(branch->label);
-		//assert(branch->arity == 0);
-		//assert(branch->children == NULL);
-		//if (branch->depth > deepest_depth && branch->depth < current_depth)
-		//{
-			//deepest_depth = branch->depth;
-			//deepest = branch;
-		//}
-		//if (branch->depth >= max_depth-1)
-		//{
-			//num_max_depth_branches++;
-		//}
-		//assert(branch->label);
-		//branch = branch->succ;
-	//}
-	//if (depth_status && num_max_depth_branches == (int) open_branches->members) // All of the branches are at the maximum depth
-	//{
-		//*depth_status = ALL_DEPTHS_EXCEEDED;
-	//}
-	//return deepest;
-//}
-
 
 /*
 ** This selection function returns the first branch found shallower than max depth.
@@ -134,6 +44,32 @@ ClauseTableau_p branch_select3(TableauSet_p open_branches, int max_depth)
 	return selected;
 }
 
+/*
+** This selection function returns the deepest branch found shallower than max depth.
+*/
+
+ClauseTableau_p branch_select5(TableauSet_p open_branches, int max_depth)
+{
+	assert(open_branches);
+	ClauseTableau_p selected = NULL;
+	int selected_depth = 0;
+	ClauseTableau_p branch = open_branches->anchor->succ;
+	while (branch != open_branches->anchor)
+	{
+		assert(branch);
+		assert(branch->label);
+		assert(branch->arity == 0);
+		assert(branch->children == NULL);
+		assert(branch->label);
+		if (branch->depth < max_depth && branch->depth > selected_depth)
+		{
+			selected_depth = branch->depth;
+			selected = branch;
+		}
+		branch = branch->succ;
+	}
+	return selected;
+}
 /*
 ** This selection function returns the first branch found shallower than max depth that has not been previously selected.
 */

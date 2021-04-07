@@ -108,5 +108,6 @@ ClauseTableau_p branch_select(TableauSet_p open_branches, int current_depth, int
 ClauseTableau_p branch_select2(TableauSet_p open_branches, int current_depth, int max_depth, int *depth_status);
 ClauseTableau_p branch_select3(TableauSet_p open_branches, int max_depth);
 ClauseTableau_p branch_select4(TableauSet_p open_branches, int max_depth);
+ClauseTableau_p branch_select5(TableauSet_p open_branches, int max_depth);
 
 #endif

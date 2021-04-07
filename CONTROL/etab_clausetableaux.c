@@ -39,9 +39,6 @@ ClauseTableau_p empty_tableau_alloc()
 	handle->arity = 0;
 	handle->unit_axioms = NULL;
 	handle->previously_saturated = 0;
-	//handle->previously_selected = false;
-	//handle->saturation_blocked = false;
-	//handle->folding_blocked = false;
 	handle->mark_int = 0;
 	handle->folded_up = 0;
 	handle->step = 0;
@@ -407,12 +404,7 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	}
 	if (trash->depth == 0)
 	{
-		assert(trash->master_backtracks);
-		while (!PStackEmpty(trash->master_backtracks))
-		{
-			PStack_p trash_position = PStackPopP(trash->master_backtracks);
-			PStackFree(trash_position);
-		}
+		PositionStackFreePositions(trash->master_backtracks);
 		PStackFree(trash->master_backtracks);
 	}
 	DStrFree(trash->info);
@@ -574,7 +566,7 @@ void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 	ClauseSetInsert(label_storage, new_label);
 	assert(new_label);
 	tab->label = new_label;
-	ClauseTableauDelProp(tab, TUPSaturationClosed);
+	ClauseTableauDelProp(tab, TUPSaturationBlocked);
 	//tab->saturation_blocked = false; // Since we are applying a nontrivial substitution to the node, we can try to saturate again
 	
 	if (tab->folding_labels)  // The edge labels that have been folded up if the pointer is non-NULL
@@ -2080,9 +2072,20 @@ void TermTreePrintCodes(FILE* out, PTree_p tree)
 
 void ClauseTableauDeleteAllProps(ClauseTableau_p tab)
 {
+	assert(tab);
 	tab->properties = 0;
 	for (int i=0; i<tab->arity; i++)
 	{
 		ClauseTableauDeleteAllProps(tab->children[i]);
+	}
+}
+
+void PositionStackFreePositions(PositionStack_p positions)
+{
+	if (!positions) return;
+	while (!PStackEmpty(positions))
+	{
+		PStack_p trash_position = PStackPopP(positions);
+		PStackFree(trash_position);
 	}
 }

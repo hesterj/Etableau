@@ -158,25 +158,28 @@ void Backtrack(Backtrack_p bt)
     {
         ClauseTableauDeregisterStep(position);
     }
-    if (BacktrackIsExtensionStep(bt) && bt->completed)
+    if (BacktrackIsExtensionStep(bt))
     {
-        // delete the children
-        assert(position->arity > 1);
-        for (int i=0; i<position->arity; i++)
+        if (bt->completed)
         {
-            assert(position->children[i]);
-            if (position->children[i]->set)
+            // delete the children
+            assert(position->arity > 1);
+            for (int i=0; i<position->arity; i++)
             {
-                assert(position->children[i]->open == true);
-                TableauSetExtractEntry(position->children[i]);
+                assert(position->children[i]);
+                if (position->children[i]->set)
+                {
+                    assert(position->children[i]->open == true);
+                    TableauSetExtractEntry(position->children[i]);
+                }
+                assert(position->children[i]->set == NULL);
+                ClauseTableauFree(position->children[i]);
             }
-            assert(position->children[i]->set == NULL);
-            ClauseTableauFree(position->children[i]);
+            ClauseTableauArgArrayFree(position->children, position->arity);
+            position->children = NULL;
+            position->arity = 0;
+            position->folded_up = 0;
         }
-        ClauseTableauArgArrayFree(position->children, position->arity);
-        position->children = NULL;
-        position->arity = 0;
-        position->folded_up = 0;
     }
     else if (BacktrackIsClosureStep(bt))
     {
@@ -190,9 +193,13 @@ void Backtrack(Backtrack_p bt)
         assert(position->arity == 0);
         assert(position->set == NULL);
         assert(position->open == false);
-        //position->saturation_blocked = true;
+        ClauseTableauDelProp(position, TUPSaturationClosed);
         ClauseTableauSetProp(position, TUPSaturationBlocked);
         position->saturation_closed = false;
+    }
+    else
+    {
+        assert(false && "Unknown backtrack");
     }
     //bt->id = position->id;
     position->id = 0;
@@ -426,6 +433,7 @@ bool BacktrackWrapper(ClauseTableau_p master)
 
 void DeleteAllBacktrackInformation(ClauseTableau_p tableau)
 {
+    assert(tableau);
     while (!PStackEmpty(tableau->old_labels))
     {
         Clause_p trash_label = PStackPopP(tableau->old_labels);
@@ -440,7 +448,7 @@ void DeleteAllBacktrackInformation(ClauseTableau_p tableau)
     }
     assert(PStackEmpty(tableau->old_labels));
     assert(PStackEmpty(tableau->old_folding_labels));
-    BacktrackStackDeleteInformation(tableau->master_backtracks);
+    PositionStackFreePositions(tableau->master_backtracks);
     BacktrackStackDeleteInformation(tableau->backtracks);
     BacktrackStackDeleteInformation(tableau->failures);
     for (int i=0; i<tableau->arity; i++)

@@ -206,6 +206,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 			ClauseTableau_p extended = ClauseTableauExtensionRuleWrapper(tableau_control,
 																		 extension_candidate,
 																		 new_tableaux);
+
 			TableauExtensionFree(extension_candidate);
 			if (extended) // extension may not happen due to regularity
 			{
@@ -222,20 +223,15 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 				}
 				if (LIKELY(!new_tableaux)) // If the tableau has been extended on, we must go back and select another branch
 				{
-					goto return_point;
+					break;
 				}
 			}
-			//if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= tableau_control->multiprocessing_active) // If we extended on a tableau without copying it, return.
-			//{
-				//goto return_point;
-			//}
 		}
 		position++;
 		leaf_clause = leaf_clause->succ;
 	}
 
    //  OK We're done
-   return_point:
    ClauseSetFree(new_leaf_clauses);
    return extensions_done;
 }
@@ -296,6 +292,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	PStackPushP(parent->master->master_backtracks, position_copy);
 
 	ClauseSet_p new_leaf_clauses_set = ClauseSetAlloc(); // Copy the clauses of the extension into this
+
 
 	// This for loop is used for regularity checking.  If the extension would create an irregular branch, block it and return NULL.
 	for (Clause_p handle = extension->other_clauses->anchor->succ;
@@ -365,6 +362,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	}
 	assert(ClauseSetEmpty(new_leaf_clauses_set));
 	assert(number_of_children == parent->arity);
+
 
 	ClauseSetFree(new_leaf_clauses_set);
 	// Now that the parent has been extended on, it should be removed from the collection of open leaves.
@@ -602,16 +600,13 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
 														TableauStack_p new_tableaux)
 {
     Clause_p selected = extension_candidates->anchor->succ;
-    //Clause_p selected = NULL;
 	ClauseTableau_p closed_tableau = NULL;
     int number_of_extensions = 0;
 	assert(ClauseSetCardinality(extension_candidates));
 
-	//ClauseSetDelProp(extension_candidates, CPIsTableauClause); // Mark them as non-tableau clauses,
     //while ((selected = select_extension_candidate(extension_candidates)))
     while (selected != extension_candidates->anchor) // iterate over the clauses we can split on the branch
     {
-        //fprintf(GlobalOut, "# Attempting to expand with clause...\n");
         assert(ClauseLiteralNumber(selected) > 1);
         assert(selected);
         number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranch(tableaucontrol,
@@ -622,7 +617,6 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
         if (UNLIKELY(tableaucontrol->closed_tableau))
         {
             closed_tableau = tableaucontrol->closed_tableau;
-            //fprintf(GlobalOut, "# Success\n");
             break;
         }
         else if (number_of_extensions > 0) // If we extended on the tableau, we have to return and select another branch, unless we are populating
@@ -631,13 +625,12 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
 			*extended += number_of_extensions;
 			number_of_extensions = 0;
 
-            // If we are in normal proof search (new_tableaux == NULL) or we have enough tableaux, return.
-            if (LIKELY(!new_tableaux)) break;
-            //if (LIKELY(!new_tableaux) || PStackGetSP(new_tableaux) >= GetDesiredNumberOfTableaux(tableaucontrol))
-			//{
-				////ClauseSetMoveClause(extension_candidates, selected); // If we just extended with a clause, move it to the end of the extension candidates list.
-				//break;
-			//}
+            // If we are in normal proof search (new_tableaux == NULL) return.
+            if (LIKELY(!new_tableaux))
+			{
+				ClauseSetMoveClause(extension_candidates, selected); // If we just extended with a clause, move it to the end of the extension candidates list.
+				break;
+			}
         }
         selected = selected->succ;
     }

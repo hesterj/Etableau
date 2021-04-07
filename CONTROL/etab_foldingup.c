@@ -240,6 +240,11 @@ int FoldUpAtNode(ClauseTableau_p node)
 		//fflush(stdout);
 		return 0;
 	}
+	if (node->folded_up == node->depth)
+	{
+		//printf("Node has already been folded up to root.\n");
+		return 0;
+	}
 	// Do not fold up nodes that are not superclosed
 
 	int child_saturation_closed = NO_CHILDREN_CLOSED_BY_SATURATION;
@@ -248,15 +253,20 @@ int FoldUpAtNode(ClauseTableau_p node)
 		//printf("Attempted to fold up nonclosed node, returning 0 in FoldUpAtNode\n");
 		return 0;
 	}
+	if (child_saturation_closed == CHILD_CLOSED_BY_SATURATION)
+	{
+		// A superclosed node with children closed by saturation could have had any clause on the branch used in its closing
+		// To reflect this, the deepest relevant node (node itself here) must be included as a dominator.
+		// By keeping track of which clauses were used in the saturation attempt, it could potentially be folded up higher.
+		// This would be tricky to implement and likely not worth the effort...
+		//PStackPushP(dominators, node);
+		printf("not folding up because of bad child\n");
+		return 0;
+	}
 
 	assert(ClauseLiteralNumber(node->label) == 1);
 
 	//Easy situation- if the node has already been folded up to the root do nothing
-	if (node->folded_up == node->depth)
-	{
-		//printf("Node has already been folded up to root.\n");
-		return 0;
-	}
 #ifndef NDEBUG
 	assert_all_children_closed(node);
 #endif
@@ -267,15 +277,7 @@ int FoldUpAtNode(ClauseTableau_p node)
 	PStack_p dominators = NodesThatDominateTableauFromMarks(node, dominated_markings); 
 	PStackFree(dominated_markings);
 
-	if (child_saturation_closed == CHILD_CLOSED_BY_SATURATION)
-	{
-		// A superclosed node with children closed by saturation could have had any clause on the branch used in its closing
-		// To reflect this, the deepest relevant node (node itself here) must be included as a dominator.
-		// By keeping track of which clauses were used in the saturation attempt, it could potentially be folded up higher.
-		// This would be tricky to implement and likely not worth the effort...
-		PStackPushP(dominators, node);
-	}
-	
+
 	Clause_p flipped_label = NULL;
 	if ((PStackGetSP(dominators) == 0) ||
 		((PStackGetSP(dominators) == 1) && (PStackElementP(dominators,0) == node->master)))
