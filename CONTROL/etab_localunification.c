@@ -261,6 +261,19 @@ void ClauseTableauUpdateVariables(ClauseTableau_p tab)
     tab->tableau_variables = tableau_variables;
 }
 
+/*
+** Update the local variables of tab using an array rather than a tree
+*/
+
+void ClauseTableauUpdateVariablesArray(ClauseTableau_p tab)
+{
+    assert(tab);
+    PTree_p tableau_variables = NULL;
+    PTreeFree(tab->tableau_variables);
+    ClauseTableauCollectVariables2(tab, &tableau_variables);
+    tab->tableau_variables = tableau_variables;
+}
+
 /*-----------------------------------------------------------------------
 //
 // Function: PTreeComplement()
