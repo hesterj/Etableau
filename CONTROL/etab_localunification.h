@@ -8,7 +8,7 @@ long CollectVariablesAtNode(ClauseTableau_p node, PTree_p *var_tree);
 long CollectVariablesAtNodeArray(ClauseTableau_p node, PDArray_p array);
 long CollectVariablesOfBranch(ClauseTableau_p branch, PTree_p *branch_vars, bool include_root);
 bool BranchIsLocal(ClauseTableau_p branch);
-bool AllBranchesAreLocal(ClauseTableau_p master);
+//bool AllBranchesAreLocal(ClauseTableau_p master);
 //Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause, PStack_p local_variables);
 long ReplaceLocalVariablesWithFreshSubst(ClauseTableau_p master, Clause_p clause, PTree_p local_variables, Subst_p subst);
 bool VarIsLocal(ClauseTableau_p open_branch, Term_p variable);

@@ -214,7 +214,7 @@ void Backtrack(Backtrack_p bt)
     }
 
     // Shouldn't need to update variables here because they are updated before any potential inference rule.
-    ClauseTableauUpdateVariablesArray(master);
+    //ClauseTableauUpdateVariablesArray(master);
 
     assert(position->label);
     return;

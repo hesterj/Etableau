@@ -1,5 +1,7 @@
 #include "etab_localunification.h"
 
+void reset_variables_array(PDArray_p variables_array);
+
 /*  This method updates the local variables of the node.
  * This is intended to be used on the leaf node of a branch.
  * Variables that are local (do not occur on any open branch but
@@ -258,11 +260,20 @@ void ClauseTableauUpdateVariablesArray(ClauseTableau_p tab)
 {
     assert(tab == tab->master);
     PDArray_p array = tab->tableau_variables_array;
+    reset_variables_array(array);
     ClauseTableau_p branch = tab->open_branches->anchor->succ;
     while (branch != tab->open_branches->anchor)
     {
         CollectVariablesOfBranchArray(branch, array, true);
         branch = branch->succ;
+    }
+}
+
+void reset_variables_array(PDArray_p variables_array)
+{
+    for (long i=0; i<variables_array->size; i++)
+    {
+        PDArrayAssignP(variables_array, i, NULL);
     }
 }
 

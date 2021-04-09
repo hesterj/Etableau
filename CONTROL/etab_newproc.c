@@ -589,7 +589,7 @@ bool EtableauPopulate_n1(TableauControl_p tableaucontrol,
     {
         assert(current_tableau && "We must have a tableau for proof search...");
         assert(current_tableau->master == current_tableau && "The current tableau must be the root node of the tableau");
-        //printf("iter %ld:%ld\n", current_tableau_index, PStackGetSP(distinct_tableaux_stack));
+        //printf("iter %ld:%ld\n", current_tableau_index, PStackGetSP(new_tableaux));
         assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
         BacktrackStatus tableau_status = BACKTRACK_OK;
         ClauseTableau_p closed_tableau = EtableauPopulate_n3(tableaucontrol,
@@ -598,7 +598,8 @@ bool EtableauPopulate_n1(TableauControl_p tableaucontrol,
                                                              &tableau_status,
                                                              new_tableaux);
         assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
-        if (UNLIKELY(current_tableau_index >= 10000)) tableau_status = RETURN_NOW;
+        // If we have not been able to find enough tableaux after 500 iterations, just return soon.
+        if (UNLIKELY(current_tableau_index >= 500)) tableau_status = RETURN_NOW;
         if (closed_tableau || current_tableau->open_branches->members == 0)
         {
             assert(tableaucontrol->closed_tableau == closed_tableau);

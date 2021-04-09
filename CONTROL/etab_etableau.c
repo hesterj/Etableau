@@ -197,6 +197,7 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 {
 	Clause_p success = NULL;
 	Clause_p success_ref = NULL;
+	TableauControl_p tableaucontrol = branch->master->tableaucontrol;
 	PStack_p branch_labels = PStackAlloc();
 	ErrorCodes status = RESOURCE_OUT;
 	bool process_branch_clauses_first = true;
@@ -225,14 +226,15 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 		if (success)
 		{
 			ClauseTableauSetProp(branch, TUPSaturationClosedInterreduction);
+			(tableaucontrol->number_of_saturations_closed_in_interreduction)++;
 		}
 		proofcontrol->heuristic_parms.selection_strategy = sel_strat;
 		assert(ProofStateProcCardinality(proofstate));
 		ProofStateResetProcessedNoCopy(proofstate, proofcontrol, branch_labels);
 	}
 
-    if(LIKELY(!success)) // First we will process the clauses of the branch, and then the full saturation
-    {
+	if(LIKELY(!success)) // First we will process the clauses of the branch, and then the full saturation
+	{
 		assert(!ClauseSetEmpty(proofstate->unprocessed));
 		proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver
 		if (process_branch_clauses_first)
@@ -243,6 +245,7 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 		{
 			assert(success_ref);
 			ClauseTableauSetProp(branch, TUPSaturationClosedOnBranch);
+			(tableaucontrol->number_of_saturations_closed_on_branch)++;
 			success = success_ref;
 		}
 		else if (full_saturation) // Now do the full branch saturation
@@ -254,6 +257,7 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 			if (success)
 			{
 				ClauseTableauSetProp(branch, TUPSaturationClosedAfterBranch);
+				(tableaucontrol->number_of_saturations_closed_after_branch)++;
 			}
 		}
 	}
@@ -272,12 +276,14 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 	}
 	if (success)
 	{
-		//Sig_p sig = proofstate->signature;
 		assert(success->derivation);
-		//fprintf(stdout, "# Derivation of pid (%ld)\n", (long) getpid());
-		//DerivationStackTSTPPrint(stdout, sig, success->derivation);
-		//fprintf(stdout, "\nDone.\n");
-		//fflush(stdout);
+#ifndef NDEBUG
+		Sig_p sig = proofstate->signature;
+		fprintf(stdout, "# Derivation of pid (%ld)\n", (long) getpid());
+		DerivationStackTSTPPrint(stdout, sig, success->derivation);
+		fprintf(stdout, "\nDone.\n");
+		fflush(stdout);
+#endif
 		assert(ClauseLiteralNumber(success) == 0);
 		status = PROOF_FOUND;
 	}
@@ -567,9 +573,9 @@ void TermTreeDeleteRWLinks(Term_p root)
       root = PStackPopP(stack);
       if(root)
       {
-    TermDeleteRWLink(root);
-    PStackPushP(stack, root->lson);
-    PStackPushP(stack, root->rson);
+		  TermDeleteRWLink(root);
+		  PStackPushP(stack, root->lson);
+		  PStackPushP(stack, root->rson);
       }
    }
    PStackFree(stack);
@@ -788,7 +794,10 @@ void BackupProofStateFree(BackupProofState_p junk)
 	BackupProofStateCellFree(junk);
 }
 
-long BacktrackProofState(ProofState_p proofstate, ProofControl_p proofcontrol, TableauControl_p tableaucontrol, BackupProofState_p backup)
+long BacktrackProofState(ProofState_p proofstate,
+						 ProofControl_p proofcontrol,
+						 TableauControl_p tableaucontrol,
+						 BackupProofState_p backup)
 {
 	//printf("start backtracking %ld\n", tableaucontrol->number_of_saturation_attempts);
 	ClauseSet_p unprocessed = NULL;
@@ -797,45 +806,83 @@ long BacktrackProofState(ProofState_p proofstate, ProofControl_p proofcontrol, T
 	assert(backup);
 	assert(tableaucontrol);
 
+	//TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
+	EtableauProofStateResetClauseSets(proofstate);
 
-	if (ClauseSetCardinality(backup->unprocessed))
+	if (!(tableaucontrol->quicksat)) // We are doing full saturation on branches
 	{
-		unprocessed = ClauseSetCopyOpt(backup->unprocessed);
+#ifndef ETAB_FLATCOPY
+		if (ClauseSetCardinality(backup->unprocessed))
+		{
+			unprocessed = ClauseSetCopyOpt(backup->unprocessed);
+		}
+		else
+		{
+			unprocessed = ClauseSetCopyOpt(tableaucontrol->unprocessed);
+		}
+#else
+		if (ClauseSetCardinality(backup->unprocessed))
+		{
+			unprocessed = ClauseSetFlatCopy(backup->unprocessed);
+		}
+		else
+		{
+			unprocessed = ClauseSetFlatCopy(tableaucontrol->unprocessed);
+		}
+#endif
+		ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
+		ClauseSetFree(unprocessed);
 	}
 	else
 	{
-		unprocessed = ClauseSetCopyOpt(tableaucontrol->unprocessed);
+		proofstate->state_is_complete = false;
 	}
 
-
-
-	EtableauProofStateResetClauseSets(proofstate);
-
-	//ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
-	//
-	proofstate->state_is_complete = false;
-	//assert(ClauseSetEmpty(unprocessed));
-
-	ClauseSetFree(unprocessed);
+	assert(ClauseSetEmpty(proofstate->processed_neg_units));
+	assert(ClauseSetEmpty(proofstate->processed_non_units));
+	assert(ClauseSetEmpty(proofstate->processed_pos_eqns));
+	assert(ClauseSetEmpty(proofstate->processed_pos_rules));
 	ClauseSetFree(proofstate->processed_neg_units);
 	ClauseSetFree(proofstate->processed_non_units);
 	ClauseSetFree(proofstate->processed_pos_eqns);
 	ClauseSetFree(proofstate->processed_pos_rules);
 
-	proofstate->processed_neg_units = ClauseSetCopyIndexedOpt(backup->processed_neg_units);
-	proofstate->processed_non_units = ClauseSetCopyIndexedOpt(backup->processed_non_units);
-	proofstate->processed_pos_eqns  = ClauseSetCopyIndexedOpt(backup->processed_pos_eqns);
-	proofstate->processed_pos_rules = ClauseSetCopyIndexedOpt(backup->processed_pos_rules);
+	proofstate->processed_neg_units = ClauseSetAlloc();
+	proofstate->processed_non_units = ClauseSetAlloc();
+	proofstate->processed_pos_eqns  = ClauseSetAlloc();
+	proofstate->processed_pos_rules = ClauseSetAlloc();
 
 	proofstate->processed_pos_rules->demod_index = PDTreeAlloc(proofstate->terms);
 	proofstate->processed_pos_eqns->demod_index  = PDTreeAlloc(proofstate->terms);
 	proofstate->processed_neg_units->demod_index = PDTreeAlloc(proofstate->terms);
 
+#ifdef ETAB_FLATCOPY
+	//proofstate->processed_neg_units = ClauseSetFlatCopyIndexed(backup->processed_neg_units);
+	//proofstate->processed_non_units = ClauseSetFlatCopyIndexed(backup->processed_non_units);
+	//proofstate->processed_pos_eqns  = ClauseSetFlatCopyIndexed(backup->processed_pos_eqns);
+	//proofstate->processed_pos_rules = ClauseSetFlatCopyIndexed(backup->processed_pos_rules);
+
+	ClauseSetInsertSetFlatCopyIndexed(proofstate->processed_neg_units, backup->processed_neg_units);
+	ClauseSetInsertSetFlatCopyIndexed(proofstate->processed_non_units, backup->processed_non_units);
+	ClauseSetInsertSetFlatCopyIndexed(proofstate->processed_pos_eqns,  backup->processed_pos_eqns);
+	ClauseSetInsertSetFlatCopyIndexed(proofstate->processed_pos_rules, backup->processed_pos_rules);
+#else
+	//proofstate->processed_neg_units = ClauseSetCopyIndexedOpt(backup->processed_neg_units);
+	//proofstate->processed_non_units = ClauseSetCopyIndexedOpt(backup->processed_non_units);
+	//proofstate->processed_pos_eqns  = ClauseSetCopyIndexedOpt(backup->processed_pos_eqns);
+	//proofstate->processed_pos_rules = ClauseSetCopyIndexedOpt(backup->processed_pos_rules);
+
+	ClauseSetInsertSetCopyOptIndexed(proofstate->processed_neg_units, backup->processed_neg_units);
+	ClauseSetInsertSetCopyOptIndexed(proofstate->processed_non_units, backup->processed_non_units);
+	ClauseSetInsertSetCopyOptIndexed(proofstate->processed_pos_eqns,  backup->processed_pos_eqns);
+	ClauseSetInsertSetCopyOptIndexed(proofstate->processed_pos_rules, backup->processed_pos_rules);
+#endif
+
+
 	proofstate->demods[0]            = proofstate->processed_pos_rules;
 	proofstate->demods[1]            = proofstate->processed_pos_eqns;
 	proofstate->demods[2]            = NULL;
 
-	//TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
 
 	//assert(ProofStateProcCardinality(proofstate));
 	//assert(ClauseSetCardinality(proofstate->unprocessed));

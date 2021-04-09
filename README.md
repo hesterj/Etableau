@@ -1,290 +1,82 @@
-**NOTE**: The CASC ReadMe file is in `DOC/Readme`.
 
-Short Installation Instructions for the impatient
-=================================================
+Etableau
+========
 
-This assumes that you have GNU tar, sh and gawk in your search path!
+Etableau is a first order theorem prover for first order logic based 
+on Eprover, using it as a library.  Etableau combines the superposition
+calculus and the clausal tableaux calculus in a novel way, using the
+tableaux calculus to generate lemmas and new assumptions that can be 
+used to find contradictions in certain situations.
 
-Simple installation of the first-order version (will install
-executables):
+This means that branches of a tableau that are difficult to close using
+the clausal tableau calculus can be closed with Eprover's saturation.
+The saturation procedure benefits from the extra assumptions that are 
+present on the branch of the tableau.  It seems that saturation procedures
+often find a proof quickly or not at all, so by doing many short proof
+searches with differing assumptions it is possible for proofs to be found
+that may not have been otherwise.
 
-```sh
-  tar -xzf E.tgz
-  cd E
-  ./configure --bindir=/path/to/EXECDIR
-  make
-  make install
-  /path/to/EXECDIR/eprover -h | more
+Etableau is licensed and installed in the same way as Eprover.
+
+To install Etableau, clone this repository, execute the following commands,
+or follow the instructions for Eprover.
+
+``` 
+    ./configure
+    make rebuild
 ```
+    
+The executable "eprover" is generated in the PROVER directory.  To check that it worked,
+try running ./eprover --tableau=1 --tableau-depth=10 $1, where $1 is some TPTP problem file.
 
-Simplest installation (in-place):
+tableau
+---------
+--tableau=1 enables clausal tableaux proof search.  If this option is not passed, normal
+Eprover will happen.
 
-```sh
-  tar -xzf E.tgz
-  cd E
-  ./configure
-  make rebuild
-  cd PROVER
-  ./eprover -h | more
-```
+tableau-saturation
+--------------------
 
-Read the rest of this file and the fine (if incomplete) manual if
-anything fails. There should be a copy of the manual in
-`DOC/eprover.pdf`.
+--tableau-saturation=1 enables the combination of the superposition calculus and tableaux
+calculus.
 
-This version or E supports a fragment of higher-order logic called
-lambda-free higher-order logic (LFHOL). To build and test the
-higher-order version, use
+tableau-dor-print
+-------------------
+--tableau-dot-print=dir prints DOT graphs of the closed tableau found in a successful proof 
+search to the directory dir.
 
-```sh
-  ./configure --enable-ho
-  make rebuild
-  cd PROVER
-  eprover-ho -h
-```
+apr
+-----
+--apr=3 filters the axiom specification to only include clauses within an alternating
+path relevance distance of 3 from the conjectures of the specification.  This number can 
+be changed.  This option is not recommended except on the largest problems.
 
-
-The recommended command for running E on the file problem.p is
-
-```
-  eprover --auto --proof-object problem.p
-```
-
-If you want to try the usually stronger strategy scheduling mode, use
-
-```
-  eprover --auto-schedule --proof-object problem.p
-```
-
-Replace `eprover` by `eprover-ho` for the higher-order-enabled
-version.
-You can add a time limit of 300 seconds with the option
-`--cpu-limit=300` and a memory limit of 2 GB with `--memory-limit=2048`
-for all "automatic" modes. You can reduce output with `-s` (or
-`--silent`). As of version 1.9.1, E will try to auto-detect the input
-format and adjust the output format accordingly. You can still force
-input and output formats via commandline options.
-
-
-
-The Equational Theorem Prover E
-===============================
-
-This is the README file for version 2.4 "Sandakphu" of the E
-equational theorem prover. This version of E is free software, see the
-file COPYING for details about the license and the fact that THERE IS
-NO WARRANTY!
-
-
-What is E?
+quicksat
 ----------
+--quicksat=100 ensures that no more than 100 clauses are processed during saturation of
+tableau branches.  This number can be changed.  The default value is 100 if the option
+--quicksat is passed without an integer option.  If quicksat is passed, then there will
+be a loss of completeness for branch saturations, but not the entire proof search.  This
+is becuase of the fact that if only a small number of clauses are going to be processed
+on a branch saturation, there is no need to copy the entire unprocessed clause set and
+only a small number or none are copied.
 
-E is an equational theorem prover. That means it is a program that you
-can stuff a mathematical specification (in many-sorted first-order
-logic with equality) and a hypothesisconjecture into, and which will
-then run forever, using up all of your machines resources. Very
-occasionally it will find a proof for the conjecture and tell you so
-;-).
+tableau-equality
+------------------
+--tableau-equality=1 introduces equality axioms for the symbols found in the specification
+as well as axioms of symmetry, reflection, and transitivity.  This is helpful on some
+problems.  This is not normally necessary because if equality is detected in the signature
+of a problem, equality axioms are automatically added.
 
-E has been created and is currently maintained by Stephan Schulz,
-<schulz@eprover.org>, now with the help of several contributors (see
-`DOC/CONTRIBUTORS`). It is developed and distributed under the GNU
-General Public License.
+Eprover options
+---------------
+Options controlling the saturation procedure of Eprover also work, allowing the user 
+to use different strategies.
 
-The E homepage can be found at <http://www.eprover.org>
+Help
+----
 
-
-Installation
-------------
-
-E can be installed anywhere in the file system, either by a normal
-user or by the system administrator. By default, the prover will still
-be compiled as a version that supports first-order logic only.
-
-To install the package, unpack the distribution (if you are reading
-this, you probably already did):
-
-```sh
-   gunzip -c E.tgz|tar -xvf -
-```
-
-or
-
-```sh
-   (g)tar -xzf E.tgz
-```
-(if you have GNU tar)
-
-This should create a directory named E. After unpacking, optionally
-edit `E/Makefile.vars` to your liking. In particular, if building for
-HPUX, comment out the suitable CFLAGS definition (for most systems,
-the default definition should be ok). Then change to the E directory:
-
-```sh
-   cd E
-```
-
-Determine if you want to run E from its own build directory or wether
-you want to install the executables in some other directory
-EXECDIR. In the first case, run
-
-```sh
-   ./configure
-```
-
-otherwise
-
-```sh
-   ./configure --bindir=EXECDIR
-```
-
-or, if you also want to install the man-pages into MANDIR,
-
-```sh
-   ./configure --bindir=EXECDIR --man-prefix=MANDIR
-```
-
-To enable higher-order-support, add the option `--enable-ho`, e.g.
-
-```sh
-   ./configure --enable-ho
-```
-
-Then type
-
-```sh
-   make
-```
-
-to compile the libraries and all included programs under the E
-directory. If you want to install E in a particular EXECDIR, type
-
-```sh
-   make install
-```
-
-You must have write permission in the EXECDIR, so if you install E
-outside your own home directory, you may need to become root or use
-sudo.
-
-If you have changed the configuration, you need to rebuild all object
-and binary files. Run
-
-```sh
-   make rebuild
-```
-
-instead of plain make.
+If you have any problems with this software or a bug report, please feel free to contact
+me at hesterj@ufl.edu.
 
 
-Type
-
-```sh
-   make documentation
-```
-
-to translate the LaTeX documentation (this requires LaTeX2e, pdflatex,
-and the packages theorem, amssymb and epsfig, which are included in
-most current LaTeX distributions). The manual should also be included
-as a pre-compiled PDF.
-
-For some operating systems, especially if you do not have the GNU gcc
-compiler installed, you may need to edit Makefile.vars manually to
-select tools and options. If you have any problems, look into
-E/DOC/PORTING.
-
-If you get into trouble,
-
-```sh
-   make rebuild
-```
-
-will rebuild E completely to your current configuration.
-
-After installation, go to E/PROVER and type
-
-```sh
-   ./eprover BOO001-1+rm_eq_rstfp.lop
-```
-
-to see the prover in action. Type
-
-```sh
-   ./eprover LUSK6.lop
-```
-
-for a harder example. `./eprover -h` will give you some information and
-a list of options.
-
-For impatient people who do not want to read anything:
-
-```sh
-   eprover --auto --memory-limit=<80%_of_your_main_memory> <problem-file>
-```
-
-should give a reasonable performance on a large class of problems
-(unless your main memory is really small).
-
-The auto mode will perform a heuristic pruning of the axiom set which
-may result in incompleteness for very large problems (many thousands
-of axioms). If you need completeness, use
-
-```sh
-  eprover --satauto --memory-limit=<80%_of_your_main_memory> <problem-file>
-```
-
-In general, different proof problems are easy for different
-strategies. If you run
-
-```sh
-  eprover --auto-schedule --memory-limit=<80%_of_your_main_memory> <problem-file>
-```
-
-or
-
-```sh
-  eprover --satauto-schedule --memory-limit=<80%_of_your_main_memory> <problem-file>
-```
-
-the prover will try a series of strategies on the problem. It assumes
-a 300 second run time - if you impose a different one externally, it
-is important to let E know via the `--cpu-limit=XXX` option so that it
-can adjust the schedule.
-
-One of the features of E is the ability to produce semi-readable
-proofs. To use this, type
-
-```sh
-  eprover --proof-object <other-stuff>
-```
-
-By default, E will now automatically detect the input format (LOP,
-TPTP-2 or TPTP-3), and will select the matching output format (PCL2
-for LOP and TPTP-2 inputs, TPTP-3 for TPTP-3 inputs).
-
-You can check the proof objects in PCL format for correctness using
-the tool checkproof in the same directory. "checkproof -h" should give
-you all necessary information. Note that checkproof cannot yet deal
-with the full first order part, and will skip anything not
-clausal. Also, support for independent provers in checkproof can be
-subject to bit-rot, as other systems and interfaces change.
-
-
-
-Bug reports and questions
-=========================
-
-We welcome bug reports and even reasonable questions. If the prover
-behaves in an unexpected way, please include the following
-information:
-
-- What did you observe?
-- What did you expect?
-- The output of `eprover --version`
-- The full commandline that lead to the unexpected behaviour
-- The input file(s) that lead to the unexpected behaviour
-
-Most bug reports should be send to <schulz@eprover.org>. Bug reports
-with respect to the LFHO-version should be send to
-<petar.vukmirovic2@gmail.com>. Please remember that this is an unpaid
-volunteer service ;-).

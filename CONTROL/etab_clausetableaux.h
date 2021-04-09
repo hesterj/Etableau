@@ -76,13 +76,10 @@ typedef struct clausetableau
 	long max_var;     // f_code of the maximal variable in the tableau
 	unsigned long maximum_depth; // The maximum depth that this tableau is allowed to search
 	DStr_p info;    // Contains the substitution used to close this node
-	//PStack_p local_variables; // The variables of the tableau that are local to the branch.
-	PTree_p local_variables;
-	
-	//PTree_p tableau_variables;
 
 	// Only present at root.  Contains variables that are present in the tableau.
 	PDArray_p tableau_variables_array;
+	PTree_p local_variables;
 
 	// A stacks of previous steps.
 	PositionStack_p master_backtracks; // This is present at the master only.  At the top is the most recent action taken anywhere in the tableau.  This is a PStack_p of PStack_p.
@@ -145,13 +142,17 @@ void ClauseTableauPrint2(ClauseTableau_p tab);
 void HCBClauseSetEvaluate(HCB_p hcb, ClauseSet_p clauses);
 
 ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set);
-ClauseSet_p ClauseSetFlatCopy(TB_p bank, ClauseSet_p set);
+ClauseSet_p ClauseSetFlatCopy(ClauseSet_p set);
+ClauseSet_p ClauseSetFlatCopyIndexed(ClauseSet_p set);
 ClauseSet_p ClauseSetCopyOpt(ClauseSet_p set);
 ClauseSet_p ClauseSetCopyIndexedOpt(ClauseSet_p set);
 Clause_p ClauseFlatCopyFresh(Clause_p clause, ClauseTableau_p tableau);
+long ClauseSetInsertSetFlatCopyIndexed(ClauseSet_p to, ClauseSet_p from);
+long ClauseSetInsertSetCopyOptIndexed(ClauseSet_p to, ClauseSet_p from);
 bool ClausesAreDisjoint(Clause_p a, Clause_p b);
 
 Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau);  // Major memory hog
+void ClauseBindFresh(Clause_p clause, Subst_p subst, ClauseTableau_p tableau);
 
 ClauseSet_p EqualityAxioms(TB_p bank);
 PList_p ClauseSetToPList(ClauseSet_p set);
@@ -250,6 +251,9 @@ typedef struct tableaucontrol_cell
 	long number_of_extensions;
 	long number_of_saturation_attempts;
 	long number_of_successful_saturation_attempts;
+	long number_of_saturations_closed_in_interreduction;
+	long number_of_saturations_closed_on_branch;
+	long number_of_saturations_closed_after_branch;
 	long neg_conjectures;
 	long number_of_nodes_freed;
 	char *problem_name;

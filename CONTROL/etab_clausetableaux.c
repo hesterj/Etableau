@@ -137,7 +137,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 		for (PStackPointer p=0; p<PStackGetSP(tab->old_folding_labels); p++)
 		{
 			ClauseSet_p old_folding_edge = PStackElementP(tab->old_folding_labels, p);
-			ClauseSet_p new_copy = ClauseSetFlatCopy(bank, old_folding_edge);
+			ClauseSet_p new_copy = ClauseSetFlatCopy(old_folding_edge);
 			GCRegisterClauseSet(gc, new_copy);
 			PStackPushP(handle->old_folding_labels, new_copy);
 		}
@@ -260,7 +260,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 		for (PStackPointer p=0; p<PStackGetSP(tab->old_folding_labels); p++)
 		{
 			ClauseSet_p old_folding_edge = PStackElementP(tab->old_folding_labels, p);
-			ClauseSet_p new_copy = ClauseSetFlatCopy(bank, old_folding_edge);
+			ClauseSet_p new_copy = ClauseSetFlatCopy(old_folding_edge);
 			PStackPushP(handle->old_folding_labels, new_copy);
 		}
 		//PStackPushP(handle->old_folding_labels, ClauseSetFlatCopy(bank, tab->folding_labels));
@@ -399,11 +399,7 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	}
 	//assert(trash->local_variables);
 	PTreeFree(trash->local_variables);
-	//if (trash->local_variables)
-	//{
-		//PStackFree(trash->local_variables);
-		//PStackFree(trash->local_variables);
-	//}
+
 	if (trash->folding_labels)
 	{
 		GCDeregisterClauseSet(gc, trash->folding_labels);
@@ -611,16 +607,6 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 	PStack_p a_local_variables = NULL;
 	PStack_p a_fresh_variables = NULL;
 
-	//Sig_p sig = tab->terms->sig;
-	//if (tab->master->max_step+1 == 6)
-	//{
-		//fprintf(stdout, "A: ");
-		//ClausePrint(stdout, a, true);
-		//fprintf(stdout, "\nB: ");
-		//ClausePrint(stdout, b, true);
-		//fprintf(stdout, "\n...\n");
-	//}
-
 #ifdef LOCAL
 	if (tab->local_variables)
 	{
@@ -630,11 +616,8 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 		ReplaceLocalVariablesWithFreshSubst(tab->master, a, tab->local_variables, subst);
 		a_eqn = EqnCopyOpt(a_eqn);
 
-		//fprintf(GlobalOut, "# Subst before backtracking subst (step %d attempt)\n", tab->master->max_step + 1);
-		//SubstPrint(GlobalOut, subst, sig, DEREF_ALWAYS);
-		//fprintf(GlobalOut, "\n");
-
-		while (!PStackEmpty(subst)) // This backtracks the substitution in order to store the local binding so it can be reinstated later
+		// This backtracks the substitution in order to store the local binding so it can be reinstated later
+		while (!PStackEmpty(subst))
 		{
 			Term_p local_variable = PStackPopP(subst);
 			Term_p fresh_variable = local_variable->binding;
@@ -649,36 +632,12 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 
 		ReplaceLocalVariablesWithFreshSubst(tab->master, b, tab->local_variables, subst);
 		b_eqn = EqnCopyOpt(b_eqn);
-
-		//fprintf(GlobalOut, "# Subst after backtracking subst (step %d attempt)\n", tab->master->max_step + 1);
-		//SubstPrint(GlobalOut, subst, sig, DEREF_ALWAYS);
-		//fprintf(GlobalOut, "\n");
 	}
 #endif
 
 
 	if (EqnUnify(a_eqn, b_eqn, subst))
 	{
-#ifndef NDEBUG
-		//Clause_p a_test = ClauseCopyOpt(a);
-		//Clause_p b_test = ClauseCopyOpt(b);
-		//fprintf(stdout, "A: ");
-		//ClausePrint(stdout, a_test, true);
-		//fprintf(stdout, "\nB: ");
-		//ClausePrint(stdout, a_test, true);
-		//fprintf(stdout, "\n...\n");
-		//fflush(stdout);
-		//Subst_p empty_subst = SubstAlloc();
-		//assert(EqnUnify(a_test->literals, b_test->literals, empty_subst));
-		//assert(PStackEmpty(empty_subst) && "Nonempty substitution for clauses that should be identical after unification");
-		//SubstDelete(empty_subst);
-		//ClauseFree(a_test);
-		//ClauseFree(b_test);
-
-		//fprintf(GlobalOut, "# Subst after unification (step %d attempt)\n", tab->master->max_step + 1);
-		//SubstPrint(GlobalOut, subst, sig, DEREF_ALWAYS);
-		//fprintf(GlobalOut, "\n");
-#endif
 		goto return_point;
 	}
 
@@ -711,6 +670,127 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 	return subst;
 }
 
+// Old version that uses local variables as a PTRee rather than PStack_p
+
+//Subst_p ClauseContradictsClauseTree(ClauseTableau_p tab, Clause_p a, Clause_p b)
+//{
+	//assert(tab);
+	//assert(a);
+	//assert(b);
+	//assert(a->literals);
+	//assert(b->literals);
+	//if (a==b) return NULL;  // Easy case...
+	//if (!ClauseIsUnit(a) || !ClauseIsUnit(b)) return NULL;
+	//Eqn_p a_eqn = a->literals;
+	//Eqn_p b_eqn = b->literals;
+//
+	//if (EqnIsPositive(a_eqn) && EqnIsPositive(b_eqn)) return NULL;
+	//if (EqnIsNegative(a_eqn) && EqnIsNegative(b_eqn)) return NULL;
+//
+	//Subst_p subst = SubstAlloc();
+	//PStack_p a_local_variables = NULL;
+	//PStack_p a_fresh_variables = NULL;
+//
+	////Sig_p sig = tab->terms->sig;
+	////if (tab->master->max_step+1 == 6)
+	////{
+		////fprintf(stdout, "A: ");
+		////ClausePrint(stdout, a, true);
+		////fprintf(stdout, "\nB: ");
+		////ClausePrint(stdout, b, true);
+		////fprintf(stdout, "\n...\n");
+	////}
+//
+//#ifdef LOCAL
+	//if (tab->local_variables)
+	//{
+		//a_local_variables = PStackAlloc();
+		//a_fresh_variables = PStackAlloc();
+//
+		//ReplaceLocalVariablesWithFreshSubst(tab->master, a, tab->local_variables, subst);
+		//a_eqn = EqnCopyOpt(a_eqn);
+//
+		////fprintf(GlobalOut, "# Subst before backtracking subst (step %d attempt)\n", tab->master->max_step + 1);
+		////SubstPrint(GlobalOut, subst, sig, DEREF_ALWAYS);
+		////fprintf(GlobalOut, "\n");
+//
+		//while (!PStackEmpty(subst)) // This backtracks the substitution in order to store the local binding so it can be reinstated later
+		//{
+			//Term_p local_variable = PStackPopP(subst);
+			//Term_p fresh_variable = local_variable->binding;
+			//assert(TermIsVar(local_variable));
+			//assert(TermIsVar(fresh_variable));
+			//local_variable->binding = NULL;
+			//PStackPushP(a_local_variables, local_variable);
+			//PStackPushP(a_fresh_variables, fresh_variable);
+		//}
+		//assert(PStackGetSP(a_local_variables) == PStackGetSP(a_fresh_variables));
+		////SubstBacktrack(subst);
+//
+		//ReplaceLocalVariablesWithFreshSubst(tab->master, b, tab->local_variables, subst);
+		//b_eqn = EqnCopyOpt(b_eqn);
+//
+		////fprintf(GlobalOut, "# Subst after backtracking subst (step %d attempt)\n", tab->master->max_step + 1);
+		////SubstPrint(GlobalOut, subst, sig, DEREF_ALWAYS);
+		////fprintf(GlobalOut, "\n");
+	//}
+//#endif
+//
+//
+	//if (EqnUnify(a_eqn, b_eqn, subst))
+	//{
+//#ifndef NDEBUG
+		////Clause_p a_test = ClauseCopyOpt(a);
+		////Clause_p b_test = ClauseCopyOpt(b);
+		////fprintf(stdout, "A: ");
+		////ClausePrint(stdout, a_test, true);
+		////fprintf(stdout, "\nB: ");
+		////ClausePrint(stdout, a_test, true);
+		////fprintf(stdout, "\n...\n");
+		////fflush(stdout);
+		////Subst_p empty_subst = SubstAlloc();
+		////assert(EqnUnify(a_test->literals, b_test->literals, empty_subst));
+		////assert(PStackEmpty(empty_subst) && "Nonempty substitution for clauses that should be identical after unification");
+		////SubstDelete(empty_subst);
+		////ClauseFree(a_test);
+		////ClauseFree(b_test);
+//
+		////fprintf(GlobalOut, "# Subst after unification (step %d attempt)\n", tab->master->max_step + 1);
+		////SubstPrint(GlobalOut, subst, sig, DEREF_ALWAYS);
+		////fprintf(GlobalOut, "\n");
+//#endif
+		//goto return_point;
+	//}
+//
+//
+	//SubstDelete(subst);
+	//subst = NULL;
+	//return_point:
+//#ifdef LOCAL
+	//if (tab->local_variables)
+	//{
+		//if (subst)
+		//{
+			//while (!PStackEmpty(a_local_variables))
+			//{
+				//Term_p local_variable = PStackPopP(a_local_variables);
+				//Term_p fresh_variable = PStackPopP(a_fresh_variables);
+				//if (!local_variable->binding)
+				//{
+					//SubstAddBinding(subst, local_variable, fresh_variable);
+				//}
+			//}
+			//assert(PStackEmpty(a_fresh_variables));
+		//}
+		//PStackFree(a_local_variables);
+		//PStackFree(a_fresh_variables);
+		//EqnListFree(a_eqn);
+		//EqnListFree(b_eqn);
+	//}
+//#endif
+	//return subst;
+//}
+
 ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set)
 {
 	Clause_p handle, temp;
@@ -732,7 +812,7 @@ ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set)
 	return new;
 }
 
-ClauseSet_p ClauseSetFlatCopy(TB_p bank, ClauseSet_p set)
+ClauseSet_p ClauseSetFlatCopy(ClauseSet_p set)
 {
 	Clause_p handle, temp;
 	assert(set);
@@ -771,6 +851,7 @@ ClauseSet_p ClauseSetCopyOpt(ClauseSet_p set)
 
 ClauseSet_p ClauseSetCopyIndexedOpt(ClauseSet_p set)
 {
+	assert(false && "This function does not work properly because the demod_index of new is not being created");
 	Clause_p handle, temp;
 	assert(set);
 	ClauseSet_p new = ClauseSetAlloc();
@@ -790,6 +871,82 @@ ClauseSet_p ClauseSetCopyIndexedOpt(ClauseSet_p set)
 	}
 	return new;
 }
+
+// Insert copies of the clauses from "from" to "to".
+// Uses the ClauseCopyOpt function
+
+long ClauseSetInsertSetCopyOptIndexed(ClauseSet_p to, ClauseSet_p from)
+{
+	long res = 0;
+	Clause_p handle, temp;
+	assert(to);
+	assert(from);
+	for (handle = from->anchor->succ; handle != from->anchor; handle = handle->succ)
+	{
+		assert(handle);
+		temp   = ClauseCopyOpt(handle);
+		temp->weight = ClauseStandardWeight(temp);
+#ifdef DEBUG
+		ClauseRecomputeLitCounts(temp);
+		assert(ClauseLiteralNumber(temp));
+#endif
+		ClauseDelProp(temp, CPIsDIndexed);
+		ClauseDelProp(temp, CPIsSIndexed);
+		ClauseSetIndexedInsertClause(to, temp);
+	}
+	return res;
+}
+
+
+ClauseSet_p ClauseSetFlatCopyIndexed(ClauseSet_p set)
+{
+	assert(false && "This function does not work properly because the demod_index of new is not being created");
+	Clause_p handle, temp;
+	assert(set);
+	ClauseSet_p new = ClauseSetAlloc();
+	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
+	{
+		assert(handle);
+		temp   = ClauseFlatCopy(handle);
+		temp->weight = ClauseStandardWeight(temp);
+#ifdef DEBUG
+		ClauseRecomputeLitCounts(temp);
+		assert(ClauseLiteralNumber(temp));
+#endif
+		ClauseDelProp(temp, CPIsDIndexed);
+		ClauseDelProp(temp, CPIsSIndexed);
+		ClauseSetIndexedInsertClause(new, temp);
+	}
+	return new;
+}
+
+// Insert copies of clauses from "from" to "to".
+// Uses ClauseFlatCopy
+
+long ClauseSetInsertSetFlatCopyIndexed(ClauseSet_p to, ClauseSet_p from)
+{
+	long res = 0;
+	Clause_p handle, temp;
+	assert(to);
+	assert(from);
+	for (handle = from->anchor->succ; handle != from->anchor; handle = handle->succ)
+	{
+		assert(handle);
+		//temp = ClauseCopy(handle,bank);
+		//temp = ClauseCopyOpt(handle);
+		temp   = ClauseFlatCopy(handle);
+		temp->weight = ClauseStandardWeight(temp);
+#ifdef DEBUG
+		ClauseRecomputeLitCounts(temp);
+		assert(ClauseLiteralNumber(temp));
+#endif
+		ClauseDelProp(temp, CPIsDIndexed);
+		ClauseDelProp(temp, CPIsSIndexed);
+		ClauseSetIndexedInsertClause(to, temp);
+	}
+	return res;
+}
+
 /*
 */
 
@@ -1025,6 +1182,44 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
 	return handle;
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: ClauseBindFresh()
+//
+//   Bind every variable of clause to a fresh one.  Every variable that is
+//   in the clause is replaced with a fresh one.  This subst must
+//   be backtracked later!
+//
+//	John Hester
+// Global Variables: -
+//
+//
+/----------------------------------------------------------------------*/
+
+void ClauseBindFresh(Clause_p clause, Subst_p subst, ClauseTableau_p tableau)
+{
+	assert(tableau);
+	assert(tableau->terms);
+	assert(tableau->master);
+	assert(tableau->master->terms);
+	assert(tableau->master->terms->vars);
+	assert(clause);
+	PTree_p variable_tree = NULL;
+
+	ClauseCollectVariables(clause, &variable_tree);
+
+	PStack_p iter = PTreeTraverseInit(variable_tree);
+	PTree_p tree_cell = NULL;
+
+	while ((tree_cell = PTreeTraverseNext(iter)))
+	{
+		ClauseTableauBindFreshVar(tableau->master, subst, tree_cell->key);
+	}
+
+
+	PTreeTraverseExit(iter);
+	PTreeFree(variable_tree);
+}
 /*
 ** Bind old_var to a variable fresh to the tableau.
 ** If the old variable is already fresh (does not occur anywhere on the tableau),
@@ -1488,6 +1683,9 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->number_of_extensions = 0;  // Total number of extensions done
 	handle->number_of_saturation_attempts = 0;
 	handle->number_of_successful_saturation_attempts = 0;
+	handle->number_of_saturations_closed_after_branch = 0;
+	handle->number_of_saturations_closed_on_branch = 0;
+	handle->number_of_saturations_closed_in_interreduction = 0;
 	handle->number_of_nodes_freed = 0;
 	handle->quicksat = quicksat;
 	handle->closed_tableau = NULL;
@@ -1653,33 +1851,10 @@ Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var)
 	Term_p potential_fresh = NULL;
 
 	// Store the old variable so that it doesn't get bound to later.
-	 //PTreeStore(&(tab->tableau_variables), old_var);
 	 FunCode old_var_funcode = old_var->f_code;
 	 assert(old_var_funcode %2 == 0);
 	 long old_var_index = (-old_var_funcode)/2;
 	 PDArrayAssignP(tableau_variables_array, old_var_index, old_var);
-
-	//while (!fresh_found)
-	//for (FunCode var_funcode = -2; ; var_funcode -= 2)
-	//{
-		//potential_fresh = VarBankVarAssertAlloc(varbank, var_funcode, old_var->type);
-		//PTree_p found = PTreeFind(&(tab->tableau_variables), potential_fresh);
-		//if (!found)
-		//{
-			//PTreeStore(&(tab->tableau_variables), potential_fresh);
-			//break;
-		//}
-//#ifndef NDEBUG
-		//{
-			//if (var_funcode < -1000000)
-			//{
-				//Error("Ludicrously large variable, are the variable trees of the tableau getting reset?", 100);
-			//}
-		//}
-//#endif
-	//}
-
-
 	 long first_unused_index = PDArrayFirstUnused2(tableau_variables_array);
 	 long fresh_var_funcode = -(2*first_unused_index);
 	 potential_fresh = VarBankVarAssertAlloc(varbank, fresh_var_funcode, old_var->type);
@@ -1815,7 +1990,13 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 {
 	assert(tableaucontrol->proofstate->status_reported == false);
 
-	fprintf(GlobalOut, "# There were %ld successful branch saturations.\n", tableaucontrol->number_of_successful_saturation_attempts);
+	fprintf(GlobalOut, "# There were %ld total successful branch saturations.\n", tableaucontrol->number_of_successful_saturation_attempts);
+	fprintf(GlobalOut, "# There were %ld successful branch saturations in interreduction.\n",
+			tableaucontrol->number_of_saturations_closed_in_interreduction);
+	fprintf(GlobalOut, "# There were %ld successful branch saturations on the branch.\n",
+			tableaucontrol->number_of_saturations_closed_on_branch);
+	fprintf(GlobalOut, "# There were %ld successful branch saturations after the branch.\n",
+			tableaucontrol->number_of_saturations_closed_after_branch);
 	if (!resulting_tab)
 	{
 		TSTPOUT(GlobalOut, "ResourceOut");

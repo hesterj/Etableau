@@ -94,28 +94,20 @@ void ClauseSetFreeAnchor(ClauseSet_p junk)
 
 ClauseSet_p SplitClauseFresh(TB_p bank, ClauseTableau_p tableau, Clause_p clause)
 {
+	Eqn_p lit = NULL;
+	Clause_p leaf_clause = NULL;
 	assert(clause);
 	assert(tableau);
 	ClauseSet_p set = ClauseSetAlloc();
-	//VarBankSetVCountsToUsed(bank->vars);
-	//printf("Clause being copied fresh: ");ClausePrint(GlobalOut, clause, true);printf("\n");
 	Clause_p fresh_clause = ClauseCopyFresh(clause, tableau);
-	Eqn_p literals = EqnListCopy(fresh_clause->literals, bank);
-	Eqn_p lit = NULL;
-	Clause_p leaf_clause = NULL;
-	ClauseRecomputeLitCounts(fresh_clause);
-	short literal_number = ClauseLiteralNumber(fresh_clause);
-	assert(literal_number);
-	assert(literal_number > 1);
-	for (short i=0; i < literal_number; i++)
+	EqnRef literals_ref = &(fresh_clause->literals);
+	while (*literals_ref)
 	{
-		lit = EqnListExtractFirst(&literals);
+		lit = EqnListExtractFirst(literals_ref);
 		leaf_clause = ClauseAlloc(lit);
 		ClauseSetInsert(set, leaf_clause);
 	}
-	EqnListFree(literals);
 	ClauseFree(fresh_clause);
-	assert(set->members == literal_number);
 	return set;
 }
 
@@ -153,11 +145,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 {
 	int extensions_done = 0;
 	int subst_completed = 0;
-	//long split_clause_ident = ClauseGetIdent(selected);
-	//if (split_clause_ident == open_branch->parent->id) return 0; // Don't split the same clause twice
-	
-	//  SplitClauseFresh here is a major performance offender.
-	//ClauseTableauUpdateVariables(open_branch->master);
+
 	ClauseTableauUpdateVariablesArray(open_branch->master);
 	ClauseSet_p new_leaf_clauses = SplitClauseFresh(open_branch->terms, open_branch->master, selected);
 	assert(new_leaf_clauses->members);
