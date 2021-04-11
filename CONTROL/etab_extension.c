@@ -1,19 +1,17 @@
 #include "etab_extension.h"
 //#include "clausetableaux.h"
-Clause_p select_extension_candidate(ClauseSet_p extension_candidates);
 
-Clause_p select_extension_candidate(ClauseSet_p extension_candidates)
-{
-	return NULL;
-}
-
+bool extension_is_strong(ClauseTableau_p parent,
+						 ClauseTableau_p grandparent,
+						 ClauseSet_p new_leaf_clauses,
+						 Clause_p head_literal);
 
 TableauExtension_p TableauExtensionAlloc(Clause_p selected,
 										 Subst_p subst, 
 										 Clause_p head_clause, 
 										 ClauseSet_p other_clauses, 
 										 ClauseTableau_p parent,
-										 short head_lit_position)
+										 long head_lit_position)
 {
 	TableauExtension_p handle = TableauExtensionCellAlloc();
 	handle->selected = selected;
@@ -167,7 +165,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 
 
 	Clause_p leaf_clause = new_leaf_clauses->anchor->succ;
-	short position = 0; // This is the position of the current leaf clause in the split clause
+	long position = 0; // This is the position of the current leaf clause in the split clause
 	while (leaf_clause != new_leaf_clauses->anchor)
 	{
 		//printf("Trying leaf clause...\n");
@@ -191,6 +189,13 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		// The subst, leaf_clause, new_leaf_clauses, will have to be reset, but the open_branch can remain the same since we have not affected it.
 		if ((subst = ClauseContradictsClause(open_branch, leaf_clause, open_branch_label))) // stricter extension step
 		{
+			PStackPointer subst_backtrack_point = PStackGetSP(subst);
+			//Clause_p other_leaf_clause = leaf_clause->succ;
+			//while (other_leaf_clause != new_leaf_clauses->anchor)
+			//{
+				//if (ClauseContradictsClause)
+			//}
+
 			//printf("Found a potential extension\n");
 			subst_completed++;
 			Clause_p head_clause = leaf_clause;
@@ -329,7 +334,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	}
 	backtrack->completed = true; // The extension is happening at this point.
 
-	short number_of_children = (short) new_leaf_clauses_set->members;
+	long number_of_children = new_leaf_clauses_set->members;
 
 	assert(head_literal_clause);
 	assert(number_of_children == extension->other_clauses->members);
@@ -339,7 +344,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	parent->children = ClauseTableauArgArrayAlloc(number_of_children);
 	Clause_p leaf_clause = NULL;
 	// Create children tableau for the leaf labels.  The head literal is labelled as closed.
-	for (short p=0; p < number_of_children; p++)
+	for (long p=0; p < number_of_children; p++)
 	{
 		leaf_clause = ClauseSetExtractFirst(new_leaf_clauses_set);
 		parent->children[p] = ClauseTableauChildLabelAlloc(parent, leaf_clause, p);
@@ -497,7 +502,7 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 	}
 	backtrack->completed = true; // The extension is happening at this point.
 
-	short number_of_children = (short) new_leaf_clauses_set->members;
+	long number_of_children = new_leaf_clauses_set->members;
 
 	assert(head_literal_clause);
 	assert(number_of_children == extension->other_clauses->members);
@@ -507,7 +512,7 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 	parent->children = ClauseTableauArgArrayAlloc(number_of_children);
 	Clause_p leaf_clause = NULL;
 	// Create children tableau for the leaf labels.  The head literal is labelled as closed.
-	for (short p=0; p < number_of_children; p++)
+	for (long p=0; p < number_of_children; p++)
 	{
 		leaf_clause = ClauseSetExtractFirst(new_leaf_clauses_set);
 		parent->children[p] = ClauseTableauChildLabelAlloc(parent, leaf_clause, p);
@@ -636,3 +641,46 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
 
 	return closed_tableau;
 }
+
+bool extension_is_strong(ClauseTableau_p parent,
+						 ClauseTableau_p grandparent,
+						 ClauseSet_p new_leaf_clauses,
+						 Clause_p head_literal)
+{
+	assert(parent);
+	assert(grandparent);
+	assert(new_leaf_clauses);
+	assert(head_literal);
+	ProofControl_p proofcontrol = parent->master->control;
+	Clause_p leaf_clauses_iterator = new_leaf_clauses->anchor->succ;
+	while (leaf_clauses_iterator != new_leaf_clauses->anchor)
+	{
+		if (leaf_clauses_iterator != head_literal)
+		{
+			for (long i=0; i<grandparent->arity; i++)
+			{
+				ClauseTableau_p sister = grandparent->children[i];
+				if (sister == parent) continue;
+				Clause_p label = sister->label;
+				Eqn_p sister_eqn = label->literals;
+				Eqn_p leaf_eqn = leaf_clauses_iterator->literals;
+				assert(!leaf_eqn->succ);
+				assert(!sister_eqn->succ);
+				EqnOrient(proofcontrol->ocb, sister_eqn);
+				EqnOrient(proofcontrol->ocb, leaf_eqn);
+				if (TermStructEqual(sister_eqn->lterm, leaf_eqn->lterm) &&
+				    TermStructEqual(sister_eqn->rterm, leaf_eqn->rterm))
+				{
+					assert(false && "Not a strong extension!");
+				}
+
+			}
+		}
+		leaf_clauses_iterator = leaf_clauses_iterator->succ;
+	}
+	return true;
+}
+
+
+
+// End of file

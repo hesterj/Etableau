@@ -24,7 +24,7 @@ PStack_p SubstRecordBindings(Subst_p subst)
     return bindings;
 }
 
-Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, short head_lit_position, TableauStepType type)
+Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, long head_lit_position, TableauStepType type)
 {
     Backtrack_p backtrack = BacktrackCellAlloc();
     backtrack->type = type;
@@ -313,7 +313,7 @@ bool SubstIsFailure(ClauseTableau_p tab, Subst_p subst)
     return false;
 }
 
-bool ExtensionIsFailure(ClauseTableau_p tab, Subst_p subst, long extension_id, short head_literal_position)
+bool ExtensionIsFailure(ClauseTableau_p tab, Subst_p subst, long extension_id, long head_literal_position)
 {
     assert(tab);
     assert(subst);

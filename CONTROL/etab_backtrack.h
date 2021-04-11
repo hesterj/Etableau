@@ -16,7 +16,7 @@ typedef struct backtrackcell
     ClauseTableau_p master;
     TableauStepType type;
     long id; // This is the ident of the clause split in the extension step, or the clause used in the closure rule
-    short head_lit_position; // This is the position in the literals array of the selected clause of the head literal.  0 if it was a closure rule step
+    long head_lit_position; // This is the position in the literals array of the selected clause of the head literal.  0 if it was a closure rule step
     PStack_p bindings; // This is a stack of the Binding_p that were used in this step
     PStack_p position; // If an extension step was done at this step, this is a path to the parent node of the step from the master node.
     bool completed;
@@ -44,7 +44,7 @@ typedef int* BacktrackStatus_p;
 #define BacktrackCellAlloc() (BackTrackCell*)SizeMalloc(sizeof(BackTrackCell))
 #define BacktrackCellCellFree(junk) SizeFree(junk, sizeof(BackTrackCell))
 PStack_p SubstRecordBindings(Subst_p subst);
-Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, short head_lit_position, TableauStepType type);
+Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, long head_lit_position, TableauStepType type);
 Backtrack_p BacktrackCopy(Backtrack_p original, ClauseTableau_p new_master);
 BacktrackStack_p BacktrackStackCopy(BacktrackStack_p stack, ClauseTableau_p new_master);
 #define BacktrackIsExtensionStep(bt) (bt->type == EXTENSION_RULE)
@@ -55,7 +55,7 @@ bool VerifyBacktrackIsClosureStep(Backtrack_p handle);
 void BacktrackFree(Backtrack_p trash);
 ClauseTableau_p GetNodeFromPosition(ClauseTableau_p master, PStack_p position);
 bool SubstIsFailure(ClauseTableau_p tab, Subst_p subst);
-bool ExtensionIsFailure(ClauseTableau_p tab, Subst_p subst, long extension_id, short head_lit_position);
+bool ExtensionIsFailure(ClauseTableau_p tab, Subst_p subst, long extension_id, long head_lit_position);
 bool BindingOccursInSubst(Binding_p binding, Subst_p subst);
 bool BacktrackContainsSubst(Backtrack_p backtrack, Subst_p subst);
 bool BacktrackWrapper(ClauseTableau_p master);

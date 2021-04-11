@@ -4,7 +4,7 @@
  * 
 */
 
-APR_p APRAlloc(short int type, Eqn_p literal, Clause_p clause, bool equality)
+APR_p APRAlloc(long type, Eqn_p literal, Clause_p clause, bool equality)
 {
 	APR_p handle = APRCellAlloc();
 	handle->visited = false;

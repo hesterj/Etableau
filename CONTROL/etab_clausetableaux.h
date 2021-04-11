@@ -64,13 +64,13 @@ typedef struct clausetableau
 	bool open;
 	bool saturation_closed;
 	bool head_lit;    // If this node was made as a head literal in an extension step, it is true.  Otherwise false.
-	short max_step;   // The number of expansion/closure steps done on the tableaux so far.  Nonzero at root node.
-	short step;       // Nodes are marked in the order they were expanded/closed on.
-	short depth;		// depth of the node in the tableau
-	short position;   // If the node is a child, this is its position in the children array of the parent
-	short arity;		// number of children
-	short mark_int;   // The number of steps up a node node was closed by.  0 if not closed by extension/closure
-	short folded_up;  // If the node has been folded up, this is the number of steps up it went
+	long max_step;   // The number of expansion/closure steps done on the tableaux so far.  Nonzero at root node.
+	long step;       // Nodes are marked in the order they were expanded/closed on.
+	long depth;		// depth of the node in the tableau
+	long position;   // If the node is a child, this is its position in the children array of the parent
+	long arity;		// number of children
+	long mark_int;   // The number of steps up a node node was closed by.  0 if not closed by extension/closure
+	long folded_up;  // If the node has been folded up, this is the number of steps up it went
 	long id;  		   // If a clause was split on a node, this is the id of the clause used to split.
 	long previously_saturated;  // If  branch has already been saturated this amount or more, don't do it!
 	long max_var;     // f_code of the maximal variable in the tableau

@@ -38,7 +38,7 @@ typedef struct aprcontrolcell
 typedef struct aprcell
 {
 	long id;
-	short int type;
+	long type;
 	bool visited;
 	bool equality_node;
 	Eqn_p literal;
@@ -50,7 +50,7 @@ typedef struct aprcell
 #define APRCellFree(junk) SizeFree(junk, sizeof(APRCell))
 #define APRControlCellAlloc() (APRControlCell*)SizeMalloc(sizeof(APRControlCell))
 #define APRControlCellFree(junk) SizeFree(junk, sizeof(APRControlCell))
-APR_p APRAlloc(short int type, Eqn_p literal, Clause_p clause, bool equality);
+APR_p APRAlloc(long type, Eqn_p literal, Clause_p clause, bool equality);
 void APRFree(APR_p trash);
 APRControl_p APRControlAlloc(Sig_p sig, TB_p terms);
 void APRControlFree(APRControl_p trash);

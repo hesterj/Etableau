@@ -9,7 +9,7 @@ void assert_all_children_closed(ClauseTableau_p tab);
 void assert_all_children_closed(ClauseTableau_p tab)
 {
 	assert(tab->open == false);
-	for (short i=0; i<tab->arity; i++)
+	for (long i=0; i<tab->arity; i++)
 	{
 		assert(tab->children[i]->set == NULL);
 		assert_all_children_closed(tab->children[i]);

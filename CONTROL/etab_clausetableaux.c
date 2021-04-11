@@ -2174,7 +2174,7 @@ void AssertAllOldLabelsAreInSet(ClauseTableau_p tab)
 	assert(tab->label->set);
 	PStack_p old_labels = tab->old_labels;
 	AssertClauseStackMembersAreInSet(old_labels);
-	for (short i=0; i<tab->arity; i++)
+	for (long i=0; i<tab->arity; i++)
 	{
 		AssertAllOldLabelsAreInSet(tab->children[i]);
 	}
