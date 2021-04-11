@@ -119,6 +119,7 @@ typedef int TableauStepType;
 #define ClauseTableauDelProp(clause, prop) DelProp((clause), (prop))
 #define ClauseTableauGiveProps(clause, prop) GiveProps((clause), (prop))
 #define ClauseTableauQueryProp(clause, prop) QueryProp((clause), (prop))
+void clauseprint(Clause_p clause);
 void ClauseTableauDeleteAllProps(ClauseTableau_p tab);
 
 ClauseTableau_p ClauseTableauAlloc(struct tableaucontrol_cell* tableaucontrol);

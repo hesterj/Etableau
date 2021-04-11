@@ -576,7 +576,7 @@ int main(int argc, char* argv[])
    {
       ClauseSet_p new_axioms = ClauseSetCopy(proofstate->terms, proofstate->unprocessed);
       bool presaturation = true;
-      if (presaturation)
+      if (TableauSaturation && presaturation)
       {
          success = Saturate(proofstate, proofcontrol, LONG_MAX, 1000, LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX);
          if (success) goto normal_eprover;

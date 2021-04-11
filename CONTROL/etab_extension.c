@@ -100,6 +100,11 @@ ClauseSet_p SplitClauseFresh(TB_p bank, ClauseTableau_p tableau, Clause_p clause
 	assert(tableau);
 	ClauseSet_p set = ClauseSetAlloc();
 	Clause_p fresh_clause = ClauseCopyFresh(clause, tableau);
+
+	//printf("splitclausefresh\n");
+	//clauseprint(clause);
+	//clauseprint(fresh_clause);
+
 	EqnRef literals_ref = &(fresh_clause->literals);
 	while (*literals_ref)
 	{
@@ -143,11 +148,13 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 											  Clause_p selected,
 											  TableauStack_p new_tableaux)
 {
+	ClauseTableau_p master = open_branch->master;
 	int extensions_done = 0;
 	int subst_completed = 0;
 
+
 	ClauseTableauUpdateVariablesArray(open_branch->master);
-	ClauseSet_p new_leaf_clauses = SplitClauseFresh(open_branch->terms, open_branch->master, selected);
+	ClauseSet_p new_leaf_clauses = SplitClauseFresh(open_branch->terms, master, selected);
 	assert(new_leaf_clauses->members);
 	assert(new_leaf_clauses->members > 1);
 	Clause_p open_branch_label = open_branch->label;
@@ -163,6 +170,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	short position = 0; // This is the position of the current leaf clause in the split clause
 	while (leaf_clause != new_leaf_clauses->anchor)
 	{
+		//printf("Trying leaf clause...\n");
 		assert(open_branch);
 		assert(open_branch != open_branch->open_branches->anchor);
 		assert(open_branch->parent);
@@ -174,6 +182,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		assert(leaf_clause);
 		assert(leaf_clause->literals);
 		assert(open_branch_label->literals);
+		assert(master->label);
 		assert(selected);
 
 		Subst_p subst = NULL;
@@ -182,8 +191,8 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		// The subst, leaf_clause, new_leaf_clauses, will have to be reset, but the open_branch can remain the same since we have not affected it.
 		if ((subst = ClauseContradictsClause(open_branch, leaf_clause, open_branch_label))) // stricter extension step
 		{
+			//printf("Found a potential extension\n");
 			subst_completed++;
-			assert(open_branch->master->label);
 			Clause_p head_clause = leaf_clause;
 			TableauExtension_p extension_candidate = TableauExtensionAlloc(selected,
 																		   subst,
@@ -610,6 +619,7 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
         }
         else if (number_of_extensions > 0) // If we extended on the tableau, we have to return and select another branch, unless we are populating
         {
+			//printf("Extended on branch\n");
             assert(new_tableaux || number_of_extensions == 1); // Always return after one extension
 			*extended += number_of_extensions;
 			number_of_extensions = 0;

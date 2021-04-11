@@ -16,6 +16,12 @@ ClauseTableau_p empty_tableau_alloc();
  * 
  */
 
+void clauseprint(Clause_p clause)
+{
+	ClausePrint(stdout, clause, true);
+	printf("\n");
+}
+
 unsigned long hash(unsigned char *str)
 {
     unsigned long hash = 5381;
@@ -643,6 +649,14 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 
 	
 	SubstDelete(subst);
+	//if (true)
+	//{
+		//fprintf(stdout, "A: ");
+		//ClausePrint(stdout, a, true);
+		//fprintf(stdout, "\nB: ");
+		//ClausePrint(stdout, b, true);
+		//fprintf(stdout, "\n...\n");
+	//}
 	subst = NULL;
 	return_point:
 #ifdef LOCAL
@@ -1164,6 +1178,7 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
 	subst = SubstAlloc();
 
 	ClauseCollectVariables(clause, &variable_tree);
+	ClauseCollectVariablesArray(clause, tableau->master->tableau_variables_array);
 
 	PStack_p iter = PTreeTraverseInit(variable_tree);
 	PTree_p tree_cell = NULL;
@@ -1172,6 +1187,9 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
 	{
 		ClauseTableauBindFreshVar(tableau->master, subst, tree_cell->key);
 	}
+
+	//SubstPrint(GlobalOut, subst, tableau->terms->sig, DEREF_NEVER);
+	//printf("\n");
 
 	handle = ClauseCopy(clause, tableau->terms);
 
@@ -1190,7 +1208,6 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
 //   in the clause is replaced with a fresh one.  This subst must
 //   be backtracked later!
 //
-//	John Hester
 // Global Variables: -
 //
 //
@@ -1846,24 +1863,29 @@ Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var)
 	assert(tab == tab->master);
 	assert(old_var);
 	assert(TermIsVar(old_var));
+
 	VarBank_p varbank = tab->terms->vars;
 	PDArray_p tableau_variables_array = tab->tableau_variables_array;
 	Term_p potential_fresh = NULL;
 
-	// Store the old variable so that it doesn't get bound to later.
-	 FunCode old_var_funcode = old_var->f_code;
+
+	 FunCode old_var_funcode = old_var->f_code; // The variable we are replacing
 	 assert(old_var_funcode %2 == 0);
-	 long old_var_index = (-old_var_funcode)/2;
-	 PDArrayAssignP(tableau_variables_array, old_var_index, old_var);
-	 long first_unused_index = PDArrayFirstUnused2(tableau_variables_array);
-	 long fresh_var_funcode = -(2*first_unused_index);
-	 potential_fresh = VarBankVarAssertAlloc(varbank, fresh_var_funcode, old_var->type);
-	 PDArrayAssignP(tableau_variables_array, first_unused_index, potential_fresh);
+	 long old_var_index = (-old_var_funcode)/2; // The index of the variable we are replacing
+
+	 PDArrayAssignP(tableau_variables_array, old_var_index, old_var); // Store the old variable so that it doesn't get bound to later. (it is probably already stored)
+	 long first_unused_index = PDArrayFirstUnused2(tableau_variables_array); // Get the first nonzero even index of NULL in the array
+	 FunCode fresh_var_funcode = -(2*first_unused_index);  // Get the FunCode of the fresh variable
+	 potential_fresh = VarBankVarAssertAlloc(varbank, fresh_var_funcode, old_var->type); // Get the Term_p of this fresh variable
+	 PDArrayAssignP(tableau_variables_array, first_unused_index, potential_fresh); // Store the new variable in the array so that it isn't bound to again
+
 	 assert(TermIsVar(potential_fresh));
+	 assert(PDArrayFirstUnused2(tableau_variables_array) != first_unused_index);
 	 assert(potential_fresh != old_var);
 	 assert(potential_fresh && "NULL variable being returned in ClauseTableauGetFreshVar");
 	 assert(potential_fresh->f_code < 0);
 	 assert(potential_fresh->f_code % 2 == 0);
+
 	 return potential_fresh;
 }
 

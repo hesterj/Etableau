@@ -103,7 +103,7 @@ int Etableau_n0(TableauControl_p tableaucontrol,
        Error("Initial tableau has no label!", 10);
    }
 
-   bool saturate_start_rules = true;
+   bool saturate_start_rules = false;
 // Do a branch saturation on the original problem before diving in to the tableaux proofsearch
    if (saturate_start_rules && !proof_found && tableaucontrol->branch_saturation_enabled)
    {
@@ -195,27 +195,23 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
     TableauSet_p open_branches = master->open_branches;
     while (true)
     {
-        //open_branch = branch_select(open_branches, current_depth, max_depth, &depth_status);
-        //selected_branch = branch_select3(open_branches, MaximumDepth(master));
         selected_branch = branch_select5(open_branches, MaximumDepth(master));
-        //if (depth_status == ALL_DEPTHS_EXCEEDED) // All of the open branches exceed our maximum depth, so we must backtrack
         if (!selected_branch)
         {
+            //printf("Couldn't select branch\n");
             ClauseTableauSetProp(master, TUPBacktrackedDueToMaxDepth);
             bool backtrack_successful = BacktrackWrapper(master);
             if (!backtrack_successful)
             {
+                //printf("Backtrack failed\n");
                 *backtrack_status = BACKTRACK_FAILURE; // Failed backtrack, this tableau is no good.
                 break;
             }
+            //printf("Backtrack successful\n");
             continue; // We backtracked, try again
         }
-        //else if (!open_branch) // All of the open branches exceed our current depth, so we must break and return in order to increase it
-        //{
-            //break;
-        //}
+        //printf("Selected a new branch\n");
 
-        //fprintf(GlobalOut, "# Selected open branch %p, %d extensions done so far, current depth %d\n", open_branch, tableaucontrol->number_of_extensions, current_depth);
         int extended = 0;
         assert(selected_branch);
         assert(selected_branch->id == 0);
@@ -242,14 +238,17 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
         }
         if (BranchIsOpen(selected_branch)) // If the open branch is still open after the extension rule attempt, it means it was not able to be extended and so we need to backtrack
         {
+            //printf("Couldn't extend\n");
             assert(!extended);
             ClauseTableauSetProp(master, TUPBacktrackedDueToExtensionFailure);
             bool backtrack_successful = BacktrackWrapper(master);
             if (!backtrack_successful)
             {
+                //printf("Backtrack failed\n");
                 *backtrack_status = BACKTRACK_FAILURE; // Failed backtrack, this tableau is no good.
                 break;
             }
+            //printf("Backtrack successful\n");
         }
         else if (tableaucontrol->number_of_extensions % 100 == 0)
         {
@@ -529,6 +528,7 @@ bool EtableauProofSearch_n1(TableauControl_p tableaucontrol,
                         PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
                         ClauseTableauFree(current_tableau);
                         current_tableau_index = 0;
+
                         //printf("# %p deleted %lu\n", current_tableau, MaximumDepth(current_tableau));
                         break;
                     }
