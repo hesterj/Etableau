@@ -1067,7 +1067,7 @@ void ClauseTableauPrintBranch(ClauseTableau_p branch)
 	{
 		assert(depth_check->label);
 		assert(depth_check->id >= 0);
-		fprintf(stdout, "# %d,%d,%ld,%d, step: %d ", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int, depth_check->step);
+		fprintf(stdout, "# %ld,%ld,%ld,%ld, step: %ld ", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int, depth_check->step);
 		fprintf(stdout, "%s", DStrView(depth_check->info));
 		if (depth_check->head_lit)
 		{
@@ -1094,7 +1094,7 @@ void ClauseTableauPrintBranch(ClauseTableau_p branch)
 	assert(depth_check->depth == 0);
 	assert(depth_check->label);
 	
-	fprintf(stdout, "# %d,%d,%ld,%d \n", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
+	fprintf(stdout, "# %ld,%ld,%ld,%ld \n", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
 	ClausePrint(stdout, depth_check->label, true);
 	fprintf(stdout, "\n");
 	//printf("\033[0m");
@@ -1109,7 +1109,7 @@ void ClauseTableauPrintBranch2(ClauseTableau_p branch)
 	{
 		assert(depth_check->label);
 		assert(depth_check->id >= 0);
-		printf("# Depth: %d, Arity: %d, Id: %ld, Mark: %d\n", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
+		printf("# Depth: %ld, Arity: %ld, Id: %ld, Mark: %ld\n", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
 		printf("# Properties:");
 		if (depth_check->head_lit)
 		{
@@ -1132,7 +1132,7 @@ void ClauseTableauPrintBranch2(ClauseTableau_p branch)
 	assert (depth_check->depth == 0);
 	assert (depth_check->label);
 	
-	printf("# Depth: %d, Arity: %d, Id: %ld, Mark: %d\n", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
+	printf("# Depth: %ld, Arity: %ld, Id: %ld, Mark: %ld\n", depth_check->depth,depth_check->arity, depth_check->id,depth_check->mark_int);
 	printf("# Root.\n");
 	ClausePrint(GlobalOut, depth_check->label, true);
 	printf("\n");

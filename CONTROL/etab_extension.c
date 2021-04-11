@@ -168,7 +168,6 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	long position = 0; // This is the position of the current leaf clause in the split clause
 	while (leaf_clause != new_leaf_clauses->anchor)
 	{
-		//printf("Trying leaf clause...\n");
 		assert(open_branch);
 		assert(open_branch != open_branch->open_branches->anchor);
 		assert(open_branch->parent);
@@ -189,28 +188,32 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		// The subst, leaf_clause, new_leaf_clauses, will have to be reset, but the open_branch can remain the same since we have not affected it.
 		if ((subst = ClauseContradictsClause(open_branch, leaf_clause, open_branch_label))) // stricter extension step
 		{
-			PStackPointer subst_backtrack_point = PStackGetSP(subst);
-			//Clause_p other_leaf_clause = leaf_clause->succ;
-			//while (other_leaf_clause != new_leaf_clauses->anchor)
-			//{
-				//if (ClauseContradictsClause)
-			//}
-
-			//printf("Found a potential extension\n");
-			subst_completed++;
+			ClauseTableau_p extended = NULL;
 			Clause_p head_clause = leaf_clause;
-			TableauExtension_p extension_candidate = TableauExtensionAlloc(selected,
-																		   subst,
-																		   head_clause, 
-																		   new_leaf_clauses, 
-																		   open_branch,
-																		   position);
-			// If there is no new_tableaux stack passed to the function we are in, the extension is done on the tableau itself
-			ClauseTableau_p extended = ClauseTableauExtensionRuleWrapper(tableau_control,
-																		 extension_candidate,
-																		 new_tableaux);
+			if (!extension_is_strong(open_branch,
+									 open_branch->parent,
+									 new_leaf_clauses,
+									 head_clause))
+			{
+				SubstDelete(subst);
+				// we're continuing to the next leaf clause
+			}
+			else
+			{
+				subst_completed++;
+				TableauExtension_p extension_candidate = TableauExtensionAlloc(selected,
+																			   subst,
+																			   head_clause,
+																			   new_leaf_clauses,
+																			   open_branch,
+																			   position);
+				// If there is no new_tableaux stack passed to the function we are in, the extension is done on the tableau itself
+				extended = ClauseTableauExtensionRuleWrapper(tableau_control,
+															 extension_candidate,
+															 new_tableaux);
+				TableauExtensionFree(extension_candidate);
+			}
 
-			TableauExtensionFree(extension_candidate);
 			if (extended) // extension may not happen due to regularity
 			{
 				extensions_done++;
@@ -664,14 +667,14 @@ bool extension_is_strong(ClauseTableau_p parent,
 				Clause_p label = sister->label;
 				Eqn_p sister_eqn = label->literals;
 				Eqn_p leaf_eqn = leaf_clauses_iterator->literals;
-				assert(!leaf_eqn->succ);
-				assert(!sister_eqn->succ);
+				assert(!leaf_eqn->next);
+				assert(!sister_eqn->next);
 				EqnOrient(proofcontrol->ocb, sister_eqn);
 				EqnOrient(proofcontrol->ocb, leaf_eqn);
 				if (TermStructEqual(sister_eqn->lterm, leaf_eqn->lterm) &&
 				    TermStructEqual(sister_eqn->rterm, leaf_eqn->rterm))
 				{
-					assert(false && "Not a strong extension!");
+					return false;
 				}
 
 			}
