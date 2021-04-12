@@ -684,126 +684,6 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 	return subst;
 }
 
-// Old version that uses local variables as a PTRee rather than PStack_p
-
-//Subst_p ClauseContradictsClauseTree(ClauseTableau_p tab, Clause_p a, Clause_p b)
-//{
-	//assert(tab);
-	//assert(a);
-	//assert(b);
-	//assert(a->literals);
-	//assert(b->literals);
-	//if (a==b) return NULL;  // Easy case...
-	//if (!ClauseIsUnit(a) || !ClauseIsUnit(b)) return NULL;
-	//Eqn_p a_eqn = a->literals;
-	//Eqn_p b_eqn = b->literals;
-//
-	//if (EqnIsPositive(a_eqn) && EqnIsPositive(b_eqn)) return NULL;
-	//if (EqnIsNegative(a_eqn) && EqnIsNegative(b_eqn)) return NULL;
-//
-	//Subst_p subst = SubstAlloc();
-	//PStack_p a_local_variables = NULL;
-	//PStack_p a_fresh_variables = NULL;
-//
-	////Sig_p sig = tab->terms->sig;
-	////if (tab->master->max_step+1 == 6)
-	////{
-		////fprintf(stdout, "A: ");
-		////ClausePrint(stdout, a, true);
-		////fprintf(stdout, "\nB: ");
-		////ClausePrint(stdout, b, true);
-		////fprintf(stdout, "\n...\n");
-	////}
-//
-//#ifdef LOCAL
-	//if (tab->local_variables)
-	//{
-		//a_local_variables = PStackAlloc();
-		//a_fresh_variables = PStackAlloc();
-//
-		//ReplaceLocalVariablesWithFreshSubst(tab->master, a, tab->local_variables, subst);
-		//a_eqn = EqnCopyOpt(a_eqn);
-//
-		////fprintf(GlobalOut, "# Subst before backtracking subst (step %d attempt)\n", tab->master->max_step + 1);
-		////SubstPrint(GlobalOut, subst, sig, DEREF_ALWAYS);
-		////fprintf(GlobalOut, "\n");
-//
-		//while (!PStackEmpty(subst)) // This backtracks the substitution in order to store the local binding so it can be reinstated later
-		//{
-			//Term_p local_variable = PStackPopP(subst);
-			//Term_p fresh_variable = local_variable->binding;
-			//assert(TermIsVar(local_variable));
-			//assert(TermIsVar(fresh_variable));
-			//local_variable->binding = NULL;
-			//PStackPushP(a_local_variables, local_variable);
-			//PStackPushP(a_fresh_variables, fresh_variable);
-		//}
-		//assert(PStackGetSP(a_local_variables) == PStackGetSP(a_fresh_variables));
-		////SubstBacktrack(subst);
-//
-		//ReplaceLocalVariablesWithFreshSubst(tab->master, b, tab->local_variables, subst);
-		//b_eqn = EqnCopyOpt(b_eqn);
-//
-		////fprintf(GlobalOut, "# Subst after backtracking subst (step %d attempt)\n", tab->master->max_step + 1);
-		////SubstPrint(GlobalOut, subst, sig, DEREF_ALWAYS);
-		////fprintf(GlobalOut, "\n");
-	//}
-//#endif
-//
-//
-	//if (EqnUnify(a_eqn, b_eqn, subst))
-	//{
-//#ifndef NDEBUG
-		////Clause_p a_test = ClauseCopyOpt(a);
-		////Clause_p b_test = ClauseCopyOpt(b);
-		////fprintf(stdout, "A: ");
-		////ClausePrint(stdout, a_test, true);
-		////fprintf(stdout, "\nB: ");
-		////ClausePrint(stdout, a_test, true);
-		////fprintf(stdout, "\n...\n");
-		////fflush(stdout);
-		////Subst_p empty_subst = SubstAlloc();
-		////assert(EqnUnify(a_test->literals, b_test->literals, empty_subst));
-		////assert(PStackEmpty(empty_subst) && "Nonempty substitution for clauses that should be identical after unification");
-		////SubstDelete(empty_subst);
-		////ClauseFree(a_test);
-		////ClauseFree(b_test);
-//
-		////fprintf(GlobalOut, "# Subst after unification (step %d attempt)\n", tab->master->max_step + 1);
-		////SubstPrint(GlobalOut, subst, sig, DEREF_ALWAYS);
-		////fprintf(GlobalOut, "\n");
-//#endif
-		//goto return_point;
-	//}
-//
-//
-	//SubstDelete(subst);
-	//subst = NULL;
-	//return_point:
-//#ifdef LOCAL
-	//if (tab->local_variables)
-	//{
-		//if (subst)
-		//{
-			//while (!PStackEmpty(a_local_variables))
-			//{
-				//Term_p local_variable = PStackPopP(a_local_variables);
-				//Term_p fresh_variable = PStackPopP(a_fresh_variables);
-				//if (!local_variable->binding)
-				//{
-					//SubstAddBinding(subst, local_variable, fresh_variable);
-				//}
-			//}
-			//assert(PStackEmpty(a_fresh_variables));
-		//}
-		//PStackFree(a_local_variables);
-		//PStackFree(a_fresh_variables);
-		//EqnListFree(a_eqn);
-		//EqnListFree(b_eqn);
-	//}
-//#endif
-	//return subst;
-//}
 
 ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set)
 {
@@ -911,29 +791,6 @@ long ClauseSetInsertSetCopyOptIndexed(ClauseSet_p to, ClauseSet_p from)
 	return res;
 }
 
-
-ClauseSet_p ClauseSetFlatCopyIndexed(ClauseSet_p set)
-{
-	assert(false && "This function does not work properly because the demod_index of new is not being created");
-	Clause_p handle, temp;
-	assert(set);
-	ClauseSet_p new = ClauseSetAlloc();
-	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
-	{
-		assert(handle);
-		temp   = ClauseFlatCopy(handle);
-		temp->weight = ClauseStandardWeight(temp);
-#ifdef DEBUG
-		ClauseRecomputeLitCounts(temp);
-		assert(ClauseLiteralNumber(temp));
-#endif
-		ClauseDelProp(temp, CPIsDIndexed);
-		ClauseDelProp(temp, CPIsSIndexed);
-		ClauseSetIndexedInsertClause(new, temp);
-	}
-	return new;
-}
-
 // Insert copies of clauses from "from" to "to".
 // Uses ClauseFlatCopy
 
@@ -949,6 +806,33 @@ long ClauseSetInsertSetFlatCopyIndexed(ClauseSet_p to, ClauseSet_p from)
 		//temp = ClauseCopy(handle,bank);
 		//temp = ClauseCopyOpt(handle);
 		temp   = ClauseFlatCopy(handle);
+		temp->weight = ClauseStandardWeight(temp);
+#ifdef DEBUG
+		ClauseRecomputeLitCounts(temp);
+		assert(ClauseLiteralNumber(temp));
+#endif
+		ClauseDelProp(temp, CPIsDIndexed);
+		ClauseDelProp(temp, CPIsSIndexed);
+		ClauseSetIndexedInsertClause(to, temp);
+	}
+	return res;
+}
+
+// Insert copies of clauses from "from" to "to".
+// Uses ClauseCopy
+
+long ClauseSetInsertSetCopyIndexed(TB_p bank, ClauseSet_p to, ClauseSet_p from)
+{
+	long res = 0;
+	Clause_p handle, temp;
+	assert(to);
+	assert(from);
+	for (handle = from->anchor->succ; handle != from->anchor; handle = handle->succ)
+	{
+		assert(handle);
+		//temp = ClauseCopy(handle,bank);
+		//temp = ClauseCopyOpt(handle);
+		temp   = ClauseCopy(handle, bank);
 		temp->weight = ClauseStandardWeight(temp);
 #ifdef DEBUG
 		ClauseRecomputeLitCounts(temp);
@@ -1499,10 +1383,9 @@ void ClauseTableauPrintDOTGraph(ClauseTableau_p tab)
 	DStrAppendStr(file_name, "/home/hesterj/Projects/Testing/DOT/");
 	DStrAppendStr(file_name, control->problem_name);
 	DStrAppendStr(file_name, ".dot");
-	//FILE *dotgraph = fopen("/home/hesterj/Projects/Testing/DOT/graph.dot", "w");
-	FILE *dotgraph = fopen(DStrView(file_name), "w");
+	FILE *dotgraph = SecureFOpen(DStrView(file_name), "w");
 	ClauseTableauPrintDOTGraphToFile(dotgraph, tab);
-	fclose(dotgraph);
+	SecureFClose(dotgraph);
 	DStrFree(file_name);
 }
 
@@ -1761,9 +1644,9 @@ void ClauseTableauPrintDerivation(FILE* out, ClauseTableau_p final_tableau, Tabl
 		DStrAppendStr(str, "/home/hesterj/Projects/APRTESTING/DOT/unsattest/graph");
 		DStrAppendInt(str, p);
 		DStrAppendStr(str, ".dot");
-		FILE *dotgraph = fopen(DStrView(str), "w");
+		FILE *dotgraph = SecureFOpen(DStrView(str), "w");
 		ClauseTableauPrintDOTGraphToFile(dotgraph, previous_step->master);
-		fclose(dotgraph);
+		SecureFClose(dotgraph);
 		printf("# %ld\n", p);
 		if ((p + 1) == PStackGetSP(derivation))
 		{
@@ -1772,9 +1655,9 @@ void ClauseTableauPrintDerivation(FILE* out, ClauseTableau_p final_tableau, Tabl
 			DStrAppendStr(str2, "/home/hesterj/Projects/APRTESTING/DOT/unsattest/graph");
 			DStrAppendInt(str2, p+1);
 			DStrAppendStr(str2, ".dot");
-			FILE *dotgraph = fopen(DStrView(str2), "w");
+			FILE *dotgraph = SecureFOpen(DStrView(str2), "w");
 			ClauseTableauPrintDOTGraphToFile(dotgraph, final_tableau);
-			fclose(dotgraph);
+			SecureFClose(dotgraph);
 			DStrFree(str2);
 		}
 		printf("#############################\n");
@@ -1793,16 +1676,16 @@ void ClauseTableauRegisterStep(ClauseTableau_p tab)
 	DStrAppendStr(file_location, "/home/hesterj/Projects/Testing/DOT/step");
 	DStrAppendInt(file_location, (long) tab->step);
 	DStrAppendStr(file_location, ".dot");
-	FILE* after_extension = fopen(DStrView(file_location), "w+");
+	FILE* after_extension = SeucreFOpen(DStrView(file_location), "w+");
 	if (!after_extension)
 	{
-		Warning("Unable to open file for DOT graph");
+		Error("Unable to open file for DOT graph", 100);
 	}
 	else
 	{
 		ClauseTableauPrintDOTGraphToFile(after_extension, tab->master);
 	}
-	fclose(after_extension);
+	SecureFClose(after_extension);
 	DStrFree(file_location);
 #endif
 }
@@ -1957,7 +1840,7 @@ long SubstDStrPrint(DStr_p str, Subst_p subst, Sig_p sig, DerefType deref)
       }
    }
    fprintf(out, "}");
-   fclose(out);
+   SecureFClose(out);
 	DStrAppendStr(str, buf);
 	free(buf);
    return (long)limit;
@@ -2084,18 +1967,9 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 		DStrAppendStr(dot_output_location, "/");
 		DStrAppendStr(dot_output_location, tableaucontrol->problem_name);
 		DStrAppendStr(dot_output_location, ".dot");
-		FILE* dot_output = fopen(DStrView(dot_output_location), "w+");
-		if (dot_output)
-		{
-			ClauseTableauPrintDOTGraphToFile(dot_output, resulting_tab);
-			fclose(dot_output);
-			fprintf(GlobalOut, "# DOT graph printed.\n");
-		}
-		else
-		{
-			fclose(dot_output);
-			Warning("# Unable to print DOT graph...");
-		}
+		FILE* dot_output = SecureFOpen(DStrView(dot_output_location), "w+");
+		ClauseTableauPrintDOTGraphToFile(dot_output, resulting_tab);
+		SecureFClose(dot_output);
 		DStrFree(dot_output_location);
 	}
 	fflush(GlobalOut);

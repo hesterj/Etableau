@@ -17,6 +17,10 @@ void process_branch(ProofState_p proofstate,
 						  int *return_status, 
 						  ClauseTableau_p *branches, 
 						  int i);
+long clauseset_delete_rw_links(ClauseSet_p set);
+long clause_delete_rw_links(Clause_p clause);
+long eqn_delete_rw_links(Eqn_p eqn);
+ClauseSet_p clauseset_flatcopy_deleterw(ClauseSet_p set);
 
 // Function definitions 
 
@@ -88,7 +92,8 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 	// Large number of clauses to process, for last ditch attempts
 	if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
 
-	BacktrackProofState(proofstate, proofcontrol, tableau_control, tableau_control->backup);
+	//BacktrackProofState(proofstate, proofcontrol, tableau_control, tableau_control->backup);
+	BacktrackProofStateReset(proofstate, proofcontrol, tableau_control, tableau_control->backup);
 
 	ErrorCodes branch_status = ECloseBranchWithInterreduction(proofstate,
 															  proofcontrol,
@@ -99,96 +104,6 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 
 	return branch_status;
 }
-
-//ErrorCodes OLD_ECloseBranchWrapper(ProofState_p proofstate,
-							   //ProofControl_p proofcontrol,
-							   //ClauseTableau_p branch,
-							   //TableauControl_p tableau_control,
-							   //long max_proc)
-//{
-	//long selected_number_of_clauses_to_process = max_proc;
-	//long previously_saturated = branch->previously_saturated;
-	//assert(branch);
-//
-	//if (tableau_control->quicksat)
-	//{
-		//fprintf(stdout, "# Processing %ld clauses\n", tableau_control->quicksat);
-		//fflush(stdout);
-		//selected_number_of_clauses_to_process = tableau_control->quicksat;
-	//}
-	//else
-	//// Process more clauses on tableaux with fewer open branches
-	//{
-		//switch (branch->open_branches->members)
-		//{
-			//case 1:
-			//{
-				////selected_number_of_clauses_to_process = 1000*branch->depth;
-				//selected_number_of_clauses_to_process = 10000;
-				//break;
-			//}
-			//case 2:
-			//{
-				////selected_number_of_clauses_to_process = 100*branch->depth;
-				//selected_number_of_clauses_to_process = 1000;
-				//break;
-			//}
-			//default:
-			//{
-				////selected_number_of_clauses_to_process = 100;
-				//selected_number_of_clauses_to_process = 100;
-				//break;
-			//}
-		//}
-	//}
-//
-	//// Do not duplicate work.
-	//if (previously_saturated >= selected_number_of_clauses_to_process)
-	//{
-		////fprintf(stdout, "# (%ld) Do not replicate work...\n", (long) getpid());
-		//return RESOURCE_OUT;
-	//}
-//
-	//// Large number of clauses to process, for last ditch attempts
-	//if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
-//
-	////proofcontrol->heuristic_parms.prefer_initial_clauses = true;
-//
-	////ClauseSet_p unprocessed = NULL;
-	////bool old_reset = false;
-	////if (old_reset)
-	////{
-		////// This is the old way of resetting the saturation proofstate
-		////unprocessed = ClauseSetCopy(branch->terms, tableau_control->unprocessed);
-		////EtableauProofStateResetClauseSets(proofstate);
-		////ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
-		////TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
-	////}
-	////else // Presaturated Etableau core
-	////{
-		////BacktrackProofState(proofstate, proofcontrol, tableau_control, tableau_control->backup);
-	////}
-//
-	//BacktrackProofState(proofstate, proofcontrol, tableau_control, tableau_control->backup);
-//
-	//ErrorCodes branch_status = ECloseBranchWithInterreduction(proofstate,
-															  //proofcontrol,
-															  //branch,
-															  //selected_number_of_clauses_to_process);
-//
-	////EtableauProofStateResetClauseSets(proofstate);
-	////TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
-//
-	//branch->previously_saturated = selected_number_of_clauses_to_process;
-//
-	////if (unprocessed) // Needed if we are using the old style proof reset
-	////{
-		////ClauseSetFree(unprocessed);
-	////}
-//
-//
-	//return branch_status;
-//}
 
 ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 										  ProofControl_p proofcontrol,
@@ -805,22 +720,14 @@ long BacktrackProofState(ProofState_p proofstate,
 	assert(proofcontrol);
 	assert(backup);
 	assert(tableaucontrol);
+	Warning("Unsound");
 
-	//TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
+	TermCellStoreDeleteRWLinks(&(proofstate->terms->term_store));
+
 	EtableauProofStateResetClauseSets(proofstate);
 
 	if (!(tableaucontrol->quicksat)) // We are doing full saturation on branches
 	{
-#ifndef ETAB_FLATCOPY
-		if (ClauseSetCardinality(backup->unprocessed))
-		{
-			unprocessed = ClauseSetCopyOpt(backup->unprocessed);
-		}
-		else
-		{
-			unprocessed = ClauseSetCopyOpt(tableaucontrol->unprocessed);
-		}
-#else
 		if (ClauseSetCardinality(backup->unprocessed))
 		{
 			unprocessed = ClauseSetFlatCopy(backup->unprocessed);
@@ -829,7 +736,6 @@ long BacktrackProofState(ProofState_p proofstate,
 		{
 			unprocessed = ClauseSetFlatCopy(tableaucontrol->unprocessed);
 		}
-#endif
 		ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
 		ClauseSetFree(unprocessed);
 	}
@@ -856,36 +762,131 @@ long BacktrackProofState(ProofState_p proofstate,
 	proofstate->processed_pos_eqns->demod_index  = PDTreeAlloc(proofstate->terms);
 	proofstate->processed_neg_units->demod_index = PDTreeAlloc(proofstate->terms);
 
-#ifdef ETAB_FLATCOPY
-	//proofstate->processed_neg_units = ClauseSetFlatCopyIndexed(backup->processed_neg_units);
-	//proofstate->processed_non_units = ClauseSetFlatCopyIndexed(backup->processed_non_units);
-	//proofstate->processed_pos_eqns  = ClauseSetFlatCopyIndexed(backup->processed_pos_eqns);
-	//proofstate->processed_pos_rules = ClauseSetFlatCopyIndexed(backup->processed_pos_rules);
-
 	ClauseSetInsertSetFlatCopyIndexed(proofstate->processed_neg_units, backup->processed_neg_units);
 	ClauseSetInsertSetFlatCopyIndexed(proofstate->processed_non_units, backup->processed_non_units);
 	ClauseSetInsertSetFlatCopyIndexed(proofstate->processed_pos_eqns,  backup->processed_pos_eqns);
 	ClauseSetInsertSetFlatCopyIndexed(proofstate->processed_pos_rules, backup->processed_pos_rules);
-#else
-	//proofstate->processed_neg_units = ClauseSetCopyIndexedOpt(backup->processed_neg_units);
-	//proofstate->processed_non_units = ClauseSetCopyIndexedOpt(backup->processed_non_units);
-	//proofstate->processed_pos_eqns  = ClauseSetCopyIndexedOpt(backup->processed_pos_eqns);
-	//proofstate->processed_pos_rules = ClauseSetCopyIndexedOpt(backup->processed_pos_rules);
-
-	ClauseSetInsertSetCopyOptIndexed(proofstate->processed_neg_units, backup->processed_neg_units);
-	ClauseSetInsertSetCopyOptIndexed(proofstate->processed_non_units, backup->processed_non_units);
-	ClauseSetInsertSetCopyOptIndexed(proofstate->processed_pos_eqns,  backup->processed_pos_eqns);
-	ClauseSetInsertSetCopyOptIndexed(proofstate->processed_pos_rules, backup->processed_pos_rules);
-#endif
 
 
 	proofstate->demods[0]            = proofstate->processed_pos_rules;
 	proofstate->demods[1]            = proofstate->processed_pos_eqns;
 	proofstate->demods[2]            = NULL;
 
-
-	//assert(ProofStateProcCardinality(proofstate));
-	//assert(ClauseSetCardinality(proofstate->unprocessed));
-	//printf("done backtracking %ld\n", tableaucontrol->number_of_saturation_attempts);
 	return 0;
 }
+
+ProofState_p BacktrackProofStateNew(ProofControl_p proofcontrol,
+									TableauControl_p tableaucontrol,
+									BackupProofState_p backup)
+{
+	ProofState_p proofstate = ProofStateAlloc(FPIgnoreProps);
+	ClauseSet_p unprocessed = NULL;
+	assert(proofcontrol);
+	assert(backup);
+	assert(tableaucontrol);
+
+	if (!(tableaucontrol->quicksat)) // We are doing full saturation on branches
+	{
+		if (ClauseSetCardinality(backup->unprocessed))
+		{
+			unprocessed = ClauseSetFlatCopy(backup->unprocessed);
+		}
+		else
+		{
+			unprocessed = ClauseSetFlatCopy(tableaucontrol->unprocessed);
+		}
+		ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
+		ClauseSetFree(unprocessed);
+	}
+	else
+	{
+		proofstate->state_is_complete = false;
+	}
+
+	ClauseSetInsertSetCopyOptIndexed(proofstate->processed_neg_units, backup->processed_neg_units);
+	ClauseSetInsertSetCopyOptIndexed(proofstate->processed_non_units, backup->processed_non_units);
+	ClauseSetInsertSetCopyOptIndexed(proofstate->processed_pos_eqns,  backup->processed_pos_eqns);
+	ClauseSetInsertSetCopyOptIndexed(proofstate->processed_pos_rules, backup->processed_pos_rules);
+
+	return proofstate;
+}
+
+long BacktrackProofStateReset(ProofState_p proofstate,
+							  ProofControl_p proofcontrol,
+							  TableauControl_p tableaucontrol,
+							  BackupProofState_p backup)
+{
+	assert(proofstate);
+	assert(proofcontrol);
+	assert(backup);
+	assert(tableaucontrol);
+
+	////// This is the old way of resetting the saturation proofstate
+	//ClauseSet_p unprocessed = ClauseSetFlatCopy(tableaucontrol->unprocessed);
+	ClauseSet_p unprocessed = clauseset_flatcopy_deleterw(tableaucontrol->unprocessed);
+	EtableauProofStateResetClauseSets(proofstate);
+	ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
+
+	return 0;
+}
+
+long clauseset_delete_rw_links(ClauseSet_p set)
+{
+	long res=0;
+	Clause_p handle = set->anchor->succ;
+	while (handle != set->anchor)
+	{
+		res += clause_delete_rw_links(handle);
+		handle = handle->succ;
+	}
+	return res;
+}
+
+long clause_delete_rw_links(Clause_p clause)
+{
+	long res = 0;
+	Eqn_p lit = clause->literals;
+	while (lit)
+	{
+		res += eqn_delete_rw_links(lit);
+		lit = lit->next;
+	}
+	return res;
+}
+
+long eqn_delete_rw_links(Eqn_p eqn)
+{
+	Term_p lterm = eqn->lterm;
+	Term_p rterm = eqn->rterm;
+	TermDeleteRWLink(lterm);
+	for (int i=0; i<lterm->arity; i++)
+	{
+		TermDeleteRWLink(lterm->args[i]);
+	}
+	TermDeleteRWLink(rterm);
+	for (int i=0; i<lterm->arity; i++)
+	{
+		TermDeleteRWLink(lterm->args[i]);
+	}
+	return 4;
+}
+
+ClauseSet_p clauseset_flatcopy_deleterw(ClauseSet_p set)
+{
+	Clause_p handle, temp;
+	assert(set);
+	ClauseSet_p new = ClauseSetAlloc();
+	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
+	{
+		assert(handle);
+		temp = ClauseFlatCopy(handle);
+		clause_delete_rw_links(temp);
+		ClauseDelProp(temp, CPIsDIndexed);
+		ClauseDelProp(temp, CPIsSIndexed);
+		ClauseSetInsert(new, temp);
+	}
+	return new;
+}
+
+
+// End of file

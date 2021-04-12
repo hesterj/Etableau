@@ -85,6 +85,10 @@ long BacktrackProofState(ProofState_p proofstate,
                          ProofControl_p proofcontrol,
                          TableauControl_p tableaucontrol,
                          BackupProofState_p backup);
+long BacktrackProofStateReset(ProofState_p proofstate,
+							  ProofControl_p proofcontrol,
+							  TableauControl_p tableaucontrol,
+							  BackupProofState_p backup);
 
 
 #endif

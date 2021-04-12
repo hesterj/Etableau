@@ -1249,17 +1249,9 @@ Clause_p ClauseCreateSubstitutionAxiom(APRControl_p control, Sig_p sig, FunCode 
 
 long APRGraphCreateDOT(APRControl_p control)
 {
-	FILE *dotgraph = fopen("/home/hesterj/Projects/APRTESTING/DOT/graph.dot", "w");
-	if (dotgraph == NULL)
-	{
-		printf("# File failure\n");
-		return 0;
-	}
-	else
-	{
-		printf("# Printing DOT APR graph to ~/Projects/APRTESTING/DOT/graph.dot\n");
-	}
-	
+	FILE *dotgraph = SecureFOpen("/home/hesterj/Projects/APRTESTING/DOT/graph.dot", "w");
+	printf("# Printing DOT APR graph to ~/Projects/APRTESTING/DOT/graph.dot\n");
+
 	fprintf(dotgraph, "digraph aprgraph {\n");
 	fprintf(dotgraph, "   graph [splines = true overlap=scale]\n");
 	
@@ -1292,7 +1284,7 @@ long APRGraphCreateDOT(APRControl_p control)
 		
 	}
 	fprintf(dotgraph,"}\n");
-	fclose(dotgraph);
+	SecureFClose(dotgraph);
 	
 	return 1;
 }
@@ -1303,17 +1295,10 @@ long APRGraphCreateDOT(APRControl_p control)
 
 long APRGraphCreateDOTClausesLabeled(APRControl_p control)
 {
-	FILE *dotgraph = fopen("/home/hesterj/Projects/APRTESTING/DOT/graph.dot", "w");
+	FILE *dotgraph = SecureFOpen("/home/hesterj/Projects/APRTESTING/DOT/graph.dot", "w");
 	printf("# Number of buckets: %ld\n", PStackGetSP(control->buckets));
-	if (dotgraph == NULL)
-	{
-		printf("# File failure\n");
-		return 0;
-	}
-	else
-	{
-		printf("# Printing DOT APR graph to ~/Projects/APRTESTING/DOT/graph.dot\n");
-	}
+	printf("# Printing DOT APR graph to ~/Projects/APRTESTING/DOT/graph.dot\n");
+
 	
 	fprintf(dotgraph, "digraph aprgraph {\n");
 	fprintf(dotgraph, "   graph [splines = true overlap=scale]\n");
@@ -1377,7 +1362,7 @@ long APRGraphCreateDOTClausesLabeled(APRControl_p control)
 		
 	}
 	fprintf(dotgraph,"}\n");
-	fclose(dotgraph);
+	SecureFClose(dotgraph);
 	
 	return 1;
 }
@@ -1387,18 +1372,10 @@ long APRGraphCreateDOTClausesLabeled(APRControl_p control)
 
 long APRGraphCreateDOTClauses(APRControl_p control)
 {
-	FILE *dotgraph = fopen("/home/hesterj/Projects/APRTESTING/DOT/graph.dot", "w");
+	FILE *dotgraph = SecureFOpen("/home/hesterj/Projects/APRTESTING/DOT/graph.dot", "w");
 	printf("# Number of buckets: %ld\n", PStackGetSP(control->buckets));
-	if (dotgraph == NULL)
-	{
-		printf("# File failure\n");
-		return 0;
-	}
-	else
-	{
-		printf("# Printing DOT APR graph to ~/Projects/APRTESTING/DOT/graph.dot\n");
-	}
-	
+	printf("# Printing DOT APR graph to ~/Projects/APRTESTING/DOT/graph.dot\n");
+
 	fprintf(dotgraph, "digraph aprgraph {\n");
 	fprintf(dotgraph, "   graph [splines = true overlap=scale]\n");
 	
@@ -1449,7 +1426,7 @@ long APRGraphCreateDOTClauses(APRControl_p control)
 		
 	}
 	fprintf(dotgraph,"}\n");
-	fclose(dotgraph);
+	SecureFClose(dotgraph);
 	
 	return 1;
 }
