@@ -720,7 +720,7 @@ bool all_tableaux_in_stack_are_root(TableauStack_p stack)
         if (tab->master != tab)
         {
             printf("failure at %ld\n", p);
-            printf("%ld d:%d %ld\n", ClauseTableauHash(tab), tab->depth, ClauseTableauHash(tab->master));
+            printf("%ld d:%ld %ld\n", ClauseTableauHash(tab), tab->depth, ClauseTableauHash(tab->master));
             return false;
         }
     }

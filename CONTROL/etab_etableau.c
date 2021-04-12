@@ -88,7 +88,6 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 	// Large number of clauses to process, for last ditch attempts
 	if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
 
-	return RESOURCE_OUT;
 	BacktrackProofState(proofstate, proofcontrol, tableau_control, tableau_control->backup);
 
 	ErrorCodes branch_status = ECloseBranchWithInterreduction(proofstate,
