@@ -575,12 +575,12 @@ int main(int argc, char* argv[])
    if (!success && TableauOptions == 1)
    {
       ClauseSet_p new_axioms = ClauseSetCopy(proofstate->terms, proofstate->unprocessed);
-      bool presaturation = true;
-      if (TableauSaturation && presaturation)
-      {
-         success = Saturate(proofstate, proofcontrol, LONG_MAX, 1000, LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX);
-         if (success) goto normal_eprover;
-      }
+      //bool presaturation = true;
+      //if (TableauSaturation && presaturation)
+      //{
+         //success = Saturate(proofstate, proofcontrol, LONG_MAX, 1000, LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX);
+         //if (success) goto normal_eprover;
+      //}
       TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures,
                                                             argv[argc-1], // the problem file
                                                             tableau_dot_out,
@@ -638,8 +638,6 @@ int main(int argc, char* argv[])
       goto cleanuptableau;
    }
 
-
-   normal_eprover:
    // Normal Eprover below...
    PERF_CTR_ENTRY(SatTimer);
 

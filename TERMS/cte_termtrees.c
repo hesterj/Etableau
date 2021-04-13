@@ -202,10 +202,11 @@ long TermTopCompare(Term_p t1, Term_p t2)
 
    assert(t1->type);
    assert(t2->type);
-   //if(t1->sort!=t2->sort)
+   //if(t1->type!=t2->type)
    //{
-   //      printf("# Sort clash (%ld): %d vs. %d\n", t1->f_code, t1->sort, t2->sort);
+         //printf("# Sort clash (%ld): %d vs. %d\n", t1->f_code, t1->type->type_uid, t2->type->type_uid);
    //}
+   //
    assert(problemType == PROBLEM_HO || t1->type == t2->type);
    assert(TermIsAppliedVar(t1) || problemType == PROBLEM_HO  || t1->arity == t2->arity);
 

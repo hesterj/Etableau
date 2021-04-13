@@ -20,7 +20,6 @@ void reset_variables_array(PDArray_p variables_array);
 
 long UpdateLocalVariables(ClauseTableau_p node)
 {
-    long num_variables = 0;
     PTree_p local_variables_tree = NULL;
     assert(NodeIsLeaf(node));
     assert(node->set);
@@ -29,20 +28,19 @@ long UpdateLocalVariables(ClauseTableau_p node)
     PTreeFree(node->local_variables);
 
     // Collect the variables of our branch
-    num_variables += CollectVariablesOfBranch(node, &local_variables_tree, true);
+    node->number_of_variables_on_branch =
+        CollectVariablesOfBranch(node, &local_variables_tree, true);
 
     // Collect the variables of the other branches
     ClauseTableau_p branch_iterator = node->open_branches->anchor->succ;
     PTree_p temp_variable_tree = NULL;
     while (branch_iterator != node->open_branches->anchor)
     {
-        //if ((int) floor(GetTotalCPUTime())%2 == 0)
-        //{
-            //printf("iter %p %f\n", node, GetTotalCPUTime());
-        //}
         if (branch_iterator != node)
         {
-            CollectVariablesOfBranch(branch_iterator, &temp_variable_tree, true); // We need to include the root, otherwise branches could share variables there...
+            // We need to include the root, otherwise branches could share variables there
+            branch_iterator->number_of_variables_on_branch =
+                CollectVariablesOfBranch(branch_iterator, &temp_variable_tree, true);
         }
         branch_iterator = branch_iterator->succ;
     }
@@ -61,17 +59,17 @@ long UpdateLocalVariables(ClauseTableau_p node)
 
 long CollectVariablesOfBranch(ClauseTableau_p branch, PTree_p *branch_vars, bool include_root)
 {
-	long num_variables = 0;
-	ClauseTableau_p iterator = branch;
-	while (iterator)
-	{
-		if ((iterator != branch->master) || (include_root))
-		{
-			num_variables += CollectVariablesAtNode(iterator, branch_vars);
-		}
-		iterator = iterator->parent;
-	}
-	return num_variables;
+    long num_variables = 0;
+    ClauseTableau_p iterator = branch;
+    while (iterator)
+    {
+        if ((iterator != branch->master) || (include_root))
+        {
+            num_variables += CollectVariablesAtNode(iterator, branch_vars);
+        }
+        iterator = iterator->parent;
+    }
+    return num_variables;
 }
 
 /*  Returns number of variables found
@@ -214,16 +212,19 @@ Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause,
 
 bool BranchIsLocal(ClauseTableau_p branch)
 {
-	PTree_p branch_vars = NULL;
-	long local_vars = UpdateLocalVariables(branch);
-	long num_vars = CollectVariablesOfBranch(branch, &branch_vars, true);
-	if (local_vars == num_vars)
-	{
-		return true;
-	}
-	PTreeFree(branch_vars);
-	return false;
-	
+    long local_variables = UpdateLocalVariables(branch);
+    long branch_variables = branch->number_of_variables_on_branch;
+#ifndef NDEBUG
+    PTree_p branch_vars = NULL;
+    long num_vars = CollectVariablesOfBranch(branch, &branch_vars, true);
+    PTreeFree(branch_vars);
+    assert(num_vars == branch_variables);
+#endif
+    if (local_variables == branch_variables)
+    {
+        return true;
+    }
+    return false;
 }
 
 bool AllBranchesAreLocal(ClauseTableau_p master)

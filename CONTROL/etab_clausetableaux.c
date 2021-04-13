@@ -56,6 +56,7 @@ ClauseTableau_p empty_tableau_alloc()
 	handle->saturation_closed = false;
 	handle->id = 0;
 	handle->max_var = 0;
+	handle->number_of_variables_on_branch = 0;
 	handle->info = NULL;
 	handle->active_branch = NULL;
 	handle->pred = NULL;

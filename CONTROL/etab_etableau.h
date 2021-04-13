@@ -47,7 +47,10 @@ int EtableauInsertBranchClausesIntoUnprocessed(ProofState_p state,
 void TermTreeDeleteRWLinks(Term_p root);
 void TermCellStoreDeleteRWLinks(TermCellStore_p store);
 
-long ClauseTableauCollectBranchCopyLabels(ClauseTableau_p branch, ClauseSet_p set, PStack_p branch_labels);
+long ClauseTableauCollectBranchCopyLabels(TB_p terms,
+                                          ClauseTableau_p branch,
+                                          ClauseSet_p set,
+                                          PStack_p branch_labels);
 
 int ProcessSpecificClauseWrapper(ProofState_p state, ProofControl_p control, Clause_p clause);
 int ProcessSpecificClauseWrapperNoCopy(ProofState_p state, ProofControl_p control, Clause_p clause, Clause_p *success_ref);
@@ -55,9 +58,15 @@ int ProcessSpecificClauseWrapperNoCopy(ProofState_p state, ProofControl_p contro
 
 ErrorCodes ProcessSpecificClauseSetWrapper(ProofState_p state, ProofControl_p control, ClauseSet_p set);
 ErrorCodes ProcessSpecificClauseStackWrapper(ProofState_p state, ProofControl_p control, ClauseStack_p stack);
-ErrorCodes ProcessSpecificClauseStackWrapperNoCopy(ProofState_p state, ProofControl_p control, ClauseStack_p stack, Clause_p *success_ref);
+ErrorCodes ProcessSpecificClauseStackWrapperNoCopy(ProofState_p state,
+                                                   ProofControl_p control,
+                                                   ClauseStack_p stack,
+                                                   Clause_p *success_ref);
 
-bool EtableauSaturateAllTableauxInStack(TableauControl_p tableaucontrol, TableauStack_p distinct_tableaux_stack, ClauseSet_p active, long maximum);
+bool EtableauSaturateAllTableauxInStack(TableauControl_p tableaucontrol,
+                                        TableauStack_p distinct_tableaux_stack,
+                                        ClauseSet_p active,
+                                        long maximum);
 Clause_p ClauseCopyAndPrepareForSaturation(Clause_p clause, TB_p bank, HCB_p hcb);
 long ClauseSetCopyInsertAndPrepareForSaturation(ClauseSet_p from, ClauseSet_p to, TB_p bank, HCB_p hcb, PStack_p branch_labels);
 
@@ -86,9 +95,11 @@ long BacktrackProofState(ProofState_p proofstate,
                          TableauControl_p tableaucontrol,
                          BackupProofState_p backup);
 long BacktrackProofStateReset(ProofState_p proofstate,
-							  ProofControl_p proofcontrol,
-							  TableauControl_p tableaucontrol,
-							  BackupProofState_p backup);
-
-
+                              ProofControl_p proofcontrol,
+                              TableauControl_p tableaucontrol,
+                              BackupProofState_p backup);
+ProofState_p BacktrackProofStateNew2(ProofState_p proofstate,
+                                     ProofControl_p proofcontrol,
+                                     TableauControl_p tableaucontrol,
+                                     BackupProofState_p backup);
 #endif

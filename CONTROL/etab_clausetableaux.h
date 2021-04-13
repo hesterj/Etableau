@@ -74,11 +74,14 @@ typedef struct clausetableau
 	long id;  		   // If a clause was split on a node, this is the id of the clause used to split.
 	long previously_saturated;  // If  branch has already been saturated this amount or more, don't do it!
 	long max_var;     // f_code of the maximal variable in the tableau
+	long number_of_variables_on_branch;
 	unsigned long maximum_depth; // The maximum depth that this tableau is allowed to search
 	DStr_p info;    // Contains the substitution used to close this node
 
 	// Only present at root.  Contains variables that are present in the tableau.
 	PDArray_p tableau_variables_array;
+
+	// The local variables of the branch.  Use UpdateLocalVariables on the branch to find them.
 	PTree_p local_variables;
 
 	// A stacks of previous steps.

@@ -22,6 +22,9 @@ long clause_delete_rw_links(Clause_p clause);
 long eqn_delete_rw_links(Eqn_p eqn);
 ClauseSet_p clauseset_flatcopy_deleterw(ClauseSet_p set);
 
+void etableau_proof_state_free(ProofState_p junk);
+ProofState_p etableau_proof_state_alloc(ProofState_p main_proof_state);
+
 // Function definitions 
 
 BranchSaturation_p BranchSaturationAlloc(ProofState_p proofstate, 
@@ -93,14 +96,25 @@ ErrorCodes ECloseBranchWrapper(ProofState_p proofstate,
 	if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
 
 	//BacktrackProofState(proofstate, proofcontrol, tableau_control, tableau_control->backup);
-	BacktrackProofStateReset(proofstate, proofcontrol, tableau_control, tableau_control->backup);
+	//BacktrackProofStateReset(proofstate, proofcontrol, tableau_control, tableau_control->backup);
+	//
+	ProofState_p new_proofstate = BacktrackProofStateNew2(proofstate,
+														  proofcontrol,
+														  tableau_control,
+														  tableau_control->backup);
 
-	ErrorCodes branch_status = ECloseBranchWithInterreduction(proofstate,
+	//ErrorCodes branch_status = ECloseBranchWithInterreduction(proofstate,
+															  //proofcontrol,
+															  //branch,
+															  //selected_number_of_clauses_to_process);
+	ErrorCodes branch_status = ECloseBranchWithInterreduction(new_proofstate,
 															  proofcontrol,
 															  branch,
 															  selected_number_of_clauses_to_process);
 
 	branch->previously_saturated = selected_number_of_clauses_to_process;
+
+	etableau_proof_state_free(new_proofstate);
 
 	return branch_status;
 }
@@ -110,23 +124,25 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 										  ClauseTableau_p branch,
 										  long max_proc)
 {
+	TB_p terms = proofstate->terms;
 	Clause_p success = NULL;
 	Clause_p success_ref = NULL;
 	TableauControl_p tableaucontrol = branch->master->tableaucontrol;
 	PStack_p branch_labels = PStackAlloc();
 	ErrorCodes status = RESOURCE_OUT;
 	bool process_branch_clauses_first = true;
-	bool interreduction = false;
+	bool interreduction = true;
 	bool full_saturation = true;
 	assert(proofstate);
 	assert(proofcontrol);
 	PStack_p debug_branch_labels = NULL;
+	assert(!ClauseSetEmpty(proofstate->unprocessed));
 
-#ifdef QUICKSAT
-	max_proc = 100;
-#endif
-
-	long number_found __attribute__((unused)) = ClauseTableauCollectBranchCopyLabels(branch, proofstate->unprocessed, debug_branch_labels);
+	long number_found __attribute__((unused)) =
+		ClauseTableauCollectBranchCopyLabels(terms,
+											 branch,
+											 proofstate->unprocessed,
+											 debug_branch_labels);
 
 	// This is the interreduction step!
 
@@ -154,7 +170,10 @@ ErrorCodes ECloseBranchWithInterreduction(ProofState_p proofstate,
 		proofcontrol->heuristic_parms.sat_check_grounding = GMNoGrounding; // This disables calls to SAT solver
 		if (process_branch_clauses_first)
 		{
-			status = ProcessSpecificClauseStackWrapperNoCopy(proofstate, proofcontrol, branch_labels, &success_ref); // Process the branch clauses first
+			status = ProcessSpecificClauseStackWrapperNoCopy(proofstate,
+															 proofcontrol,
+															 branch_labels,
+															 &success_ref); // Process the branch clauses first
 		}
 		if (UNLIKELY(status == PROOF_FOUND)) // A contradiction was found while processing the branch clauses
 		{
@@ -545,7 +564,10 @@ bool EtableauSaturateAllTableauxInStack(TableauControl_p tableaucontrol, Tableau
 	return false;
 }
 
-long ClauseTableauCollectBranchCopyLabels(ClauseTableau_p branch, ClauseSet_p set, PStack_p branch_labels)
+long ClauseTableauCollectBranchCopyLabels(TB_p terms,
+										  ClauseTableau_p branch,
+										  ClauseSet_p set,
+										  PStack_p branch_labels)
 {
 	assert(branch);
 	assert(set);
@@ -553,7 +575,9 @@ long ClauseTableauCollectBranchCopyLabels(ClauseTableau_p branch, ClauseSet_p se
 	while (branch_handle)
 	{
 		assert(branch_handle);
-		Clause_p label = ClauseCopyAndPrepareForSaturation(branch_handle->label, branch->terms, branch->control->hcb);
+		Clause_p label = ClauseCopyAndPrepareForSaturation(branch_handle->label,
+														   terms,
+														   branch->control->hcb);
 		assert(label);
 		assert(label->set == NULL);
 		assert(ClauseLiteralNumber(label));
@@ -567,7 +591,11 @@ long ClauseTableauCollectBranchCopyLabels(ClauseTableau_p branch, ClauseSet_p se
 		if (branch_handle->folding_labels)
 		{
 			//printf("there are %ld folding labels at a node of depth %d\n", branch_handle->folding_labels->members, branch_handle->depth);
-			ClauseSetCopyInsertAndPrepareForSaturation(branch_handle->folding_labels, set, branch->terms, branch->control->hcb, branch_labels);
+			ClauseSetCopyInsertAndPrepareForSaturation(branch_handle->folding_labels,
+													   set,
+													   terms,
+													   branch->control->hcb,
+													   branch_labels);
 		}
 #endif
 		branch_handle = branch_handle->parent;
@@ -830,6 +858,40 @@ long BacktrackProofStateReset(ProofState_p proofstate,
 	return 0;
 }
 
+ProofState_p BacktrackProofStateNew2(ProofState_p proofstate,
+									 ProofControl_p proofcontrol,
+									 TableauControl_p tableaucontrol,
+									 BackupProofState_p backup)
+{
+	assert(proofstate);
+	assert(proofcontrol);
+	assert(backup);
+	assert(tableaucontrol);
+	//printf("allocating new proof state\n");
+
+	ProofState_p new_state = etableau_proof_state_alloc(proofstate);
+	//printf("copying unprocessed into the new proofstate's axioms\n");
+	ClauseSet_p unprocessed = ClauseSetCopy(new_state->terms, tableaucontrol->unprocessed);
+	ClauseSetInsertSet(new_state->axioms, unprocessed);
+	ClauseSetFree(unprocessed);
+	//printf("initializing global indices\n");
+	//ProofControl_p new_proofconrol
+	GlobalIndicesInit(&(new_state->wlindices),
+					  new_state->signature,
+					  proofcontrol->heuristic_parms.rw_bw_index_type,
+					  "NoIndex",
+					  "NoIndex");
+	//printf("initializing proofstate\n");
+
+	ProofStateInit(new_state, proofcontrol);
+	//ClauseSet_p unprocessed = clauseset_flatcopy_deleterw(tableaucontrol->unprocessed);
+	//EtableauProofStateResetClauseSets(proofstate);
+	//ProofStateResetProcessedSet(proofstate, proofcontrol, unprocessed);
+
+	//printf("returning new proof state\n");
+	return new_state;
+}
+
 long clauseset_delete_rw_links(ClauseSet_p set)
 {
 	long res=0;
@@ -888,5 +950,221 @@ ClauseSet_p clauseset_flatcopy_deleterw(ClauseSet_p set)
 	return new;
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: ProofStateAlloc()
+//
+//   Return an empty, initialized proof state. The argument is:
+//   free_symb_prop: Which sub-properties of FPDistinctProp should be
+//                   ignored (i.e. which classes with distinct object
+//                   syntax  should be treated as plain free
+//                   symbols). Use FPIgnoreProps for default
+//                   behaviour, FPDistinctProp for fully free
+//                   (conventional) semantics.
+//
+//   This differs from ProofStateAlloc by assuming we have FPIgnoreProps
+//   and using the signature of an existing ProofState_p.
+//
+//   There is a corresponding etableau_proof_state_free function.
+//
+// Global Variables: -
+//
+// Side Effects    : Memory operations
+//
+/----------------------------------------------------------------------*/
 
+ProofState_p etableau_proof_state_alloc(ProofState_p main_proof_state)
+{
+   ProofState_p handle = ProofStateCellAlloc();
+
+   //handle->type_bank            = TypeBankAlloc();
+   handle->type_bank = main_proof_state->type_bank;
+   //handle->signature            = SigAlloc(handle->type_bank);
+   handle->signature = main_proof_state->signature;
+   //SigInsertInternalCodes(handle->signature);
+   //handle->original_symbols     = 0;
+   handle->original_symbols     = main_proof_state->original_symbols;
+   handle->terms                = TBAlloc(handle->signature);
+   handle->tmp_terms            = TBAlloc(handle->signature);
+   //handle->freshvars            = VarBankAlloc(handle->type_bank);
+   handle->freshvars = main_proof_state->freshvars;
+   VarBankPairShadow(handle->terms->vars, handle->freshvars);
+   handle->f_axioms             = FormulaSetAlloc();
+   handle->f_ax_archive         = FormulaSetAlloc();
+   handle->ax_archive           = ClauseSetAlloc();
+   handle->axioms               = ClauseSetAlloc();
+   handle->processed_pos_rules  = ClauseSetAlloc();
+   handle->processed_pos_eqns   = ClauseSetAlloc();
+   handle->processed_neg_units  = ClauseSetAlloc();
+   handle->processed_non_units  = ClauseSetAlloc();
+   handle->unprocessed          = ClauseSetAlloc();
+   handle->tmp_store            = ClauseSetAlloc();
+   handle->eval_store           = ClauseSetAlloc();
+   handle->archive              = ClauseSetAlloc();
+
+   if (main_proof_state->watchlist)
+   {
+	   handle->watchlist = ClauseSetCopy(handle->terms, main_proof_state->watchlist);
+   }
+   else
+   {
+	   handle->watchlist = NULL;
+   }
+   //handle->watchlist            = ClauseSetAlloc();
+   handle->f_archive            = FormulaSetAlloc();
+   handle->extract_roots        = PStackAlloc();
+   GlobalIndicesNull(&(handle->gindices));
+   handle->fvi_initialized      = false;
+   handle->fvi_cspec            = NULL;
+   handle->processed_pos_rules->demod_index = PDTreeAlloc(handle->terms);
+   handle->processed_pos_eqns->demod_index  = PDTreeAlloc(handle->terms);
+   handle->processed_neg_units->demod_index = PDTreeAlloc(handle->terms);
+   handle->demods[0]            = handle->processed_pos_rules;
+   handle->demods[1]            = handle->processed_pos_eqns;
+   handle->demods[2]            = NULL;
+   GlobalIndicesNull(&(handle->wlindices));
+   handle->state_is_complete       = true;
+   //handle->has_interpreted_symbols = false;
+   handle->has_interpreted_symbols = main_proof_state->has_interpreted_symbols;
+   handle->definition_store     = DefStoreAlloc(handle->terms);
+   handle->def_store_cspec      = NULL;
+
+   handle->gc_terms             = GCAdminAlloc(handle->terms);
+   GCRegisterFormulaSet(handle->gc_terms, handle->f_axioms);
+   GCRegisterFormulaSet(handle->gc_terms, handle->f_ax_archive);
+   GCRegisterClauseSet(handle->gc_terms, handle->axioms);
+   GCRegisterClauseSet(handle->gc_terms, handle->ax_archive);
+   GCRegisterClauseSet(handle->gc_terms, handle->processed_pos_rules);
+   GCRegisterClauseSet(handle->gc_terms, handle->processed_pos_eqns);
+   GCRegisterClauseSet(handle->gc_terms, handle->processed_neg_units);
+   GCRegisterClauseSet(handle->gc_terms, handle->processed_non_units);
+   GCRegisterClauseSet(handle->gc_terms, handle->unprocessed);
+   GCRegisterClauseSet(handle->gc_terms, handle->tmp_store);
+   GCRegisterClauseSet(handle->gc_terms, handle->eval_store);
+   GCRegisterClauseSet(handle->gc_terms, handle->archive);
+   //GCRegisterClauseSet(handle->gc_terms, handle->watchlist);
+   if (handle->watchlist)
+   {
+	   GCRegisterClauseSet(handle->gc_terms, handle->watchlist);
+   }
+   GCRegisterClauseSet(handle->gc_terms, handle->definition_store->def_clauses);
+   GCRegisterFormulaSet(handle->gc_terms, handle->definition_store->def_archive);
+   GCRegisterFormulaSet(handle->gc_terms, handle->f_archive);
+
+   handle->status_reported              = false;
+   handle->answer_count                 = 0;
+
+   handle->processed_count              = 0;
+   handle->proc_trivial_count           = 0;
+   handle->proc_forward_subsumed_count  = 0;
+   handle->proc_non_trivial_count       = 0;
+   handle->other_redundant_count        = 0;
+   handle->non_redundant_deleted        = 0;
+   handle->backward_subsumed_count      = 0;
+   handle->backward_rewritten_count     = 0;
+   handle->backward_rewritten_lit_count = 0;
+   handle->generated_count              = 0;
+   handle->generated_lit_count          = 0;
+   handle->non_trivial_generated_count  = 0;
+   handle->context_sr_count     = 0;
+   handle->paramod_count        = 0;
+   handle->factor_count         = 0;
+   handle->resolv_count         = 0;
+   handle->satcheck_count       = 0;
+   handle->satcheck_success     = 0;
+   handle->satcheck_satisfiable = 0;
+   handle->satcheck_full_size   = 0;
+   handle->satcheck_actual_size = 0;
+   handle->satcheck_core_size   = 0;
+   handle->satcheck_preproc_time  = 0.0;
+   handle->satcheck_encoding_time = 0.0;
+   handle->satcheck_solver_time   = 0.0;
+   handle->satcheck_preproc_stime  = 0.0;
+   handle->satcheck_encoding_stime = 0.0;
+   handle->satcheck_solver_stime   = 0.0;
+
+   handle->filter_orphans_base   = 0;
+   handle->forward_contract_base = 0;
+
+   handle->gc_count             = 0;
+   handle->gc_used_count        = 0;
+
+#ifdef NEVER_DEFINED
+   printf("# XXXf_axioms            = %p\n", handle->f_axioms);
+   printf("# XXXf_ax_archive        = %p\n", handle->f_ax_archive);
+   printf("# XXXax_archive          = %p\n", handle->ax_archive);
+   printf("# XXXaxioms              = %p\n", handle->axioms);
+   printf("# XXXprocessed_pos_rules = %p\n", handle->processed_pos_rules);
+   printf("# XXXprocessed_pos_eqns  = %p\n", handle->processed_pos_eqns);
+   printf("# XXXprocessed_neg_units = %p\n", handle->processed_neg_units);
+   printf("# XXXprocessed_non_units = %p\n", handle->processed_non_units);
+   printf("# XXXunprocessed         = %p\n", handle->unprocessed);
+   printf("# XXXtmp_store           = %p\n", handle->tmp_store);
+   printf("# XXXeval_store          = %p\n", handle->eval_store);
+   printf("# XXXarchive             = %p\n", handle->archive);
+   printf("# XXXwatchlist           = %p\n", handle->watchlist);
+   printf("# XXXf_archive           = %p\n", handle->f_archive);
+#endif
+   return handle;
+}
+
+/*-----------------------------------------------------------------------
+//
+// Function: etableau_proof_state_free()
+//
+//   Free a ProofStateCell, but not the type bank and signature.
+//
+// Global Variables: -
+//
+// Side Effects    : Memory operations
+//
+/----------------------------------------------------------------------*/
+
+void etableau_proof_state_free(ProofState_p junk)
+{
+   assert(junk);
+   ClauseSetFree(junk->axioms);
+   FormulaSetFree(junk->f_axioms);
+   FormulaSetFree(junk->f_ax_archive);
+   ClauseSetFree(junk->processed_pos_rules);
+   ClauseSetFree(junk->processed_pos_eqns);
+   ClauseSetFree(junk->processed_neg_units);
+   ClauseSetFree(junk->processed_non_units);
+   ClauseSetFree(junk->unprocessed);
+   ClauseSetFree(junk->tmp_store);
+   ClauseSetFree(junk->eval_store);
+   ClauseSetFree(junk->archive);
+   ClauseSetFree(junk->ax_archive);
+   FormulaSetFree(junk->f_archive);
+   PStackFree(junk->extract_roots);
+   GlobalIndicesFreeIndices(&(junk->gindices));
+   GCAdminFree(junk->gc_terms);
+   //GCAdminFree(junk->gc_original_terms);
+   if(junk->watchlist)
+   {
+      ClauseSetFree(junk->watchlist);
+   }
+   GlobalIndicesFreeIndices(&(junk->wlindices));
+
+   DefStoreFree(junk->definition_store);
+   if(junk->fvi_cspec)
+   {
+      FVCollectFree(junk->fvi_cspec);
+   }
+   if(junk->def_store_cspec)
+   {
+      FVCollectFree(junk->def_store_cspec);
+   }
+   // junk->original_terms->sig = NULL;
+   junk->terms->sig = NULL;
+   junk->tmp_terms->sig = NULL;
+   //SigFree(junk->signature);
+   // TBFree(junk->original_terms);
+   TBFree(junk->terms);
+   TBFree(junk->tmp_terms);
+   VarBankFree(junk->freshvars);
+   //TypeBankFree(junk->type_bank);
+
+   ProofStateCellFree(junk);
+}
 // End of file
