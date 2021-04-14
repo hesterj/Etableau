@@ -53,7 +53,7 @@ typedef struct e_pctrl_cell
 }EPCtrlCell, *EPCtrl_p;
 
 #define EPCTRL_BUFSIZE 65536
-#define MAX_CORES 8
+#define MAX_CORES 32
 
 
 typedef struct e_pctrl_set_cell

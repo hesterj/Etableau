@@ -144,8 +144,13 @@ static bool instance_is_rule(OCB_p ocb, TB_p bank,
          desc->sos_rewritten = true;
       }
 
-      assert(TOGreater(desc->ocb, term, TermRWReplaceField(term),
-                        DEREF_NEVER, DEREF_NEVER));
+#ifndef NDEBUG
+      if (!TOGreater(desc->ocb, term, TermRWReplaceField(term),
+                     DEREF_NEVER, DEREF_NEVER))
+      {
+         Warning("Ordering violation in term_follow_top_RW_chain");
+      }
+#endif
       term = TermRWReplaceField(term);
       assert(term);
    }

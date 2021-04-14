@@ -1667,7 +1667,7 @@ Clause_p Saturate(ProofState_p state, ProofControl_p control, long
          }
       }
    }
-   printf("processed %ld in saturate\n", count);
+   //printf("processed %ld in saturate\n", count);
    return unsatisfiable;
 }
 

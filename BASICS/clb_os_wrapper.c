@@ -304,6 +304,8 @@ long long GetUSecClock(void)
 FILE* SecureFOpen(char* name, char* mode)
 {
    FILE* res;
+   printf("about to try to fopen\n");
+   fflush(stdout);
 
    res = fopen(name, mode);
    if(!res)

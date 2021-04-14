@@ -419,15 +419,13 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
         {
             SilentTimeOut = true;
             TableauStack_p new_tableaux = PStackElementP(buckets, i);
-//#ifndef NDEBUG
-            //printf("%ld tableaux in new process %d\n", PStackGetSP(new_tableaux), i);
-            //fflush(stdout);
-//#endif
 
             // should be good to go...
-            proc->pipe = fdopen(pipefd[1], "w");
-            GlobalOut = proc->pipe;
-            close(pipefd[0]);
+            //proc->pipe = fdopen(pipefd[1], "w");
+            //GlobalOut = proc->pipe;
+            //close(pipefd[0]);
+            GlobalOut = stdout;
+            fflush(GlobalOut);
             tableaucontrol->process_control = proc;
             proof_found = EtableauProofSearch_n1(tableaucontrol,
                                                  new_tableaux,
