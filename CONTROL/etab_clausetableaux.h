@@ -73,7 +73,6 @@ typedef struct clausetableau
 	long folded_up;  // If the node has been folded up, this is the number of steps up it went
 	long id;  		   // If a clause was split on a node, this is the id of the clause used to split.
 	long previously_saturated;  // If  branch has already been saturated this amount or more, don't do it!
-	long max_var;     // f_code of the maximal variable in the tableau
 	long number_of_variables_on_branch;
 	unsigned long maximum_depth; // The maximum depth that this tableau is allowed to search
 	DStr_p info;    // Contains the substitution used to close this node
@@ -251,6 +250,8 @@ typedef struct tableaucontrol_cell
 	TB_p terms;
 	bool branch_saturation_enabled; // Is branch saturation enabled?
 	bool satisfiable;
+	bool all_start_rule_created;
+	bool only_saturate_max_depth_branches;
 	long quicksat; // Maximum number of processed clauess in saturation attempts
 	long number_of_extensions;
 	long number_of_saturation_attempts;
@@ -284,6 +285,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 									 ProofState_p proofstate,
 									 ProofControl_p proofcontrol,
 									 bool branch_saturation_enabled,
+									 bool only_saturate_max_depth_branches,
 									 long num_cores_to_use,
 									 long quicksat);
 void TableauControlFree(TableauControl_p trash);

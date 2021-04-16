@@ -38,18 +38,12 @@ int TableauControlGetCores(TableauControl_p tableaucontrol);
 ClauseTableau_p EtableauHailMary(TableauControl_p tableaucontrol);
 ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate,
                                            ClauseSet_p active);
-TableauSet_p EtableauCreateStartRules(ProofState_p proofstate, 
-                                      ProofControl_p proofcontrol, 
-                                      TB_p bank, 
-                                      FunCode max_var,
+TableauSet_p EtableauCreateStartRules(TB_p bank,
                                       ClauseSet_p unit_axioms,
                                       ClauseSet_p start_rule_candidates,
                                       TableauControl_p tableaucontrol,
                                       unsigned long maximum_depth);
-TableauStack_p EtableauCreateStartRulesStack(ProofState_p proofstate,
-                                             ProofControl_p proofcontrol,
-                                             TB_p bank,
-                                             FunCode max_var,
+TableauStack_p EtableauCreateStartRulesStack(TB_p bank,
                                              ClauseSet_p unit_axioms,
                                              ClauseSet_p start_rule_candidates,
                                              TableauControl_p tableaucontrol,

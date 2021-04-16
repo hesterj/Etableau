@@ -55,7 +55,6 @@ ClauseTableau_p empty_tableau_alloc()
 	handle->head_lit = false;
 	handle->saturation_closed = false;
 	handle->id = 0;
-	handle->max_var = 0;
 	handle->number_of_variables_on_branch = 0;
 	handle->info = NULL;
 	handle->active_branch = NULL;
@@ -156,7 +155,6 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	}
 	handle->head_lit = tab->head_lit;
 	handle->saturation_closed = tab->saturation_closed;
-	handle->max_var = tab->max_var;
 	handle->open_branches = TableauSetAlloc();
 	handle->terms = tab->terms;
 	handle->control = tab->control;
@@ -245,7 +243,6 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	handle->step = tab->step;
 	handle->max_step = tab->max_step;
 	handle->head_lit = tab->head_lit;
-	handle->max_var = parent->max_var;
 	handle->signature = parent->signature;
 	handle->terms = parent->terms;
 	handle->mark_int = tab->mark_int;
@@ -348,7 +345,6 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->open_branches = parent->open_branches;
 	handle->label = label;
 	handle->control = parent->control;
-	handle->max_var = parent->max_var;
 	handle->folding_labels = ClauseSetAlloc();
 	handle->info = DStrAlloc();
 	handle->signature = parent->signature;
@@ -1575,18 +1571,21 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 									 ProofState_p proofstate,
 									 ProofControl_p proofcontrol,
 									 bool branch_saturation_enabled,
+									 bool only_saturate_max_depth_branches,
 									 long num_cores_to_use,
 									 long quicksat)
 {
 	TableauControl_p handle = TableauControlCellAlloc();
 	//handle->backup = BackupProofstateAlloc(proofstate);
 	handle->terms = NULL; // The termbank for this tableau control..
+	handle->all_start_rule_created = false;
 	handle->number_of_extensions = 0;  // Total number of extensions done
 	handle->number_of_saturation_attempts = 0;
 	handle->number_of_successful_saturation_attempts = 0;
 	handle->number_of_saturations_closed_after_branch = 0;
 	handle->number_of_saturations_closed_on_branch = 0;
 	handle->number_of_saturations_closed_in_interreduction = 0;
+	handle->only_saturate_max_depth_branches = only_saturate_max_depth_branches;
 	handle->number_of_nodes_freed = 0;
 	handle->quicksat = quicksat;
 	handle->closed_tableau = NULL;
@@ -1908,7 +1907,7 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 		TSTPOUT(GlobalOut, "ResourceOut");
 	}
 	long neg_conjectures = tableaucontrol->neg_conjectures;
-	assert(resulting_tab == tableaucontrol->closed_tableau);
+	resulting_tab = tableaucontrol->closed_tableau;
 	assert(resulting_tab);
 	fflush(GlobalOut);
 	if (resulting_tab && !tableaucontrol->satisfiable)

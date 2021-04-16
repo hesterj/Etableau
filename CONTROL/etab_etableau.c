@@ -99,9 +99,9 @@ ErrorCodes EproverCloseBranchWrapper(ProofState_p proofstate,
 */
 
 ErrorCodes EproverCloseBranch(ProofState_p proofstate,
-                        ProofControl_p proofcontrol,
-                        ClauseTableau_p branch,
-                        long max_proc)
+                              ProofControl_p proofcontrol,
+                              ClauseTableau_p branch,
+                              long max_proc)
 {
     assert(branch->proofstate != proofstate); // Do not saturate branches with the main proof search state!
     TB_p terms = proofstate->terms;
@@ -234,6 +234,20 @@ int CloseBranchesWithEprover(TableauControl_p tableaucontrol,
     assert(master->master == master);
     TableauSet_p open_branches = master->open_branches;
     assert(open_branches);
+
+    if (tableaucontrol->only_saturate_max_depth_branches)
+    {
+        int deepest_depth = ClauseTableauGetDeepestBranch(master);
+        if (deepest_depth < master->maximum_depth - 1)
+        {
+            //printf("Only saturate when we have a deep branch\n");
+            return 0;
+        }
+        else
+        {
+            //printf("We have a deep branch\n");
+        }
+    }
 
     ClauseTableau_p handle = open_branches->anchor->succ;
     int num_local_branches = 0;

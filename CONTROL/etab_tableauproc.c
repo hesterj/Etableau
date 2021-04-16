@@ -371,64 +371,56 @@ ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate, ClauseSet_p 
 //
 /----------------------------------------------------------------------*/
 
-TableauSet_p EtableauCreateStartRules(ProofState_p proofstate,
-									  ProofControl_p proofcontrol,
-									  TB_p bank,
-									  FunCode max_var,
+TableauSet_p EtableauCreateStartRules(TB_p bank,
 									  ClauseSet_p unit_axioms,
 									  ClauseSet_p start_rule_candidates,
 									  TableauControl_p tableaucontrol,
 									  unsigned long maximum_depth)
 
 {
-   ClauseTableau_p initial_tab = ClauseTableauAlloc(tableaucontrol);
-   initial_tab->open_branches = TableauSetAlloc();
-   TableauSet_p open_branches = initial_tab->open_branches;
-   TableauSetInsert(open_branches, initial_tab);
+	ProofState_p proofstate = tableaucontrol->proofstate;
+	ProofControl_p proofcontrol = tableaucontrol->proofcontrol;
+	ClauseTableau_p initial_tab = ClauseTableauAlloc(tableaucontrol);
+	initial_tab->open_branches = TableauSetAlloc();
+	TableauSet_p open_branches = initial_tab->open_branches;
+	TableauSetInsert(open_branches, initial_tab);
 
-   VarBankSetVCountsToUsed(bank->vars);
-   VarBankSetVCountsToUsed(proofstate->freshvars);
-   initial_tab->terms = bank;
-   initial_tab->signature = bank->sig;
-   initial_tab->state = proofstate;
-   initial_tab->control = proofcontrol;
-   initial_tab->unit_axioms = NULL;
-   initial_tab->maximum_depth = maximum_depth;
+	VarBankSetVCountsToUsed(bank->vars);
+	VarBankSetVCountsToUsed(proofstate->freshvars);
+	initial_tab->terms = bank;
+	initial_tab->signature = bank->sig;
+	initial_tab->state = proofstate;
+	initial_tab->control = proofcontrol;
+	initial_tab->unit_axioms = NULL;
+	initial_tab->maximum_depth = maximum_depth;
 
 	ClauseTableau_p beginning_tableau = NULL;
 	TableauSet_p distinct_tableaux_set = TableauSetAlloc();
 	// Create a tableau for each axiom using the start rule
-   Clause_p start_label = start_rule_candidates->anchor->succ;
-   while (start_label != start_rule_candidates->anchor)
-   {
+	Clause_p start_label = start_rule_candidates->anchor->succ;
+	while (start_label != start_rule_candidates->anchor)
+	{
 		beginning_tableau = ClauseTableauMasterCopy(initial_tab);
 		beginning_tableau->unit_axioms = ClauseSetCopy(initial_tab->terms, unit_axioms);
-		beginning_tableau->max_var = max_var;
 		beginning_tableau = TableauStartRule(beginning_tableau, start_label);
 		TableauSetInsert(distinct_tableaux_set, beginning_tableau->master);
 		//ClauseTableauUpdateVariables(beginning_tableau->master); //unnecessary, is done before any uni attempts
 		start_label = start_label->succ;
 	}
 
-    TableauSetExtractEntry(initial_tab);
+	TableauSetExtractEntry(initial_tab);
 	ClauseTableauFree(initial_tab);
 	return distinct_tableaux_set;
 }
 
-TableauStack_p EtableauCreateStartRulesStack(ProofState_p proofstate,
-											 ProofControl_p proofcontrol,
-											 TB_p bank,
-											 FunCode max_var,
+TableauStack_p EtableauCreateStartRulesStack(TB_p bank,
 											 ClauseSet_p unit_axioms,
 											 ClauseSet_p start_rule_candidates,
 											 TableauControl_p tableaucontrol,
 											 unsigned long maximum_depth)
 {
 	PStack_p stack = PStackAlloc();
-	TableauSet_p dt = EtableauCreateStartRules(proofstate,
-											   proofcontrol,
-											   bank,
-											   max_var,
+	TableauSet_p dt = EtableauCreateStartRules(bank,
 											   unit_axioms,
 											   start_rule_candidates,
 											   tableaucontrol,

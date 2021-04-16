@@ -191,6 +191,7 @@ typedef enum
    OPT_TABLEAU_DEPTH,
    OPT_TABLEAU_EQUALITY,
    OPT_TABLEAU_SATURATION,
+   OPT_TABLEAU_SATURATION_MAX_DEPTH_ONLY,
    OPT_TABLEAU_CORES,
    OPT_TABLEAU_APR_DISTANCE,
    OPT_TABLEAU_DOT_PRINT,
@@ -1457,7 +1458,16 @@ OptCell opts[] =
     OptArg, "0",
     "Specify an integer"
     "The default 0 means that no tableau saturation will be done"
-    "If this is enabled (1), local branches of tableaux may be saturated with the superposition calculus"}
+    "If this is enabled (1), local branches of tableaux may be saturated with the superposition calculus"
+    }
+    ,
+    {
+    OPT_TABLEAU_SATURATION_MAX_DEPTH_ONLY,
+    '\0', "tsmdo",
+    NoArg, "0",
+    "No argument"
+    "If tableau saturation is enabled, only saturate branches when there is a branch at maximum depth"
+    }
     ,
     {
     OPT_TABLEAU_CORES,

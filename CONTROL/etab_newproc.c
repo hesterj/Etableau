@@ -4,9 +4,16 @@ extern void c_smoketest();
 bool all_tableaux_in_stack_are_root(TableauStack_p stack);
 ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_stack,
                                             PStackPointer *current_index_p,
-                                            TableauStack_p new_tableaux);
+                                            TableauStack_p new_tableaux,
+                                            TableauControl_p tableaucontrol,
+                                            ClauseSet_p active);
 ClauseTableau_p get_next_tableau(TableauStack_p distinct_tableaux_stack,
-                                 PStackPointer *current_index_p);
+                                 PStackPointer *current_index_p,
+                                 TableauControl_p tableaucontrol,
+                                 ClauseSet_p active);
+long create_all_start_rules(TableauControl_p tableaucontrol,
+                        TableauStack_p stack,
+                        ClauseSet_p active);
 
 
 int Etableau_n0(TableauControl_p tableaucontrol,
@@ -41,18 +48,17 @@ int Etableau_n0(TableauControl_p tableaucontrol,
 
     bool proof_found = false;
     problemType = PROBLEM_FO;
-    FunCode max_var = ClauseSetGetMaxVar(active);
     // Create a new copy of the unprocesed axioms...
+    if (tableauequality)
+    {
+        ClauseSet_p equality_axioms = EqualityAxioms(bank);
+        ClauseSetInsertSet(proofstate->unprocessed, equality_axioms);
+        ClauseSetFree(equality_axioms);
+    }
     tableaucontrol->unprocessed = ClauseSetCopy(bank, proofstate->unprocessed);
     GCAdmin_p gc = proofstate->gc_terms;
     fprintf(GlobalOut, "# %ld beginning clauses after preprocessing and clausification\n", active->members);
     ClauseSet_p extension_candidates = ClauseSetCopy(bank, active);
-    if (tableauequality)
-    {
-        ClauseSet_p equality_axioms = EqualityAxioms(bank);
-        ClauseSetInsertSet(extension_candidates, equality_axioms);
-        ClauseSetFree(equality_axioms);
-    }
 
     //long unbound = TermBankUnbindAll(bank);
     //fprintf(GlobalOut, "# Unound %ld terms before tableau proof search...\n", unbound);
@@ -72,13 +78,10 @@ int Etableau_n0(TableauControl_p tableaucontrol,
     GCRegisterClauseSet(gc, extension_candidates);
     GCRegisterClauseSet(gc, tableaucontrol->unprocessed);
 
-    //  At this point, all that is left in extension_candidates are non-conjecture non-unit clauses.
+    //  At this point, all that is left in extension_candidates are non-unit clauses.
     //  The conjecture non-unit clauses will be added to extension candidates later.
 
-    TableauStack_p distinct_tableaux_stack = EtableauCreateStartRulesStack(proofstate,
-                                                                           proofcontrol,
-                                                                           bank,
-                                                                           max_var,
+    TableauStack_p distinct_tableaux_stack = EtableauCreateStartRulesStack(bank,
                                                                            unit_axioms,
                                                                            start_rule_candidates,
                                                                            tableaucontrol,
@@ -129,16 +132,16 @@ int Etableau_n0(TableauControl_p tableaucontrol,
 
    if (!proof_found && tableaucontrol->multiprocessing_active != 0)
    {
-       proof_found = EtableauMultiprocess_n(tableaucontrol,
-                                            distinct_tableaux_stack,
-                                            active,
-                                            extension_candidates,
-                                            maximum_depth);
+       proof_found = EtableauMultiprocess(tableaucontrol,
+                                          distinct_tableaux_stack,
+                                          active,
+                                          extension_candidates,
+                                          maximum_depth);
 
    }
    else if (!proof_found)
    {
-       proof_found = EtableauProofSearch_n1(tableaucontrol,
+       proof_found = EtableauSelectTableau(tableaucontrol,
                                             distinct_tableaux_stack,
                                             active,
                                             extension_candidates);
@@ -176,10 +179,10 @@ int Etableau_n0(TableauControl_p tableaucontrol,
    return 0;
 }
 
-ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
-                                       ClauseTableau_p master,
-                                       ClauseSet_p extension_candidates,
-                                       BacktrackStatus_p backtrack_status)
+ClauseTableau_p EtableauSelectBranchAndExtend(TableauControl_p tableaucontrol,
+                                              ClauseTableau_p master,
+                                              ClauseSet_p extension_candidates,
+                                              BacktrackStatus_p backtrack_status)
 {
     assert(tableaucontrol);
     assert(master);
@@ -264,7 +267,7 @@ ClauseTableau_p EtableauProofSearch_n3(TableauControl_p tableaucontrol,
     return result;
 }
 
-ClauseTableau_p EtableauPopulate_n3(TableauControl_p tableaucontrol,
+ClauseTableau_p EtableauPopulationSelectBranchAndExtend(TableauControl_p tableaucontrol,
                                     ClauseTableau_p master,
                                     ClauseSet_p extension_candidates,
                                     BacktrackStatus_p backtrack_status,
@@ -334,11 +337,11 @@ ClauseTableau_p EtableauPopulate_n3(TableauControl_p tableaucontrol,
     return result;
 }
 
-bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
-                            TableauStack_p starting_tableaux,
-                            ClauseSet_p active,
-                            ClauseSet_p extension_candidates,
-                            unsigned long max_depth)
+bool EtableauMultiprocess(TableauControl_p tableaucontrol,
+                          TableauStack_p starting_tableaux,
+                          ClauseSet_p active,
+                          ClauseSet_p extension_candidates,
+                          unsigned long max_depth)
 {
     bool proof_found = false;
     int num_cores_available = TableauControlGetCores(tableaucontrol);
@@ -347,7 +350,7 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     if (PStackGetSP(starting_tableaux) < num_cores_available)
     {
         fprintf(GlobalOut, "# There are not enough tableaux to fork, creating more from the initial %ld\n", PStackGetSP(starting_tableaux));
-        proof_found = EtableauPopulate_n1(tableaucontrol,
+        proof_found = EtableauPopulation(tableaucontrol,
                                           starting_tableaux,
                                           active,
                                           extension_candidates,
@@ -385,10 +388,6 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     //printf("done printing hashes\n");
     //fflush(stdout);
 //#endif
-    if (PStackEmpty(new_tableaux))
-    {
-        printf("# No tableaux after population, if there were conjectures present we should make all non-conjectures start rules.\n");
-    }
 
     EPCtrlSet_p process_set = EPCtrlSetAlloc();
     PStack_p buckets = PStackAlloc();
@@ -432,7 +431,7 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
             GlobalOut = stdout;
             fflush(GlobalOut);
             tableaucontrol->process_control = proc;
-            proof_found = EtableauProofSearch_n1(tableaucontrol,
+            proof_found = EtableauSelectTableau(tableaucontrol,
                                                  new_tableaux,
                                                  active,
                                                  extension_candidates);
@@ -468,7 +467,7 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     return proof_found;
 }
 
-bool EtableauProofSearch_n1(TableauControl_p tableaucontrol,
+bool EtableauSelectTableau(TableauControl_p tableaucontrol,
                             TableauStack_p distinct_tableaux_stack,
                             ClauseSet_p active,
                             ClauseSet_p extension_candidates)
@@ -482,20 +481,26 @@ bool EtableauProofSearch_n1(TableauControl_p tableaucontrol,
     PStackPointer current_tableau_index = -1;
     ClauseTableau_p current_tableau = NULL;
     while ((current_tableau = get_next_tableau(distinct_tableaux_stack,
-                                               &current_tableau_index)))
+                                               &current_tableau_index,
+                                               tableaucontrol,
+                                               active)))
     {
+        if (tableaucontrol->closed_tableau)
+        {
+            EtableauStatusReport(tableaucontrol, active, tableaucontrol->closed_tableau);
+        }
         assert(MaximumDepth(current_tableau) && "Maximum depth must be a positive integer");
         assert(current_tableau && "We must have a tableau for proof search...");
         assert(current_tableau->master == current_tableau && "The current tableau must be the root node of the tableau");
         BacktrackStatus tableau_status = BACKTRACK_OK;
-        ClauseTableau_p closed_tableau = EtableauProofSearch_n3(tableaucontrol,
+        ClauseTableau_p closed_tableau = EtableauSelectBranchAndExtend(tableaucontrol,
                                                                 current_tableau,
                                                                 extension_candidates,
                                                                 &tableau_status);
         assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
-        if (closed_tableau || current_tableau->open_branches->members == 0)
+        if (closed_tableau || current_tableau->open_branches->members == 0 || tableaucontrol->closed_tableau)
         {
-            assert(tableaucontrol->closed_tableau == closed_tableau);
+            closed_tableau = tableaucontrol->closed_tableau;
             EtableauStatusReport(tableaucontrol, active, closed_tableau);
             proof_found = true;
             goto return_point;
@@ -567,11 +572,11 @@ bool EtableauProofSearch_n1(TableauControl_p tableaucontrol,
     return proof_found;
 }
 
-bool EtableauPopulate_n1(TableauControl_p tableaucontrol,
-                         TableauStack_p distinct_tableaux_stack,
-                         ClauseSet_p active,
-                         ClauseSet_p extension_candidates,
-                         TableauStack_p new_tableaux)
+bool EtableauPopulation(TableauControl_p tableaucontrol,
+                        TableauStack_p distinct_tableaux_stack,
+                        ClauseSet_p active,
+                        ClauseSet_p extension_candidates,
+                        TableauStack_p new_tableaux)
 {
     assert(new_tableaux);
     if (PStackEmpty(distinct_tableaux_stack))
@@ -590,25 +595,28 @@ bool EtableauPopulate_n1(TableauControl_p tableaucontrol,
     //while (!proof_found)
     while ((current_tableau = get_next_tableau_population(distinct_tableaux_stack,
                                                           &current_tableau_index,
-                                                          new_tableaux)))
+                                                          new_tableaux,
+                                                          tableaucontrol,
+                                                          active)))
     {
+        if (tableaucontrol->closed_tableau)
+        {
+            EtableauStatusReport(tableaucontrol, active, tableaucontrol->closed_tableau);
+        }
         assert(current_tableau && "We must have a tableau for proof search...");
         assert(current_tableau->master == current_tableau && "The current tableau must be the root node of the tableau");
         //printf("iter %ld:%ld\n", current_tableau_index, PStackGetSP(new_tableaux));
-        assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
         BacktrackStatus tableau_status = BACKTRACK_OK;
-        ClauseTableau_p closed_tableau = EtableauPopulate_n3(tableaucontrol,
+        ClauseTableau_p closed_tableau = EtableauPopulationSelectBranchAndExtend(tableaucontrol,
                                                              current_tableau,
                                                              extension_candidates,
                                                              &tableau_status,
                                                              new_tableaux);
-        assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
         // If we have not been able to find enough tableaux after 500 iterations, just return soon.
         if (UNLIKELY(current_tableau_index >= 500)) tableau_status = RETURN_NOW;
-        if (closed_tableau || current_tableau->open_branches->members == 0)
+        if (closed_tableau || current_tableau->open_branches->members == 0 || tableaucontrol->closed_tableau)
         {
-            assert(tableaucontrol->closed_tableau == closed_tableau);
-            //fprintf(GlobalOut, "# Reporting status (n1), a proof was found.\n");
+            closed_tableau = tableaucontrol->closed_tableau;
             EtableauStatusReport(tableaucontrol, active, closed_tableau);
             proof_found = true;
             break;
@@ -669,7 +677,9 @@ bool EtableauPopulate_n1(TableauControl_p tableaucontrol,
 
 ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_stack,
                                             PStackPointer *current_index_p,
-                                            TableauStack_p new_tableaux)
+                                            TableauStack_p new_tableaux,
+                                            TableauControl_p tableaucontrol,
+                                            ClauseSet_p active)
 {
     ClauseTableau_p new_current_tableau = NULL;
     assert(new_tableaux);
@@ -677,6 +687,14 @@ ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_sta
     assert(*current_index_p >= 0);
     if (*current_index_p >= PStackGetSP(distinct_tableaux_stack))
     {
+        // If we have not been able to produce tableaux
+        if (PStackEmpty(new_tableaux) &&
+            tableaucontrol->all_start_rule_created == false &&
+            tableaucontrol->neg_conjectures)
+        {
+            create_all_start_rules(tableaucontrol, new_tableaux, active);
+        }
+        // Get a new tableau from the newly produced stack
         if (!PStackEmpty(new_tableaux))
         {
             new_current_tableau = PStackPopP(new_tableaux);
@@ -693,13 +711,22 @@ ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_sta
 }
 
 ClauseTableau_p get_next_tableau(TableauStack_p distinct_tableaux_stack,
-                                 PStackPointer *current_index_p)
+                                 PStackPointer *current_index_p,
+                                 TableauControl_p tableaucontrol,
+                                 ClauseSet_p active)
 {
     ClauseTableau_p new_current_tableau = NULL;
     (*current_index_p)++;
     assert(*current_index_p >= 0);
     if (*current_index_p >= PStackGetSP(distinct_tableaux_stack))
     {
+        // If we have not been able to produce tableaux
+        if (PStackEmpty(distinct_tableaux_stack) &&
+            tableaucontrol->all_start_rule_created == false &&
+            tableaucontrol->neg_conjectures)
+        {
+            create_all_start_rules(tableaucontrol, distinct_tableaux_stack, active);
+        }
         if (!PStackEmpty(distinct_tableaux_stack) )
         {
             *current_index_p = 0;
@@ -731,3 +758,36 @@ bool all_tableaux_in_stack_are_root(TableauStack_p stack)
     }
     return true;
 }
+
+// Create start rule applications for ALL clauses in active and put the resulting tableaux in to stack
+
+long create_all_start_rules(TableauControl_p tableaucontrol,
+                            TableauStack_p stack,
+                            ClauseSet_p active)
+{
+    printf("# Making start rules for all clauses\n");
+    long res = 0;
+    TB_p terms = tableaucontrol->proofstate->terms;
+    tableaucontrol->all_start_rule_created = true;
+    //printf("Ran out of tableaux in population...\n");
+    ClauseSet_p emergency_units = ClauseSetAlloc();
+    ClauseSetCopyUnits(terms, active, emergency_units);
+    TableauStack_p emergency_tableaux = EtableauCreateStartRulesStack(terms,
+                                                                      emergency_units,
+                                                                      active,
+                                                                      tableaucontrol,
+                                                                      4);
+    while (!PStackEmpty(emergency_tableaux))
+    {
+        PStackPushP(stack, PStackPopP(emergency_tableaux));
+        res++;
+    }
+    ClauseSetFree(emergency_units);
+    TableauStackFree(emergency_tableaux);
+    printf("# Made %ld start rules\n", res);
+    return res;
+}
+
+
+
+// End of file
