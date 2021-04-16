@@ -133,35 +133,22 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 void ClauseTableauApplySubstitution(ClauseTableau_p tab, Subst_p subst);
 void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst);
 ClauseSet_p ClauseSetApplySubstitution(TB_p bank, ClauseSet_p set, Subst_p subst);
-FunCode ClauseSetGetMaxVar(ClauseSet_p set);
-Clause_p ClauseApplySubst(Clause_p clause,  TB_p bank, Subst_p subst);
 int ClauseTableauDifference(ClauseTableau_p higher, ClauseTableau_p lower);
 void ClauseTableauScoreActive(ClauseTableau_p tab);
-void ClauseTableauPrint(ClauseTableau_p tab);
 void ClauseTableauCollectSteps(ClauseTableau_p tab, PStack_p steps);
-void ClauseTableauTPTPPrint(ClauseTableau_p tab);
-void ClauseTableauPrint2(ClauseTableau_p tab);
 
 void HCBClauseSetEvaluate(HCB_p hcb, ClauseSet_p clauses);
 
 ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set);
 ClauseSet_p ClauseSetFlatCopy(ClauseSet_p set);
-ClauseSet_p ClauseSetFlatCopyIndexed(ClauseSet_p set);
-ClauseSet_p ClauseSetCopyOpt(ClauseSet_p set);
-ClauseSet_p ClauseSetCopyIndexedOpt(ClauseSet_p set);
-Clause_p ClauseFlatCopyFresh(Clause_p clause, ClauseTableau_p tableau);
-long ClauseSetInsertSetFlatCopyIndexed(ClauseSet_p to, ClauseSet_p from);
-long ClauseSetInsertSetCopyOptIndexed(ClauseSet_p to, ClauseSet_p from);
 bool ClausesAreDisjoint(Clause_p a, Clause_p b);
 
 Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau);  // Major memory hog
 void ClauseBindFresh(Clause_p clause, Subst_p subst, ClauseTableau_p tableau);
 
 ClauseSet_p EqualityAxioms(TB_p bank);
-PList_p ClauseSetToPList(ClauseSet_p set);
 
 Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b);
-Subst_p ClauseContradictsClauseSubst(Clause_p a, Clause_p b, Subst_p subst);
 int ClauseTableauGetDeepestBranch(ClauseTableau_p tab);
 int ClauseTableauGetShallowestBranch(ClauseTableau_p tab);
 
@@ -175,10 +162,22 @@ bool ClauseTableauIsLeafRegular(ClauseTableau_p tab);
 void ClauseTableauRegisterStep(ClauseTableau_p tab);
 void ClauseTableauDeregisterStep(ClauseTableau_p tab);
 
+void ClauseTableauTPTPPrint(ClauseTableau_p tab);
+void ClauseTableauPrint(ClauseTableau_p tab);
+void ClauseTableauPrintBranch(ClauseTableau_p branch);
 void ClauseTableauPrintDOTGraphToFile(FILE* file, ClauseTableau_p tab);
 void ClauseTableauPrintDOTGraph(ClauseTableau_p tab);
 void ClauseTableauPrintDOTGraphChildren(ClauseTableau_p tab, FILE* dotgraph);
 void ClauseTableauPrintDerivation(FILE* out, ClauseTableau_p final_tableau, TableauStack_p derivation);
+
+void ClauseTableauCollectLeavesStack(ClauseTableau_p tab, PStack_p leaves);
+
+bool TableauDominatesNode(ClauseTableau_p tab, ClauseTableau_p node);
+
+Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var);
+void ClauseTableauBindFreshVar(ClauseTableau_p master, Subst_p subst, Term_p old_var);
+long ClauseGetIdent(Clause_p clause);
+long          SubstDStrPrint(DStr_p str, Subst_p subst, Sig_p sig, DerefType deref);
 
 void AssertClauseStackMembersAreInSet(ClauseStack_p stack);
 void AssertAllOldLabelsAreInSet(ClauseTableau_p tab);
@@ -213,28 +212,14 @@ typedef struct tableau_set_cell
 TableauSet_p TableauSetAlloc();
 TableauSet_p TableauSetCopy(TableauSet_p set);
 void TableauSetInsert(TableauSet_p set, ClauseTableau_p tab);
-void ClauseTableauPrintBranch(ClauseTableau_p branch);
-void ClauseTableauPrintBranch2(ClauseTableau_p branch);
 ClauseTableau_p   TableauSetExtractFirst(TableauSet_p list);
 ClauseTableau_p TableauSetExtractEntry(ClauseTableau_p set);
 void TableauSetFree(TableauSet_p handle);
-void TableauSetDrainToStack(PStack_p to, TableauSet_p from);
-void TableauStackDrainToSet(TableauSet_p to, PStack_p from);
-void TableauSetMoveClauses(TableauSet_p to, TableauSet_p from);
 void ClauseTableauDeselectBranches(TableauSet_p open_branches);
 
 
 void TableauStackFreeTableaux(PStack_p stack);
 void TableauStackFree(TableauStack_p stack);
-void ClauseTableauCollectLeaves(ClauseTableau_p tab, TableauSet_p leaves);
-void ClauseTableauCollectLeavesStack(ClauseTableau_p tab, PStack_p leaves);
-
-bool TableauDominatesNode(ClauseTableau_p tab, ClauseTableau_p node);
-
-Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var);
-void ClauseTableauBindFreshVar(ClauseTableau_p master, Subst_p subst, Term_p old_var);
-long ClauseGetIdent(Clause_p clause);
-long          SubstDStrPrint(DStr_p str, Subst_p subst, Sig_p sig, DerefType deref);
 
 /*  Tableau control struct
  * 

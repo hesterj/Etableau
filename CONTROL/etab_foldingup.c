@@ -99,20 +99,6 @@ ClauseTableau_p PStackGetDeepestTableauNode(PStack_p stack)
 	return deepest;
 }
 
-/*  marks are the integer distance from a node to the dominating node it was closed with
- *  Returns the clause labelling the mark'd node.
-*/
-
-Clause_p FoldingUpGetLabelFromMark(ClauseTableau_p tableau, int mark)
-{
-	while (mark)
-	{
-		tableau = tableau->parent;
-		mark -= 1;
-	}
-	return tableau->label;
-}
-
 /*  Integer marks represent the distance up used for contradiction.
  *  This returns the node at mark distance up from tableau.
 */
@@ -259,7 +245,6 @@ int FoldUpAtNode(ClauseTableau_p node)
 		// To reflect this, the deepest relevant node (node itself here) must be included as a dominator.
 		// By keeping track of which clauses were used in the saturation attempt, it could potentially be folded up higher.
 		// This would be tricky to implement and likely not worth the effort...
-		//PStackPushP(dominators, node);
 		printf("not folding up because of bad child\n");
 		return 0;
 	}
@@ -289,12 +274,8 @@ int FoldUpAtNode(ClauseTableau_p node)
 			ClauseFlipLiteralSign(flipped_label, flipped_label->literals);
 			node->folded_up = node->depth;
 			ClauseTableauEdgeInsert(master_node, flipped_label);
-			//ClauseSetInsertSet(master_node->folding_labels, node->folding_labels);
 			ClauseSetDeleteCopies(master_node->folding_labels);
 			node->folded_up = node->depth;
-			//fprintf(stdout, "Folding up clause %ld to the root\n", ClauseGetIdent(flipped_label));
-
-			//ClauseFree(flipped_label); // Temporary, for debugging
 		}
 	}
 	else
@@ -311,41 +292,22 @@ int FoldUpAtNode(ClauseTableau_p node)
 		else if (!(deepest->parent))
 		{
 			//  We are at the master node, probably because of unit axioms... fold up to it
-			//printf("Folding up to master node.\n");
 			flipped_label = ClauseCopy(node->label, node->terms);
 			ClauseFlipLiteralSign(flipped_label, flipped_label->literals);
-			//printf("The flipped literal clause that has been folded up to root:\n");
-			//ClausePrint(GlobalOut, flipped_label, true);printf("\n");
 			node->folded_up = node->depth;
 			ClauseTableauEdgeInsert(master_node, flipped_label);
-			//ClauseSetInsertSet(master_node->folding_labels, node->folding_labels);
 			ClauseSetDeleteCopies(master_node->folding_labels);
-			//fprintf(stdout, "Folding up clause %ld case 2.1\n", ClauseGetIdent(flipped_label));
-			//ClauseFree(flipped_label); // Temporary, for debugging
 		}
 		else
 		{
 			// The actual case 2
 			assert(deepest->depth > 0);
 			node->folded_up = ClauseTableauDifference(deepest, node)+1;
-			//assert(deepest != node);
 			assert(node->folded_up);
 			flipped_label = ClauseCopy(node->label, node->terms);
-			//if (ClauseGetIdent(flipped_label) == 100981)
-			//{
-				//fprintf(stdout, "# Folding up the bastard\n");
-				//if (ClauseContradictsSet(node, flipped_label, node->master->unit_axioms, node))
-				//{
-					//fprintf(stdout, "# Contradicts unit axioms...\n");
-				//}
-				//fflush(stdout);
-			//}
 			ClauseFlipLiteralSign(flipped_label, flipped_label->literals);
 			ClauseTableauEdgeInsert(deepest->parent, flipped_label);
-			//ClauseSetInsertSet(deepest->parent->folding_labels, node->folding_labels);
 			ClauseSetDeleteCopies(deepest->parent->folding_labels);
-			//fprintf(stdout, "Folding up clause %ld case 2.2, deepest depth is %d\n", ClauseGetIdent(flipped_label), deepest->depth);
-			//ClauseFree(flipped_label); // Temporary, for debugging
 		}
 		
 	}

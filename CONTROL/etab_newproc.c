@@ -1,5 +1,9 @@
 #include"etab_newproc.h"
 
+/*
+** Function declarations
+*/
+
 extern void c_smoketest();
 bool all_tableaux_in_stack_are_root(TableauStack_p stack);
 ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_stack,
@@ -14,7 +18,65 @@ ClauseTableau_p get_next_tableau(TableauStack_p distinct_tableaux_stack,
 long create_all_start_rules(TableauControl_p tableaucontrol,
                         TableauStack_p stack,
                         ClauseSet_p active);
+ClauseTableau_p branch_select_new(TableauSet_p open_branches, int max_depth);
+ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth);
 
+
+/*
+** Function Definitions
+ */
+
+/*
+** This selection function returns the deepest branch found shallower than max depth.
+*/
+
+ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth)
+{
+    assert(open_branches);
+    ClauseTableau_p selected = NULL;
+    int selected_depth = 0;
+    ClauseTableau_p branch = open_branches->anchor->succ;
+    while (branch != open_branches->anchor)
+    {
+        assert(branch);
+        assert(branch->label);
+        assert(branch->arity == 0);
+        assert(branch->children == NULL);
+        assert(branch->label);
+        if (branch->depth < max_depth && branch->depth > selected_depth)
+        {
+            selected_depth = branch->depth;
+            selected = branch;
+        }
+        branch = branch->succ;
+    }
+    return selected;
+}
+/*
+** This selection function returns the first branch found shallower than max depth that has not been previously selected.
+*/
+
+ClauseTableau_p branch_select_new(TableauSet_p open_branches, int max_depth)
+{
+    assert(open_branches);
+    ClauseTableau_p selected = NULL;
+    ClauseTableau_p branch = open_branches->anchor->succ;
+    while (branch != open_branches->anchor)
+    {
+        assert(branch);
+        assert(branch->label);
+        assert(branch->arity == 0);
+        assert(branch->children == NULL);
+        assert(branch->label);
+        if (branch->depth < max_depth && !ClauseTableauQueryProp(branch, TUPHasBeenPreviouslySelected))
+        {
+            ClauseTableauSetProp(branch, TUPHasBeenPreviouslySelected);
+            return branch;
+        }
+        branch = branch->succ;
+    }
+    return selected;
+}
 
 int Etableau_n0(TableauControl_p tableaucontrol,
                 ProofState_p proofstate,
@@ -198,7 +260,7 @@ ClauseTableau_p EtableauSelectBranchAndExtend(TableauControl_p tableaucontrol,
     TableauSet_p open_branches = master->open_branches;
     while (true)
     {
-        selected_branch = branch_select5(open_branches, MaximumDepth(master));
+        selected_branch = branch_select(open_branches, MaximumDepth(master));
         if (!selected_branch)
         {
             //printf("Couldn't select branch\n");
@@ -288,7 +350,7 @@ ClauseTableau_p EtableauPopulationSelectBranchAndExtend(TableauControl_p tableau
     while (true)
     {
         //open_branch = branch_select2(open_branches, current_depth, max_depth, &depth_status);
-        open_branch = branch_select4(open_branches, MaximumDepth(master));
+        open_branch = branch_select_new(open_branches, MaximumDepth(master));
         if (!open_branch)
         {
             *backtrack_status = NEXT_TABLEAU;

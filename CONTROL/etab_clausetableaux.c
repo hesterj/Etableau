@@ -512,46 +512,6 @@ void ClauseTableauApplySubstitution(ClauseTableau_p tab, Subst_p subst)
 	ClauseTableauApplySubstitutionToNode(master, subst);
 }
 
-FunCode ClauseSetGetMaxVar(ClauseSet_p set)
-{
-	FunCode max_funcode = 0;
-	Clause_p start_label = set->anchor->succ;
-   PStack_p start_subterms = PStackAlloc();
-   PTree_p tree = NULL;
-   while (start_label != set->anchor)
-   {
-		ClauseCollectVariables(start_label, &tree);
-		//ClauseCollectSubterms(start_label, start_subterms);
-		start_label = start_label->succ;
-	}
-	PTreeToPStack(start_subterms, tree);
-	//printf("%ld subterms found", PStackGetSP(start_subterms));
-	Term_p temp_term = NULL;
-	for (PStackPointer p = 0; p<PStackGetSP(start_subterms); p++)
-	{
-		temp_term = PStackElementP(start_subterms, p);
-		//printf("tmp term fcode %ld ", temp_term->f_code);
-		if (TermIsVar(temp_term))
-		{
-			FunCode var_funcode = temp_term->f_code;
-			//printf("%ld ", var_funcode);
-			if (var_funcode <= max_funcode)
-			{
-				max_funcode = var_funcode;
-			}
-		}
-	}
-	//printf("\n");
-	PTreeFree(tree);
-	PStackFree(start_subterms);
-	if (max_funcode == 0)
-	{
-		return -2;
-	}
-	//printf("max_funcode: %ld\n", max_funcode);
-	return max_funcode;
-}
-
 /*  Recursively apply subst to the clauses in tab, and tab's children
  *  Subst is not directly used in the function... Since the subst sets bindings to variables, it is kept here as a reminder of what is happening.
 */
@@ -740,108 +700,6 @@ ClauseSet_p ClauseSetCopyOpt(ClauseSet_p set)
 	return new;
 }
 
-ClauseSet_p ClauseSetCopyIndexedOpt(ClauseSet_p set)
-{
-	assert(false && "This function does not work properly because the demod_index of new is not being created");
-	Clause_p handle, temp;
-	assert(set);
-	ClauseSet_p new = ClauseSetAlloc();
-	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
-	{
-		assert(handle);
-		//temp = ClauseCopy(handle,bank);
-		temp = ClauseCopyOpt(handle);
-		temp->weight = ClauseStandardWeight(temp);
-#ifdef DEBUG
-		ClauseRecomputeLitCounts(temp);
-		assert(ClauseLiteralNumber(temp));
-#endif
-		ClauseDelProp(temp, CPIsDIndexed);
-		ClauseDelProp(temp, CPIsSIndexed);
-		ClauseSetIndexedInsertClause(new, temp);
-	}
-	return new;
-}
-
-// Insert copies of the clauses from "from" to "to".
-// Uses the ClauseCopyOpt function
-
-long ClauseSetInsertSetCopyOptIndexed(ClauseSet_p to, ClauseSet_p from)
-{
-	long res = 0;
-	Clause_p handle, temp;
-	assert(to);
-	assert(from);
-	for (handle = from->anchor->succ; handle != from->anchor; handle = handle->succ)
-	{
-		assert(handle);
-		temp   = ClauseCopyOpt(handle);
-		temp->weight = ClauseStandardWeight(temp);
-#ifdef DEBUG
-		ClauseRecomputeLitCounts(temp);
-		assert(ClauseLiteralNumber(temp));
-#endif
-		ClauseDelProp(temp, CPIsDIndexed);
-		ClauseDelProp(temp, CPIsSIndexed);
-		ClauseSetIndexedInsertClause(to, temp);
-	}
-	return res;
-}
-
-// Insert copies of clauses from "from" to "to".
-// Uses ClauseFlatCopy
-
-long ClauseSetInsertSetFlatCopyIndexed(ClauseSet_p to, ClauseSet_p from)
-{
-	long res = 0;
-	Clause_p handle, temp;
-	assert(to);
-	assert(from);
-	for (handle = from->anchor->succ; handle != from->anchor; handle = handle->succ)
-	{
-		assert(handle);
-		//temp = ClauseCopy(handle,bank);
-		//temp = ClauseCopyOpt(handle);
-		temp   = ClauseFlatCopy(handle);
-		temp->weight = ClauseStandardWeight(temp);
-#ifdef DEBUG
-		ClauseRecomputeLitCounts(temp);
-		assert(ClauseLiteralNumber(temp));
-#endif
-		ClauseDelProp(temp, CPIsDIndexed);
-		ClauseDelProp(temp, CPIsSIndexed);
-		ClauseSetIndexedInsertClause(to, temp);
-	}
-	return res;
-}
-
-// Insert copies of clauses from "from" to "to".
-// Uses ClauseCopy
-
-long ClauseSetInsertSetCopyIndexed(TB_p bank, ClauseSet_p to, ClauseSet_p from)
-{
-	long res = 0;
-	Clause_p handle, temp;
-	assert(to);
-	assert(from);
-	for (handle = from->anchor->succ; handle != from->anchor; handle = handle->succ)
-	{
-		assert(handle);
-		//temp = ClauseCopy(handle,bank);
-		//temp = ClauseCopyOpt(handle);
-		temp   = ClauseCopy(handle, bank);
-		temp->weight = ClauseStandardWeight(temp);
-#ifdef DEBUG
-		ClauseRecomputeLitCounts(temp);
-		assert(ClauseLiteralNumber(temp));
-#endif
-		ClauseDelProp(temp, CPIsDIndexed);
-		ClauseDelProp(temp, CPIsSIndexed);
-		ClauseSetIndexedInsertClause(to, temp);
-	}
-	return res;
-}
-
 /*
 */
 
@@ -877,19 +735,6 @@ void ClauseTableauPrint(ClauseTableau_p tab)
 	PStackFree(leaves);
 }
 
-void ClauseTableauPrint2(ClauseTableau_p tab)
-{
-	PStack_p leaves = PStackAlloc();
-	fprintf(GlobalOut, "# ClauseTableauPrint2\n");
-	ClauseTableauCollectLeavesStack(tab, leaves);
-	for (PStackPointer p = 0; p<PStackGetSP(leaves); p++)
-	{
-		ClauseTableau_p handle = PStackElementP(leaves, p);
-		ClauseTableauPrintBranch2(handle);printf("\n");
-	}
-	PStackFree(leaves);
-}
-
 /*  Checks to see if the node dominates tab.
  *
 */
@@ -906,24 +751,7 @@ bool TableauDominatesNode(ClauseTableau_p tab, ClauseTableau_p node)
 	return false;
 }
 
-/*  Only call on closed tableau.  Collects the leaves (no children nodes).
- * 
-*/
-
-void ClauseTableauCollectLeaves(ClauseTableau_p tab, TableauSet_p leaves)
-{
-	if (tab->arity == 0) // found a leaf
-	{
-		assert(!tab->set);
-		TableauSetInsert(leaves, tab);
-	}
-	for (int i=0; i<tab->arity; i++)
-	{
-		ClauseTableauCollectLeaves(tab->children[i], leaves);
-	}
-}
-
-/*  
+/*
  * Collects the leaves below a tableau node
 */
 
@@ -1018,15 +846,6 @@ void ClauseTableauPrintBranch2(ClauseTableau_p branch)
 	ClausePrint(GlobalOut, depth_check->label, true);
 	printf("\n");
 	//printf("\033[0m");
-}
-
-Clause_p ClauseApplySubst(Clause_p clause,  TB_p bank, Subst_p subst)
-{
-   Clause_p new_clause;
-   Term_p variable_in_clause __attribute__((unused));
-   assert(clause);
-   new_clause = ClauseCopy(clause, bank);
-   return new_clause;
 }
 
 /*-----------------------------------------------------------------------
@@ -1342,35 +1161,6 @@ void TableauSetFree(TableauSet_p set)
 	assert(set->members == 0);
 	ClauseTableauCellFree(set->anchor);
 	TableauSetCellFree(set);
-}
-
-/*  Empty the set "from" and push all its members to "to"
-*/
-
-void TableauSetDrainToStack(PStack_p to, TableauSet_p from)
-{
-	while (!TableauSetEmpty(from))
-	{
-		PStackPushP(to, TableauSetExtractFirst(from));
-	}
-}
-
-void TableauStackDrainToSet(TableauSet_p to, PStack_p from)
-{
-	while (!PStackEmpty(from))
-	{
-		ClauseTableau_p handle = PStackPopP(from);
-		TableauSetInsert(to, handle);
-	}
-}
-
-void TableauSetMoveClauses(TableauSet_p to, TableauSet_p from)
-{
-	while (!TableauSetEmpty(from))
-	{
-		ClauseTableau_p handle = TableauSetExtractFirst(from);
-		TableauSetInsert(to, handle);
-	}
 }
 
 void ClauseTableauPrintDOTGraph(ClauseTableau_p tab)
@@ -1770,18 +1560,6 @@ Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var)
 	 assert(potential_fresh->f_code % 2 == 0);
 
 	 return potential_fresh;
-}
-
-PList_p ClauseSetToPList(ClauseSet_p set)
-{
-	PList_p list = PListAlloc();
-	Clause_p handle = set->anchor->succ;
-	while (handle != set->anchor)
-	{
-		PListStoreP(list, handle);
-		handle = handle->succ;
-	}
-	return list;
 }
 
 long ClauseGetIdent(Clause_p clause)

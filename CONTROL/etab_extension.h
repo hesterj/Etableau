@@ -24,7 +24,6 @@ typedef struct tableau_extension_cell
 	struct tableau_extension_cell* succ;  // for singly linked lists of the extension steps
 }TableauExtension, *TableauExtension_p;
 
-void ClauseSetFreeAnchor(ClauseSet_p junk);
 ClauseSet_p ClauseStackToClauseSet(ClauseStack_p stack);
 
 //bool ClauseTableauExtensionIsRegular(ClauseTableau_p branch, Clause_p clause);
@@ -44,11 +43,6 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p control,
 											  Clause_p selected,
 											  TableauStack_p new_tableaux);
 ClauseSet_p SplitClauseFresh(TB_p bank, ClauseTableau_p tableau, Clause_p clause); // Major memory eating offender
-TableauExtension_p ClauseTableauCreateExtensionJobs(ClauseTableau_p open_branch, Clause_p selected);
-ClauseTableau_p ClauseTableauExtensionRule(TableauControl_p tableau_control,
-										   TableauSet_p distinct_tableaux,
-										   TableauExtension_p extension,
-										   TableauStack_p new_tableaux);
 
 ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableau_control,
 												 TableauExtension_p extension);

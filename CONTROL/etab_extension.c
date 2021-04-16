@@ -30,9 +30,6 @@ TableauExtension_p TableauExtensionAlloc(Clause_p selected,
 
 void TableauExtensionFree(TableauExtension_p ext)
 {
-	//SubstDelete(ext->subst);
-	//ClauseFree(ext->head_clause);
-	//ClauseSetFree(ext->other_clauses);
 	TableauExtensionCellFree(ext);
 }
 
@@ -50,44 +47,6 @@ ClauseSet_p ClauseStackToClauseSet(ClauseStack_p stack)
 		ClauseSetInsert(clauses, clause);
 	}
 	return clauses;
-}
-
-/*-----------------------------------------------------------------------
-//
-// Function: ClauseSetFreeAnchor()
-//
-//   Delete a clauseset anchor, removing the clauses from the set but not free'ing them.
-//   Warning: May cause memory leaks if you lose track of the clauses!
-//
-// Global Variables: -
-//
-// Side Effects    : Memory operations
-//
-/----------------------------------------------------------------------*/
-
-void ClauseSetFreeAnchor(ClauseSet_p junk)
-{
-   assert(junk);
-
-   Clause_p handle = NULL;
-   
-   while ((handle = ClauseSetExtractFirst(junk)))
-   {
-	   // extract all of the clauses
-   }
-
-   if(junk->demod_index)
-   {
-      PDTreeFree(junk->demod_index);
-   }
-   if(junk->fvindex)
-   {
-      FVIAnchorFree(junk->fvindex);
-   }
-   PDArrayFree(junk->eval_indices);
-   ClauseCellFree(junk->anchor);
-   //DStrFree(junk->identifier);
-   ClauseSetCellFree(junk);
 }
 
 ClauseSet_p SplitClauseFresh(TB_p bank, ClauseTableau_p tableau, Clause_p clause)
@@ -113,25 +72,6 @@ ClauseSet_p SplitClauseFresh(TB_p bank, ClauseTableau_p tableau, Clause_p clause
 	ClauseFree(fresh_clause);
 	return set;
 }
-
-// Check to see if the literals of clause occur in the branch already.
-
-//bool ClauseTableauExtensionIsRegular(ClauseTableau_p branch, Clause_p clause)
-//{
-	//for (Eqn_p lit = clause->literals; lit; lit = lit->next)
-	//{
-		//if (ClauseTableauBranchContainsLiteral(branch, lit))
-		//{
-			////printf("Irregular extension\n ");
-			////ClausePrint(GlobalOut, clause, true);printf("\n");
-			////ClauseTableauPrintBranch(branch);
-			//return false;
-		//}
-	//}
-	//return true;
-//}
-
-
 
 /*  Do all of the extension rules possible with the selected clause.
  *  There may be multiple literals extension can be done with.

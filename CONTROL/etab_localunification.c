@@ -173,37 +173,8 @@ long ReplaceLocalVariablesWithFreshSubst(ClauseTableau_p master, Clause_p clause
 
 bool VarIsLocal(ClauseTableau_p open_branch, Term_p variable)
 {
-	Warning("Not implemented (VarIsLocal)");
-	return false;
-}
-
-/*  Only call this method if the local variables of the tableau have been udpated!
- *  This method deletes the substitution used in the replacement.
-*/
-
-Clause_p ReplaceLocalVariablesWithFresh(ClauseTableau_p master, Clause_p clause, PStack_p local_variables)
-{
-    assert(master->master == master);
-    assert(PStackGetSP(local_variables));
-    assert(clause->set);
-    assert(ClauseLiteralNumber(clause));
-    Clause_p new_clause = NULL;
-    Subst_p subst = SubstAlloc();
-    ClauseSet_p label_storage = clause->set;
-    for (PStackPointer p = 0; p < PStackGetSP(local_variables); p++)
-    {
-        Term_p old_var = PStackElementP(local_variables, p);
-        assert(old_var);
-        assert(old_var->f_code < 0);
-        assert(!(old_var->binding));
-        ClauseTableauBindFreshVar(master, subst, old_var);
-    }
-    new_clause = ClauseCopy(clause, master->terms);
-    ClauseSetInsert(label_storage, new_clause);
-    SubstDelete(subst);
-    assert(new_clause);
-    assert(new_clause->literals);
-    return new_clause;
+    Warning("Not implemented (VarIsLocal)");
+    return false;
 }
 
 /*  Return true if the branch is local
@@ -229,30 +200,18 @@ bool BranchIsLocal(ClauseTableau_p branch)
 
 bool AllBranchesAreLocal(ClauseTableau_p master)
 {
-	ClauseTableau_p branch_handle = master->open_branches->anchor->succ;
-	while (branch_handle != master->open_branches->anchor)
-	{
-		bool local = BranchIsLocal(branch_handle);
-		if (!local)
-		{
-			return false;
-		}
-		branch_handle = branch_handle->succ;
-	}
-	printf("# All branches are local!\n");
-	return true;
-}
-
-// Collects variables occurring in all OPEN branches.
-
-void ClauseTableauCollectVariables(ClauseTableau_p tab, PTree_p *variables)
-{
-    ClauseTableau_p branch = tab->open_branches->anchor->succ;
-    while (branch != tab->open_branches->anchor)
+    ClauseTableau_p branch_handle = master->open_branches->anchor->succ;
+    while (branch_handle != master->open_branches->anchor)
     {
-        CollectVariablesOfBranch(branch, variables, true);
-        branch = branch->succ;
+        bool local = BranchIsLocal(branch_handle);
+        if (!local)
+        {
+            return false;
+        }
+        branch_handle = branch_handle->succ;
     }
+    printf("# All branches are local!\n");
+    return true;
 }
 
 // Collects variables occurring in ALL branches.
@@ -277,19 +236,6 @@ void reset_variables_array(PDArray_p variables_array)
         PDArrayAssignP(variables_array, i, NULL);
     }
 }
-
-/*
-** Update the local variables of tab
-*/
-
-//void ClauseTableauUpdateVariables(ClauseTableau_p tab)
-//{
-    //assert(tab);
-    //PTree_p tableau_variables = NULL;
-    //PTreeFree(tab->tableau_variables);
-    //ClauseTableauCollectVariables(tab, &tableau_variables);
-    //tab->tableau_variables = tableau_variables;
-//}
 
 /*-----------------------------------------------------------------------
 //

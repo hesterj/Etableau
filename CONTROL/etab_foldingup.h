@@ -15,7 +15,6 @@ void CollectDominatedMarkings(ClauseTableau_p original, ClauseTableau_p tableau,
 
 PStack_p NodesThatDominateTableauFromMarks(ClauseTableau_p tableau, PStack_p marks);
 
-Clause_p FoldingUpGetLabelFromMark(ClauseTableau_p tableau, int mark);
 ClauseTableau_p FoldingUpGetNodeFromMark(ClauseTableau_p tableau, int mark);
 
 ClauseTableau_p PStackGetDeepestTableauNode(PStack_p stack);
