@@ -4,7 +4,7 @@ Etableau
 
 Etableau is a first order theorem prover for first order logic based 
 on Eprover, using it as a library.  Etableau combines the superposition
-calculus and the clausal tableaux calculus in a novel way, using the
+calculus and the clausal tableaux connection calculus in a novel way, using the
 tableaux calculus to generate lemmas and new assumptions that can be 
 used to find contradictions in certain situations.
 
@@ -27,7 +27,7 @@ or follow the instructions for Eprover.
 ```
     
 The executable "eprover" is generated in the PROVER directory.  To check that it worked,
-try running ./eprover --tableau=1 --tableau-depth=10 $1, where $1 is some TPTP problem file.
+try running ./eprover --tableau=1 --tableau-saturation=1 --auto $1, where $1 is some [TPTP](https://www.tptp.org) problem file.
 
 tableau
 ---------
@@ -40,10 +40,18 @@ tableau-saturation
 --tableau-saturation=1 enables the combination of the superposition calculus and tableaux
 calculus.
 
-tableau-dor-print
+tableau-dot-print
 -------------------
 --tableau-dot-print=dir prints DOT graphs of the closed tableau found in a successful proof 
 search to the directory dir.
+
+tsmdo
+-----
+--tsmdo restricts branch saturation attmepts on a tableau to the case where there is a branch
+at the current maximum tableau search depth.  If this is not passed, Etableau will attempt
+to saturate every local branch found.  Passing this option potentially increases the amount
+of branching during proof search, but also prevents time being wasted on attempts to saturate
+shallow branches that may not have an easily found contradiction.
 
 apr
 -----
@@ -71,12 +79,15 @@ of a problem, equality axioms are automatically added.
 Eprover options
 ---------------
 Options controlling the saturation procedure of Eprover also work, allowing the user 
-to use different strategies.
+to use different strategies.  It is recommended to at least use the --auto
+option of Eprover.
 
 Help
 ----
 
 If you have any problems with this software or a bug report, please feel free to contact
-me at hesterj@ufl.edu.
+me at <hesterj@etableau.com>.  The project's webpage is [here](https://www.etableau.com).
+[Github](https://github.com/hesterj/Etableau).
+
 
 
