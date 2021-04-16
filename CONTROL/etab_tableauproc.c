@@ -280,6 +280,7 @@ ClauseTableau_p EtableauHailMary(TableauControl_p tableaucontrol)
 {
 	// If no new tableaux were created, we will do a "hail mary" saturation attempt on the remaining branches
 	// of some tableau...
+	Warning("Hail Mary");
 	fprintf(GlobalOut, "# No tableaux could be created.  Saturating branches.\n");
 	if (PStackEmpty(tableaucontrol->tableaux_trash))
 	{
@@ -290,13 +291,7 @@ ClauseTableau_p EtableauHailMary(TableauControl_p tableaucontrol)
 	assert(some_tableau);
 	assert(some_tableau->master == some_tableau);
 	some_tableau = some_tableau->master;  // Whe want to call saturation method on the root node only
-	BranchSaturation_p branch_saturation = BranchSaturationAlloc(tableaucontrol->proofstate, 
-																					 tableaucontrol->proofcontrol, 
-																					 some_tableau,
-																					 LONG_MAX);
-	AttemptToCloseBranchesWithSuperpositionSerial(tableaucontrol, 
-																 branch_saturation);
-	BranchSaturationFree(branch_saturation);
+	AttemptToCloseBranchesWithSuperposition(tableaucontrol, some_tableau, LONG_MAX);
 	if (some_tableau->open_branches->members == 0)
 	{
 		return some_tableau;

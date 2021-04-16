@@ -419,6 +419,7 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
         {
             SilentTimeOut = true;
             TableauStack_p new_tableaux = PStackElementP(buckets, i);
+            assert(problemType == PROBLEM_FO);
 
             // should be good to go...
             //proc->pipe = fdopen(pipefd[1], "w");

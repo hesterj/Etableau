@@ -246,7 +246,7 @@ typedef struct tableaucontrol_cell
 {
 	EPCtrl_p process_control;
 	ProofState_p proofstate;
-	struct backup_proofstate_cell* backup;
+	//struct backup_proofstate_cell* backup;
 	ProofControl_p proofcontrol;
 	TB_p terms;
 	bool branch_saturation_enabled; // Is branch saturation enabled?

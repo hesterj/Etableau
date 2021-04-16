@@ -84,6 +84,7 @@ Clause_p Saturate(ProofState_p state, ProofControl_p control, long
                   long answer_limit);
 Clause_p SATCheck(ProofState_p state, ProofControl_p control);
 
+Clause_p InsertNewClauses(ProofState_p proofstate, ProofControl_p proofcontrol);
 
 
 #endif

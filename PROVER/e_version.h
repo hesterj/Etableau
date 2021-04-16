@@ -35,7 +35,7 @@ Contents
 /* git tag E-2.5 */
 
 #define PVERSION      "2.5"
-#define ETABLEAU_VERSION "0.41"
+#define ETABLEAU_VERSION "0.42"
 
 #include "e_gitcommit.h"
 

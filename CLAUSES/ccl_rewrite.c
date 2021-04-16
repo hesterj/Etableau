@@ -138,19 +138,23 @@ static bool instance_is_rule(OCB_p ocb, TB_p bank,
 
    while(TermIsTopRewritten(term)&&(!restricted_rw||TermIsRRewritten(term)))
    {
+      if (!TOGreater(desc->ocb, term, TermRWReplaceField(term),
+                     DEREF_NEVER, DEREF_NEVER))
+      {
+#ifndef NDEBUG
+         Warning("Ordering violation in term_follow_top_RW_chain");
+#endif
+         TermDeleteRWLink(term);
+         break;
+      }
+      assert(TOGreater(desc->ocb, term, TermRWReplaceField(term),
+                     DEREF_NEVER, DEREF_NEVER));
       assert(term);
       if(TermCellQueryProp(term, TPIsSOSRewritten))
       {
          desc->sos_rewritten = true;
       }
 
-#ifndef NDEBUG
-      if (!TOGreater(desc->ocb, term, TermRWReplaceField(term),
-                     DEREF_NEVER, DEREF_NEVER))
-      {
-         Warning("Ordering violation in term_follow_top_RW_chain");
-      }
-#endif
       term = TermRWReplaceField(term);
       assert(term);
    }
@@ -611,6 +615,7 @@ static Term_p rewrite_with_clause_set(OCB_p ocb, TB_p bank, Term_p term,
 
       if(problemType == PROBLEM_HO)
       {
+         assert(false);
          repl = MakeRewrittenTerm(term, repl, mi->remaining_args, bank);
          if(mi->remaining_args)
          {
@@ -618,10 +623,20 @@ static Term_p rewrite_with_clause_set(OCB_p ocb, TB_p bank, Term_p term,
          }
       }
 
+      if (!TOGreater(ocb, term, repl, DEREF_NEVER, DEREF_NEVER))
+      {
+#ifndef NDEBUG
+         Warning("Ordering violation in rewrite_with_clause_set");
+#endif
+         //TermDeleteRWLink(term);
+         MatchResFree(mi);
+         SubstDelete(subst);
+         return term;
+      }
       assert(mi->pos->clause->ident);
+      assert(TOGreater(ocb, term, repl, DEREF_NEVER, DEREF_NEVER));
       TermAddRWLink(term, repl, mi->pos->clause, ClauseIsSOS(mi->pos->clause),
                     restricted_rw?RWAlwaysRewritable:RWLimitedRewritable);
-      assert(TOGreater(ocb, term, repl, DEREF_NEVER, DEREF_NEVER));
 
       term = repl;
       MatchResFree(mi);

@@ -722,6 +722,11 @@ static Clause_p insert_new_clauses(ProofState_p state, ProofControl_p control)
    return NULL;
 }
 
+Clause_p InsertNewClauses(ProofState_p proofstate, ProofControl_p proofcontrol)
+{
+   return insert_new_clauses(proofstate, proofcontrol);
+}
+
 
 /*-----------------------------------------------------------------------
 //
