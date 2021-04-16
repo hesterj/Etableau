@@ -385,6 +385,10 @@ bool EtableauMultiprocess_n(TableauControl_p tableaucontrol,
     //printf("done printing hashes\n");
     //fflush(stdout);
 //#endif
+    if (PStackEmpty(new_tableaux))
+    {
+        printf("# No tableaux after population, if there were conjectures present we should make all non-conjectures start rules.\n");
+    }
 
     EPCtrlSet_p process_set = EPCtrlSetAlloc();
     PStack_p buckets = PStackAlloc();
@@ -469,11 +473,6 @@ bool EtableauProofSearch_n1(TableauControl_p tableaucontrol,
                             ClauseSet_p active,
                             ClauseSet_p extension_candidates)
 {
-    if (PStackEmpty(distinct_tableaux_stack))
-    {
-        Warning("No tableaux for proof search...");
-        return false;
-    }
     assert(tableaucontrol);
     assert(distinct_tableaux_stack);
     assert(active);
@@ -499,7 +498,7 @@ bool EtableauProofSearch_n1(TableauControl_p tableaucontrol,
             assert(tableaucontrol->closed_tableau == closed_tableau);
             EtableauStatusReport(tableaucontrol, active, closed_tableau);
             proof_found = true;
-            break;
+            goto return_point;
         }
         else
         {
@@ -555,6 +554,13 @@ bool EtableauProofSearch_n1(TableauControl_p tableaucontrol,
                 }
             }
         }
+    }
+
+    if (PStackEmpty(distinct_tableaux_stack))
+    {
+        printf("# No tableaux for proof search... maybe we should make start rules for everything?\n");
+        if (tableaucontrol->neg_conjectures) printf("# Yes...\n");
+        else printf("# No..\n");
     }
 
     return_point:

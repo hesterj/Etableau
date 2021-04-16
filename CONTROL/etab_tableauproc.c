@@ -291,7 +291,7 @@ ClauseTableau_p EtableauHailMary(TableauControl_p tableaucontrol)
 	assert(some_tableau);
 	assert(some_tableau->master == some_tableau);
 	some_tableau = some_tableau->master;  // Whe want to call saturation method on the root node only
-	AttemptToCloseBranchesWithSuperposition(tableaucontrol, some_tableau, LONG_MAX);
+	CloseBranchesWithEprover(tableaucontrol, some_tableau, LONG_MAX);
 	if (some_tableau->open_branches->members == 0)
 	{
 		return some_tableau;
@@ -437,8 +437,9 @@ TableauStack_p EtableauCreateStartRulesStack(ProofState_p proofstate,
 	{
 		ClauseTableau_p tab = TableauSetExtractFirst(dt);
 		FoldUpCloseCycle(tab);
-		if (tab->open_branches == 0)
+		if (tab->open_branches->members == 0)
 		{
+			printf("# Found closed tableau while making start rule\n");
 			tableaucontrol->closed_tableau = tab;
 			while (!TableauSetEmpty(dt))
 			{

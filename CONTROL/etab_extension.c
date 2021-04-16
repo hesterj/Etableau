@@ -220,7 +220,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 				tableau_control->number_of_extensions++;
 				if (tableau_control->branch_saturation_enabled)
 				{
-					AttemptToCloseBranchesWithSuperposition(tableau_control, extended->master, 10000);
+					CloseBranchesWithEprover(tableau_control, extended->master, 10000);
 				}
 				if (LIKELY(!new_tableaux)) // If the tableau has been extended on, we must go back and select another branch
 				{
