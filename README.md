@@ -3,7 +3,7 @@ Etableau
 ========
 
 Etableau is a first order theorem prover for first order logic based 
-on Eprover, using it as a library.  Etableau combines the superposition
+on [Eprover](https://www.eprover.org), using it as a library.  Etableau combines the superposition
 calculus and the clausal tableaux connection calculus in a novel way, using the
 tableaux calculus to generate lemmas and new assumptions that can be 
 used to find contradictions in certain situations.
@@ -38,7 +38,8 @@ tableau-saturation
 --------------------
 
 --tableau-saturation=1 enables the combination of the superposition calculus and tableaux
-calculus.
+calculus.  The default is 0, meaning that without this option, Etableau will function
+purely as a clausal tableaux connection calculus prover.
 
 tableau-dot-print
 -------------------
@@ -55,10 +56,19 @@ The PID is used to distinguish steps made by different processes.
 tsmdo
 -----
 --tsmdo restricts branch saturation attmepts on a tableau to the case where there is a branch
-at the current maximum tableau search depth.  If this is not passed, Etableau will attempt
-to saturate every local branch found.  Passing this option potentially increases the amount
-of branching during proof search, but also prevents time being wasted on attempts to saturate
-shallow branches that may not have an easily found contradiction.
+at the current maximum tableau search depth.  It stands for "Tableau saturate max depth only".
+If this is not passed, Etableau will attempt to saturate every local branch found.  
+Passing this option potentially increases the amount of branching during proof search, 
+but also prevents time being wasted on attempts to saturate
+shallow branches that may not have an easily found contradiction.  The default is false.
+
+tnssr
+-----
+--tnssr prevents star rule tableaux from being saturated by Eprover.  It stands for 
+"Tableau no saturate start rules".  This is useful if you
+want to force Etableau to do a little more work, rather than just relying on Eprover to find
+contradictions on simple problems immediately.  By default this is disabled in order to prove
+as many problems as possible.
 
 apr
 -----
@@ -74,7 +84,9 @@ tableau branches.  This number can be changed.  The default value is 100 if the 
 be a loss of completeness for branch saturations, but not the entire proof search.  This
 is becuase of the fact that if only a small number of clauses are going to be processed
 on a branch saturation, there is no need to copy the entire unprocessed clause set and
-only a small number or none are copied.
+only a small number or none are copied.  If this option is not passed, the number of
+clauses passed during branch saturations will vary, with more clauses being processed
+when there are fewer open local branches.
 
 tableau-equality
 ------------------

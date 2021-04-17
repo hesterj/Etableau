@@ -169,9 +169,8 @@ int Etableau_n0(TableauControl_p tableaucontrol,
        Error("Initial tableau has no label!", 10);
    }
 
-   bool saturate_start_rules = false;
 // Do a branch saturation on the original problem before diving in to the tableaux proofsearch
-   if (saturate_start_rules && !proof_found && tableaucontrol->branch_saturation_enabled)
+   if (tableaucontrol->saturate_start_rules && !proof_found && tableaucontrol->branch_saturation_enabled)
    {
        // The maximum number of tableaux to attmept to saturate before moving on is the last paramater of the below function
        proof_found = EtableauSaturateAllTableauxInStack(tableaucontrol, distinct_tableaux_stack, active, 30);

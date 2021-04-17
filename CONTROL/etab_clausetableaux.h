@@ -241,6 +241,7 @@ typedef struct tableaucontrol_cell
 	bool all_start_rule_created;
 	bool only_saturate_max_depth_branches;
 	bool print_dot_steps;
+	bool saturate_start_rules;
 	long quicksat; // Maximum number of processed clauess in saturation attempts
 	long number_of_extensions;
 	long number_of_saturation_attempts;
@@ -276,6 +277,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 									 ProofControl_p proofcontrol,
 									 bool branch_saturation_enabled,
 									 bool only_saturate_max_depth_branches,
+									 bool saturate_start_rules,
 									 long num_cores_to_use,
 									 long quicksat);
 void TableauControlFree(TableauControl_p trash);

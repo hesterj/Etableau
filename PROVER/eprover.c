@@ -104,6 +104,7 @@ long TableauCores = 0;
 long TableauQuicksat = 0;
 bool TableauSaturation = false;
 bool TableauSaturationMaxDepthOnly = false;
+bool TableauSaturateStartRules = true;
 bool PrintDotSteps = false;
 int AprDistance = 0;
 char  *tableau_dot_out = NULL;
@@ -591,6 +592,7 @@ int main(int argc, char* argv[])
                                                             proofcontrol,
                                                             TableauSaturation,
                                                             TableauSaturationMaxDepthOnly,
+                                                            TableauSaturateStartRules,
                                                             TableauCores,
                                                             TableauQuicksat);
       fprintf(GlobalOut, "# Number of axioms: %ld Number of unprocessed: %ld\n",
@@ -1797,6 +1799,9 @@ CLState_p process_options(int argc, char* argv[])
 		case OPT_TABLEAU_SATURATION_MAX_DEPTH_ONLY:
          TableauSaturationMaxDepthOnly = true;
 			break;
+      case OPT_TABLEAU_NO_SATURATE_START_RULES:
+         TableauSaturateStartRules = false;
+         break;
 		case OPT_TABLEAU_EQUALITY:
 			if (strcmp(arg, "1") == 0)
 			{

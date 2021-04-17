@@ -1353,6 +1353,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 									 ProofControl_p proofcontrol,
 									 bool branch_saturation_enabled,
 									 bool only_saturate_max_depth_branches,
+									 bool saturate_start_rules,
 									 long num_cores_to_use,
 									 long quicksat)
 {
@@ -1367,6 +1368,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->number_of_saturations_closed_on_branch = 0;
 	handle->number_of_saturations_closed_in_interreduction = 0;
 	handle->only_saturate_max_depth_branches = only_saturate_max_depth_branches;
+	handle->saturate_start_rules = saturate_start_rules;
 	handle->number_of_nodes_freed = 0;
 	handle->quicksat = quicksat;
 	handle->closed_tableau = NULL;

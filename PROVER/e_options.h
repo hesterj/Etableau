@@ -192,6 +192,7 @@ typedef enum
    OPT_TABLEAU_EQUALITY,
    OPT_TABLEAU_SATURATION,
    OPT_TABLEAU_SATURATION_MAX_DEPTH_ONLY,
+   OPT_TABLEAU_NO_SATURATE_START_RULES,
    OPT_TABLEAU_CORES,
    OPT_TABLEAU_APR_DISTANCE,
    OPT_TABLEAU_DOT_PRINT,
@@ -1468,6 +1469,16 @@ OptCell opts[] =
     NoArg, "0",
     "No argument"
     "If tableau saturation is enabled, only saturate branches when there is a branch at maximum depth"
+    }
+    ,
+    {
+    OPT_TABLEAU_NO_SATURATE_START_RULES,
+    '\0', "tnssr",
+    NoArg, "0",
+    "No argument"
+    "If tableau saturation is enabled, do not saturate start rules."
+    "The default is to saturate start rules.  This is useful if you"
+    "do not want to let Eprover solve the simple problems"
     }
     ,
     {
