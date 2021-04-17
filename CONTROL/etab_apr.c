@@ -967,34 +967,28 @@ ClauseSet_p apr_EqualityAxioms(TB_p bank, bool substitution)
 	ClauseSet_p equality_axioms = ClauseSetAlloc();
 	
 	// Reflexivity
-	/*
 	Eqn_p x_equals_x = EqnAlloc(x, x, bank, true);
 	Clause_p clause1 = ClauseAlloc(x_equals_x);
 	ClauseRecomputeLitCounts(clause1);
 	ClauseSetInsert(equality_axioms, clause1);
-	*/
-	
+
 	// Symmetry clause 1
-	/*
 	Eqn_p y_equals_x = EqnAlloc(y, x, bank, true);
 	Eqn_p x_neq_y = EqnAlloc(x, y, bank, false);
 	EqnListAppend(&y_equals_x, x_neq_y);
 	Clause_p clause2 = ClauseAlloc(y_equals_x);
 	ClauseRecomputeLitCounts(clause2);
 	ClauseSetInsert(equality_axioms, clause2);
-	*/
-	
+
 	
 	// Symmetry clause 2
-	/*
 	Eqn_p x_equals_y = EqnAlloc(x, y, bank, true);
 	Eqn_p y_neq_x = EqnAlloc(y, x, bank, false);
 	EqnListAppend(&x_equals_y, y_neq_x);
 	Clause_p clause3 = ClauseAlloc(x_equals_y);
 	ClauseRecomputeLitCounts(clause2);
 	ClauseSetInsert(equality_axioms, clause3);
-	*/
-	
+
 	// Transitivity
 	Eqn_p x_equals_z = EqnAlloc(x, z, bank, true);
 	Eqn_p x_neq_y2 = EqnAlloc(x, y, bank, false);

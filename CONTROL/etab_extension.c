@@ -190,6 +190,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	Subst_p subst = extension->subst;
 	if (ExtensionIsFailure(extension->parent, subst, ClauseGetIdent(extension->selected), extension->head_lit_position))
 	{
+		ETAB_VERBOSE(printf("# Extension is blocked due to being a failure extension\n");)
 		SubstDelete(subst);
 		return NULL;
 	}
@@ -245,7 +246,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 		//if (ClauseTableauBranchContainsLiteral(parent, handle->literals))
 		if (ClauseTableauBranchContainsLiteral(parent, subst_applied->literals))
 		{
-			//fprintf(GlobalOut, "# Irregular extension stopped at parent\n");
+			ETAB_VERBOSE(printf("# Irregular extension stopped at parent\n");)
 			ClauseSetFree(new_leaf_clauses_set);
 			SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
 			__attribute__((unused)) bool backtracked = BacktrackWrapper(master);
@@ -262,7 +263,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	// They have had their labels replaced, and parent is no longer in the open branches set, so we check the remaining open branches.
 	if (!ClauseTableauIsLeafRegular(master))
 	{
-		//fprintf(GlobalOut, "# Irregular extension stopped at non-parent\n");
+		ETAB_VERBOSE(fprintf(GlobalOut, "# Irregular extension stopped at non-parent\n");)
 		ClauseSetFree(new_leaf_clauses_set);
 		SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
 		__attribute__((unused)) bool backtracked = BacktrackWrapper(master);
@@ -334,6 +335,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 	}
 	assert(PStackGetSP(parent->backtracks));
 
+	ETAB_VERBOSE(printf("# Extension completed\n");)
 	// There is no need to apply the substitution to the tablaeu, it has already been done by copying labels.
 	// In fact, the substitution should be free'd before this function ever returns.
 	return parent->master;
@@ -562,7 +564,7 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
         }
         else if (number_of_extensions > 0) // If we extended on the tableau, we have to return and select another branch, unless we are populating
         {
-			//printf("Extended on branch\n");
+			ETAB_VERBOSE(printf("Extended on branch\n");)
             assert(new_tableaux || number_of_extensions == 1); // Always return after one extension
 			*extended += number_of_extensions;
 			number_of_extensions = 0;

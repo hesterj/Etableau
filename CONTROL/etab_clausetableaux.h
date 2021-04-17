@@ -113,6 +113,12 @@ typedef int TableauStepType;
 #define CLOSURE_RULE 1
 #define ETABLEAU_RULE 2
 
+#ifndef NDEBUG
+#define ETAB_VERBOSE(arg) VERBOSE(arg)
+#else
+#define ETAB_VERBOSE(arg)
+#endif
+
 #define ClauseTableauCellAlloc() (ClauseTableau*)SizeMalloc(sizeof(ClauseTableau))
 #define ClauseTableauCellFree(junk) SizeFree(junk, sizeof(ClauseTableau))
 #define ClauseTableauArgArrayAlloc(arity) ((ClauseTableau_p*)SizeMalloc((arity)*sizeof(ClauseTableau_p)))
@@ -159,8 +165,6 @@ int ClauseTableauAssertCheck(ClauseTableau_p tab);
 bool ClauseTableauBranchContainsLiteral(ClauseTableau_p parent, Eqn_p literal);
 bool ClauseTableauIsLeafRegular(ClauseTableau_p tab);
 
-void ClauseTableauRegisterStep(ClauseTableau_p tab);
-void ClauseTableauDeregisterStep(ClauseTableau_p tab);
 
 void ClauseTableauTPTPPrint(ClauseTableau_p tab);
 void ClauseTableauPrint(ClauseTableau_p tab);
@@ -168,7 +172,6 @@ void ClauseTableauPrintBranch(ClauseTableau_p branch);
 void ClauseTableauPrintDOTGraphToFile(FILE* file, ClauseTableau_p tab);
 void ClauseTableauPrintDOTGraph(ClauseTableau_p tab);
 void ClauseTableauPrintDOTGraphChildren(ClauseTableau_p tab, FILE* dotgraph);
-void ClauseTableauPrintDerivation(FILE* out, ClauseTableau_p final_tableau, TableauStack_p derivation);
 
 void ClauseTableauCollectLeavesStack(ClauseTableau_p tab, PStack_p leaves);
 
@@ -237,6 +240,7 @@ typedef struct tableaucontrol_cell
 	bool satisfiable;
 	bool all_start_rule_created;
 	bool only_saturate_max_depth_branches;
+	bool print_dot_steps;
 	long quicksat; // Maximum number of processed clauess in saturation attempts
 	long number_of_extensions;
 	long number_of_saturation_attempts;
@@ -267,6 +271,7 @@ typedef struct tableaucontrol_cell
 TableauControl_p TableauControlAlloc(long neg_conjectures, 
 									 char *problem_name,
 									 char *dot_output,
+									 bool print_dot_steps,
 									 ProofState_p proofstate,
 									 ProofControl_p proofcontrol,
 									 bool branch_saturation_enabled,
@@ -275,6 +280,9 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 									 long quicksat);
 void TableauControlFree(TableauControl_p trash);
 void EqnRepFree(void *eqn_p);
+
+void ClauseTableauRegisterStep(ClauseTableau_p tab);
+void ClauseTableauDeregisterStep(ClauseTableau_p tab);
 
 //  Stuff for representing branches of a tableau as a stack of integers
 ClauseRep_p ClauseGetRepresentation(Clause_p clause);

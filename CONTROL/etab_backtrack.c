@@ -306,6 +306,7 @@ bool SubstIsFailure(ClauseTableau_p tab, Subst_p subst)
         //}
         if (tab->id == bt->id)
         {
+            ETAB_VERBOSE(printf("# Failure substitution averted\n");)
             assert(BacktrackIsClosureStep(bt));
             return true;
         }

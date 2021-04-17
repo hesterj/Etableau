@@ -1178,16 +1178,6 @@ void ClauseTableauPrintDOTGraph(ClauseTableau_p tab)
 
 void ClauseTableauPrintDOTGraphToFile(FILE* dotgraph, ClauseTableau_p tab)
 {
-	if (dotgraph == NULL)
-	{
-		printf("# Failed to print DOT graph, continuing\n");
-		return;
-	}
-	else
-	{
-		printf("# Printing DOT graph to specified file\n");
-	}
-	
 	Clause_p root_label = tab->label;
 	ClauseSet_p folding_labels = tab->folding_labels;
 	assert(root_label);
@@ -1355,9 +1345,10 @@ bool ClauseTableauBranchContainsLiteral(ClauseTableau_p parent, Eqn_p literal)
 	return false;
 }
 
-TableauControl_p TableauControlAlloc(long neg_conjectures, 
+TableauControl_p TableauControlAlloc(long neg_conjectures,
 									 char *problem_name,
 									 char *dot_output,
+									 bool print_dot_steps,
 									 ProofState_p proofstate,
 									 ProofControl_p proofcontrol,
 									 bool branch_saturation_enabled,
@@ -1386,6 +1377,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->label_storage = ClauseSetAlloc();
 	handle->problem_name = problem_name;
 	handle->dot_output = dot_output;
+	handle->print_dot_steps = print_dot_steps;
 	handle->neg_conjectures = neg_conjectures;
 	handle->proofstate = proofstate;
 	handle->proofcontrol = proofcontrol;
@@ -1423,61 +1415,26 @@ void TableauControlFree(TableauControl_p trash)
 	TableauControlCellFree(trash);
 }
 
-void ClauseTableauPrintDerivation(FILE* out, ClauseTableau_p final_tableau, TableauStack_p derivation)
-{
-	for (PStackPointer p = 1; p < PStackGetSP(derivation); p++)
-	{
-		ClauseTableau_p previous_step = PStackElementP(derivation, p);
-		assert(previous_step);
-		ClauseTableauPrint(previous_step);
-		DStr_p str = DStrAlloc();
-		DStrAppendStr(str, "/home/hesterj/Projects/APRTESTING/DOT/unsattest/graph");
-		DStrAppendInt(str, p);
-		DStrAppendStr(str, ".dot");
-		FILE *dotgraph = SecureFOpen(DStrView(str), "w");
-		ClauseTableauPrintDOTGraphToFile(dotgraph, previous_step->master);
-		SecureFClose(dotgraph);
-		printf("# %ld\n", p);
-		if ((p + 1) == PStackGetSP(derivation))
-		{
-			sleep(1);
-			DStr_p str2 = DStrAlloc();
-			DStrAppendStr(str2, "/home/hesterj/Projects/APRTESTING/DOT/unsattest/graph");
-			DStrAppendInt(str2, p+1);
-			DStrAppendStr(str2, ".dot");
-			FILE *dotgraph = SecureFOpen(DStrView(str2), "w");
-			ClauseTableauPrintDOTGraphToFile(dotgraph, final_tableau);
-			SecureFClose(dotgraph);
-			DStrFree(str2);
-		}
-		printf("#############################\n");
-		DStrFree(str);
-		sleep(1);
-	}
-}
-
 void ClauseTableauRegisterStep(ClauseTableau_p tab)
 {
+	TableauControl_p tableaucontrol = tab->master->tableaucontrol;
 	tab->master->max_step++;
 	tab->step = tab->master->max_step;
 
-#ifdef PRINT_DOT_STEPS
-	DStr_p file_location = DStrAlloc();
-	DStrAppendStr(file_location, "/home/hesterj/Projects/Testing/DOT/step");
-	DStrAppendInt(file_location, (long) tab->step);
-	DStrAppendStr(file_location, ".dot");
-	FILE* after_extension = SeucreFOpen(DStrView(file_location), "w+");
-	if (!after_extension)
+	if (tableaucontrol->print_dot_steps && tableaucontrol->dot_output)
 	{
-		Error("Unable to open file for DOT graph", 100);
-	}
-	else
-	{
+		DStr_p file_location = DStrAlloc();
+		DStrAppendStr(file_location, tableaucontrol->dot_output);
+		DStrAppendStr(file_location, "/pid");
+		DStrAppendInt(file_location, (long) getpid());
+		DStrAppendStr(file_location, "step");
+		DStrAppendInt(file_location, (long) tab->step);
+		DStrAppendStr(file_location, ".dot");
+		FILE* after_extension = SecureFOpen(DStrView(file_location), "w+");
 		ClauseTableauPrintDOTGraphToFile(after_extension, tab->master);
+		SecureFClose(after_extension);
+		DStrFree(file_location);
 	}
-	SecureFClose(after_extension);
-	DStrFree(file_location);
-#endif
 }
 
 void ClauseTableauDeregisterStep(ClauseTableau_p tab)

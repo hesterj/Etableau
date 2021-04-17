@@ -113,8 +113,9 @@ int Etableau_n0(TableauControl_p tableaucontrol,
     // Create a new copy of the unprocesed axioms...
     if (tableauequality)
     {
-        ClauseSet_p equality_axioms = EqualityAxioms(bank);
-        ClauseSetInsertSet(proofstate->unprocessed, equality_axioms);
+        //ClauseSet_p equality_axioms = EqualityAxioms(bank);
+        ClauseSet_p equality_axioms = apr_EqualityAxioms(bank, true);
+        ClauseSetInsertSet(active, equality_axioms);
         ClauseSetFree(equality_axioms);
     }
     tableaucontrol->unprocessed = ClauseSetCopy(bank, proofstate->unprocessed);
@@ -263,19 +264,18 @@ ClauseTableau_p EtableauSelectBranchAndExtend(TableauControl_p tableaucontrol,
         selected_branch = branch_select(open_branches, MaximumDepth(master));
         if (!selected_branch)
         {
-            //printf("Couldn't select branch\n");
             ClauseTableauSetProp(master, TUPBacktrackedDueToMaxDepth);
             bool backtrack_successful = BacktrackWrapper(master);
             if (!backtrack_successful)
             {
-                //printf("Backtrack failed\n");
+                ETAB_VERBOSE(printf("# Backtrack failed because we couldn't select a branch (depth)\n");)
                 *backtrack_status = BACKTRACK_FAILURE; // Failed backtrack, this tableau is no good.
                 break;
             }
-            //printf("Backtrack successful\n");
+            ETAB_VERBOSE(printf("# Backtrack successful (depth)\n");)
             continue; // We backtracked, try again
         }
-        //printf("Selected a new branch\n");
+        ETAB_VERBOSE(printf("# Selected a new branch\n");)
 
         int extended = 0;
         assert(selected_branch);
@@ -303,17 +303,16 @@ ClauseTableau_p EtableauSelectBranchAndExtend(TableauControl_p tableaucontrol,
         }
         if (BranchIsOpen(selected_branch)) // If the open branch is still open after the extension rule attempt, it means it was not able to be extended and so we need to backtrack
         {
-            //printf("Couldn't extend\n");
             assert(!extended);
             ClauseTableauSetProp(master, TUPBacktrackedDueToExtensionFailure);
             bool backtrack_successful = BacktrackWrapper(master);
             if (!backtrack_successful)
             {
-                //printf("Backtrack failed\n");
+                ETAB_VERBOSE(printf("# Backtrack failed (couldn't extend branch)\n");)
                 *backtrack_status = BACKTRACK_FAILURE; // Failed backtrack, this tableau is no good.
                 break;
             }
-            //printf("Backtrack successful\n");
+            ETAB_VERBOSE(printf("# Backtrack successful (couldn't extend branch)\n");)
         }
         else if (tableaucontrol->number_of_extensions % 100 == 0)
         {
@@ -556,9 +555,9 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
         assert(current_tableau->master == current_tableau && "The current tableau must be the root node of the tableau");
         BacktrackStatus tableau_status = BACKTRACK_OK;
         ClauseTableau_p closed_tableau = EtableauSelectBranchAndExtend(tableaucontrol,
-                                                                current_tableau,
-                                                                extension_candidates,
-                                                                &tableau_status);
+                                                                       current_tableau,
+                                                                       extension_candidates,
+                                                                       &tableau_status);
         assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
         if (closed_tableau || current_tableau->open_branches->members == 0 || tableaucontrol->closed_tableau)
         {
@@ -579,7 +578,7 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
                 }
                 case BACKTRACK_FAILURE:
                 {
-                    //printf("# %p BTF %lu\n", current_tableau, MaximumDepth(current_tableau));
+                    ETAB_VERBOSE(printf("# %p backtrack failed. maximum depth %lu\n", current_tableau, MaximumDepth(current_tableau));)
                     assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
                     assert(PStackElementP(distinct_tableaux_stack, current_tableau_index) == current_tableau);
                     assert(current_tableau->master == current_tableau);
@@ -594,11 +593,11 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
                         ClauseTableauFree(current_tableau);
                         current_tableau_index = 0;
 
-                        //printf("# %p deleted %lu\n", current_tableau, MaximumDepth(current_tableau));
+                        ETAB_VERBOSE(printf("# %p deleted at maximum depth %lu (backtrack failed for a reason other than depth)\n", current_tableau, MaximumDepth(current_tableau));)
                         break;
                     }
                     MaximumDepth(current_tableau) = MaximumDepth(current_tableau) << (unsigned long) 1;
-                    //printf("# %p INCREASED DEPTH %lu\n", current_tableau, MaximumDepth(current_tableau));
+                    ETAB_VERBOSE(printf("# %p increaesd maximum depth to %lu (backtrack failed because of depth)\n", current_tableau, MaximumDepth(current_tableau));)
                     assert(ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToExtensionFailure));
                     ClauseTableauDelProp(current_tableau, TUPBacktracked);
                     assert(!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToMaxDepth));
@@ -621,13 +620,6 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
                 }
             }
         }
-    }
-
-    if (PStackEmpty(distinct_tableaux_stack))
-    {
-        printf("# No tableaux for proof search... maybe we should make start rules for everything?\n");
-        if (tableaucontrol->neg_conjectures) printf("# Yes...\n");
-        else printf("# No..\n");
     }
 
     return_point:
@@ -787,6 +779,7 @@ ClauseTableau_p get_next_tableau(TableauStack_p distinct_tableaux_stack,
             tableaucontrol->all_start_rule_created == false &&
             tableaucontrol->neg_conjectures)
         {
+            Error("Disabled for debugging", 10);
             create_all_start_rules(tableaucontrol, distinct_tableaux_stack, active);
         }
         if (!PStackEmpty(distinct_tableaux_stack) )

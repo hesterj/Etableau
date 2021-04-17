@@ -104,6 +104,7 @@ long TableauCores = 0;
 long TableauQuicksat = 0;
 bool TableauSaturation = false;
 bool TableauSaturationMaxDepthOnly = false;
+bool PrintDotSteps = false;
 int AprDistance = 0;
 char  *tableau_dot_out = NULL;
 
@@ -585,6 +586,7 @@ int main(int argc, char* argv[])
       TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures,
                                                             argv[argc-1], // the problem file
                                                             tableau_dot_out,
+                                                            PrintDotSteps,
                                                             proofstate,
                                                             proofcontrol,
                                                             TableauSaturation,
@@ -1828,6 +1830,9 @@ CLState_p process_options(int argc, char* argv[])
 				break;
       case OPT_TABLEAU_DOT_PRINT:
             tableau_dot_out = arg;
+            break;
+      case OPT_TABLEAU_DOT_PRINT_STEPS:
+            PrintDotSteps = true;
             break;
       case OPT_TABLEAU_QUICKSAT:
             TableauQuicksat = CLStateGetIntArg(handle,arg);

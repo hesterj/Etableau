@@ -12,14 +12,12 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 	assert(tab->label);
 	assert(tab->label->set);
 
-	//if ((subst = ClauseContradictsBranch(tab, tab->label)))
 	if ((subst = ClauseContradictsBranchSimple(tab, tab->label)))
 	{
 		if (SubstIsFailure(tab, subst))
 		{
 			tab->id = 0; // ClauseContradictsBranch sets tab->id, if we block the closure rule attempt that needs to be reset to 0.
 			tab->mark_int = 0; // Similarly, the mark_int is set.  This needs to be undone...
-			//fprintf(GlobalOut, "# Failure substitution in closure rule attempt!\n");
 			SubstDelete(subst);
 			return false;
 		}
@@ -39,7 +37,6 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 		// Check for regularity?
 		if (!ClauseTableauIsLeafRegular(tab->master))
 		{
-			//fprintf(GlobalOut, "# Backtracking after closure step violated regularity\n");
 			__attribute__((unused)) bool backtracked = BacktrackWrapper(tab->master);
 			assert(backtracked);
 			assert(tab->mark_int == 0);
@@ -48,9 +45,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 			return false;
 		}
 		assert(tab->info);
-		//tab->folding_blocked = true;
 		backtrack->completed = true;
-		//tab->mark_int = tab->depth;
 		SubstDStrPrint(tab->info, subst, tab->terms->sig, DEREF_NEVER);
 		DStrAppendStr(tab->info, " Reduction step with clause ");
 		DStrAppendInt(tab->info, tab->id);
@@ -68,9 +63,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
  *  Attempt closure rule on all the open branches of the tableau.
  *  Returns the total number of closures that were accomplished.
  *  If there are no more open branches (a closed tableau was found),
- *  return the negative of the total number of branches closed.
- * 
- *  
+ *  set the closed tableau in tableaucontrol.
 */
 
 
@@ -93,13 +86,10 @@ int AttemptClosureRuleOnAllOpenBranches(ClauseTableau_p tableau)
 			num_branches_closed += 1;
 			open_branch = next_open_branch;
 			assert(open_branch);
-			if (open_branch == tableau->open_branches->anchor)
-			{
-				break;
-			}
 			if (tableau->open_branches->members == 0)
 			{
-				return -num_branches_closed;
+				tableau->master->tableaucontrol->closed_tableau = tableau;
+				return num_branches_closed;
 			}
 		}
 		else

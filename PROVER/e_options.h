@@ -195,6 +195,7 @@ typedef enum
    OPT_TABLEAU_CORES,
    OPT_TABLEAU_APR_DISTANCE,
    OPT_TABLEAU_DOT_PRINT,
+   OPT_TABLEAU_DOT_PRINT_STEPS,
    OPT_TABLEAU_QUICKSAT,
    OPT_DUMMY
 }OptionCodes;
@@ -1491,6 +1492,12 @@ OptCell opts[] =
     '\0', "tableau-dot-print",
     ReqArg, NULL,
     "Print a DOT graph of the closed tableau to a file in the specified directory."
+    },
+    {
+    OPT_TABLEAU_DOT_PRINT_STEPS,
+    '\0', "tableau-dot-print-steps",
+    NoArg, NULL,
+    "Print a DOT graphs of every step made, temporally, to the directory specified by --tableau-dot-print."
     },
     {
     OPT_TABLEAU_QUICKSAT,

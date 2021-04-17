@@ -103,7 +103,7 @@ ErrorCodes EproverCloseBranch(ProofState_p proofstate,
                               ClauseTableau_p branch,
                               long max_proc)
 {
-    assert(branch->proofstate != proofstate); // Do not saturate branches with the main proof search state!
+    assert(branch->state != proofstate); // Do not saturate branches with the main proof search state!
     TB_p terms = proofstate->terms;
     Clause_p success = NULL;
     Clause_p success_ref = NULL;
@@ -228,7 +228,7 @@ int CloseBranchesWithEprover(TableauControl_p tableaucontrol,
 {
     ProofState_p proofstate = tableaucontrol->proofstate;
     ProofControl_p proofcontrol = tableaucontrol->proofcontrol;
-    assert(tableau_control);
+    assert(tableaucontrol);
     assert(proofstate);
     assert(proofcontrol);
     assert(master->master == master);
@@ -305,7 +305,7 @@ int CloseBranchesWithEprover(TableauControl_p tableaucontrol,
                 fprintf(GlobalOut, "# Satisfiable branch found.\n");
                 fflush(GlobalOut);
                 successful_count++;
-                assert(tableau_control->satisfiable);
+                assert(tableaucontrol->satisfiable);
                 DStrAppendStr(handle->info, " Satisfiable ");
                 DStrAppendInt(handle->info, tableaucontrol->number_of_saturation_attempts);
                 break;
@@ -458,7 +458,6 @@ ProofState_p backtrack_proofstate(ProofState_p proofstate,
 {
     assert(proofstate);
     assert(proofcontrol);
-    assert(backup);
     assert(tableaucontrol);
 
     ProofState_p new_state = etableau_proofstate_alloc(proofstate);

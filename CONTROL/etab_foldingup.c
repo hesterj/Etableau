@@ -361,12 +361,15 @@ int FoldUpCloseCycle(ClauseTableau_p tableau)
 #endif
 		closures_done = AttemptClosureRuleOnAllOpenBranches(tableau);
 		total_closures_done += closures_done;
+		ETAB_VERBOSE(printf("# Closed %d branches in FoldUpCloseCycle\n", total_closures_done);)
 		//printf("Closures done in FoldUpCloseCycle: %d\n", closures_done);
 		if ((tableau->open_branches->members == 0) || (closures_done < 0))
 		{
 			assert(tableau->open_branches->members == 0);
-			fprintf(GlobalOut, "# Closed tableau found in foldup close cycle with %d folds and %d closures done.\n", folding_ups_done, total_closures_done);
-			return -total_closures_done;
+			fprintf(GlobalOut, "# Closed tableau found in foldup close cycle with %d folds and %d closures done.\n",
+					folding_ups_done,
+					total_closures_done);
+			return total_closures_done;
 		}
 	} while (closures_done > 0);
 	//fprintf(GlobalOut, "# %d closures done\n", total_closures_done);
