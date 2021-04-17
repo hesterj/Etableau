@@ -45,6 +45,13 @@ tableau-dot-print
 --tableau-dot-print=dir prints DOT graphs of the closed tableau found in a successful proof 
 search to the directory dir.
 
+tableau-dot-print-steps
+-----------------------
+--tableau-dot-print-steps prints DOT graphs of every step made by the prover to the directory
+specified in tableau-dot-print.  When a closed tableau is found, the final step will be the 
+closed tableau.  Otherwise, the steps present will be the most recent made by the prover.
+The PID is used to distinguish steps made by different processes.
+
 tsmdo
 -----
 --tsmdo restricts branch saturation attmepts on a tableau to the case where there is a branch
