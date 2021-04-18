@@ -951,7 +951,8 @@ void APRLiveProofStateProcess(ProofState_p proofstate, int relevance)
  
 /*  Return a clause set of equality axioms appropriate for alternating
  *  path relevance.  If substitution is true, create substitution axioms
- *  for all non-internal symbols.
+ *  for all non-internal symbols and are not symbols resulting from
+ *  skolemization.
  * 
 */
 

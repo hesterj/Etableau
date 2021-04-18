@@ -434,3 +434,175 @@ int TableauControlGetCores(TableauControl_p tableaucontrol)
 	}
 	return num_cores;
 }
+
+/*  Return a clause set of equality axioms appropriate for alternating
+ *  path relevance.  If substitution is true, create substitution axioms
+ *  for all non-internal symbols and are not symbols resulting from
+ *  skolemization.
+ *
+*/
+
+ClauseSet_p EqualityAxiomsWithSubstitution(TB_p bank, ClauseSet_p set, bool substitution)
+{
+	Sig_p sig = bank->sig;
+	long *symbol_distrib = SizeMalloc((sig->size)*sizeof(long));
+	for(long i=0; i< sig->size; i++)
+	{
+		symbol_distrib[i] = 0;
+	}
+	ClauseSetAddSymbolDistribution(set, symbol_distrib);
+	//Setup
+	printf("# Creating equality axioms\n");
+	Type_p i_type = bank->sig->type_bank->i_type;
+	Term_p x = VarBankGetFreshVar(bank->vars, i_type);
+	Term_p y = VarBankGetFreshVar(bank->vars, i_type);
+	Term_p z = VarBankGetFreshVar(bank->vars, i_type);
+	ClauseSet_p equality_axioms = ClauseSetAlloc();
+
+	// Reflexivity
+	Eqn_p x_equals_x = EqnAlloc(x, x, bank, true);
+	Clause_p clause1 = ClauseAlloc(x_equals_x);
+	ClauseRecomputeLitCounts(clause1);
+	ClauseSetInsert(equality_axioms, clause1);
+
+	// Symmetry clause 1
+	Eqn_p y_equals_x = EqnAlloc(y, x, bank, true);
+	Eqn_p x_neq_y = EqnAlloc(x, y, bank, false);
+	EqnListAppend(&y_equals_x, x_neq_y);
+	Clause_p clause2 = ClauseAlloc(y_equals_x);
+	ClauseRecomputeLitCounts(clause2);
+	ClauseSetInsert(equality_axioms, clause2);
+
+
+	// Symmetry clause 2
+	Eqn_p x_equals_y = EqnAlloc(x, y, bank, true);
+	Eqn_p y_neq_x = EqnAlloc(y, x, bank, false);
+	EqnListAppend(&x_equals_y, y_neq_x);
+	Clause_p clause3 = ClauseAlloc(x_equals_y);
+	ClauseRecomputeLitCounts(clause2);
+	ClauseSetInsert(equality_axioms, clause3);
+
+	// Transitivity
+	Eqn_p x_equals_z = EqnAlloc(x, z, bank, true);
+	Eqn_p x_neq_y2 = EqnAlloc(x, y, bank, false);
+	Eqn_p y_neq_z = EqnAlloc(y, z, bank, false);
+	EqnListAppend(&x_equals_z, x_neq_y2);
+	EqnListAppend(&x_equals_z, y_neq_z);
+	Clause_p clause4 = ClauseAlloc(x_equals_z);
+	ClauseRecomputeLitCounts(clause4);
+	ClauseSetInsert(equality_axioms, clause4);
+
+	//printf("# (1) Created %ld equality axioms.\n", equality_axioms->members);
+	//ClauseSetPrint(stdout, equality_axioms, true);
+	// Function/Predicate equality substitution axioms
+	// There must be one for every f-code of a pred or non const func.
+
+	FunCode f_count = sig->f_count; // Max used f_code
+
+	if (substitution)
+	{
+		for (FunCode f_code = sig->internal_symbols + 1; f_code <= f_count; f_code++)
+		{
+			int arity = SigFindArity(sig, f_code);
+			if (!arity || !symbol_distrib[f_code]) continue;
+			PStack_p x_variables = PStackAlloc();
+			PStack_p y_variables = PStackAlloc();
+			Term_p x_0 = VarBankGetFreshVar(bank->vars, i_type);
+			PStackPushP(x_variables, x_0);
+			Term_p y_0 = VarBankGetFreshVar(bank->vars, i_type);
+			//Term_p y_0 = VarBankGetAltVar(bank->vars, x_0);
+			PStackPushP(y_variables, y_0);
+			Eqn_p subst_axiom = EqnAlloc(x_0, y_0, bank, false);
+			for (int i=1; i<arity; i++)
+			{
+				Term_p x_i = VarBankGetFreshVar(bank->vars, i_type);
+				PStackPushP(x_variables, x_i);
+				Term_p y_i = VarBankGetFreshVar(bank->vars, i_type);
+				//Term_p y_i = VarBankGetAltVar(bank->vars, x_i);
+				PStackPushP(y_variables, y_i);
+				Eqn_p xi_neq_yi = EqnAlloc(x_i, y_i, bank, false);
+				EqnListAppend(&subst_axiom, xi_neq_yi);
+			}
+
+			Term_p left_handle = TermDefaultCellAlloc();
+			left_handle->arity = arity;
+			left_handle->args = TermArgArrayAlloc(arity);
+			left_handle->f_code = f_code;
+
+			for (int i=0; i<arity; i++)
+			{
+				left_handle->args[i] = PStackElementP(x_variables, i);
+			}
+			left_handle->v_count = arity;
+			left_handle = TBTermTopInsert(bank, left_handle);
+			TypeInferSort(bank->sig, left_handle, NULL);
+			Term_p right_handle = NULL;
+			if (SigIsFunction(sig, f_code))
+			{
+				right_handle = TermDefaultCellAlloc();
+				right_handle->arity = arity;
+				right_handle->f_code = f_code;
+				right_handle->args = TermArgArrayAlloc(arity);
+				for (int i=0; i<arity; i++)
+				{
+					right_handle->args[i] = PStackElementP(y_variables, i);
+				}
+				right_handle->v_count = arity;
+				right_handle = TBTermTopInsert(bank, right_handle);
+				TypeInferSort(bank->sig, right_handle, NULL);
+				Eqn_p final = EqnAlloc(left_handle, right_handle, bank, true);
+				EqnListAppend(&subst_axiom, final);
+			}
+			else if (SigIsPredicate(sig, f_code))
+			{
+				right_handle = bank->true_term;
+				assert(left_handle);
+				assert(right_handle);
+				Eqn_p seq = EqnAlloc(left_handle, right_handle, bank, false);
+				EqnListAppend(&subst_axiom, seq);
+
+				left_handle = TermDefaultCellAlloc();
+				left_handle->arity = arity;
+				left_handle->args = TermArgArrayAlloc(arity);
+				left_handle->f_code = f_code;
+				//left_handle->type = SigGetType(bank->sig, f_code);
+				for (int i=0; i<arity; i++)
+				{
+					left_handle->args[i] = PStackElementP(y_variables, i);
+				}
+				left_handle->v_count = arity;
+				left_handle = TBTermTopInsert(bank, left_handle);
+				TypeInferSort(bank->sig, left_handle, NULL);
+				Eqn_p final = EqnAlloc(left_handle, right_handle, bank, true);
+				EqnListAppend(&subst_axiom, final);
+			}
+			else // These are skolem symbols I think
+			{
+				//printf("What is this f_code %s\n", SigFindName(sig, f_code));
+				EqnListFree(subst_axiom);
+				PStackFree(x_variables);
+				PStackFree(y_variables);
+				continue;
+			}
+
+			Clause_p subst_axiom_clause = ClauseAlloc(subst_axiom);
+			ClauseRecomputeLitCounts(subst_axiom_clause);
+			ClauseSetInsert(equality_axioms, subst_axiom_clause);
+			//printf("Substitution axiom:\n");
+			//ClausePrint(GlobalOut, subst_axiom_clause, true);
+			//printf("\n");
+			PStackFree(x_variables);
+			PStackFree(y_variables);
+		}
+	}
+
+	SizeFree(symbol_distrib,(sig->size)*sizeof(long));
+	//printf("# Created %ld equality axioms.\n", equality_axioms->members);
+	//ClauseSetPrint(stdout, equality_axioms, true);
+	return equality_axioms;
+}
+
+
+
+
+// End of file

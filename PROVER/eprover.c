@@ -99,7 +99,7 @@ FunctionProperties free_symb_prop = FPIgnoreProps;
 
 long TableauOptions = 0; // Etableau stuff
 unsigned long TableauDepth = 4;
-bool TableauEquality = false;
+long TableauEquality = 3;
 long TableauCores = 0;
 long TableauQuicksat = 0;
 bool TableauSaturation = false;
@@ -578,11 +578,10 @@ int main(int argc, char* argv[])
    if (!success && TableauOptions == 1)
    {
       ClauseSet_p new_axioms = ClauseSetCopy(proofstate->terms, proofstate->unprocessed);
-      //bool presaturation = true;
-      //if (TableauSaturation && presaturation)
+      //if ((TableauEquality == 2) && ClauseSetIsEquational(new_axioms))
       //{
-         //success = Saturate(proofstate, proofcontrol, LONG_MAX, 1000, LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX);
-         //if (success) goto normal_eprover;
+         //fprintf(GlobalOut, "# Automatically enabled equality axioms after equality was detected\n");
+         //TableauEquality = 1;
       //}
       TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures,
                                                             argv[argc-1], // the problem file
@@ -594,7 +593,8 @@ int main(int argc, char* argv[])
                                                             TableauSaturationMaxDepthOnly,
                                                             TableauSaturateStartRules,
                                                             TableauCores,
-                                                            TableauQuicksat);
+                                                            TableauQuicksat,
+                                                            TableauEquality);
       fprintf(GlobalOut, "# Number of axioms: %ld Number of unprocessed: %ld\n",
               proofstate->axioms->members,
               proofstate->unprocessed->members);
@@ -625,11 +625,6 @@ int main(int argc, char* argv[])
       PStackReset(proofstate->extract_roots);
       fclose(clausification_stream);
       tableaucontrol->clausification_buffer = buf;
-      if (!TableauEquality && ClauseSetIsEquational(new_axioms))
-      {
-         fprintf(GlobalOut, "# Automatically enabled equality axioms after equality was detected\n");
-         TableauEquality = true;
-      }
 // This is the entry point for tableaux proof search
       Etableau_n0(tableaucontrol,
                   proofstate,
@@ -1783,56 +1778,75 @@ CLState_p process_options(int argc, char* argv[])
       case OPT_APP_ENCODE:
             app_encode = true;
             break;
-		case OPT_TABLEAU_APR_DISTANCE:
-			AprDistance  = CLStateGetIntArg(handle, arg);
-			break;
-		case OPT_TABLEAU_CORES:
-			TableauCores = CLStateGetIntArg(handle, arg);
-			break;
-		case OPT_TABLEAU_SATURATION:
-			if (strcmp(arg, "1") == 0)
-			{
-				TableauSaturation = true;
-				break;
-			}
-			break;
-		case OPT_TABLEAU_SATURATION_MAX_DEPTH_ONLY:
+      case OPT_TABLEAU_APR_DISTANCE:
+         AprDistance  = CLStateGetIntArg(handle, arg);
+         break;
+      case OPT_TABLEAU_CORES:
+         TableauCores = CLStateGetIntArg(handle, arg);
+         break;
+      case OPT_TABLEAU_SATURATION:
+         if (strcmp(arg, "1") == 0)
+         {
+            TableauSaturation = true;
+            break;
+         }
+         break;
+      case OPT_TABLEAU_SATURATION_MAX_DEPTH_ONLY:
          TableauSaturationMaxDepthOnly = true;
-			break;
+         break;
       case OPT_TABLEAU_NO_SATURATE_START_RULES:
          TableauSaturateStartRules = false;
          break;
-		case OPT_TABLEAU_EQUALITY:
-			if (strcmp(arg, "1") == 0)
-			{
-				TableauEquality = true;
-				break;
-			}
-			break;
-		case OPT_TABLEAU:
-			if (strcmp(arg,"0") == 0)
-			{
-				TableauOptions = 0;
-				break;
-			}
-			else if (strcmp(arg, "1") == 0)
-			{
-				TableauOptions = 1;
-				break;
-			}
-			else if (strcmp(arg, "2") == 0)
-			{
-				TableauOptions = 2;
-				break;
-			}
-			else
-			{
-				Error("Must provide an argument of 0,1, or 2 for tableau use.", OTHER_ERROR);
-				assert(false);
-			}
-		case OPT_TABLEAU_DEPTH:
-				TableauDepth = CLStateGetIntArg(handle, arg);
-				break;
+      case OPT_TABLEAU_EQUALITY:
+         if (strcmp(arg, "0") == 0)
+         {
+            TableauEquality = 0;
+            break;
+         }
+         else if (strcmp(arg, "1") == 0)
+         {
+            TableauEquality = 1;
+            break;
+         }
+         else if (strcmp(arg, "2") == 0)
+         {
+            TableauEquality = 2;
+            break;
+         }
+         else if (strcmp(arg, "3") == 0)
+         {
+            TableauEquality = 3;
+            break;
+         }
+         else
+         {
+            Error("Illegal --tableau-equality argument", 1);
+         }
+         break;
+      case OPT_TABLEAU:
+         if (strcmp(arg,"0") == 0)
+         {
+            TableauOptions = 0;
+            break;
+         }
+         else if (strcmp(arg, "1") == 0)
+         {
+            TableauOptions = 1;
+            break;
+         }
+         else if (strcmp(arg, "2") == 0)
+         {
+            TableauOptions = 2;
+            break;
+         }
+         else
+         {
+            Error("Must provide an argument of 0,1, or 2 for tableau use.", OTHER_ERROR);
+            assert(false);
+         }
+      case OPT_TABLEAU_DEPTH:
+            TableauDepth = CLStateGetIntArg(handle, arg);
+            break;
       case OPT_TABLEAU_DOT_PRINT:
             tableau_dot_out = arg;
             break;

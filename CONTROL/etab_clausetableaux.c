@@ -1363,7 +1363,8 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 									 bool only_saturate_max_depth_branches,
 									 bool saturate_start_rules,
 									 long num_cores_to_use,
-									 long quicksat)
+									 long quicksat,
+									 long tableauequality)
 {
 	TableauControl_p handle = TableauControlCellAlloc();
 	//handle->backup = BackupProofstateAlloc(proofstate);
@@ -1379,6 +1380,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->saturate_start_rules = saturate_start_rules;
 	handle->number_of_nodes_freed = 0;
 	handle->quicksat = quicksat;
+	handle->tableauequality = tableauequality;
 	handle->closed_tableau = NULL;
 	handle->branch_saturation_enabled = branch_saturation_enabled;
 	handle->satisfiable = false;

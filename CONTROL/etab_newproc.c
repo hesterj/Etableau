@@ -20,6 +20,8 @@ long create_all_start_rules(TableauControl_p tableaucontrol,
                         ClauseSet_p active);
 ClauseTableau_p branch_select_new(TableauSet_p open_branches, int max_depth);
 ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth);
+long add_equality_axioms_to_state(TableauControl_p tableaucontrol,
+                                  ClauseSet_p active);
 
 
 /*
@@ -111,10 +113,14 @@ int Etableau_n0(TableauControl_p tableaucontrol,
     bool proof_found = false;
     problemType = PROBLEM_FO;
     // Create a new copy of the unprocesed axioms...
-    if (tableauequality)
+
+    //assert(tableauequality == 0 || tableauequality ==1);
+    if (tableauequality == 1 || (tableauequality == 2 && ClauseSetIsEquational(active)))
     {
         //ClauseSet_p equality_axioms = EqualityAxioms(bank);
-        ClauseSet_p equality_axioms = apr_EqualityAxioms(bank, true);
+        //ClauseSet_p equality_axioms = apr_EqualityAxioms(bank, true);
+        ClauseSet_p equality_axioms = EqualityAxiomsWithSubstitution(bank, active, true);
+        fprintf(GlobalOut, "# Adding %ld equality axioms\n", equality_axioms->members);
         ClauseSetInsertSet(active, equality_axioms);
         ClauseSetFree(equality_axioms);
     }
@@ -745,6 +751,7 @@ ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_sta
             tableaucontrol->all_start_rule_created == false &&
             tableaucontrol->neg_conjectures)
         {
+            add_equality_axioms_to_state(tableaucontrol, active);
             create_all_start_rules(tableaucontrol, new_tableaux, active);
         }
         // Get a new tableau from the newly produced stack
@@ -778,7 +785,7 @@ ClauseTableau_p get_next_tableau(TableauStack_p distinct_tableaux_stack,
             tableaucontrol->all_start_rule_created == false &&
             tableaucontrol->neg_conjectures)
         {
-            Error("Disabled for debugging", 10);
+            add_equality_axioms_to_state(tableaucontrol, active);
             create_all_start_rules(tableaucontrol, distinct_tableaux_stack, active);
         }
         if (!PStackEmpty(distinct_tableaux_stack) )
@@ -839,6 +846,20 @@ long create_all_start_rules(TableauControl_p tableaucontrol,
     ClauseSetFree(emergency_units);
     TableauStackFree(emergency_tableaux);
     printf("# Made %ld start rules\n", res);
+    return res;
+}
+
+long add_equality_axioms_to_state(TableauControl_p tableaucontrol,
+                                  ClauseSet_p active)
+{
+    if (tableaucontrol->tableauequality != 3) return 0;
+    TB_p terms = tableaucontrol->proofstate->terms;
+    ClauseSet_p equality_axioms = EqualityAxiomsWithSubstitution(terms, active, true);
+    long res = equality_axioms->members;
+    //ClauseSet_p equality_copy = ClauseSetCopy(terms, equality_axioms);
+    ClauseSetMoveUnits(equality_axioms, active);
+    ClauseSetInsertSet(active, equality_axioms);
+    printf("# Added %ld equality axioms to the tableau state\n", res);
     return res;
 }
 

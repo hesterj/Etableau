@@ -1448,11 +1448,17 @@ OptCell opts[] =
     {
     OPT_TABLEAU_EQUALITY,
     '\0', "tableau-equality",
-    OptArg, "0",
+    OptArg, "3",
     "Specify an integer."
-    "The defualt 0 means that no equality axioms will be added"
-    "If this is enabled, SRT equality axioms will be added as extension candidates"
-    "This makes the search space larger, but is necessary on some problems"}
+    "If this is enabled (1), equality axioms will be added to the prover."
+    "If this is disabled (0), equality axioms will not be added."
+    "If this is (2), the prover will detect if equality"
+    "is present and only add the equality axioms then."
+    "If this option is passed with (3), equality axioms are not added unless"
+    "the prover fails to find a closed tableau and makes start rules from"
+    "all clauses, and equality axioms are present."
+    "This makes the search space larger, but is necessary on some problems."
+    }
     ,
     {
     OPT_TABLEAU_SATURATION,
