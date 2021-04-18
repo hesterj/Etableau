@@ -569,6 +569,14 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 	Subst_p subst = SubstAlloc();
 	PStack_p a_local_variables = NULL;
 	PStack_p a_fresh_variables = NULL;
+	//if (true)
+	//{
+		//fprintf(stdout, "A before ");
+		//ClausePrint(stdout, a, true);
+		//fprintf(stdout, "\nB before: ");
+		//ClausePrint(stdout, b, true);
+		//fprintf(stdout, "\n...\n");
+	//}
 
 #ifdef LOCAL
 	if (tab->local_variables)
@@ -606,17 +614,17 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 
 	
 	SubstDelete(subst);
-	//if (true)
-	//{
-		//fprintf(stdout, "A: ");
-		//ClausePrint(stdout, a, true);
-		//fprintf(stdout, "\nB: ");
-		//ClausePrint(stdout, b, true);
-		//fprintf(stdout, "\n...\n");
-	//}
 	subst = NULL;
 	return_point:
 #ifdef LOCAL
+	//if (true)
+	//{
+		//fprintf(stdout, "A: ");
+		//ClausePrint(stdout, ClauseAlloc(a_eqn), true);
+		//fprintf(stdout, "\nB: ");
+		//ClausePrint(stdout, ClauseAlloc(b_eqn), true);
+		//fprintf(stdout, "\n...\n");
+	//}
 	if (tab->local_variables)
 	{
 		if (subst)

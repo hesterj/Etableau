@@ -16,6 +16,9 @@ often find a proof quickly or not at all, so by doing many short proof
 searches with differing assumptions it is possible for proofs to be found
 that may not have been otherwise.
 
+Install
+=======
+
 Etableau is licensed and installed in the same way as Eprover.
 
 To install Etableau, clone this repository, execute the following commands,
@@ -28,6 +31,9 @@ or follow the instructions for Eprover.
     
 The executable "eprover" is generated in the PROVER directory.  To check that it worked,
 try running ./eprover --tableau=1 --tableau-saturation=1 --auto $1, where $1 is some [TPTP](https://www.tptp.org) problem file.
+
+Options
+=======
 
 tableau
 ---------
@@ -102,7 +108,7 @@ to use different strategies.  It is recommended to at least use the --auto
 option of Eprover.
 
 Help
-----
+====
 
 If you have any problems with this software or a bug report, please feel free to contact
 me at <hesterj@etableau.com>.  The project's webpage is [here](https://www.etableau.com).

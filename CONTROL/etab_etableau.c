@@ -541,7 +541,8 @@ ProofState_p etableau_proofstate_alloc(ProofState_p main_proof_state)
    handle->demods[1]            = handle->processed_pos_eqns;
    handle->demods[2]            = NULL;
    GlobalIndicesNull(&(handle->wlindices));
-   handle->state_is_complete       = true;
+   //handle->state_is_complete       = true;
+   handle->state_is_complete       = main_proof_state->state_is_complete;
    //handle->has_interpreted_symbols = false;
    handle->has_interpreted_symbols = main_proof_state->has_interpreted_symbols;
    handle->definition_store     = DefStoreAlloc(handle->terms);

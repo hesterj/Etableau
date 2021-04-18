@@ -1001,6 +1001,8 @@ ClauseSet_p apr_EqualityAxioms(TB_p bank, bool substitution)
 	
 	// Function/Predicate equality substitution axioms
 	// There must be one for every f-code of a pred or non const func.
+	printf("# (1) Created %ld equality axioms.\n", equality_axioms->members);
+	ClauseSetPrint(stdout, equality_axioms, true);
 	
 	FunCode f_count = sig->f_count; // Max used f_code
 	
@@ -1081,6 +1083,14 @@ ClauseSet_p apr_EqualityAxioms(TB_p bank, bool substitution)
 				Eqn_p final = EqnAlloc(left_handle, right_handle, bank, true);
 				EqnListAppend(&subst_axiom, final);
 			}
+			else // These are skolem symbols I think
+			{
+				//printf("What is this f_code %s\n", SigFindName(sig, f_code));
+				EqnListFree(subst_axiom);
+				PStackFree(x_variables);
+				PStackFree(y_variables);
+				continue;
+			}
 			
 			Clause_p subst_axiom_clause = ClauseAlloc(subst_axiom);
 			ClauseRecomputeLitCounts(subst_axiom_clause);
@@ -1093,7 +1103,8 @@ ClauseSet_p apr_EqualityAxioms(TB_p bank, bool substitution)
 		}
 	}
 	
-	//printf("# Created %ld equality axioms.\n", equality_axioms->members);
+	printf("# Created %ld equality axioms.\n", equality_axioms->members);
+	ClauseSetPrint(stdout, equality_axioms, true);
 	return equality_axioms;
 }
 
