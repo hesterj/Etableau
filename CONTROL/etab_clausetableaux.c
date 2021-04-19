@@ -1370,6 +1370,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	//handle->backup = BackupProofstateAlloc(proofstate);
 	handle->terms = NULL; // The termbank for this tableau control..
 	handle->all_start_rule_created = false;
+	handle->equality_axioms_added = false;
 	handle->number_of_extensions = 0;  // Total number of extensions done
 	handle->number_of_saturation_attempts = 0;
 	handle->number_of_successful_saturation_attempts = 0;

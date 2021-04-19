@@ -10,18 +10,21 @@ ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_sta
                                             PStackPointer *current_index_p,
                                             TableauStack_p new_tableaux,
                                             TableauControl_p tableaucontrol,
-                                            ClauseSet_p active);
+                                            ClauseSet_p active,
+                                            ClauseSet_p extension_candidates);
 ClauseTableau_p get_next_tableau(TableauStack_p distinct_tableaux_stack,
                                  PStackPointer *current_index_p,
                                  TableauControl_p tableaucontrol,
-                                 ClauseSet_p active);
+                                 ClauseSet_p active,
+                                 ClauseSet_p extension_candidates);
 long create_all_start_rules(TableauControl_p tableaucontrol,
                         TableauStack_p stack,
                         ClauseSet_p active);
 ClauseTableau_p branch_select_new(TableauSet_p open_branches, int max_depth);
 ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth);
 long add_equality_axioms_to_state(TableauControl_p tableaucontrol,
-                                  ClauseSet_p active);
+                                  ClauseSet_p active,
+                                  ClauseSet_p extension_candidates);
 
 
 /*
@@ -123,6 +126,7 @@ int Etableau_n0(TableauControl_p tableaucontrol,
         fprintf(GlobalOut, "# Adding %ld equality axioms\n", equality_axioms->members);
         ClauseSetInsertSet(active, equality_axioms);
         ClauseSetFree(equality_axioms);
+        tableaucontrol->equality_axioms_added = true;
     }
     tableaucontrol->unprocessed = ClauseSetCopy(bank, proofstate->unprocessed);
     GCAdmin_p gc = proofstate->gc_terms;
@@ -131,7 +135,9 @@ int Etableau_n0(TableauControl_p tableaucontrol,
 
     //long unbound = TermBankUnbindAll(bank);
     //fprintf(GlobalOut, "# Unound %ld terms before tableau proof search...\n", unbound);
-    ClauseSet_p start_rule_candidates = EtableauGetStartRuleCandidates(proofstate, extension_candidates);
+    ClauseSet_p start_rule_candidates = EtableauGetStartRuleCandidates(tableaucontrol,
+                                                                       proofstate,
+                                                                       extension_candidates);
     fprintf(GlobalOut, "# There are %ld start rule candidates:\n", start_rule_candidates->members);
     ClauseSet_p unit_axioms = ClauseSetAlloc();
 
@@ -549,7 +555,8 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
     while ((current_tableau = get_next_tableau(distinct_tableaux_stack,
                                                &current_tableau_index,
                                                tableaucontrol,
-                                               active)))
+                                               active,
+                                               extension_candidates)))
     {
         if (tableaucontrol->closed_tableau)
         {
@@ -656,7 +663,8 @@ bool EtableauPopulation(TableauControl_p tableaucontrol,
                                                           &current_tableau_index,
                                                           new_tableaux,
                                                           tableaucontrol,
-                                                          active)))
+                                                          active,
+                                                          extension_candidates)))
     {
         if (tableaucontrol->closed_tableau)
         {
@@ -667,10 +675,10 @@ bool EtableauPopulation(TableauControl_p tableaucontrol,
         //printf("iter %ld:%ld\n", current_tableau_index, PStackGetSP(new_tableaux));
         BacktrackStatus tableau_status = BACKTRACK_OK;
         ClauseTableau_p closed_tableau = EtableauPopulationSelectBranchAndExtend(tableaucontrol,
-                                                             current_tableau,
-                                                             extension_candidates,
-                                                             &tableau_status,
-                                                             new_tableaux);
+                                                                                 current_tableau,
+                                                                                 extension_candidates,
+                                                                                 &tableau_status,
+                                                                                 new_tableaux);
         // If we have not been able to find enough tableaux after 500 iterations, just return soon.
         if (UNLIKELY(current_tableau_index >= 500)) tableau_status = RETURN_NOW;
         if (closed_tableau || current_tableau->open_branches->members == 0 || tableaucontrol->closed_tableau)
@@ -738,7 +746,8 @@ ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_sta
                                             PStackPointer *current_index_p,
                                             TableauStack_p new_tableaux,
                                             TableauControl_p tableaucontrol,
-                                            ClauseSet_p active)
+                                            ClauseSet_p active,
+                                            ClauseSet_p extension_candidates)
 {
     ClauseTableau_p new_current_tableau = NULL;
     assert(new_tableaux);
@@ -748,10 +757,9 @@ ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_sta
     {
         // If we have not been able to produce tableaux
         if (PStackEmpty(new_tableaux) &&
-            tableaucontrol->all_start_rule_created == false &&
-            tableaucontrol->neg_conjectures)
+            tableaucontrol->all_start_rule_created == false)
         {
-            add_equality_axioms_to_state(tableaucontrol, active);
+            add_equality_axioms_to_state(tableaucontrol, active, extension_candidates);
             create_all_start_rules(tableaucontrol, new_tableaux, active);
         }
         // Get a new tableau from the newly produced stack
@@ -773,21 +781,27 @@ ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_sta
 ClauseTableau_p get_next_tableau(TableauStack_p distinct_tableaux_stack,
                                  PStackPointer *current_index_p,
                                  TableauControl_p tableaucontrol,
-                                 ClauseSet_p active)
+                                 ClauseSet_p active,
+                                 ClauseSet_p extension_candidates)
 {
     ClauseTableau_p new_current_tableau = NULL;
     (*current_index_p)++;
     assert(*current_index_p >= 0);
+    //printf("selecting new tableau %ld remain, psp: %ld\n", PStackGetSP(distinct_tableaux_stack), *current_index_p);
     if (*current_index_p >= PStackGetSP(distinct_tableaux_stack))
     {
         // If we have not been able to produce tableaux
         if (PStackEmpty(distinct_tableaux_stack) &&
-            tableaucontrol->all_start_rule_created == false &&
-            tableaucontrol->neg_conjectures)
+            tableaucontrol->all_start_rule_created == false)
         {
-            add_equality_axioms_to_state(tableaucontrol, active);
+            printf("# Ran out of tableaux in process, attempting to make more from every clause.\n");
+            add_equality_axioms_to_state(tableaucontrol, active, extension_candidates);
             create_all_start_rules(tableaucontrol, distinct_tableaux_stack, active);
         }
+        //else
+        //{
+            //printf("%d %d\n", PStackEmpty(distinct_tableaux_stack), tableaucontrol->all_start_rule_created);
+        //}
         if (!PStackEmpty(distinct_tableaux_stack) )
         {
             *current_index_p = 0;
@@ -826,7 +840,7 @@ long create_all_start_rules(TableauControl_p tableaucontrol,
                             TableauStack_p stack,
                             ClauseSet_p active)
 {
-    printf("# Making start rules for all clauses\n");
+    printf("# Ran out of tableaux, making start rules for all clauses\n");
     long res = 0;
     TB_p terms = tableaucontrol->proofstate->terms;
     tableaucontrol->all_start_rule_created = true;
@@ -850,16 +864,19 @@ long create_all_start_rules(TableauControl_p tableaucontrol,
 }
 
 long add_equality_axioms_to_state(TableauControl_p tableaucontrol,
-                                  ClauseSet_p active)
+                                  ClauseSet_p active,
+                                  ClauseSet_p extension_candidates)
 {
-    if (tableaucontrol->tableauequality != 3) return 0;
+    // If we are not dynamically adding equality axioms during proof search, or have already done so, return
+    if (tableaucontrol->tableauequality != 3 || tableaucontrol->equality_axioms_added) return 0;
     TB_p terms = tableaucontrol->proofstate->terms;
     ClauseSet_p equality_axioms = EqualityAxiomsWithSubstitution(terms, active, true);
     long res = equality_axioms->members;
     //ClauseSet_p equality_copy = ClauseSetCopy(terms, equality_axioms);
     ClauseSetMoveUnits(equality_axioms, active);
-    ClauseSetInsertSet(active, equality_axioms);
-    printf("# Added %ld equality axioms to the tableau state\n", res);
+    long new_ext_candidates = ClauseSetInsertSet(extension_candidates, equality_axioms);
+    tableaucontrol->equality_axioms_added = true;
+    printf("# Added %ld equality axioms and %ld new extension candidates\n", res, new_ext_candidates);
     return res;
 }
 

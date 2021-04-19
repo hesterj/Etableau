@@ -32,7 +32,8 @@ long ClauseSetFreeUnits(ClauseSet_p set);
 bool EtableauWait(int num_cores_available, EPCtrlSet_p process_set);
 int TableauControlGetCores(TableauControl_p tableaucontrol);
 
-ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate,
+ClauseSet_p EtableauGetStartRuleCandidates(TableauControl_p tableaucontrol,
+                                           ProofState_p proofstate,
                                            ClauseSet_p active);
 TableauSet_p EtableauCreateStartRules(TB_p bank,
                                       ClauseSet_p unit_axioms,

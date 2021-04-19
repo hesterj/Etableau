@@ -157,7 +157,9 @@ long ClauseSetFreeUnits(ClauseSet_p set)
 //
 /----------------------------------------------------------------------*/
 
-ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate, ClauseSet_p active)
+ClauseSet_p EtableauGetStartRuleCandidates(TableauControl_p tableaucontrol,
+										   ProofState_p proofstate,
+										   ClauseSet_p active)
 {
    PList_p conjectures = PListAlloc();
    PList_p non_conjectures = PListAlloc();
@@ -176,6 +178,7 @@ ClauseSet_p EtableauGetStartRuleCandidates(ProofState_p proofstate, ClauseSet_p 
 		if (PListEmpty(conjectures))
 		{
 			fprintf(GlobalOut, "# No conjectures.\n");
+			tableaucontrol->all_start_rule_created = true;
 			start_rule_candidates = ClauseSetAlloc();
 			ClauseSetInsertSet(start_rule_candidates, active);
 			goto return_point;

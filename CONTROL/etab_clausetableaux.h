@@ -242,6 +242,7 @@ typedef struct tableaucontrol_cell
 	bool only_saturate_max_depth_branches;
 	bool print_dot_steps;
 	bool saturate_start_rules;
+	bool equality_axioms_added;
 	long tableauequality;
 	long quicksat; // Maximum number of processed clauess in saturation attempts
 	long number_of_extensions;

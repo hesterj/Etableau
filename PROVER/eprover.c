@@ -1839,6 +1839,11 @@ CLState_p process_options(int argc, char* argv[])
             TableauOptions = 2;
             break;
          }
+         else if (strcmp(arg, "3") == 3)
+         {
+            TableauOptions = 3;
+            break;
+         }
          else
          {
             Error("Must provide an argument of 0,1, or 2 for tableau use.", OTHER_ERROR);
