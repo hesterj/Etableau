@@ -25,6 +25,9 @@ ClauseTableau_p branch_select(TableauSet_p open_branches, int max_depth);
 long add_equality_axioms_to_state(TableauControl_p tableaucontrol,
                                   ClauseSet_p active,
                                   ClauseSet_p extension_candidates);
+static inline bool can_restart(TableauControl_p tableaucontrol,
+                               TableauStack_p stack,
+                               ClauseSet_p active);
 
 
 /*
@@ -756,8 +759,7 @@ ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_sta
     if (*current_index_p >= PStackGetSP(distinct_tableaux_stack))
     {
         // If we have not been able to produce tableaux
-        if (PStackEmpty(new_tableaux) &&
-            tableaucontrol->all_start_rule_created == false)
+        if (can_restart(tableaucontrol, new_tableaux, active))
         {
             add_equality_axioms_to_state(tableaucontrol, active, extension_candidates);
             create_all_start_rules(tableaucontrol, new_tableaux, active);
@@ -791,17 +793,12 @@ ClauseTableau_p get_next_tableau(TableauStack_p distinct_tableaux_stack,
     if (*current_index_p >= PStackGetSP(distinct_tableaux_stack))
     {
         // If we have not been able to produce tableaux
-        if (PStackEmpty(distinct_tableaux_stack) &&
-            tableaucontrol->all_start_rule_created == false)
+        if (can_restart(tableaucontrol, distinct_tableaux_stack, active))
         {
-            printf("# Ran out of tableaux in process, attempting to make more from every clause.\n");
+            //printf("# Ran out of tableaux in process, attempting to make more from every clause.\n");
             add_equality_axioms_to_state(tableaucontrol, active, extension_candidates);
             create_all_start_rules(tableaucontrol, distinct_tableaux_stack, active);
         }
-        //else
-        //{
-            //printf("%d %d\n", PStackEmpty(distinct_tableaux_stack), tableaucontrol->all_start_rule_created);
-        //}
         if (!PStackEmpty(distinct_tableaux_stack) )
         {
             *current_index_p = 0;
@@ -859,7 +856,7 @@ long create_all_start_rules(TableauControl_p tableaucontrol,
     }
     ClauseSetFree(emergency_units);
     TableauStackFree(emergency_tableaux);
-    printf("# Made %ld start rules\n", res);
+    //printf("# Made %ld start rules\n", res);
     return res;
 }
 
@@ -876,10 +873,17 @@ long add_equality_axioms_to_state(TableauControl_p tableaucontrol,
     ClauseSetMoveUnits(equality_axioms, active);
     long new_ext_candidates = ClauseSetInsertSet(extension_candidates, equality_axioms);
     tableaucontrol->equality_axioms_added = true;
-    printf("# Added %ld equality axioms and %ld new extension candidates\n", res, new_ext_candidates);
+    //printf("# Added %ld equality axioms and %ld new extension candidates\n", res, new_ext_candidates);
     return res;
 }
 
-
+static inline bool can_restart(TableauControl_p tableaucontrol, TableauStack_p stack, ClauseSet_p active)
+{
+    bool stack_empty = PStackEmpty(stack);
+    if (!stack_empty) return false;
+    if (tableaucontrol->all_start_rule_created == false) return true;
+    if (ClauseSetIsEquational(active) && tableaucontrol->equality_axioms_added == false) return true;
+    return false;
+}
 
 // End of file
