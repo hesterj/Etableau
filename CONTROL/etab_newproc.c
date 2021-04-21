@@ -759,7 +759,7 @@ ClauseTableau_p get_next_tableau_population(TableauStack_p distinct_tableaux_sta
     if (*current_index_p >= PStackGetSP(distinct_tableaux_stack))
     {
         // If we have not been able to produce tableaux
-        if (can_restart(tableaucontrol, new_tableaux, active))
+        if (PStackEmpty(new_tableaux) && can_restart(tableaucontrol, new_tableaux, active))
         {
             add_equality_axioms_to_state(tableaucontrol, active, extension_candidates);
             create_all_start_rules(tableaucontrol, new_tableaux, active);
@@ -793,7 +793,7 @@ ClauseTableau_p get_next_tableau(TableauStack_p distinct_tableaux_stack,
     if (*current_index_p >= PStackGetSP(distinct_tableaux_stack))
     {
         // If we have not been able to produce tableaux
-        if (can_restart(tableaucontrol, distinct_tableaux_stack, active))
+        if (PStackEmpty(distinct_tableaux_stack) && can_restart(tableaucontrol, distinct_tableaux_stack, active))
         {
             //printf("# Ran out of tableaux in process, attempting to make more from every clause.\n");
             add_equality_axioms_to_state(tableaucontrol, active, extension_candidates);
@@ -879,8 +879,7 @@ long add_equality_axioms_to_state(TableauControl_p tableaucontrol,
 
 static inline bool can_restart(TableauControl_p tableaucontrol, TableauStack_p stack, ClauseSet_p active)
 {
-    bool stack_empty = PStackEmpty(stack);
-    if (!stack_empty) return false;
+    assert(PStackEmpty(stack));
     if (tableaucontrol->all_start_rule_created == false) return true;
     if (ClauseSetIsEquational(active) && tableaucontrol->equality_axioms_added == false) return true;
     return false;
