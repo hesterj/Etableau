@@ -542,42 +542,42 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
 														int *extended,
 														TableauStack_p new_tableaux)
 {
-    Clause_p selected = extension_candidates->anchor->succ;
+	Clause_p selected = extension_candidates->anchor->succ;
 	ClauseTableau_p closed_tableau = NULL;
-    int number_of_extensions = 0;
+	int number_of_extensions = 0;
 	assert(ClauseSetCardinality(extension_candidates));
 
-    //while ((selected = select_extension_candidate(extension_candidates)))
-    while (selected != extension_candidates->anchor) // iterate over the clauses we can split on the branch
-    {
-        assert(ClauseLiteralNumber(selected) > 1);
-        assert(selected);
-        number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranch(tableaucontrol,
-                                                                          open_branch,
-                                                                          NULL,
-                                                                          selected,
-                                                                          new_tableaux);
-        if (UNLIKELY(tableaucontrol->closed_tableau))
-        {
-            closed_tableau = tableaucontrol->closed_tableau;
-            break;
-        }
-        else if (number_of_extensions > 0) // If we extended on the tableau, we have to return and select another branch, unless we are populating
-        {
-			ETAB_VERBOSE(printf("Extended on branch\n");)
-            assert(new_tableaux || number_of_extensions == 1); // Always return after one extension
+	//while ((selected = select_extension_candidate(extension_candidates)))
+	while (selected != extension_candidates->anchor) // iterate over the clauses we can split on the branch
+	{
+		assert(ClauseLiteralNumber(selected) > 1);
+		assert(selected);
+		number_of_extensions += ClauseTableauExtensionRuleAttemptOnBranch(tableaucontrol,
+																		  open_branch,
+																		  NULL,
+																		  selected,
+																		  new_tableaux);
+		if (UNLIKELY(tableaucontrol->closed_tableau))
+		{
+			closed_tableau = tableaucontrol->closed_tableau;
+			break;
+		}
+		else if (number_of_extensions > 0) // If we extended on the tableau, we have to return and select another branch, unless we are populating
+		{
+			ETAB_VERBOSE(printf("# Extended on branch at depth %ld\n", open_branch->depth);)
+			assert(new_tableaux || number_of_extensions == 1); // Always return after one extension
 			*extended += number_of_extensions;
 			number_of_extensions = 0;
 
-            // If we are in normal proof search (new_tableaux == NULL) return.
-            if (LIKELY(!new_tableaux))
+			// If we are in normal proof search (new_tableaux == NULL) return.
+			if (LIKELY(!new_tableaux))
 			{
 				ClauseSetMoveClause(extension_candidates, selected); // If we just extended with a clause, move it to the end of the extension candidates list.
 				break;
 			}
-        }
-        selected = selected->succ;
-    }
+		}
+		selected = selected->succ;
+	}
 
 	return closed_tableau;
 }

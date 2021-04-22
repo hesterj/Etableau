@@ -1014,65 +1014,6 @@ int ClauseTableauDifference(ClauseTableau_p deeper, ClauseTableau_p shallower)
 	return (deeper->depth - shallower->depth);
 }
 
-/*  Creates the symmetry, reflexivity, and transitivity equality axioms.
- *  These are needed in clausal tableaux calculus for problems with equality.
- *  Clausified, they are 4 axioms.
- * 
-*/
-
-ClauseSet_p EqualityAxioms(TB_p bank)
-{
-	//Clause_p symmetry
-	Type_p i_type = bank->sig->type_bank->i_type;
-	//~ Term_p x = VarBankVarAssertAlloc(bank->vars, -2, i_type);
-	//~ Term_p y = VarBankVarAssertAlloc(bank->vars, -4, i_type);
-	//~ Term_p z = VarBankVarAssertAlloc(bank->vars, -6, i_type);
-	Term_p x = VarBankGetFreshVar(bank->vars, i_type);
-	Term_p y = VarBankGetFreshVar(bank->vars, i_type);
-	Term_p z = VarBankGetFreshVar(bank->vars, i_type);
-	//VarBankSetVCountsToUsed(bank->vars);
-	
-	ClauseSet_p equality_axioms = ClauseSetAlloc();
-	
-	Eqn_p x_equals_x = EqnAlloc(x, x, bank, true);
-	Clause_p clause1 = ClauseAlloc(x_equals_x);
-	ClauseRecomputeLitCounts(clause1);
-	//printf("clause 1: %d\n", ClauseLiteralNumber(clause1));
-	//ClausePrint(GlobalOut, clause1, true);
-	ClauseSetInsert(equality_axioms, clause1);
-	
-	Eqn_p y_equals_x = EqnAlloc(y, x, bank, true);
-	Eqn_p x_neq_y = EqnAlloc(x, y, bank, false);
-	EqnListAppend(&y_equals_x, x_neq_y);
-	Clause_p clause2 = ClauseAlloc(y_equals_x);
-	ClauseRecomputeLitCounts(clause2);
-	//printf("clause 2: %d\n", ClauseLiteralNumber(clause2));
-	//ClausePrint(GlobalOut, clause2, true);
-	ClauseSetInsert(equality_axioms, clause2);
-	
-	Eqn_p x_equals_y = EqnAlloc(x, y, bank, true);
-	Eqn_p y_neq_x = EqnAlloc(y, x, bank, false);
-	EqnListAppend(&x_equals_y, y_neq_x);
-	Clause_p clause3 = ClauseAlloc(x_equals_y);
-	ClauseRecomputeLitCounts(clause2);
-	//printf("clause 3: %d\n", ClauseLiteralNumber(clause3));
-	//ClausePrint(GlobalOut, clause3, true);
-	ClauseSetInsert(equality_axioms, clause3);
-	
-	Eqn_p x_equals_z = EqnAlloc(x, z, bank, true);
-	x_neq_y = EqnAlloc(x, y, bank, false);
-	Eqn_p y_neq_z = EqnAlloc(y, z, bank, false);
-	EqnListAppend(&x_equals_z, x_neq_y);
-	EqnListAppend(&x_equals_z, y_neq_z);
-	Clause_p clause4 = ClauseAlloc(x_equals_z);
-	ClauseRecomputeLitCounts(clause4);
-	//printf("clause 4: %d\n", ClauseLiteralNumber(clause4));
-	//ClausePrint(GlobalOut, clause4, true);
-	ClauseSetInsert(equality_axioms, clause4);
-	
-	return equality_axioms;
-}
-
 // Goes through the children to tableau to ensure that all of the nodes have labels
 // returns number of nodes checked
 
@@ -1364,7 +1305,8 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 									 bool saturate_start_rules,
 									 long num_cores_to_use,
 									 long quicksat,
-									 long tableauequality)
+									 long tableauequality,
+									 long tableaubigbacktrack)
 {
 	TableauControl_p handle = TableauControlCellAlloc();
 	//handle->backup = BackupProofstateAlloc(proofstate);
@@ -1382,6 +1324,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->number_of_nodes_freed = 0;
 	handle->quicksat = quicksat;
 	handle->tableauequality = tableauequality;
+	handle->tableaubigbacktrack = tableaubigbacktrack;
 	handle->closed_tableau = NULL;
 	handle->branch_saturation_enabled = branch_saturation_enabled;
 	handle->satisfiable = false;
@@ -1878,6 +1821,9 @@ void ClauseTableauCreateID(ClauseTableau_p tableau, DStr_p str)
 		ClauseTableauCreateID(tableau->children[i], str);
 	}
 }
+
+// The sum of depths of ALL nodes divided by the number of open branches.
+// Not a very good measure, but can be used to see we are doing something.
 
 double ClauseTableauGetAverageDepth(ClauseTableau_p tableau)
 {

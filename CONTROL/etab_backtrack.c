@@ -401,6 +401,7 @@ bool BacktrackContainsSubst(Backtrack_p backtrack, Subst_p subst)
 
 bool BacktrackWrapper(ClauseTableau_p master)
 {
+    //TableauControl_p tableaucontrol = master->tableaucontrol;
     bool success = true;
     assert(master == master->master);
     PStack_p master_backtracks = master->master_backtracks;
@@ -469,4 +470,30 @@ void BacktrackStackDeleteInformation(BacktrackStack_p trash)
         assert(trash_bt);
         BacktrackFree(trash_bt);
     }
+}
+
+/*
+** If there are n backtracks available, backtrack n/fraction times.
+** If we ran out of backtracks return false, else return true.
+*/
+
+bool BacktrackMultiple(ClauseTableau_p master, long denominator)
+{
+    assert(denominator);
+    long number_of_backtracks = PStackGetSP(master->master_backtracks);
+    double fraction = (double) number_of_backtracks / (double) denominator;
+    assert(fraction >= 0);
+    double ceiling = ceil(fraction);
+    long counter = (long) ceiling;
+    assert(counter);
+    bool success = true;
+
+    while (counter)
+    {
+        success = BacktrackWrapper(master);
+        if (!success) break;
+        counter--;
+    }
+
+    return success;
 }

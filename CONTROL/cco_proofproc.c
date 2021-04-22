@@ -1831,7 +1831,7 @@ Clause_p ProcessSpecificClause(ProofState_p state, ProofControl_p control,
    ClauseFree(tmp_copy);
    if(TermCellStoreNodes(&(state->tmp_terms->term_store))>TMPBANK_GC_LIMIT)
    {
-      TBGCSweep(state->tmp_terms); // Disabled by John!
+      TBGCSweep(state->tmp_terms);
    }
 #ifdef PRINT_SHARING
    print_sharing_factor(state);

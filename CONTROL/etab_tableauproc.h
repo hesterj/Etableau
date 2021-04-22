@@ -45,7 +45,6 @@ TableauStack_p EtableauCreateStartRulesStack(TB_p bank,
                                              ClauseSet_p start_rule_candidates,
                                              TableauControl_p tableaucontrol,
                                              unsigned long maximum_depth);
-ClauseSet_p EqualityAxiomsWithSubstitution(TB_p bank, ClauseSet_p set, bool substitution);
 
 
 #endif

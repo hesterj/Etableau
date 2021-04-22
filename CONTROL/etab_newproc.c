@@ -270,6 +270,7 @@ ClauseTableau_p EtableauSelectBranchAndExtend(TableauControl_p tableaucontrol,
 
 
     int extensions_done = 0; // This allows us to keep track of the number of extensions done since the last backtrack
+    long big_backtracks = 0;
     //int depth_status = DEPTH_OK;
     ClauseTableau_p selected_branch = NULL, result = NULL;
     TableauSet_p open_branches = master->open_branches;
@@ -279,7 +280,15 @@ ClauseTableau_p EtableauSelectBranchAndExtend(TableauControl_p tableaucontrol,
         if (!selected_branch)
         {
             ClauseTableauSetProp(master, TUPBacktrackedDueToMaxDepth);
-            bool backtrack_successful = BacktrackWrapper(master);
+            bool backtrack_successful = true;
+            if ((big_backtracks = tableaucontrol->tableaubigbacktrack))
+            {
+                backtrack_successful = BacktrackMultiple(master, big_backtracks);
+            }
+            else
+            {
+                backtrack_successful = BacktrackWrapper(master);
+            }
             if (!backtrack_successful)
             {
                 ETAB_VERBOSE(printf("# Backtrack failed because we couldn't select a branch (depth)\n");)
@@ -561,6 +570,13 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
                                                active,
                                                extension_candidates)))
     {
+        TB_p terms = current_tableau->terms;
+        //if (Verbose)
+        //{
+            //fprintf(stderr, "# Selected tableau %ld\n", current_tableau_index);
+        //}
+        //fprintf(stderr, "# Selected tableau has maximum depth %d, average depth %f\n", ClauseTableauGetDeepestBranch(current_tableau),
+                //ClauseTableauGetAverageDepth(current_tableau));
         if (tableaucontrol->closed_tableau)
         {
             EtableauStatusReport(tableaucontrol, active, tableaucontrol->closed_tableau);
@@ -584,6 +600,7 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
         else
         {
             assert(current_tableau->master == current_tableau);
+            //GCCollect(terms->gc);
             switch (tableau_status)
             {
                 case BACKTRACK_OK: // This should only happen during population, when all possible extension up to a depth have been made on a tableau
@@ -612,8 +629,8 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
                         break;
                     }
                     MaximumDepth(current_tableau) = MaximumDepth(current_tableau) << (unsigned long) 1;
-                    ETAB_VERBOSE(printf("# %p increaesd maximum depth to %lu (backtrack failed because of depth)\n", current_tableau, MaximumDepth(current_tableau));)
-                    assert(ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToExtensionFailure));
+                    ETAB_VERBOSE(printf("# %p increased maximum depth to %lu (backtrack failed because of depth)\n", current_tableau, MaximumDepth(current_tableau));)
+                    assert(ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToMaxDepth));
                     ClauseTableauDelProp(current_tableau, TUPBacktracked);
                     assert(!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToMaxDepth));
                     assert(!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToExtensionFailure));
@@ -633,9 +650,9 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
                 {
                     Error("Unknown tableau status in n1", 100);
                 }
-            }
-        }
-    }
+            } // End of switch statement
+        } // End of no proof found else statement
+    } // End of tableau selection while loop
 
     return_point:
     return proof_found;
@@ -865,6 +882,7 @@ long add_equality_axioms_to_state(TableauControl_p tableaucontrol,
                                   ClauseSet_p extension_candidates)
 {
     // If we are not dynamically adding equality axioms during proof search, or have already done so, return
+    if (!ClauseSetIsEquational(active)) return 0;
     if (tableaucontrol->tableauequality != 3 || tableaucontrol->equality_axioms_added) return 0;
     TB_p terms = tableaucontrol->proofstate->terms;
     ClauseSet_p equality_axioms = EqualityAxiomsWithSubstitution(terms, active, true);
@@ -884,5 +902,6 @@ static inline bool can_restart(TableauControl_p tableaucontrol, TableauStack_p s
     if (ClauseSetIsEquational(active) && tableaucontrol->equality_axioms_added == false) return true;
     return false;
 }
+
 
 // End of file

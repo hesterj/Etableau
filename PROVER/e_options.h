@@ -198,6 +198,7 @@ typedef enum
    OPT_TABLEAU_DOT_PRINT,
    OPT_TABLEAU_DOT_PRINT_STEPS,
    OPT_TABLEAU_QUICKSAT,
+   OPT_TABLEAU_BIG_BACKTRACKS,
    OPT_DUMMY
 }OptionCodes;
 
@@ -1521,8 +1522,18 @@ OptCell opts[] =
     '\0', "quicksat",
     OptArg, "100",
     "No argument"
-    "All local branch saturations will process no more than the specified number of clauess."
+    "All local branch saturations will process no more than the specified number of clauses."
     "The default value is 100."
+    },
+    {
+    OPT_TABLEAU_BIG_BACKTRACKS,
+    '\0', "big-backtracks",
+    OptArg, "100",
+    "No argument"
+    "Whenever a tableau is backtracked due to max depth, rather than backtracking only one step,"
+    " backtrack a larger amount than simply once.  If this option is passed with m as a parameter"
+    " and n is the number of backtracks on the current tableau, backtrack the least positive integer"
+    " greater than n/m times."
     },
    {OPT_NOOPT,
     '\0', NULL,

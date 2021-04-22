@@ -80,7 +80,7 @@ PStack_p APRRelevanceNeighborhood(Sig_p sig, ClauseSet_p set, PList_p list, int 
 void APRProofStateProcess(ProofState_p proofstate, int relevance, bool equality, bool print_apr_graph);
 void APRProofStateProcessTest(ProofState_p proofstate, int relevance, bool equality, bool print_apr_graph);
 void APRLiveProofStateProcess(ProofState_p proofstate, int relevance);
-ClauseSet_p apr_EqualityAxioms(TB_p bank, bool substitution);
+ClauseSet_p EqualityAxiomsWithSubstitution(TB_p bank, ClauseSet_p set, bool substitution);
 
 int APRNodeStackAddSubstAxioms(APRControl_p control, PStack_p nodes);
 int APRNodeAddSubstAxioms(APRControl_p control, APR_p node);

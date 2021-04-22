@@ -152,7 +152,6 @@ bool ClausesAreDisjoint(Clause_p a, Clause_p b);
 Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau);  // Major memory hog
 void ClauseBindFresh(Clause_p clause, Subst_p subst, ClauseTableau_p tableau);
 
-ClauseSet_p EqualityAxioms(TB_p bank);
 
 Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b);
 int ClauseTableauGetDeepestBranch(ClauseTableau_p tab);
@@ -253,6 +252,7 @@ typedef struct tableaucontrol_cell
 	long number_of_saturations_closed_after_branch;
 	long neg_conjectures;
 	long number_of_nodes_freed;
+	long tableaubigbacktrack;
 	char *problem_name;
 	char *dot_output;
 	char *clausification_buffer;
@@ -282,7 +282,8 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 									 bool saturate_start_rules,
 									 long num_cores_to_use,
 									 long quicksat,
-									 long tableauequality);
+									 long tableauequality,
+									 long tableaubigbacktrack);
 void TableauControlFree(TableauControl_p trash);
 void EqnRepFree(void *eqn_p);
 

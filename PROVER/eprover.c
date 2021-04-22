@@ -102,6 +102,7 @@ unsigned long TableauDepth = 4;
 long TableauEquality = 3;
 long TableauCores = 0;
 long TableauQuicksat = 0;
+long TableauBigBacktrack = 0;
 bool TableauSaturation = false;
 bool TableauSaturationMaxDepthOnly = false;
 bool TableauSaturateStartRules = true;
@@ -578,11 +579,6 @@ int main(int argc, char* argv[])
    if (!success && TableauOptions == 1)
    {
       ClauseSet_p new_axioms = ClauseSetCopy(proofstate->terms, proofstate->unprocessed);
-      //if ((TableauEquality == 2) && ClauseSetIsEquational(new_axioms))
-      //{
-         //fprintf(GlobalOut, "# Automatically enabled equality axioms after equality was detected\n");
-         //TableauEquality = 1;
-      //}
       TableauControl_p tableaucontrol = TableauControlAlloc(neg_conjectures,
                                                             argv[argc-1], // the problem file
                                                             tableau_dot_out,
@@ -594,7 +590,8 @@ int main(int argc, char* argv[])
                                                             TableauSaturateStartRules,
                                                             TableauCores,
                                                             TableauQuicksat,
-                                                            TableauEquality);
+                                                            TableauEquality,
+                                                            TableauBigBacktrack);
       fprintf(GlobalOut, "# Number of axioms: %ld Number of unprocessed: %ld\n",
               proofstate->axioms->members,
               proofstate->unprocessed->members);
@@ -1860,6 +1857,9 @@ CLState_p process_options(int argc, char* argv[])
             break;
       case OPT_TABLEAU_QUICKSAT:
             TableauQuicksat = CLStateGetIntArg(handle,arg);
+            break;
+      case OPT_TABLEAU_BIG_BACKTRACKS:
+            TableauBigBacktrack = CLStateGetIntArg(handle, arg);
             break;
       default:
             assert(false && "Unknown option");
