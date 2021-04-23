@@ -1331,6 +1331,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->multiprocessing_active = num_cores_to_use;
 	handle->unprocessed = NULL;
 	handle->label_storage = ClauseSetAlloc();
+	GCRegisterClauseSet(proofstate->terms->gc, handle->label_storage);
 	handle->problem_name = problem_name;
 	handle->dot_output = dot_output;
 	handle->print_dot_steps = print_dot_steps;
@@ -1349,6 +1350,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 void TableauControlFree(TableauControl_p trash)
 {
 	//BackupProofStateFree(trash->backup);
+	GCDeregisterClauseSet(trash->proofstate->terms->gc, trash->label_storage);
 	ClauseSetFree(trash->label_storage);
 	PStackFree(trash->tableaux_trash);
 	TableauStackFree(trash->max_depth_tableaux);
@@ -1586,6 +1588,7 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 {
 	assert(tableaucontrol->proofstate->status_reported == false);
 
+	fprintf(GlobalOut, "# There were %ld total branch saturation attempts.\n", tableaucontrol->number_of_saturation_attempts);
 	fprintf(GlobalOut, "# There were %ld total successful branch saturations.\n", tableaucontrol->number_of_successful_saturation_attempts);
 	fprintf(GlobalOut, "# There were %ld successful branch saturations in interreduction.\n",
 			tableaucontrol->number_of_saturations_closed_in_interreduction);

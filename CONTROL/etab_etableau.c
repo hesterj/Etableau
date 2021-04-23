@@ -75,6 +75,7 @@ ErrorCodes EproverCloseBranchWrapper(ProofState_p proofstate,
     if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
 
     // Create a backtracked proofstate for the branch saturation.
+    tableau_control->number_of_saturation_attempts++;
     ProofState_p new_proofstate = backtrack_proofstate(proofstate,
                                                        proofcontrol,
                                                        tableau_control);
@@ -261,7 +262,6 @@ int CloseBranchesWithEprover(TableauControl_p tableaucontrol,
         if ((!ClauseTableauQueryProp(handle, TUPSaturationBlocked)) && ((open_branches->members == 1) || BranchIsLocal(handle)))
         {
             num_local_branches++;
-            tableaucontrol->number_of_saturation_attempts++;
             //ResetAllOccurrences(&tableau_control->feature_tree);
             branch_status = EproverCloseBranchWrapper(proofstate,
                                                 proofcontrol,

@@ -600,7 +600,7 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
         else
         {
             assert(current_tableau->master == current_tableau);
-            //GCCollect(terms->gc);
+            GCCollect(terms->gc);
             switch (tableau_status)
             {
                 case BACKTRACK_OK: // This should only happen during population, when all possible extension up to a depth have been made on a tableau
