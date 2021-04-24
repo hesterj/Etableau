@@ -22,6 +22,7 @@ long collect_set_for_saturation(ClauseSet_p from,
                                 TB_p bank,
                                 ProofControl_p proofcontrol,
                                 PStack_p branch_labels);
+bool branch_saturation_allowed(ClauseTableau_p branch);
 
 // Function definitions 
 
@@ -259,15 +260,16 @@ int CloseBranchesWithEprover(TableauControl_p tableaucontrol,
         assert(handle);
         assert(handle != master->open_branches->anchor);
         assert(handle->info);
-        if ((!ClauseTableauQueryProp(handle, TUPSaturationBlocked)) && ((open_branches->members == 1) || BranchIsLocal(handle)))
+        //if ((!ClauseTableauQueryProp(handle, TUPSaturationBlocked)) && ((open_branches->members == 1) || BranchIsLocal(handle)))
+        if (branch_saturation_allowed(handle))
         {
             num_local_branches++;
             //ResetAllOccurrences(&tableau_control->feature_tree);
             branch_status = EproverCloseBranchWrapper(proofstate,
-                                                proofcontrol,
-                                                handle,
-                                                tableaucontrol,
-                                                max_proc);
+                                                      proofcontrol,
+                                                      handle,
+                                                      tableaucontrol,
+                                                      max_proc);
             //EqnBranchRepresentationsList(handle, tableau_control->feature_list, branch_status);
             //XGBoostTest();
             if (branch_status == PROOF_FOUND)
@@ -712,3 +714,20 @@ long clauseset_insert_copy(TB_p bank,
     }
     return res;
 }
+
+bool branch_saturation_allowed(ClauseTableau_p branch)
+{
+    if (!ClauseTableauQueryProp(branch, TUPSaturationBlocked))
+    {
+        if (branch->open_branches->members == 1) return true;
+        if (BranchIsLocal(branch)) return true;
+    }
+    return false;
+}
+
+
+
+
+
+
+// End of file
