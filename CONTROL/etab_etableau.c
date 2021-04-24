@@ -75,6 +75,9 @@ ErrorCodes EproverCloseBranchWrapper(ProofState_p proofstate,
     // Large number of clauses to process, for last ditch attempts
     if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
 
+    printf("# Hash of branch we are going to saturate with %ld clauses: %ld\n",
+           selected_number_of_clauses_to_process,
+           ClauseTableauHashBranch(branch));
     // Create a backtracked proofstate for the branch saturation.
     tableau_control->number_of_saturation_attempts++;
     ProofState_p new_proofstate = backtrack_proofstate(proofstate,

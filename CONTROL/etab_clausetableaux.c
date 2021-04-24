@@ -24,13 +24,13 @@ void clauseprint(Clause_p clause)
 
 unsigned long hash(unsigned char *str)
 {
-    unsigned long hash = 5381;
-    int c;
+	unsigned long hash = 5381;
+	int c;
 
-    while ((c = *str++))
-        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+	while ((c = *str++))
+		hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
 
-    return hash;
+	return hash;
 }
 
 ClauseTableau_p empty_tableau_alloc()
@@ -817,6 +817,36 @@ void ClauseTableauPrintBranch(ClauseTableau_p branch)
 	//printf("\033[0m");
 }
 
+/*
+** Print branch clauses separated by commas and terminated by a newline to out
+*/
+
+void ClauseTableauPrintBranchSimple(FILE* out, ClauseTableau_p branch)
+{
+	ClauseTableau_p depth_check = branch;
+	assert(depth_check);
+
+	while (depth_check->depth != 0)
+	{
+		assert(depth_check->label);
+		assert(depth_check->id >= 0);
+		ClausePrint(out, depth_check->label, true);
+		fprintf(out, ", ");
+		if (depth_check->folding_labels)
+		{
+			ClauseSetPrint(out, depth_check->folding_labels, true);
+			fprintf(out, ", ");
+		}
+
+		depth_check = depth_check->parent;
+	}
+	assert(depth_check->depth == 0);
+	assert(depth_check->label);
+
+	ClausePrint(out, depth_check->label, true);
+	fprintf(out, "\n");
+}
+
 void ClauseTableauPrintBranch2(ClauseTableau_p branch)
 {
 	ClauseTableau_p depth_check = branch;
@@ -1522,15 +1552,15 @@ long SubstDStrPrint(DStr_p str, Subst_p subst, Sig_p sig, DerefType deref)
    fprintf(out, "{");
    if(limit)
    {
-      SubstBindingPrint(out,  PStackElementP(subst,0), sig, deref);
-      {
-         for(i=1; i<limit;i++)
-         {
-            fprintf(out, ", ");
-            SubstBindingPrint(out,  PStackElementP(subst,i), sig,
-                              deref);
-         }
-      }
+	  SubstBindingPrint(out,  PStackElementP(subst,0), sig, deref);
+	  {
+		 for(i=1; i<limit;i++)
+		 {
+			fprintf(out, ", ");
+			SubstBindingPrint(out,  PStackElementP(subst,i), sig,
+							  deref);
+		 }
+	  }
    }
    fprintf(out, "}");
    SecureFClose(out);
@@ -1548,15 +1578,15 @@ ClauseRep_p ClauseGetRepresentation(Clause_p clause)
 
 void EqnRepFree(void *eqn_p)
 {
-    Eqn_p eqn = (Eqn_p) eqn_p;
+	Eqn_p eqn = (Eqn_p) eqn_p;
 	assert(!TermCellQueryProp(eqn->lterm, TPIsShared));
-    TermFree(eqn->lterm);
+	TermFree(eqn->lterm);
 	if (eqn->rterm->f_code != SIG_TRUE_CODE)
 	{
-        assert(!TermCellQueryProp(eqn->rterm, TPIsShared));
+		assert(!TermCellQueryProp(eqn->rterm, TPIsShared));
 		TermFree(eqn->rterm);
 	}
-    EqnFree(eqn);
+	EqnFree(eqn);
 }
 
 void ClauseStackFree(ClauseStack_p trash)
@@ -1816,6 +1846,22 @@ long ClauseTableauHash(ClauseTableau_p tableau)
 	return hash_value;
 }
 
+long ClauseTableauHashBranch(ClauseTableau_p branch)
+{
+	char* buf;
+	size_t len;
+	FILE* branch_in_memory = open_memstream(&buf, &len);
+	if (!branch_in_memory)
+	{
+		Error("Could not open FILE* in memory (ClauseTableauHashBranch)", 100);
+	}
+	ClauseTableauPrintBranchSimple(branch_in_memory, branch);
+	long hash_value = hash(buf);
+	fclose(branch_in_memory);
+	free(buf);
+	return hash_value;
+}
+
 void ClauseTableauCreateID(ClauseTableau_p tableau, DStr_p str)
 {
 	DStrAppendInt(str, tableau->id);
@@ -1823,6 +1869,11 @@ void ClauseTableauCreateID(ClauseTableau_p tableau, DStr_p str)
 	{
 		ClauseTableauCreateID(tableau->children[i], str);
 	}
+}
+
+void ClauseTableauCreateID2(ClauseTableau_p tableau, FILE* out)
+{
+	ClauseTableauPrintBranch(tableau);
 }
 
 // The sum of depths of ALL nodes divided by the number of open branches.
