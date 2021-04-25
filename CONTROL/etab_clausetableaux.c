@@ -1408,7 +1408,9 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->feature_list = PListAlloc();
 
 	handle->failed_saturations = PStackAlloc();
+	handle->successful_saturations = PStackAlloc();
 	handle->number_saturations_blocked = 0;
+	handle->number_of_free_saturations = 0;
 	return handle;
 }
 
@@ -1437,6 +1439,7 @@ void TableauControlFree(TableauControl_p trash)
 	}
 
 	PStackFree(trash->failed_saturations);
+	PStackFree(trash->successful_saturations);
 	TableauControlCellFree(trash);
 }
 
@@ -1656,7 +1659,8 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 	assert(tableaucontrol->proofstate->status_reported == false);
 
 	fprintf(GlobalOut, "# There were %ld total branch saturation attempts.\n", tableaucontrol->number_of_saturation_attempts);
-	fprintf(GlobalOut, "# There were %ld of these attempts BLOCKED.\n", tableaucontrol->number_saturations_blocked);
+	fprintf(GlobalOut, "# There were %ld of these attempts blocked.\n", tableaucontrol->number_saturations_blocked);
+	fprintf(GlobalOut, "# There were %ld free duplicated saturations.\n", tableaucontrol->number_of_free_saturations);
 	fprintf(GlobalOut, "# There were %ld total successful branch saturations.\n", tableaucontrol->number_of_successful_saturation_attempts);
 	fprintf(GlobalOut, "# There were %ld successful branch saturations in interreduction.\n",
 			tableaucontrol->number_of_saturations_closed_in_interreduction);

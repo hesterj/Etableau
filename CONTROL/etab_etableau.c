@@ -80,14 +80,17 @@ ErrorCodes EproverCloseBranchWrapper(ProofState_p proofstate,
            //selected_number_of_clauses_to_process,
            //branch_hash);
     tableau_control->number_of_saturation_attempts++;
-    for (PStackPointer p=0; p<PStackGetSP(tableau_control->failed_saturations); p++)
+    if (PStackFindInt(tableau_control->failed_saturations, branch_hash))
     {
-        if (branch_hash == PStackElementInt(tableau_control->failed_saturations, p))
-        {
-            tableau_control->number_saturations_blocked++;
-            //printf("Wow, a big branch that we can choose to not saturate!\n");
-            return RESOURCE_OUT;
-        }
+        tableau_control->number_saturations_blocked++;
+        ClauseTableauSetProp(branch, TUPSaturationBlocked);
+        return RESOURCE_OUT;
+    }
+    else if (PStackFindInt(tableau_control->successful_saturations, branch_hash))
+    {
+        tableau_control->number_of_free_saturations++;
+        //printf("# We got a free saturation!\n");
+        return PROOF_FOUND;
     }
     // Create a backtracked proofstate for the branch saturation.
     ProofState_p new_proofstate = backtrack_proofstate(proofstate,
@@ -100,6 +103,8 @@ ErrorCodes EproverCloseBranchWrapper(ProofState_p proofstate,
                                                   selected_number_of_clauses_to_process);
 
     if (branch_status != PROOF_FOUND) PStackPushInt(tableau_control->failed_saturations, branch_hash);
+    else if (branch_status == PROOF_FOUND) PStackPushInt(tableau_control->successful_saturations, branch_hash);
+
     branch->previously_saturated = selected_number_of_clauses_to_process;
     etableau_proofstate_free(new_proofstate);
 
@@ -399,8 +404,8 @@ bool EtableauSaturateAllTableauxInStack(TableauControl_p tableaucontrol, Tableau
         }
         ClauseTableau_p saturation_tableau = PStackElementP(distinct_tableaux_stack, p);
         CloseBranchesWithEprover(tableaucontrol,
-                                                 saturation_tableau,
-                                                 10000);
+                                 saturation_tableau,
+                                 10000);
         if (tableaucontrol->closed_tableau)
         {
             assert(tableaucontrol->closed_tableau == saturation_tableau);

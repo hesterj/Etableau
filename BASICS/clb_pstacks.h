@@ -103,6 +103,8 @@ void     PStackSort(PStack_p stack, ComparisonFunctionType cmpfun);
 void     PStackMerge(PStack_p st1, PStack_p st2, PStack_p res,
                      ComparisonFunctionType cmpfun);
 
+bool     PStackFindInt(PStack_p stack, long integer);
+
 double   PStackComputeAverage(PStack_p stack, double *deviation);
 
 void     PStackPushStack(PStack_p target, PStack_p source);

@@ -288,6 +288,14 @@ void PStackPrintInt(FILE* out, char* format, PStack_p stack)
 }
 
 
+bool PStackFindInt(PStack_p stack, long integer)
+{
+   for (PStackPointer p=0; p<PStackGetSP(stack); p++)
+   {
+      if (PStackElementInt(stack, p) == integer)  return true;
+   }
+   return false;
+}
 
 /*---------------------------------------------------------------------*/
 /*                        End of File                                  */

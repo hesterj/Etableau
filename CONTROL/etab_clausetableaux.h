@@ -250,7 +250,9 @@ typedef struct tableaucontrol_cell
 	PList_p feature_list;
 
 	PStack_p failed_saturations; // Simple stack of hashes of failed branch saturations... a very dumb hash table
+	PStack_p successful_saturations; // Simple stack of hashes of successful branch saturations... a very dumb hash table
 	long number_saturations_blocked;
+	long number_of_free_saturations;
 }TableauControlCell, *TableauControl_p;
 
 #define TableauControlCellAlloc()    (TableauControlCell*)SizeMalloc(sizeof(TableauControlCell))
