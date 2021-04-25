@@ -796,6 +796,29 @@ void ClauseSetPrint(FILE* out, ClauseSet_p set, bool fullterms)
    }
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: ClauseSetTSTPCorePrint()
+//
+//   Print the clause set to the given stream.
+//
+// Global Variables: Only for term output
+//
+// Side Effects    : Output
+//
+/----------------------------------------------------------------------*/
+
+void ClauseSetTSTPCorePrint(FILE* out, ClauseSet_p set, bool fullterms)
+{
+   Clause_p handle;
+
+   for(handle = set->anchor->succ; handle!=set->anchor; handle =
+          handle->succ)
+   {
+      ClauseTSTPCorePrint(out, handle, fullterms);
+      fputc('\n', out);
+   }
+}
 
 /*-----------------------------------------------------------------------
 //

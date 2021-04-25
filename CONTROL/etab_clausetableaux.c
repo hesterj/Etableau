@@ -8,7 +8,7 @@ int clausesetallocs_counter = 1;
 
 void DTreeFree(void *trash);
 
-unsigned long hash(unsigned char *str);
+long hash(char *str);
 ClauseTableau_p empty_tableau_alloc();
 /*  The open branches for each distinct tableau MUST be initialized on creation,
  *  not by this method.
@@ -22,9 +22,9 @@ void clauseprint(Clause_p clause)
 	printf("\n");
 }
 
-unsigned long hash(unsigned char *str)
+long hash(char *str)
 {
-	unsigned long hash = 5381;
+	long hash = 5381;
 	int c;
 
 	while ((c = *str++))
@@ -830,11 +830,11 @@ void ClauseTableauPrintBranchSimple(FILE* out, ClauseTableau_p branch)
 	{
 		assert(depth_check->label);
 		assert(depth_check->id >= 0);
-		ClausePrint(out, depth_check->label, true);
+		ClauseTSTPCorePrint(out, depth_check->label, true);
 		fprintf(out, ", ");
-		if (depth_check->folding_labels)
+		if (depth_check->folding_labels && !ClauseSetEmpty(depth_check->folding_labels))
 		{
-			ClauseSetPrint(out, depth_check->folding_labels, true);
+			ClauseSetTSTPCorePrint(out, depth_check->folding_labels, true);
 			fprintf(out, ", ");
 		}
 
@@ -843,7 +843,7 @@ void ClauseTableauPrintBranchSimple(FILE* out, ClauseTableau_p branch)
 	assert(depth_check->depth == 0);
 	assert(depth_check->label);
 
-	ClausePrint(out, depth_check->label, true);
+	ClauseTSTPCorePrint(out, depth_check->label, true);
 	fprintf(out, "\n");
 }
 
@@ -1841,7 +1841,7 @@ long ClauseTableauHash(ClauseTableau_p tableau)
 
 	ClauseTableauCreateID(tableau, string);
 
-	long hash_value = hash((unsigned char*) DStrView(string));
+	long hash_value = hash(DStrView(string));
 	DStrFree(string);
 	return hash_value;
 }
@@ -1856,6 +1856,8 @@ long ClauseTableauHashBranch(ClauseTableau_p branch)
 		Error("Could not open FILE* in memory (ClauseTableauHashBranch)", 100);
 	}
 	ClauseTableauPrintBranchSimple(branch_in_memory, branch);
+	fflush(branch_in_memory);
+	printf("%s\n", buf);
 	long hash_value = hash(buf);
 	fclose(branch_in_memory);
 	free(buf);
