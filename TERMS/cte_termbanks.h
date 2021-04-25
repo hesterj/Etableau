@@ -155,9 +155,13 @@ Term_p  TBFindRepr(TB_p bank, Term_p term);
 
 void    TBPrintBankInOrder(FILE* out, TB_p bank);
 void    TBPrintTermCompact(FILE* out, TB_p bank, Term_p term);
+void    TBPrintTermCompactNormed(FILE* out, TB_p bank, Term_p term);
 #define TBPrintTermFull(out, bank, term)                        \
    TermPrint((out), (term), (bank)->sig, DEREF_NEVER)
+#define TBPrintTermFullNormed(out, bank, term)                        \
+   TermPrintNormed((out), (term), (bank)->sig, DEREF_NEVER)
 void    TBPrintTerm(FILE* out, TB_p bank, Term_p term, bool fullterms);
+void    TBPrintTermNormed(FILE* out, TB_p bank, Term_p term, bool fullterms);
 void    TBPrintBankTerms(FILE* out, TB_p bank);
 Term_p  TBTermParseReal(Scanner_p in, TB_p bank, bool check_symb_prop);
 

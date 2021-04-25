@@ -53,12 +53,14 @@ extern bool      TermPrintTypes;
 
 void   VarPrint(FILE* out, FunCode var);
 void TermPrintFO(FILE* out, Term_p term, Sig_p sig, DerefType deref);
+void TermPrintFONormed(FILE* out, Term_p term, Sig_p sig, DerefType deref);
 #ifdef ENABLE_LFHO
 void TermPrintHO(FILE* out, Term_p term, Sig_p sig, DerefType deref);
 #define TermPrint(out, term, sig, deref) (problemType == PROBLEM_HO ? \
         TermPrintHO(out, term, sig, deref) : TermPrintFO(out, term, sig, deref))
 #else
 #define TermPrint(out, term, sig, deref) TermPrintFO(out, term, sig, deref)
+#define TermPrintNormed(out, term, sig, deref) TermPrintFONormed(out, term, sig, deref)
 #endif
 void   TermPrintArgList(FILE* out, Term_p *args, int arity, Sig_p sig, DerefType deref);
 void   TermFOOLPrint(FILE* out, Sig_p sig, Term_p form);

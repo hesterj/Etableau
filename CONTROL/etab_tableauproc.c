@@ -1,5 +1,4 @@
 #include "etab_tableauproc.h"
-#define _GNU_SOURCE
 #include <fcntl.h>
 #include <cpp_interface.h>
 

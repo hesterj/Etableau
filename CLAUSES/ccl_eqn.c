@@ -1185,6 +1185,42 @@ void EqnTSTPPrint(FILE* out, Eqn_p eq, bool fullterms)
 }
 
 
+/*-----------------------------------------------------------------------
+//
+// Function: EqnTSTPPrint()
+//
+//   Print a literal in TSTP format, with variables normed to X1.
+//
+// Global Variables: -
+//
+// Side Effects    : Output
+//
+/----------------------------------------------------------------------*/
+
+void EqnTSTPPrintNormed(FILE* out, Eqn_p eq, bool fullterms)
+{
+   if(EqnIsPropFalse(eq))
+   {
+      fputs("$false", out);
+   }
+   else
+   {
+      if(EqnIsEquLit(eq))
+      {
+         TBPrintTermNormed(out, eq->bank, eq->lterm, fullterms);
+         fprintf(out, "%s", EqnIsNegative(eq)?"!=":"=");
+         TBPrintTermNormed(out, eq->bank, eq->rterm, fullterms);
+      }
+      else
+      {
+         if(EqnIsNegative(eq))
+         {
+            fputc('~', out);
+         }
+         TBPrintTermNormed(out, eq->bank, eq->lterm, fullterms);
+      }
+   }
+}
 
 /*-----------------------------------------------------------------------
 //

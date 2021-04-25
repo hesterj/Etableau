@@ -93,6 +93,7 @@ Clause_p    ClauseSetFindBest(ClauseSet_p set, int idx);
 void        ClauseSetPrint(FILE* out, ClauseSet_p set, bool
             fullterms);
 void ClauseSetTSTPCorePrint(FILE* out, ClauseSet_p set, bool fullterms);
+void ClauseSetTSTPCorePrintNormed(FILE* out, ClauseSet_p set, bool fullterms);
 void        ClauseSetTSTPPrint(FILE* out, ClauseSet_p set, bool fullterms);
 void        ClauseSetPrintPrefix(FILE* out, char* prefix, ClauseSet_p set);
 void        ClauseSetSort(ClauseSet_p set, ComparisonFunctionType cmp_fun);

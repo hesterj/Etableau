@@ -75,11 +75,21 @@ ErrorCodes EproverCloseBranchWrapper(ProofState_p proofstate,
     // Large number of clauses to process, for last ditch attempts
     if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
 
-    printf("# Hash of branch we are going to saturate with %ld clauses: %ld\n",
-           selected_number_of_clauses_to_process,
-           ClauseTableauHashBranch(branch));
-    // Create a backtracked proofstate for the branch saturation.
+    long branch_hash = ClauseTableauHashBranch(branch);
+    //printf("# Hash of branch we are going to saturate with %ld clauses: %ld\n",
+           //selected_number_of_clauses_to_process,
+           //branch_hash);
     tableau_control->number_of_saturation_attempts++;
+    for (PStackPointer p=0; p<PStackGetSP(tableau_control->failed_saturations); p++)
+    {
+        if (branch_hash == PStackElementInt(tableau_control->failed_saturations, p))
+        {
+            tableau_control->number_saturations_blocked++;
+            //printf("Wow, a big branch that we can choose to not saturate!\n");
+            return RESOURCE_OUT;
+        }
+    }
+    // Create a backtracked proofstate for the branch saturation.
     ProofState_p new_proofstate = backtrack_proofstate(proofstate,
                                                        proofcontrol,
                                                        tableau_control);
@@ -89,6 +99,7 @@ ErrorCodes EproverCloseBranchWrapper(ProofState_p proofstate,
                                                   branch,
                                                   selected_number_of_clauses_to_process);
 
+    if (branch_status != PROOF_FOUND) PStackPushInt(tableau_control->failed_saturations, branch_hash);
     branch->previously_saturated = selected_number_of_clauses_to_process;
     etableau_proofstate_free(new_proofstate);
 

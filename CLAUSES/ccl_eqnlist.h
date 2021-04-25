@@ -98,6 +98,7 @@ void    EqnListPrint(FILE* out, Eqn_p list, char* sep,
 void    EqnListPrintDeref(FILE* out, Eqn_p list, char* sep,
                           DerefType deref);
 void    EqnListTSTPPrint(FILE* out, Eqn_p list, char* sep, bool fullterms);
+void    EqnListTSTPPrintNormed(FILE* out, Eqn_p list, char* sep, bool fullterms);
 Eqn_p   EqnListParse(Scanner_p in, TB_p bank, TokenType sep);
 
 FunCode NormSubstEqnListExcept(Eqn_p list, Eqn_p except, Subst_p

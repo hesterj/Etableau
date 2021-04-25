@@ -847,6 +847,38 @@ void ClauseTableauPrintBranchSimple(FILE* out, ClauseTableau_p branch)
 	fprintf(out, "\n");
 }
 
+/*
+** Print the branch with all variables normed to X1
+*/
+
+void ClauseTableauPrintBranchNormedSimple(FILE* out, ClauseTableau_p branch)
+{
+	ClauseTableau_p depth_check = branch;
+	assert(depth_check);
+
+
+	while (depth_check->depth != 0)
+	{
+		assert(depth_check->label);
+		assert(depth_check->id >= 0);
+		ClauseTSTPCorePrintNormed(out, depth_check->label, true);
+		fprintf(out, ", ");
+		if (depth_check->folding_labels && !ClauseSetEmpty(depth_check->folding_labels))
+		{
+			ClauseSetTSTPCorePrintNormed(out, depth_check->folding_labels, true);
+			fprintf(out, ", ");
+		}
+
+		depth_check = depth_check->parent;
+	}
+	assert(depth_check->depth == 0);
+	assert(depth_check->label);
+
+	ClauseTSTPCorePrintNormed(out, depth_check->label, true);
+	fprintf(out, "\n");
+
+}
+
 void ClauseTableauPrintBranch2(ClauseTableau_p branch)
 {
 	ClauseTableau_p depth_check = branch;
@@ -1374,6 +1406,9 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->process_control = NULL;
 	handle->feature_tree = NULL;
 	handle->feature_list = PListAlloc();
+
+	handle->failed_saturations = PStackAlloc();
+	handle->number_saturations_blocked = 0;
 	return handle;
 }
 
@@ -1400,6 +1435,8 @@ void TableauControlFree(TableauControl_p trash)
 		}
 		PListFree(trash->feature_list);
 	}
+
+	PStackFree(trash->failed_saturations);
 	TableauControlCellFree(trash);
 }
 
@@ -1619,6 +1656,7 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 	assert(tableaucontrol->proofstate->status_reported == false);
 
 	fprintf(GlobalOut, "# There were %ld total branch saturation attempts.\n", tableaucontrol->number_of_saturation_attempts);
+	fprintf(GlobalOut, "# There were %ld of these attempts BLOCKED.\n", tableaucontrol->number_saturations_blocked);
 	fprintf(GlobalOut, "# There were %ld total successful branch saturations.\n", tableaucontrol->number_of_successful_saturation_attempts);
 	fprintf(GlobalOut, "# There were %ld successful branch saturations in interreduction.\n",
 			tableaucontrol->number_of_saturations_closed_in_interreduction);
@@ -1857,7 +1895,7 @@ long ClauseTableauHashBranch(ClauseTableau_p branch)
 	}
 	ClauseTableauPrintBranchSimple(branch_in_memory, branch);
 	fflush(branch_in_memory);
-	printf("%s\n", buf);
+	//printf("%s\n", buf);
 	long hash_value = hash(buf);
 	fclose(branch_in_memory);
 	free(buf);

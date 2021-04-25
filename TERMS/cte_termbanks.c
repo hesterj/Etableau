@@ -1315,6 +1315,57 @@ void TBPrintTermCompact(FILE* out, TB_p bank, Term_p term)
    }
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: TBPrintTermCompactNormed()
+//
+//   Print a term bank term. Introduce abbreviations for all subterms
+//   encountered. Subterms with TPOutputFlag are not
+//   printed, but are assumed to be known. Does _not_ follow bindings
+//   (they are temporary and as such make little sense in the term
+//   bank context).  Variables are printed as X1.
+//
+// Global Variables: -
+//
+// Side Effects    : Output, set TPOutputFlag in subterms printed with
+//                   abbreviation.
+//
+/----------------------------------------------------------------------*/
+
+void TBPrintTermCompactNormed(FILE* out, TB_p bank, Term_p term)
+{
+   int i;
+
+   if(TermCellQueryProp(term, TPOutputFlag))
+   {
+      fprintf(out, "*%ld", term->entry_no);
+   }
+   else
+   {
+      if(TermIsVar(term))
+      {
+         VarPrint(out, -2);
+      }
+      else
+      {
+         fprintf(out, "*%ld:", term->entry_no);
+         TermCellSetProp(term, TPOutputFlag);
+         fputs(SigFindName(bank->sig, term->f_code), out);
+         if(!TermIsConst(term))
+         {
+            fputc('(',out);
+            assert(term->args && (term->arity>0));
+            TBPrintTermCompact(out, bank, term->args[0]);
+            for(i=1;i<term->arity;i++)
+            {
+               fputc(',', out);
+               TBPrintTermCompact(out, bank, term->args[i]);
+            }
+            fputc(')',out);
+         }
+      }
+   }
+}
 
 /*-----------------------------------------------------------------------
 //
@@ -1341,6 +1392,32 @@ void TBPrintTerm(FILE* out, TB_p bank, Term_p term, bool fullterms)
    }
 }
 
+
+/*-----------------------------------------------------------------------
+//
+// Function: TBPrintTermNormed()
+//
+//   Print a term from a term bank either in compact form (with
+//   abbreviations) or as a conventional term.  Variables
+//   are normalized to X1.
+//
+// Global Variables: -
+//
+// Side Effects    : By the called functions
+//
+/----------------------------------------------------------------------*/
+
+void TBPrintTermNormed(FILE* out, TB_p bank, Term_p term, bool fullterms)
+{
+   if(fullterms)
+   {
+      TBPrintTermFullNormed(out, bank, term);
+   }
+   else
+   {
+      TBPrintTermCompactNormed(out, bank, term);
+   }
+}
 
 /*-----------------------------------------------------------------------
 //

@@ -1,24 +1,7 @@
 #ifndef CLAUSETABLEAUX
 #define CLAUSETABLEAUX
-#include <clb_os_wrapper.h>
-#include <cio_signals.h>
-#include <ccl_fcvindexing.h>
-#include <che_heuristics.h>
-#include <che_axiomscan.h>
-#include <che_to_autoselect.h>
-#include <cco_clausesplitting.h>
-#include <cco_forward_contraction.h>
-#include <cco_interpreted.h>
-#include <ccl_satinterface.h>
-#include <cco_proofproc.h>
-#include <cco_scheduling.h>
-#include <cco_proc_ctrl.h>
-#include <etab_apr.h>
-#include <time.h>
-#include <arpa/inet.h>
-#include <clb_plist.h>
-#include <clb_quadtrees.h>
-#include <clb_objtrees.h>
+
+#include "etab_hash.h"
 
 typedef PStack_p ClauseStack_p; // Stack of Clause_p
 typedef PStack_p ClauseSetStack_p; // Stack of ClauseSet_p
@@ -265,6 +248,9 @@ typedef struct tableaucontrol_cell
 	TableauStack_p max_depth_tableaux;
 	PObjTree_p feature_tree;
 	PList_p feature_list;
+
+	PStack_p failed_saturations; // Simple stack of hashes of failed branch saturations... a very dumb hash table
+	long number_saturations_blocked;
 }TableauControlCell, *TableauControl_p;
 
 #define TableauControlCellAlloc()    (TableauControlCell*)SizeMalloc(sizeof(TableauControlCell))

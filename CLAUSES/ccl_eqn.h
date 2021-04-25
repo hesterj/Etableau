@@ -227,6 +227,7 @@ void    EqnPrintDeref(FILE* out, Eqn_p eq, DerefType deref);
 
 void    EqnFOFPrint(FILE* out, Eqn_p eq, bool negated, bool fullterms, bool pcl);
 void    EqnTSTPPrint(FILE* out, Eqn_p eq, bool fullterms);
+void    EqnTSTPPrintNormed(FILE* out, Eqn_p eq, bool fullterms);
 
 void    EqnSwapSidesSimple(Eqn_p eq);
 void    EqnSwapSides(Eqn_p eq);

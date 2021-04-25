@@ -822,6 +822,31 @@ void ClauseSetTSTPCorePrint(FILE* out, ClauseSet_p set, bool fullterms)
 
 /*-----------------------------------------------------------------------
 //
+// Function: ClauseSetTSTPCorePrintNormed()
+//
+//   Print the clause set to the given stream.  Variables
+//   are normed to X1.  Clauses are separated by commas.
+//
+// Global Variables: Only for term output
+//
+// Side Effects    : Output
+//
+/----------------------------------------------------------------------*/
+
+void ClauseSetTSTPCorePrintNormed(FILE* out, ClauseSet_p set, bool fullterms)
+{
+   Clause_p handle;
+
+   for(handle = set->anchor->succ; handle!=set->anchor; handle =
+          handle->succ)
+   {
+      ClauseTSTPCorePrintNormed(out, handle, fullterms);
+      fprintf(out, ", ");
+   }
+}
+
+/*-----------------------------------------------------------------------
+//
 // Function: ClauseSetTSTPPrint()
 //
 //   Print the clause set in TSTP format to the given stream.

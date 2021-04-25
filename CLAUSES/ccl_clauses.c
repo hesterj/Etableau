@@ -1345,6 +1345,32 @@ void ClauseTSTPCorePrint(FILE* out, Clause_p clause, bool fullterms)
    fputc(')', out);
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: ClauseTSTPCorePrintNormed()
+//
+//   Print a core clause in TSTP format, with all variables
+//   printed as X1.
+//
+// Global Variables: -
+//
+// Side Effects    : -
+//
+/----------------------------------------------------------------------*/
+
+void ClauseTSTPCorePrintNormed(FILE* out, Clause_p clause, bool fullterms)
+{
+   fputc('(', out);
+   if(ClauseIsEmpty(clause))
+   {
+      fprintf(out, "$false");
+   }
+   else
+   {
+      EqnListTSTPPrintNormed(out, clause->literals, "|", fullterms);
+   }
+   fputc(')', out);
+}
 
 /*-----------------------------------------------------------------------
 //

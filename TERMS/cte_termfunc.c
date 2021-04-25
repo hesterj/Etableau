@@ -354,6 +354,82 @@ void TermPrintFO(FILE* out, Term_p term, Sig_p sig, DerefType deref)
    }
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: TermPrintFONormed()
+//
+//   Print a FO term to the given stream.
+//   Print all variables as X1 (f_code -2)
+//
+// Global Variables: TermPrintLists
+//
+// Side Effects    : Output
+//
+/----------------------------------------------------------------------*/
+void TermPrintFONormed(FILE* out, Term_p term, Sig_p sig, DerefType deref)
+{
+   assert(term);
+   assert(sig||TermIsVar(term));
+   // no need to change derefs here -- FOL
+
+   term = TermDeref(term, &deref);
+
+   if(!TermIsVar(term) &&
+      SigIsLogicalSymbol(sig, term->f_code) &&
+      term->f_code != SIG_TRUE_CODE &&
+      term->f_code != SIG_FALSE_CODE)
+   {
+      TermFOOLPrint(out, sig, term);
+      return;
+   }
+
+#ifdef NEVER_DEFINED
+   if(TermCellQueryProp(term, TPRestricted))
+   {
+      fprintf(out, "*");
+   }
+   if(TermCellQueryProp(term, TPIsRewritten))
+   {
+      if(TermIsTopRewritten(term))
+      {
+         fprintf(out, "=");
+      }
+      else
+      {
+         fprintf(out, "+");
+      }
+   }
+#endif
+   if(SigSupportLists && TermPrintLists &&
+      ((term->f_code == SIG_NIL_CODE)||
+       (term->f_code == SIG_CONS_CODE)))
+   {
+      print_cons_list(out, term, sig, deref);
+   }
+   else
+   {
+      if(TermIsVar(term))
+      {
+         VarPrint(out, -2);
+      }
+      else
+      {
+         fputs(SigFindName(sig, term->f_code), out);
+         if(!TermIsConst(term))
+         {
+            assert(term->args);
+            TermPrintArgList(out, term->args, term->arity, sig, deref);
+         }
+      }
+   }
+
+   if(TermPrintTypes)
+   {
+      fputc(':', out);
+      TypePrintTSTP(out, sig->type_bank, term->type);
+   }
+}
+
 #define PRINT_AT
 
 #ifdef ENABLE_LFHO
