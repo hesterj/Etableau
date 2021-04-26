@@ -715,12 +715,12 @@ bool EtableauPopulation(TableauControl_p tableaucontrol,
             {
                 case BACKTRACK_OK: // This should only happen during population, when all possible extension up to a depth have been made on a tableau
                 {
-                    assert(false && "We should not get BACKTRACK_OK status in population");
+                    Error("We should not get BACKTRACK_OK status in population", 100);
                     break;
                 }
                 case BACKTRACK_FAILURE: // We never backtrack during population
                 {
-                    assert(false && "We should not get BACKTRACK_FAILURE status in population");
+                    Error("We should not get BACKTRACK_FAILURE status in population", 100);
                     break;
                 }
                 case NEXT_TABLEAU:

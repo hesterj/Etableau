@@ -173,7 +173,7 @@ long ReplaceLocalVariablesWithFreshSubst(ClauseTableau_p master, Clause_p clause
 
 bool VarIsLocal(ClauseTableau_p open_branch, Term_p variable)
 {
-    Warning("Not implemented (VarIsLocal)");
+    Error("Not implemented (VarIsLocal)", 100);
     return false;
 }
 

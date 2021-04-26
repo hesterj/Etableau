@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<title>README.html</title>
+<meta http-equiv="Content-Type" content="application/xhtml+xml;charset=utf-8"/>
+<link rel="stylesheet" type="text/css" media="all" href="https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown.min.css"  />
+<link rel="stylesheet" type="text/css" media="all" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/github.min.css"  /><meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no'><style> body { box-sizing: border-box; max-width: 740px; width: 100%; margin: 40px auto; padding: 0 10px; } </style><script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script><script src='https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js'></script><script>document.addEventListener('DOMContentLoaded', () => { document.body.classList.add('markdown-body'); document.querySelectorAll('pre[lang] > code').forEach((code) => { code.classList.add(code.parentElement.lang); }); document.querySelectorAll('pre > code').forEach((code) => { hljs.highlightBlock(code); }); });</script>
+</head>
+
+<body>
+
+<h1>Etableau</h1>
+
+<p>Etableau is a first order theorem prover for first order logic based 
+on Eprover, using it as a library.  Etableau combines the superposition
+calculus and the clausal tableaux connection calculus in a novel way, using the
+tableaux calculus to generate lemmas and new assumptions that can be 
+used to find contradictions in certain situations.</p>
+
+<p>This means that branches of a tableau that are difficult to close using
+the clausal tableau calculus can be closed with Eprover's saturation.
+The saturation procedure benefits from the extra assumptions that are 
+present on the branch of the tableau.  It seems that saturation procedures
+often find a proof quickly or not at all, so by doing many short proof
+searches with differing assumptions it is possible for proofs to be found
+that may not have been otherwise.</p>
+
+<p>Etableau is licensed and installed in the same way as Eprover.</p>
+
+<p>To install Etableau, clone this repository, execute the following commands,
+or follow the instructions for Eprover.</p>
+
+<p><code>
+    ./configure
+    make rebuild
+</code></p>
+
+<p>The executable "eprover" is generated in the PROVER directory.  To check that it worked,
+try running ./eprover --tableau=1 --tableau-saturation=1 --auto $1, where $1 is some <a href="https://www.tptp.org">TPTP</a> problem file.</p>
+
+<h2>tableau</h2>
+
+<p>--tableau=1 enables clausal tableaux proof search.  If this option is not passed, normal
+Eprover will happen.</p>
+
+<h2>tableau-saturation</h2>
+
+<p>--tableau-saturation=1 enables the combination of the superposition calculus and tableaux
+calculus.</p>
+
+<h2>tableau-dot-print</h2>
+
+<p>--tableau-dot-print=dir prints DOT graphs of the closed tableau found in a successful proof 
+search to the directory dir.</p>
+
+<h2>tsmdo</h2>
+
+<p>--tsmdo restricts branch saturation attmepts on a tableau to the case where there is a branch
+at the current maximum tableau search depth.  If this is not passed, Etableau will attempt
+to saturate every local branch found.  Passing this option potentially increases the amount
+of branching during proof search, but also prevents time being wasted on attempts to saturate
+shallow branches that may not have an easily found contradiction.</p>
+
+<h2>apr</h2>
+
+<p>--apr=3 filters the axiom specification to only include clauses within an alternating
+path relevance distance of 3 from the conjectures of the specification.  This number can 
+be changed.  This option is not recommended except on the largest problems.</p>
+
+<h2>quicksat</h2>
+
+<p>--quicksat=100 ensures that no more than 100 clauses are processed during saturation of
+tableau branches.  This number can be changed.  The default value is 100 if the option
+--quicksat is passed without an integer option.  If quicksat is passed, then there will
+be a loss of completeness for branch saturations, but not the entire proof search.  This
+is becuase of the fact that if only a small number of clauses are going to be processed
+on a branch saturation, there is no need to copy the entire unprocessed clause set and
+only a small number or none are copied.</p>
+
+<h2>tableau-equality</h2>
+
+<p>--tableau-equality=1 introduces equality axioms for the symbols found in the specification
+as well as axioms of symmetry, reflection, and transitivity.  This is helpful on some
+problems.  This is not normally necessary because if equality is detected in the signature
+of a problem, equality axioms are automatically added.</p>
+
+<h2>Eprover options</h2>
+
+<p>Options controlling the saturation procedure of Eprover also work, allowing the user 
+to use different strategies.  It is recommended to at least use the --auto
+option of Eprover.</p>
+
+<h2>Help</h2>
+
+<p>If you have any problems with this software or a bug report, please feel free to contact
+me at <a href="&#109;&#x61;i&#108;&#116;&#x6F;:h&#101;&#115;t&#101;&#114;&#x6A;&#64;&#101;&#116;a&#98;&#108;&#x65;&#x61;&#117;&#x2E;&#x63;&#x6F;&#109;">h&#101;&#115;t&#101;&#114;&#x6A;&#64;&#101;&#116;a&#98;&#108;&#x65;&#x61;&#117;&#x2E;&#x63;&#x6F;&#109;</a>.  The project's webpage is <a href="https://www.etableau.com">here</a>.
+<a href="https://github.com/hesterj/Etableau">Github</a>.</p>
+
+</body>
+</html>

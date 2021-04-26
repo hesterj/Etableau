@@ -1719,7 +1719,7 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 		fprintf(GlobalOut, "# Clausification printing disabled or no record found\n");
 	}
 	fprintf(GlobalOut, "# Begin printing tableau\n");
-	ClauseTableauPrint(resulting_tab);
+	//ClauseTableauPrint(resulting_tab);
 	ClauseTableauTPTPPrint(resulting_tab);
 	fprintf(GlobalOut, "# End printing tableau\n");
 	//fprintf(GlobalOut, "# SZS output end CNFRefutation for %s\n", tableaucontrol->problem_name);
