@@ -328,7 +328,16 @@ ClauseTableau_p EtableauSelectBranchAndExtend(TableauControl_p tableaucontrol,
         {
             assert(!extended);
             ClauseTableauSetProp(master, TUPBacktrackedDueToExtensionFailure);
-            bool backtrack_successful = BacktrackWrapper(master);
+            bool backtrack_successful = true;
+            //if ((big_backtracks = tableaucontrol->tableaubigbacktrack))
+            //{
+                //backtrack_successful = BacktrackMultiple(master, big_backtracks);
+            //}
+            //else
+            //{
+                //backtrack_successful = BacktrackWrapper(master);
+            //}
+            backtrack_successful = BacktrackWrapper(master);
             if (!backtrack_successful)
             {
                 ETAB_VERBOSE(printf("# Backtrack failed (couldn't extend branch)\n");)

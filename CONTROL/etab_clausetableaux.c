@@ -1604,8 +1604,8 @@ long SubstDStrPrint(DStr_p str, Subst_p subst, Sig_p sig, DerefType deref)
    }
    fprintf(out, "}");
    SecureFClose(out);
-	DStrAppendStr(str, buf);
-	free(buf);
+   DStrAppendStr(str, buf);
+   free(buf);
    return (long)limit;
 }
 

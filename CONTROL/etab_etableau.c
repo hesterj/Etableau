@@ -334,6 +334,7 @@ int CloseBranchesWithEprover(TableauControl_p tableaucontrol,
             else
             {
                 ClauseTableauSetProp(handle, TUPSaturationBlocked);
+                if (tableaucontrol->only_saturate_max_depth_branches) break;
             }
         }
         handle = handle->succ;
