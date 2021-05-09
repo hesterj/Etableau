@@ -75,28 +75,39 @@ ErrorCodes EproverCloseBranchWrapper(ProofState_p proofstate,
     // Large number of clauses to process, for last ditch attempts
     if (max_proc == LONG_MAX) selected_number_of_clauses_to_process = LONG_MAX;
 
+    // Hash the branch and make sure that we haven't already saturated an identical branch
     long branch_hash = ClauseTableauHashBranch(branch);
     //printf("# Hash of branch we are going to saturate with %ld clauses: %ld\n",
            //selected_number_of_clauses_to_process,
            //branch_hash);
     tableau_control->number_of_saturation_attempts++;
+
+    // If we have already unsuccessfully saturated an identical branch, block the attempt
     if (PStackFindInt(tableau_control->failed_saturations, branch_hash))
     {
         tableau_control->number_saturations_blocked++;
         ClauseTableauSetProp(branch, TUPSaturationBlocked);
         return RESOURCE_OUT;
     }
+
+    // If we have already successfully saturated an identical branch, we can mark this branch as closed for free
     else if (PStackFindInt(tableau_control->successful_saturations, branch_hash))
     {
         tableau_control->number_of_free_saturations++;
         //printf("# We got a free saturation!\n");
         return PROOF_FOUND;
     }
+#ifdef XGBOOST_FLAG
+    DStr_p branch_data_file = DStrAlloc();
+    DStrAppendStr(branch_data_file, "/home/hesterj/Projects/branchdata/");
+    DStrAppendInt(branch_data_file, getpid());
+#endif
     // Create a backtracked proofstate for the branch saturation.
     ProofState_p new_proofstate = backtrack_proofstate(proofstate,
                                                        proofcontrol,
                                                        tableau_control);
 
+    // Actually do the branch saturation
     ErrorCodes branch_status = EproverCloseBranch(new_proofstate,
                                                   proofcontrol,
                                                   branch,
@@ -107,6 +118,18 @@ ErrorCodes EproverCloseBranchWrapper(ProofState_p proofstate,
 
     branch->previously_saturated = selected_number_of_clauses_to_process;
     etableau_proofstate_free(new_proofstate);
+
+    // Record the branch in the appropriate file with the saturation status
+#ifdef XGBOOST_FLAG
+    char prefix = '-';
+    if (branch_status == PROOF_FOUND) prefix = '+';
+    ClauseTableauPrintBranchSimpleToFile(DStrView(branch_data_file),
+                                                  "a",
+                                                  prefix,
+                                                  ',',
+                                                  branch);
+    DStrFree(branch_data_file);
+#endif
 
     return branch_status;
 }

@@ -851,10 +851,14 @@ void ClauseTableauPrintBranchSimple(FILE* out, char separator, ClauseTableau_p b
 // Simply print a branch to file, with the branch prefixed by the character prefix and a space.
 // Print the branch on a single line.
 
-void ClauseTableauPrintBranchSimpleToFile(char* file, char prefix, char separator, ClauseTableau_p branch)
+void ClauseTableauPrintBranchSimpleToFile(char* file,
+										  char* mode,
+										  char prefix,
+										  char separator,
+										  ClauseTableau_p branch)
 {
 	assert(file);
-	FILE* file_p = SecureFOpen(file, "w");
+	FILE* file_p = SecureFOpen(file, mode);
 	fprintf(file_p, "%c ", prefix);
 	ClauseTableauPrintBranchSimple(file_p, separator, branch);
 	SecureFClose(file_p);

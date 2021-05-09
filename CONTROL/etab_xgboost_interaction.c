@@ -83,25 +83,6 @@ int EqnUnifyRenamingPCmp(const void *left_p, const void *right_p)
     return 1;
 }
 
-// This commented out function shouldn't be necessary due to the benefits of PObjTree_p
-
-//DTree_p PTreeFindDTree(PObjTree_p *splay_tree, DTree_p dtree)
-//{
-   //PStack_p iter = QuadTreeTraverseInit(*splay_tree);
-   //QuadTree_p  handle = NULL;
-//
-   //while((handle = QuadTreeTraverseNext(iter)))
-   //{
-       //if (DTreesIdentical(handle->p1, dtree))
-       //{
-           //QuadTreeTraverseExit(iter);
-           //return handle->p1;
-       //}
-   //}
-//
-   //QuadTreeTraverseExit(iter);
-   //return NULL;
-//}
 void DTreeStupidPrintChildren(DTree_p root)
 {
     for (int i=0; i<root->arity; i++)

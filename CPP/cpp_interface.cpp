@@ -7,5 +7,5 @@
 
 void cpp_smoketest()
 {
-  std::cout << "# Fuck you Steve" << std::endl;
+  std::cout << "# Hello from C++" << std::endl;
 }
