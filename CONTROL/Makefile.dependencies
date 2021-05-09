@@ -3012,7 +3012,9 @@ etab_backtrack.o: etab_backtrack.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
  /usr/include/x86_64-linux-gnu/bits/socket2.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
- /usr/include/search.h ../include/etab_etableau.h
+ /usr/include/search.h \
+ /home/hesterj/Projects/xgboost/include/xgboost/c_api.h \
+ ../include/etab_etableau.h
 etab_clausetableaux.o: etab_clausetableaux.c /usr/include/stdc-predef.h \
  etab_clausetableaux.h etab_hash.h ../include/clb_os_wrapper.h \
  /usr/include/assert.h /usr/include/features.h \
@@ -3236,8 +3238,9 @@ etab_clausetableaux.o: etab_clausetableaux.c /usr/include/stdc-predef.h \
  /usr/include/search.h etab_backtrack.h ../include/etab_extension.h \
  ../include/etab_backtrack.h ../include/etab_xgboost_interaction.h \
  ../include/etab_foldingup.h ../include/etab_closure.h \
- ../include/etab_localunification.h ../include/etab_etableau.h \
- etab_etableau.h
+ ../include/etab_localunification.h \
+ /home/hesterj/Projects/xgboost/include/xgboost/c_api.h \
+ ../include/etab_etableau.h etab_etableau.h
 etab_closure.o: etab_closure.c /usr/include/stdc-predef.h \
  ../include/etab_closure.h ../include/etab_localunification.h \
  ../include/etab_clausetableaux.h ../include/etab_hash.h \
@@ -3462,7 +3465,9 @@ etab_closure.o: etab_closure.c /usr/include/stdc-predef.h \
  /usr/include/search.h ../include/etab_backtrack.h \
  ../include/etab_extension.h ../include/etab_backtrack.h \
  ../include/etab_xgboost_interaction.h ../include/etab_foldingup.h \
- ../include/etab_closure.h ../include/etab_etableau.h
+ ../include/etab_closure.h \
+ /home/hesterj/Projects/xgboost/include/xgboost/c_api.h \
+ ../include/etab_etableau.h
 etab_etableau.o: etab_etableau.c /usr/include/stdc-predef.h \
  etab_etableau.h etab_foldingup.h etab_closure.h etab_localunification.h \
  etab_clausetableaux.h etab_hash.h ../include/clb_os_wrapper.h \
@@ -3684,7 +3689,8 @@ etab_etableau.o: etab_etableau.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
  /usr/include/x86_64-linux-gnu/bits/socket2.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
- /usr/include/search.h etab_xgboost_interaction.h etab_backtrack.h \
+ /usr/include/search.h etab_xgboost_interaction.h \
+ /home/hesterj/Projects/xgboost/include/xgboost/c_api.h etab_backtrack.h \
  ../include/etab_extension.h ../include/etab_backtrack.h \
  ../include/etab_xgboost_interaction.h ../include/etab_etableau.h \
  /usr/lib/gcc/x86_64-linux-gnu/9/include/omp.h
@@ -3912,6 +3918,7 @@ etab_extension.o: etab_extension.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/socket2.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
  /usr/include/search.h ../include/etab_xgboost_interaction.h \
+ /home/hesterj/Projects/xgboost/include/xgboost/c_api.h \
  etab_xgboost_interaction.h
 etab_foldingup.o: etab_foldingup.c /usr/include/stdc-predef.h \
  etab_foldingup.h etab_closure.h etab_localunification.h \
@@ -4581,6 +4588,7 @@ etab_newproc.o: etab_newproc.c /usr/include/stdc-predef.h etab_newproc.h \
  /usr/include/x86_64-linux-gnu/bits/socket2.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
  /usr/include/search.h ../include/etab_xgboost_interaction.h \
+ /home/hesterj/Projects/xgboost/include/xgboost/c_api.h \
  /usr/include/x86_64-linux-gnu/sys/sysinfo.h /usr/include/linux/kernel.h \
  /usr/include/linux/sysinfo.h /usr/include/linux/types.h \
  /usr/include/x86_64-linux-gnu/asm/types.h \
@@ -4810,6 +4818,7 @@ etab_tableauproc.o: etab_tableauproc.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/socket2.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
  /usr/include/search.h ../include/etab_xgboost_interaction.h \
+ /home/hesterj/Projects/xgboost/include/xgboost/c_api.h \
  /usr/include/x86_64-linux-gnu/sys/sysinfo.h /usr/include/linux/kernel.h \
  /usr/include/linux/sysinfo.h /usr/include/linux/types.h \
  /usr/include/x86_64-linux-gnu/asm/types.h \
@@ -4817,7 +4826,8 @@ etab_tableauproc.o: etab_tableauproc.c /usr/include/stdc-predef.h \
  /usr/include/linux/const.h /usr/include/fcntl.h \
  /usr/include/x86_64-linux-gnu/bits/fcntl.h \
  /usr/include/x86_64-linux-gnu/bits/fcntl-linux.h \
- /usr/include/x86_64-linux-gnu/bits/fcntl2.h ../include/cpp_interface.h
+ /usr/include/x86_64-linux-gnu/bits/fcntl2.h ../include/cpp_interface.h \
+ ../include/../CONTROL/etab_newproc.h ../include/etab_tableauproc.h
 etab_xgboost_interaction.o: etab_xgboost_interaction.c \
  /usr/include/stdc-predef.h etab_xgboost_interaction.h etab_foldingup.h \
  etab_closure.h etab_localunification.h etab_clausetableaux.h etab_hash.h \
@@ -5039,4 +5049,5 @@ etab_xgboost_interaction.o: etab_xgboost_interaction.c \
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
  /usr/include/x86_64-linux-gnu/bits/socket2.h \
  /usr/include/x86_64-linux-gnu/bits/in.h ../include/clb_quadtrees.h \
- /usr/include/search.h
+ /usr/include/search.h \
+ /home/hesterj/Projects/xgboost/include/xgboost/c_api.h

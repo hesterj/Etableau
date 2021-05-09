@@ -99,6 +99,9 @@ int Etableau_n0(TableauControl_p tableaucontrol,
     ClauseSetFreeClauses(proofstate->archive);
     APRVerify();
     c_smoketest();
+#ifdef XGBOOST_FLAG
+    XGBoostTest();
+#endif
 
 #ifdef FOLD
     fprintf(GlobalOut, "# The folding up rule is enabled...\n");

@@ -818,10 +818,11 @@ void ClauseTableauPrintBranch(ClauseTableau_p branch)
 }
 
 /*
-** Print branch clauses separated by commas and terminated by a newline to out
+** Print branch clauses separated by separator and terminated by a newline to out
+** In other words, the branch is printed on a single line.
 */
 
-void ClauseTableauPrintBranchSimple(FILE* out, ClauseTableau_p branch)
+void ClauseTableauPrintBranchSimple(FILE* out, char separator, ClauseTableau_p branch)
 {
 	ClauseTableau_p depth_check = branch;
 	assert(depth_check);
@@ -831,11 +832,11 @@ void ClauseTableauPrintBranchSimple(FILE* out, ClauseTableau_p branch)
 		assert(depth_check->label);
 		assert(depth_check->id >= 0);
 		ClauseTSTPCorePrint(out, depth_check->label, true);
-		fprintf(out, ", ");
+		fprintf(out, "%c", separator);
 		if (depth_check->folding_labels && !ClauseSetEmpty(depth_check->folding_labels))
 		{
 			ClauseSetTSTPCorePrint(out, depth_check->folding_labels, true);
-			fprintf(out, ", ");
+			fprintf(out, "%c", separator);
 		}
 
 		depth_check = depth_check->parent;
@@ -845,6 +846,18 @@ void ClauseTableauPrintBranchSimple(FILE* out, ClauseTableau_p branch)
 
 	ClauseTSTPCorePrint(out, depth_check->label, true);
 	fprintf(out, "\n");
+}
+
+// Simply print a branch to file, with the branch prefixed by the character prefix and a space.
+// Print the branch on a single line.
+
+void ClauseTableauPrintBranchSimpleToFile(char* file, char prefix, char separator, ClauseTableau_p branch)
+{
+	assert(file);
+	FILE* file_p = SecureFOpen(file, "w");
+	fprintf(file_p, "%c ", prefix);
+	ClauseTableauPrintBranchSimple(file_p, separator, branch);
+	SecureFClose(file_p);
 }
 
 /*
@@ -1897,7 +1910,7 @@ long ClauseTableauHashBranch(ClauseTableau_p branch)
 	{
 		Error("Could not open FILE* in memory (ClauseTableauHashBranch)", 100);
 	}
-	ClauseTableauPrintBranchSimple(branch_in_memory, branch);
+	ClauseTableauPrintBranchSimple(branch_in_memory, ',',branch);
 	fflush(branch_in_memory);
 	//printf("%s\n", buf);
 	long hash_value = hash(buf);

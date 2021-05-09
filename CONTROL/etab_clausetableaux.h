@@ -297,7 +297,8 @@ inline int GetDesiredNumberOfTableaux(TableauControl_p control)
 long ClauseTableauHash(ClauseTableau_p tableau);
 long ClauseTableauHashBranch(ClauseTableau_p branch);
 void ClauseTableauCreateID(ClauseTableau_p tableau, DStr_p str);
-void ClauseTableauPrintBranchSimple(FILE* out, ClauseTableau_p branch);
+void ClauseTableauPrintBranchSimple(FILE* out, char separator, ClauseTableau_p branch);
+void ClauseTableauPrintBranchSimpleToFile(char* file, char prefix, char separator, ClauseTableau_p branch)
 long ClauseTableauAddDepths(ClauseTableau_p tab);
 double ClauseTableauGetAverageDepth(ClauseTableau_p tableau);
 void TermTreePrintCodes(FILE* out, PTree_p tree);
