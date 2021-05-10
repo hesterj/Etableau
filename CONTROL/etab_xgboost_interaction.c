@@ -108,8 +108,10 @@ void DTreeStupidPrint(DTree_p root)
 }
 
 /*
-** This is the function that gets (an easy) feature representation of the branch.  Features are indexed by their address of the corresponding DTree_p.
-** The number of occurrences of a feature is the value of the occurence_function applied to the memory addresses of the branch's DTree_p occurrences.
+** This is the function that gets (an easy) feature representation of the branch.
+** Features are indexed by their address of the corresponding DTree_p.
+** The number of occurrences of a feature is the value of the occurence_function applied
+** to the memory addresses of the branch's DTree_p occurrences.
  */
 
 long DTreeBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_trees)
@@ -146,6 +148,9 @@ long DTreeBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_tree
     return 0;
 }
 
+// Insert the equation representations of the labels of branch in to tree_of_eqns
+// Does not account for folding labels.
+
 long EqnBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_eqns)
 {
     TB_p bank = branch->terms;
@@ -159,13 +164,16 @@ long EqnBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_eqns)
         PTree_p eqn_vars = NULL;
         Eqn_p label_eqn = branch->label->literals;
 
+        // Bind all of the variables to a single variable - X1
+        // I already did something better in the hashing functions.  What is after can be improved by
+        // simply treating XN as X1 whenever it is found.
         __attribute__((unused)) long num_vars = EqnCollectVariables(label_eqn, &eqn_vars);
 
         Subst_p variable_subst = SubstAlloc();
-        Term_p x1 = VarBankVarAssertAlloc(vars, -2, individual_type);
-        PStack_p traverse = PTreeTraverseInit(eqn_vars);
         PTree_p variable_cell;
         Term_p variable;
+        Term_p x1 = VarBankVarAssertAlloc(vars, -2, individual_type);
+        PStack_p traverse = PTreeTraverseInit(eqn_vars);
         while ((variable_cell = PTreeTraverseNext(traverse)))
         {
             variable = variable_cell->key;
@@ -191,7 +199,9 @@ long EqnBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_eqns)
         PObjTree_p new_cell = PTreeCellAlloc();
         new_cell->key = dummy_eqn;
         PObjTree_p objtree_cell = PTreeObjInsert(tree_of_eqns, new_cell, EqnUnifyRenamingPCmp);
-        if (objtree_cell) // We found a cell with an identical eqn, so we can discard the one we just made and increment the number of occurrences of the one we found.
+        // We found a cell with an identical eqn, so we can discard the one we just made and increment
+        // the number of occurrences of the one we found.
+        if (objtree_cell)
         {
             TermFree(unshared_lterm);
             if (unshared_rterm->f_code != SIG_TRUE_CODE)
@@ -203,7 +213,9 @@ long EqnBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_eqns)
             Eqn_p real_eqn = (Eqn_p) objtree_cell->key;
             real_eqn->occurrences++;
         }
-        else // The dtree we just made has been inserted into the tree of dtrees, and since it clearly occurs we increment the occurrences.
+        // The dtree we just made has been inserted into the tree of dtrees,
+        // and since it clearly occurs we increment the occurrences.
+        else
         {
             assert(new_cell->key == dummy_eqn);
             dummy_eqn->occurrences++;
@@ -296,23 +308,7 @@ long EqnBranchRepresentationsList(ClauseTableau_p branch, PList_p list_of_eqns, 
         assert(ClauseLiteralNumber(branch->label) == 1);
         Eqn_p label_eqn = branch->label->literals;
 
-        //PTree_p eqn_vars = NULL;
-        //long num_vars = EqnCollectVariables(label_eqn, &eqn_vars);
-        //Subst_p variable_subst = SubstAlloc();
-        //Term_p x1 = VarBankVarAssertAlloc(vars, -2, individual_type);
-        //PStack_p traverse = PTreeTraverseInit(eqn_vars);
-        //PTree_p variable_cell;
-        //Term_p variable;
-        //while ((variable_cell = PTreeTraverseNext(traverse)))
-        //{
-            //variable = variable_cell->key;
-            //SubstAddBinding(variable_subst, variable, x1);
-        //}
-        //PTreeTraverseExit(traverse);
-        //PTreeFree(eqn_vars);
-
         Term_p unshared_lterm = TermCopyUnifyVars(vars, label_eqn->lterm);
-        //Term_p unshared_lterm = TermCopy(label_eqn->lterm, vars, DEREF_ALWAYS);
         assert(!TermCellQueryProp(unshared_lterm, TPIsShared));
         Term_p unshared_rterm;
         if (label_eqn->rterm->f_code == SIG_TRUE_CODE)
@@ -321,7 +317,6 @@ long EqnBranchRepresentationsList(ClauseTableau_p branch, PList_p list_of_eqns, 
         }
         else
         {
-            //unshared_rterm = TermCopy(label_eqn->rterm, vars, DEREF_ALWAYS);
             unshared_rterm = TermCopyUnifyVars(vars, label_eqn->rterm);
             assert(!TermCellQueryProp(unshared_rterm, TPIsShared));
         }

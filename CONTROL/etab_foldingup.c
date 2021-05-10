@@ -19,7 +19,6 @@ void assert_all_children_closed(ClauseTableau_p tab)
 bool ClauseTableauMarkClosedNodes(ClauseTableau_p tableau, int *subtree_saturation_closed)
 {
 	//printf("Attempting to mark a new node.");
-	int saturation_closed = *subtree_saturation_closed;
 	assert(tableau);
 	if (tableau->set)
 	{
@@ -30,13 +29,9 @@ bool ClauseTableauMarkClosedNodes(ClauseTableau_p tableau, int *subtree_saturati
 	{
 		//fprintf(GlobalOut, "# Found saturation closed branch by marking\n");
 		assert(tableau->open == false);
-		saturation_closed = CHILD_CLOSED_BY_SATURATION;
+		*subtree_saturation_closed = CHILD_CLOSED_BY_SATURATION;
 	}
 	int arity = tableau->arity;
-	//if (arity == 0)
-	//{
-		//return false;
-	//}
 	bool all_children_closed = true;
 	// Check to see if all the children are actually superclosed
 	//printf("Marking children.\n");
@@ -44,7 +39,7 @@ bool ClauseTableauMarkClosedNodes(ClauseTableau_p tableau, int *subtree_saturati
 	{
 			assert(tableau->children[i]);
 			ClauseTableau_p child = tableau->children[i];
-			bool child_is_superclosed = ClauseTableauMarkClosedNodes(child, &saturation_closed);
+			bool child_is_superclosed = ClauseTableauMarkClosedNodes(child, subtree_saturation_closed);
 #ifndef NDEBUG
 			if (child_is_superclosed)
 			{
@@ -239,13 +234,10 @@ int FoldUpAtNode(ClauseTableau_p node)
 		//printf("Attempted to fold up nonclosed node, returning 0 in FoldUpAtNode\n");
 		return 0;
 	}
+	// We cannot fold up branches with children closed by saturation.
 	if (child_saturation_closed == CHILD_CLOSED_BY_SATURATION)
 	{
-		// A superclosed node with children closed by saturation could have had any clause on the branch used in its closing
-		// To reflect this, the deepest relevant node (node itself here) must be included as a dominator.
-		// By keeping track of which clauses were used in the saturation attempt, it could potentially be folded up higher.
-		// This would be tricky to implement and likely not worth the effort...
-		printf("not folding up because of bad child\n");
+		//printf("not folding up because of bad child\n");
 		return 0;
 	}
 
