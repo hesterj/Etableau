@@ -630,9 +630,6 @@ Eqn_p EqnAlloc(Term_p lterm, Term_p rterm, TB_p bank,  bool positive)
 
    handle->lterm = lterm;
    handle->rterm = rterm;
-
-   handle->occurrences = 0;
-   handle->positive_occurrences = 0;
    /* EqnPrint(stdout, handle, false, true);
       printf("\n"); */
 

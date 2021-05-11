@@ -44,16 +44,16 @@ DTree_p DTreeRepresentation(Term_p term)
     return handle;
 }
 
-DTree_p DTreeEqnRepresentation(Eqn_p eqn)
-{
-    bool positive = EqnIsPositive(eqn);
-    DTree_p handle = DTreeAlloc(positive, 2);
-    handle->children = DTreeArgArrayAlloc(2);
-    handle->children[0] = DTreeRepresentation(eqn->lterm);
-    handle->children[1] = DTreeRepresentation(eqn->rterm);
-    return handle;
-
-}
+//DTree_p DTreeEqnRepresentation(Eqn_p eqn)
+//{
+    //bool positive = EqnIsPositive(eqn);
+    //DTree_p handle = DTreeAlloc(positive, 2);
+    //handle->children = DTreeArgArrayAlloc(2);
+    //handle->children[0] = DTreeRepresentation(eqn->lterm);
+    //handle->children[1] = DTreeRepresentation(eqn->rterm);
+    //return handle;
+//
+//}
 
 // Return 0 if the two DTree_p are identical
 // This is intended to be a ComparisonFunctionType!
@@ -114,117 +114,117 @@ void DTreeStupidPrint(DTree_p root)
 ** to the memory addresses of the branch's DTree_p occurrences.
  */
 
-long DTreeBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_trees)
-{
-    //fprintf(GlobalOut, "# getting branch representations\n");
-    //fprintf(GlobalOut, "# p: %p\n", *tree_of_trees);
-    while (branch != branch->master)
-    {
-        assert(ClauseLiteralNumber(branch->label) == 1);
-        PObjTree_p new_cell = PTreeCellAlloc();
-        Eqn_p label_eqn = branch->label->literals;
-        DTree_p dtree_representation = DTreeEqnRepresentation(label_eqn);
-        new_cell->key = dtree_representation;
-        //fprintf(GlobalOut, "# inserting... &%p %p\n", tree_of_trees, *tree_of_trees);
-        PObjTree_p objtree_cell = PTreeObjInsert(tree_of_trees, new_cell, DTreesIdentical);
-        //fprintf(GlobalOut, "# done inserting\n");
-        if (objtree_cell) // We found a cell with an identical ptree, so we can discard the one we just made and increment the number of occurrences of the one we found.
-        {
-            PTreeCellFree(new_cell);
-            DTreeFree(dtree_representation);
-            DTree_p real_tree = (DTree_p) objtree_cell->key;
-            real_tree->occurrences++;
-            *tree_of_trees = objtree_cell;  // The tree was splayed and objtree_cell is the new root.
-        }
-        else // The dtree we just made has been inserted into the tree of dtrees, and since it clearly occurs we increment the occurrences.
-        {
-            *tree_of_trees = new_cell; // Since the new cell was inserted into the splay tree, we need to ensure we have a reference to the root.
-            dtree_representation->occurrences++;
-        }
-
-        branch = branch->parent;
-    }
-    //fprintf(GlobalOut, "# blablabla %ld\n", PTreeNodes(*tree_of_trees));
-    return 0;
-}
+//long DTreeBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_trees)
+//{
+    ////fprintf(GlobalOut, "# getting branch representations\n");
+    ////fprintf(GlobalOut, "# p: %p\n", *tree_of_trees);
+    //while (branch != branch->master)
+    //{
+        //assert(ClauseLiteralNumber(branch->label) == 1);
+        //PObjTree_p new_cell = PTreeCellAlloc();
+        //Eqn_p label_eqn = branch->label->literals;
+        //DTree_p dtree_representation = DTreeEqnRepresentation(label_eqn);
+        //new_cell->key = dtree_representation;
+        ////fprintf(GlobalOut, "# inserting... &%p %p\n", tree_of_trees, *tree_of_trees);
+        //PObjTree_p objtree_cell = PTreeObjInsert(tree_of_trees, new_cell, DTreesIdentical);
+        ////fprintf(GlobalOut, "# done inserting\n");
+        //if (objtree_cell) // We found a cell with an identical ptree, so we can discard the one we just made and increment the number of occurrences of the one we found.
+        //{
+            //PTreeCellFree(new_cell);
+            //DTreeFree(dtree_representation);
+            //DTree_p real_tree = (DTree_p) objtree_cell->key;
+            //real_tree->occurrences++;
+            //*tree_of_trees = objtree_cell;  // The tree was splayed and objtree_cell is the new root.
+        //}
+        //else // The dtree we just made has been inserted into the tree of dtrees, and since it clearly occurs we increment the occurrences.
+        //{
+            //*tree_of_trees = new_cell; // Since the new cell was inserted into the splay tree, we need to ensure we have a reference to the root.
+            //dtree_representation->occurrences++;
+        //}
+//
+        //branch = branch->parent;
+    //}
+    ////fprintf(GlobalOut, "# blablabla %ld\n", PTreeNodes(*tree_of_trees));
+    //return 0;
+//}
 
 // Insert the equation representations of the labels of branch in to tree_of_eqns
 // Does not account for folding labels.
 
-long EqnBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_eqns)
-{
-    TB_p bank = branch->terms;
-    VarBank_p vars = bank->vars;
-    TypeBank_p typebank = bank->sig->type_bank;
-    Type_p individual_type = typebank->i_type;
-
-    while (branch != branch->master)
-    {
-        assert(ClauseLiteralNumber(branch->label) == 1);
-        PTree_p eqn_vars = NULL;
-        Eqn_p label_eqn = branch->label->literals;
-
-        // Bind all of the variables to a single variable - X1
-        // I already did something better in the hashing functions.  What is after can be improved by
-        // simply treating XN as X1 whenever it is found.
-        __attribute__((unused)) long num_vars = EqnCollectVariables(label_eqn, &eqn_vars);
-
-        Subst_p variable_subst = SubstAlloc();
-        PTree_p variable_cell;
-        Term_p variable;
-        Term_p x1 = VarBankVarAssertAlloc(vars, -2, individual_type);
-        PStack_p traverse = PTreeTraverseInit(eqn_vars);
-        while ((variable_cell = PTreeTraverseNext(traverse)))
-        {
-            variable = variable_cell->key;
-            SubstAddBinding(variable_subst, variable, x1);
-        }
-        PTreeTraverseExit(traverse);
-
-        Term_p unshared_lterm = TermCopy(label_eqn->lterm, vars, DEREF_ALWAYS);
-        assert(!TermCellQueryProp(unshared_lterm, TPIsShared));
-        Term_p unshared_rterm;
-        if (label_eqn->rterm->f_code == SIG_TRUE_CODE)
-        {
-            unshared_rterm = bank->true_term;
-        }
-        else
-        {
-            unshared_rterm = TermCopy(label_eqn->rterm, vars, DEREF_ALWAYS);
-            assert(!TermCellQueryProp(unshared_rterm, TPIsShared));
-        }
-        Eqn_p dummy_eqn = EqnAlloc(unshared_lterm, unshared_rterm, bank, label_eqn->pos);
-        SubstDelete(variable_subst);
-
-        PObjTree_p new_cell = PTreeCellAlloc();
-        new_cell->key = dummy_eqn;
-        PObjTree_p objtree_cell = PTreeObjInsert(tree_of_eqns, new_cell, EqnUnifyRenamingPCmp);
-        // We found a cell with an identical eqn, so we can discard the one we just made and increment
-        // the number of occurrences of the one we found.
-        if (objtree_cell)
-        {
-            TermFree(unshared_lterm);
-            if (unshared_rterm->f_code != SIG_TRUE_CODE)
-            {
-                TermFree(unshared_rterm);
-            }
-            EqnFree(dummy_eqn);
-            PTreeCellFree(new_cell);
-            Eqn_p real_eqn = (Eqn_p) objtree_cell->key;
-            real_eqn->occurrences++;
-        }
-        // The dtree we just made has been inserted into the tree of dtrees,
-        // and since it clearly occurs we increment the occurrences.
-        else
-        {
-            assert(new_cell->key == dummy_eqn);
-            dummy_eqn->occurrences++;
-        }
-        PTreeFree(eqn_vars);
-        branch = branch->parent;
-    }
-    return 0;
-}
+//long EqnBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_eqns)
+//{
+    //TB_p bank = branch->terms;
+    //VarBank_p vars = bank->vars;
+    //TypeBank_p typebank = bank->sig->type_bank;
+    //Type_p individual_type = typebank->i_type;
+//
+    //while (branch != branch->master)
+    //{
+        //assert(ClauseLiteralNumber(branch->label) == 1);
+        //PTree_p eqn_vars = NULL;
+        //Eqn_p label_eqn = branch->label->literals;
+//
+        //// Bind all of the variables to a single variable - X1
+        //// I already did something better in the hashing functions.  What is after can be improved by
+        //// simply treating XN as X1 whenever it is found.
+        //__attribute__((unused)) long num_vars = EqnCollectVariables(label_eqn, &eqn_vars);
+//
+        //Subst_p variable_subst = SubstAlloc();
+        //PTree_p variable_cell;
+        //Term_p variable;
+        //Term_p x1 = VarBankVarAssertAlloc(vars, -2, individual_type);
+        //PStack_p traverse = PTreeTraverseInit(eqn_vars);
+        //while ((variable_cell = PTreeTraverseNext(traverse)))
+        //{
+            //variable = variable_cell->key;
+            //SubstAddBinding(variable_subst, variable, x1);
+        //}
+        //PTreeTraverseExit(traverse);
+//
+        //Term_p unshared_lterm = TermCopy(label_eqn->lterm, vars, DEREF_ALWAYS);
+        //assert(!TermCellQueryProp(unshared_lterm, TPIsShared));
+        //Term_p unshared_rterm;
+        //if (label_eqn->rterm->f_code == SIG_TRUE_CODE)
+        //{
+            //unshared_rterm = bank->true_term;
+        //}
+        //else
+        //{
+            //unshared_rterm = TermCopy(label_eqn->rterm, vars, DEREF_ALWAYS);
+            //assert(!TermCellQueryProp(unshared_rterm, TPIsShared));
+        //}
+        //Eqn_p dummy_eqn = EqnAlloc(unshared_lterm, unshared_rterm, bank, label_eqn->pos);
+        //SubstDelete(variable_subst);
+//
+        //PObjTree_p new_cell = PTreeCellAlloc();
+        //new_cell->key = dummy_eqn;
+        //PObjTree_p objtree_cell = PTreeObjInsert(tree_of_eqns, new_cell, EqnUnifyRenamingPCmp);
+        //// We found a cell with an identical eqn, so we can discard the one we just made and increment
+        //// the number of occurrences of the one we found.
+        //if (objtree_cell)
+        //{
+            //TermFree(unshared_lterm);
+            //if (unshared_rterm->f_code != SIG_TRUE_CODE)
+            //{
+                //TermFree(unshared_rterm);
+            //}
+            //EqnFree(dummy_eqn);
+            //PTreeCellFree(new_cell);
+            //Eqn_p real_eqn = (Eqn_p) objtree_cell->key;
+            //real_eqn->occurrences++;
+        //}
+        //// The dtree we just made has been inserted into the tree of dtrees,
+        //// and since it clearly occurs we increment the occurrences.
+        //else
+        //{
+            //assert(new_cell->key == dummy_eqn);
+            //dummy_eqn->occurrences++;
+        //}
+        //PTreeFree(eqn_vars);
+        //branch = branch->parent;
+    //}
+    //return 0;
+//}
 
 /*
 ** Return true if left and right are unifiable by a renaming of variables, false otherwise
@@ -278,81 +278,81 @@ void FeatureTreePrint(FILE* out, PObjTree_p *tree_of_trees)
     PTreeTraverseExit(iter);
 }
 
-void EqnTreePrint(FILE* out, PObjTree_p *tree_of_eqns)
-{
-    PStack_p iter = PTreeTraverseInit(*tree_of_eqns);
-    PObjTree_p handle = NULL;
-    while ((handle = PTreeTraverseNext(iter)))
-    {
-        Eqn_p eqn = (Eqn_p) handle->key;
-        assert(eqn);
-        fprintf(GlobalOut, "# %p ", eqn);
-        EqnPrint(GlobalOut, eqn, EqnIsNegative(eqn), true);
-        fprintf(GlobalOut, " %d\n", eqn->occurrences);
-
-    }
-    PTreeTraverseExit(iter);
-}
+//void EqnTreePrint(FILE* out, PObjTree_p *tree_of_eqns)
+//{
+    //PStack_p iter = PTreeTraverseInit(*tree_of_eqns);
+    //PObjTree_p handle = NULL;
+    //while ((handle = PTreeTraverseNext(iter)))
+    //{
+        //Eqn_p eqn = (Eqn_p) handle->key;
+        //assert(eqn);
+        //fprintf(GlobalOut, "# %p ", eqn);
+        //EqnPrint(GlobalOut, eqn, EqnIsNegative(eqn), true);
+        //fprintf(GlobalOut, " %d\n", eqn->occurrences);
+//
+    //}
+    //PTreeTraverseExit(iter);
+//}
 
 //  Another try...  Using PList instead of splay trees
 
-long EqnBranchRepresentationsList(ClauseTableau_p branch, PList_p list_of_eqns, int branch_status)
-{
-    TB_p bank = branch->terms;
-    VarBank_p vars = bank->vars;
-    //TypeBank_p typebank = bank->sig->type_bank;
-    //Type_p individual_type = typebank->i_type;
-
-    while (branch != branch->master)
-    {
-        assert(ClauseLiteralNumber(branch->label) == 1);
-        Eqn_p label_eqn = branch->label->literals;
-
-        Term_p unshared_lterm = TermCopyUnifyVars(vars, label_eqn->lterm);
-        assert(!TermCellQueryProp(unshared_lterm, TPIsShared));
-        Term_p unshared_rterm;
-        if (label_eqn->rterm->f_code == SIG_TRUE_CODE)
-        {
-            unshared_rterm = bank->true_term;
-        }
-        else
-        {
-            unshared_rterm = TermCopyUnifyVars(vars, label_eqn->rterm);
-            assert(!TermCellQueryProp(unshared_rterm, TPIsShared));
-        }
-        Eqn_p dummy_eqn = EqnAlloc(unshared_lterm, unshared_rterm, bank, label_eqn->pos);
-        //SubstDelete(variable_subst);
-
-        // Check to see if an equivalent equation is stored in the list
-        Eqn_p found;
-        if ((found = EquivalentEquationInList(dummy_eqn, list_of_eqns)))
-        {
-            found->occurrences++;
-            TermFree(dummy_eqn->lterm);
-            if (dummy_eqn->rterm->f_code != SIG_TRUE_CODE)
-            {
-                TermFree(dummy_eqn->rterm);
-            }
-            EqnFree(dummy_eqn);
-            if (branch_status == PROOF_FOUND) // If the proof attempt on this branch was successful, increment the counter of successful proof searches
-            {
-                found->positive_occurrences++;
-            }
-        }
-        else
-        {
-            PListStoreP(list_of_eqns, dummy_eqn);
-            dummy_eqn->occurrences++;
-            if (branch_status == PROOF_FOUND) // If the proof attempt on this branch was successful, increment the counter of successful proof searches
-            {
-                dummy_eqn->positive_occurrences++;
-            }
-        }
-
-        branch = branch->parent;
-    }
-    return 0;
-}
+//long EqnBranchRepresentationsList(ClauseTableau_p branch, PList_p list_of_eqns, int branch_status)
+//{
+    //TB_p bank = branch->terms;
+    //VarBank_p vars = bank->vars;
+    ////TypeBank_p typebank = bank->sig->type_bank;
+    ////Type_p individual_type = typebank->i_type;
+//
+    //while (branch != branch->master)
+    //{
+        //assert(ClauseLiteralNumber(branch->label) == 1);
+        //Eqn_p label_eqn = branch->label->literals;
+//
+        //Term_p unshared_lterm = TermCopyUnifyVars(vars, label_eqn->lterm);
+        //assert(!TermCellQueryProp(unshared_lterm, TPIsShared));
+        //Term_p unshared_rterm;
+        //if (label_eqn->rterm->f_code == SIG_TRUE_CODE)
+        //{
+            //unshared_rterm = bank->true_term;
+        //}
+        //else
+        //{
+            //unshared_rterm = TermCopyUnifyVars(vars, label_eqn->rterm);
+            //assert(!TermCellQueryProp(unshared_rterm, TPIsShared));
+        //}
+        //Eqn_p dummy_eqn = EqnAlloc(unshared_lterm, unshared_rterm, bank, label_eqn->pos);
+        ////SubstDelete(variable_subst);
+//
+        //// Check to see if an equivalent equation is stored in the list
+        //Eqn_p found;
+        //if ((found = EquivalentEquationInList(dummy_eqn, list_of_eqns)))
+        //{
+            //found->occurrences++;
+            //TermFree(dummy_eqn->lterm);
+            //if (dummy_eqn->rterm->f_code != SIG_TRUE_CODE)
+            //{
+                //TermFree(dummy_eqn->rterm);
+            //}
+            //EqnFree(dummy_eqn);
+            //if (branch_status == PROOF_FOUND) // If the proof attempt on this branch was successful, increment the counter of successful proof searches
+            //{
+                //found->positive_occurrences++;
+            //}
+        //}
+        //else
+        //{
+            //PListStoreP(list_of_eqns, dummy_eqn);
+            //dummy_eqn->occurrences++;
+            //if (branch_status == PROOF_FOUND) // If the proof attempt on this branch was successful, increment the counter of successful proof searches
+            //{
+                //dummy_eqn->positive_occurrences++;
+            //}
+        //}
+//
+        //branch = branch->parent;
+    //}
+    //return 0;
+//}
 
 Eqn_p EquivalentEquationInList(Eqn_p eqn, PList_p anchor)
 {
@@ -369,20 +369,20 @@ Eqn_p EquivalentEquationInList(Eqn_p eqn, PList_p anchor)
     return NULL;
 }
 
-void EqnPListPrint(FILE* out, PList_p list_of_eqns)
-{
-    fprintf(GlobalOut, "# Printing feature list vector\n");
-    PList_p handle = list_of_eqns->succ;
-    while (handle != list_of_eqns)
-    {
-        Eqn_p eqn = (Eqn_p) handle->key.p_val;
-        assert(eqn);
-        fprintf(GlobalOut, "# %p ", eqn);
-        EqnPrint(GlobalOut, eqn, EqnIsNegative(eqn), true);
-        fprintf(GlobalOut, " %d / %d\n", eqn->positive_occurrences, eqn->occurrences);
-        handle = handle->succ;
-    }
-}
+//void EqnPListPrint(FILE* out, PList_p list_of_eqns)
+//{
+    //fprintf(GlobalOut, "# Printing feature list vector\n");
+    //PList_p handle = list_of_eqns->succ;
+    //while (handle != list_of_eqns)
+    //{
+        //Eqn_p eqn = (Eqn_p) handle->key.p_val;
+        //assert(eqn);
+        //fprintf(GlobalOut, "# %p ", eqn);
+        //EqnPrint(GlobalOut, eqn, EqnIsNegative(eqn), true);
+        //fprintf(GlobalOut, " %d / %d\n", eqn->positive_occurrences, eqn->occurrences);
+        //handle = handle->succ;
+    //}
+//}
 
 #ifdef XGBOOST_FLAG
 void XGBoostTest()

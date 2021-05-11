@@ -2,10 +2,25 @@
 #define ETAB_XGBOOST
 
 #include "etab_foldingup.h"
+
 #ifdef XGBOOST_FLAG
-#include </home/hesterj/Projects/xgboost/include/xgboost/c_api.h>
+#   if defined __has_include
+#      if __has_include(</home/hesterj/Projects/xgboost/include/xgboost/c_api.h>)
+#         include</home/hesterj/Projects/xgboost/include/xgboost/c_api.h>
+#
+#      elif __has_include(</home/john/projects/xgboost/include/xgboost/c_api.h>)
+#         include</home/john/projects/xgboost/include/xgboost/c_api.h>
+#      else
+#         echo Unable to find xgboost c api, please look at etab_xgboost_interaction.h and set where yours is
+#      endif
+#   else
+#      include</home/hesterj/Projects/xgboost/include/xgboost/c_api.h>
+#   endif
 void XGBoostTest();
 #endif
+
+
+//include </home/hesterj/Projects/xgboost/include/xgboost/c_api.h>
 
 /*
 ** The DTree is just that, a tree of integers, with potentially multiple children.
@@ -30,11 +45,11 @@ void DTreeFree(void *trash);
 DTree_p DTreeRepresentation(Term_p term);
 int DTreesIdentical(const void *left, const void *right); // ComparisonFunctionType
 //DTree_p PTreeFindDTree(QuadTree_p *splay_tree, DTree_p dtree);
-DTree_p DTreeEqnRepresentation(Eqn_p eqn);
+//DTree_p DTreeEqnRepresentation(Eqn_p eqn);
 void FeatureTreePrint(FILE* out, PObjTree_p *tree_of_trees);
 
-long DTreeBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_trees);
-long EqnBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_eqns);
+//long DTreeBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_trees);
+//long EqnBranchRepresentations(ClauseTableau_p branch, PObjTree_p *tree_of_eqns);
 void DTreeResetOccurrences(void *tree);
 void ResetAllOccurrences(PObjTree_p *tree_of_trees);
 
@@ -43,9 +58,9 @@ void DTreeStupidPrintChildren(DTree_p root);
 
 bool EqnUnifyRenamingP(Eqn_p left, Eqn_p right);
 int EqnUnifyRenamingPCmp(const void *left_p, const void *right_p);
-void EqnTreePrint(FILE* out, PObjTree_p *tree_of_eqns);
-void EqnPListPrint(FILE* out, PList_p list_of_eqns);
-long EqnBranchRepresentationsList(ClauseTableau_p branch, PList_p list_of_eqns, int branch_status);
+//void EqnTreePrint(FILE* out, PObjTree_p *tree_of_eqns);
+//void EqnPListPrint(FILE* out, PList_p list_of_eqns);
+//long EqnBranchRepresentationsList(ClauseTableau_p branch, PList_p list_of_eqns, int branch_status);
 Eqn_p EquivalentEquationInList(Eqn_p eqn, PList_p anchor);
 
 #endif
