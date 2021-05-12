@@ -297,11 +297,11 @@ inline int GetDesiredNumberOfTableaux(TableauControl_p control)
 long ClauseTableauHash(ClauseTableau_p tableau);
 long ClauseTableauHashBranch(ClauseTableau_p branch);
 void ClauseTableauCreateID(ClauseTableau_p tableau, DStr_p str);
-void ClauseTableauPrintBranchSimple(FILE* out, char separator, ClauseTableau_p branch);
+void ClauseTableauPrintBranchSimple(FILE* out, const char* separator, ClauseTableau_p branch);
 void ClauseTableauPrintBranchSimpleToFile(char* file,
 										  char* mode,
-										  char prefix,
-										  char separator,
+										  const char* prefix,
+										  const char* separator,
 										  ClauseTableau_p branch);
 long ClauseTableauAddDepths(ClauseTableau_p tab);
 double ClauseTableauGetAverageDepth(ClauseTableau_p tableau);

@@ -121,12 +121,12 @@ ErrorCodes EproverCloseBranchWrapper(ProofState_p proofstate,
 
     // Record the branch in the appropriate file with the saturation status
 #ifdef XGBOOST_FLAG
-    char prefix = '-';
-    if (branch_status == PROOF_FOUND) prefix = '+';
+    const char* prefix = "-,";
+    if (branch_status == PROOF_FOUND) prefix = "+,";
     ClauseTableauPrintBranchSimpleToFile(DStrView(branch_data_file),
                                                   "a",
                                                   prefix,
-                                                  ',',
+                                                  ".",
                                                   branch);
     DStrFree(branch_data_file);
 #endif
