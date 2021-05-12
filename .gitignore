@@ -19,6 +19,7 @@ PROVER/ekb_delete
 PROVER/ekb_ginsert
 PROVER/ekb_insert
 PROVER/enormalizer
+PROVER/epatternize
 PROVER/epclanalyse
 PROVER/epclextract
 PROVER/epcllemma
