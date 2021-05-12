@@ -827,7 +827,8 @@ void ClauseTableauPrintBranchSimple(FILE* out, const char* separator, ClauseTabl
 	ClauseTableau_p depth_check = branch;
 	assert(depth_check);
 
-	while (depth_check->depth != 0)
+	fprintf(out, "\"");
+	while (depth_check)
 	{
 		assert(depth_check->label);
 		assert(depth_check->id >= 0);
@@ -848,11 +849,7 @@ void ClauseTableauPrintBranchSimple(FILE* out, const char* separator, ClauseTabl
 
 		depth_check = depth_check->parent;
 	}
-	assert(depth_check->depth == 0);
-	assert(depth_check->label);
-
-	ClauseTSTPCorePrint(out, depth_check->label, true);
-	fprintf(out, "\n");
+	fprintf(out, "\"\n");
 }
 
 // Simply print a branch to file, with the branch prefixed by the string prefix and a space.
