@@ -301,6 +301,7 @@ void ClauseTableauPrintBranchSimple(FILE* out, const char* separator, ClauseTabl
 void ClauseTableauPrintBranchSimpleToFile(char* file,
 										  char* mode,
 										  const char* prefix,
+										  const char* postfix,
 										  const char* separator,
 										  ClauseTableau_p branch);
 long ClauseTableauAddDepths(ClauseTableau_p tab);

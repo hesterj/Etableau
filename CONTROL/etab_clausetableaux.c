@@ -849,7 +849,7 @@ void ClauseTableauPrintBranchSimple(FILE* out, const char* separator, ClauseTabl
 
 		depth_check = depth_check->parent;
 	}
-	fprintf(out, "\"\n");
+	fprintf(out, "\"");
 }
 
 // Simply print a branch to file, with the branch prefixed by the string prefix and a space.
@@ -858,13 +858,21 @@ void ClauseTableauPrintBranchSimple(FILE* out, const char* separator, ClauseTabl
 void ClauseTableauPrintBranchSimpleToFile(char* file,
 										  char* mode,
 										  const char* prefix,
+										  const char* postfix,
 										  const char* separator,
 										  ClauseTableau_p branch)
 {
 	assert(file);
 	FILE* file_p = SecureFOpen(file, mode);
-	fprintf(file_p, "%s ", prefix);
+	if (prefix)
+	{
+		fprintf(file_p, "%s", prefix);
+	}
 	ClauseTableauPrintBranchSimple(file_p, separator, branch);
+	if (postfix)
+	{
+		fprintf(file_p, "%s", postfix);
+	}
 	SecureFClose(file_p);
 }
 
