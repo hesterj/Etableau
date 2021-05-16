@@ -857,6 +857,7 @@ void ClauseTableauPrintBranchSimple(FILE* out, const char* separator, ClauseTabl
 
 void ClauseTableauPrintBranchSimpleToFile(char* file,
 										  char* mode,
+										  int multiple,
 										  const char* prefix,
 										  const char* postfix,
 										  const char* separator,
@@ -864,14 +865,17 @@ void ClauseTableauPrintBranchSimpleToFile(char* file,
 {
 	assert(file);
 	FILE* file_p = SecureFOpen(file, mode);
-	if (prefix)
+	for (int i=0; i<multiple; i++)
 	{
-		fprintf(file_p, "%s", prefix);
-	}
-	ClauseTableauPrintBranchSimple(file_p, separator, branch);
-	if (postfix)
-	{
-		fprintf(file_p, "%s", postfix);
+		if (prefix)
+		{
+			fprintf(file_p, "%s", prefix);
+		}
+		ClauseTableauPrintBranchSimple(file_p, separator, branch);
+		if (postfix)
+		{
+			fprintf(file_p, "%s", postfix);
+		}
 	}
 	SecureFClose(file_p);
 }

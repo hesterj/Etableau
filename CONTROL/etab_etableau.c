@@ -122,9 +122,15 @@ ErrorCodes EproverCloseBranchWrapper(ProofState_p proofstate,
     // Record the branch in the appropriate file with the saturation status
 #ifdef XGBOOST_FLAG
     const char* postfix = ",0\n";
-    if (branch_status == PROOF_FOUND) postfix = ",1\n";
+    int number_of_times_to_print = 1;
+    if (branch_status == PROOF_FOUND)
+    {
+        number_of_times_to_print = 10;
+        postfix = ",1\n";
+    }
     ClauseTableauPrintBranchSimpleToFile(DStrView(branch_data_file),
                                          "a",
+                                         number_of_times_to_print,
                                          NULL,
                                          postfix,
                                          ". ",

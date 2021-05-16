@@ -300,6 +300,7 @@ void ClauseTableauCreateID(ClauseTableau_p tableau, DStr_p str);
 void ClauseTableauPrintBranchSimple(FILE* out, const char* separator, ClauseTableau_p branch);
 void ClauseTableauPrintBranchSimpleToFile(char* file,
 										  char* mode,
+										  int multiple,
 										  const char* prefix,
 										  const char* postfix,
 										  const char* separator,
