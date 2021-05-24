@@ -232,9 +232,9 @@ void RollBackEveryNode(ClauseTableau_p tab)
         assert(tab->old_labels->current);
         Clause_p new_label = (Clause_p) PStackPopP(tab->old_labels);
         assert(new_label->set);
-        ClauseSetExtractEntry(tab->label);
-        ClauseFree(tab->label);
         tab->label = new_label;
+        // The old tab->label now only has a reference to it in the label_storage.
+        // The automatic garbage collection for label storage (will) works with a a mark & sweep
     }
 
     assert(p_folding);
@@ -246,9 +246,6 @@ void RollBackEveryNode(ClauseTableau_p tab)
         ClauseSetFree(tab->folding_labels);
         tab->folding_labels = new_folding_labels;
     }
-    //GCDeregisterClauseSet(gc, new_folding_labels);
-    //ClauseSetFree(new_folding_labels);
-    //tab->folding_labels = ClauseSetAlloc();
 
     PTreeFree(tab->local_variables);
     tab->local_variables = NULL;
@@ -438,12 +435,15 @@ bool BacktrackWrapper(ClauseTableau_p master)
 void DeleteAllBacktrackInformation(ClauseTableau_p tableau)
 {
     assert(tableau);
-    while (!PStackEmpty(tableau->old_labels))
-    {
-        Clause_p trash_label = PStackPopP(tableau->old_labels);
-        ClauseSetExtractEntry(trash_label);
-        ClauseFree(trash_label);
-    }
+
+    // We reset the old labels because the clause garbage collection should handle the old labels appropriately
+    PStackReset(tableau->old_labels);
+    //while (!PStackEmpty(tableau->old_labels))
+    //{
+        //Clause_p trash_label = PStackPopP(tableau->old_labels);
+        //ClauseSetExtractEntry(trash_label);
+        //ClauseFree(trash_label);
+    //}
     while (!PStackEmpty(tableau->old_folding_labels))
     {
         ClauseSet_p trash_label_set = PStackPopP(tableau->old_folding_labels);

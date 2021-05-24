@@ -158,7 +158,9 @@ void    EqnFree(Eqn_p junk);
    EqnQueryProp((eq), EPIsStrictlyMaximal)
 
 #define EqnGetPredCodeFO(eq) (EqnIsEquLit(eq)?0:(eq)->lterm->f_code)
-#define EqnGetPredCodeHO(eq) (EqnIsEquLit(eq)?0:(TermIsTopLevelVar((eq)->lterm) ? 0 : (eq)->lterm->f_code))
+#define EqnGetPredCodeHO(eq) (EqnIsEquLit(eq)?0:(TermIsTopLevelVar((eq)->lterm) ? 0 : (eq)->round((eq)->lterm) && TBTermIsGround((eq)->rterm))
+
+
 
 #ifdef ENABLE_LFHO
 #define EqnGetPredCode(eq) (problemType == PROBLEM_HO ? EqnGetPredCodeHO(eq) : EqnGetPredCodeFO(eq))
@@ -183,6 +185,7 @@ void    EqnFree(Eqn_p junk);
 
 #define EqnIsGround(eq)                                         \
    (TBTermIsGround((eq)->lterm) && TBTermIsGround((eq)->rterm))
+
 #define EqnIsPureVar(eq)                                \
    (TermIsVar((eq)->lterm) && TermIsVar((eq)->rterm))
 #define EqnIsPartVar(eq)                                \

@@ -34,6 +34,7 @@ typedef struct bindingcell
 }BindingCell, *Binding_p;
 
 
+
 typedef int BacktrackStatus;
 typedef int* BacktrackStatus_p;
 #define BACKTRACK_FAILURE 0

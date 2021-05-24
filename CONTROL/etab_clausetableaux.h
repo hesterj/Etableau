@@ -73,6 +73,7 @@ typedef struct clausetableau
 	// The failures can be interpreted as failure substitutions with an associated position in the tableau where the work was done.
 	
 	Clause_p label; // The clause at this node
+	//EtableauClause_p label;
 	ClauseStack_p old_labels; // Keep the old labels around in case there needs to be backtracking.
 	ClauseSet_p unit_axioms; // Only present at the master node
 	ClauseSet_p folding_labels; // These are clauses that have been folded up to this node.

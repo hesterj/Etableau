@@ -10,6 +10,9 @@ void DTreeFree(void *trash);
 
 long hash(char *str);
 ClauseTableau_p empty_tableau_alloc();
+bool clause_variables_are_disjoint_with_subst(const Clause_p clause, const Subst_p subst);
+bool equation_variables_are_disjoint_with_subst(const Eqn_p eqn, const Subst_p subst);
+bool term_variables_are_disjoint_with_subst(const Term_p term, const Subst_p subst);
 /*  The open branches for each distinct tableau MUST be initialized on creation,
  *  not by this method.
  * 
@@ -78,6 +81,67 @@ ClauseTableau_p empty_tableau_alloc()
 	handle->failures = NULL;
 
 	return handle;
+}
+
+bool clause_variables_are_disjoint_with_subst(const Clause_p clause, const Subst_p subst)
+{
+	Eqn_p literal = clause->literals;
+	bool variables_are_disjoint = true;
+	while (literal)
+	{
+		if (!equation_variables_are_disjoint_with_subst(literal, subst))
+		{
+			variables_are_disjoint = false;
+			break;
+		}
+		literal = literal->next;
+	}
+	return variables_are_disjoint;
+}
+
+bool equation_variables_are_disjoint_with_subst(const Eqn_p eqn, const Subst_p subst)
+{
+	Term_p lhs = eqn->lterm;
+	Term_p rhs = eqn->rterm;
+	bool variables_are_disjoint = true;
+
+	if (!term_variables_are_disjoint_with_subst(lhs, subst) ||
+		!term_variables_are_disjoint_with_subst(rhs, subst))
+	{
+		variables_are_disjoint = false;
+	}
+
+	return variables_are_disjoint;
+}
+
+bool term_variables_are_disjoint_with_subst(const Term_p term, const Subst_p subst)
+{
+	bool variables_are_disjoint = true;
+	if (TermIsVar(term))
+	{
+		for (PStackPointer p = 0; p<PStackGetSP(subst); p++)
+		{
+			Term_p subst_variable = PStackElementP(subst, p);
+			assert(TermIsVar(subst_variable));
+			if (term == subst_variable)
+			{
+				assert(term->arity == 0);
+				variables_are_disjoint = false;
+				break;
+			}
+		}
+	}
+	for (int i=0; i<term->arity; i++)
+	{
+		variables_are_disjoint = term_variables_are_disjoint_with_subst(term->args[i], subst);
+		if (!variables_are_disjoint)
+		{
+			return false;
+		}
+
+	}
+	return variables_are_disjoint;
+
 }
 
 ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
@@ -433,18 +497,19 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	PStackFree(trash->failures);
 
 	// Free old labels
-	while (!PStackEmpty(trash->old_labels))
-	{
-		//fprintf(GlobalOut, "%ld\n", PStackGetSP(trash->old_labels));
-		Clause_p old_trash_label = (Clause_p) PStackPopP(trash->old_labels);
-		assert(old_trash_label);
-		if (old_trash_label->set)
-		{
-			ClauseSetExtractEntry(old_trash_label);
-		}
-		ClauseFree(old_trash_label);
-	}
-	assert(PStackEmpty(trash->old_labels));
+	// They should be free'd by the clause GC now...
+	//while (!PStackEmpty(trash->old_labels))
+	//{
+		////fprintf(GlobalOut, "%ld\n", PStackGetSP(trash->old_labels));
+		//Clause_p old_trash_label = (Clause_p) PStackPopP(trash->old_labels);
+		//assert(old_trash_label);
+		//if (old_trash_label->set)
+		//{
+			//ClauseSetExtractEntry(old_trash_label);
+		//}
+		//ClauseFree(old_trash_label);
+	//}
+	//assert(PStackEmpty(trash->old_labels));
 	PStackFree(trash->old_labels);
 
 	//  Free old folding label sets
@@ -518,23 +583,30 @@ void ClauseTableauApplySubstitution(ClauseTableau_p tab, Subst_p subst)
 
 void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 {
-	GCAdmin_p gc = tab->state->gc_terms;
 	assert(tab);
 	assert(tab->label);
 	assert(subst);
 	assert(PStackGetSP(subst));
 	assert(tab->label->set);
-	ClauseSet_p label_storage = tab->master->tableaucontrol->label_storage;
-	Clause_p new_label = ClauseCopy(tab->label, tab->terms);
 
+	GCAdmin_p gc = tab->state->gc_terms;
+	ClauseSet_p label_storage = tab->master->tableaucontrol->label_storage;
+
+	// Only make a copy of the clause if we have to.
+	if (!ClauseIsGround(tab->label) || !clause_variables_are_disjoint_with_subst(tab->label, subst))
+	{
+		Clause_p new_label = ClauseCopy(tab->label, tab->terms);
+		ClauseSetInsert(label_storage, new_label);
+		tab->label = new_label;
+	}
 
 	PStackPushP(tab->old_labels, tab->label);  // Store old folding labels in case we need to backtrack
-	ClauseSetInsert(label_storage, new_label);
-	assert(new_label);
-	tab->label = new_label;
-	ClauseTableauDelProp(tab, TUPSaturationBlocked);
-	//tab->saturation_blocked = false; // Since we are applying a nontrivial substitution to the node, we can try to saturate again
-	
+
+	//Clause_p new_label = ClauseCopy(tab->label, tab->terms);
+	//PStackPushP(tab->old_labels, tab->label);  // Store old folding labels in case we need to backtrack
+	//ClauseSetInsert(label_storage, new_label);
+	//tab->label = new_label;
+
 	if (tab->folding_labels)  // The edge labels that have been folded up if the pointer is non-NULL
 	{
 		ClauseSet_p new_edge = ClauseSetCopy(tab->terms, tab->folding_labels);
@@ -543,7 +615,8 @@ void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 		assert(new_edge);
 		tab->folding_labels = new_edge;
 	}
-	
+
+	ClauseTableauDelProp(tab, TUPSaturationBlocked);
 	for (int i=0; i<tab->arity; i++)
 	{
 		ClauseTableauApplySubstitutionToNode(tab->children[i], subst);

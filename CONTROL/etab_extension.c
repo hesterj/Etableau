@@ -1,5 +1,4 @@
 #include "etab_extension.h"
-//#include "clausetableaux.h"
 
 bool extension_is_strong(ClauseTableau_p parent,
 						 ClauseTableau_p grandparent,
@@ -75,9 +74,10 @@ ClauseSet_p SplitClauseFresh(TB_p bank, ClauseTableau_p tableau, Clause_p clause
 
 /*  Do all of the extension rules possible with the selected clause.
  *  There may be multiple literals extension can be done with.
- *  The resulting tableaux are added to distinct_tableaux.
+ *  The resulting tableaux are added to distinct_tableaux, if new_tableaux is passed.
  *  At the end, when all of the new tableaux are created, the original tableau is removed from
  *  distinct_tableaux.
+ *  Otherwise, if new_tableaux is not passed, the extension is done directly on to the branch.
 */
 
 int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
@@ -91,7 +91,9 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	int subst_completed = 0;
 
 
-	ClauseTableauUpdateVariablesArray(open_branch->master);
+	// Not necessary here, the tableau variables are updated in SplitClauseFresh
+	// ClauseTableauUpdateVariablesArray(open_branch->master);
+
 	ClauseSet_p new_leaf_clauses = SplitClauseFresh(open_branch->terms, master, selected);
 	assert(new_leaf_clauses->members);
 	assert(new_leaf_clauses->members > 1);

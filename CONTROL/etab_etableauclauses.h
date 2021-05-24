@@ -33,7 +33,17 @@ typedef enum
 
 typedef struct etableauclausecell
 {
-    EtableauClauseProperties etc_properties;
+    EtableauClauseProperties properties;
     Clause_p clause;
 }EtableauClauseCell, *EtableauClause_p;
+
+#define EtableauClauseCellAlloc() (EtableauClauseCell*) SizeMalloc(sizeof(EtableauClauseCell))
+#define EtableauClauseCellFree(junk) SizeFree(junk, sizeof(EtableauClauseCell))
+#define EtableauClauseSetProp(clause, prop) SetProp((clause), (prop))
+#define EtableauClauseDelProp(clause, prop) DelProp((clause), (prop))
+#define EtablaeuClauseGiveProps(clause, prop) GiveProps((clause), (prop))
+#define EtableauCLauseQueryProp(clause, prop) QueryProp((clause), (prop))
+
+EtableauClause_p EtableauClauseAlloc(Clause_p clause);
+
 #endif
