@@ -3,7 +3,7 @@
 EtableauClause_p EtableauClauseAlloc(Clause_p clause)
 {
     EtableauClause_p wrapped_clause = EtableauClauseCellAlloc();
-    wrapped_clause->etc_properties = ETCIgnoreProps;
+    wrapped_clause->properties = ETCIgnoreProps;
     wrapped_clause->clause = clause;
 }
 
