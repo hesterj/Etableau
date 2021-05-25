@@ -116,11 +116,13 @@ Subst_p ClauseContradictsBranchSimple(ClauseTableau_p open_branch, Clause_p orig
 	Clause_p temporary_label = NULL;
 
 	//ClauseTableauUpdateVariables(open_branch->master);
-	ClauseTableauUpdateVariablesArray(open_branch->master);
+	//ClauseTableauUpdateVariablesArray(open_branch->master);
+	ClauseTableauUpdateVariablesArray2(open_branch->master);
 
 #ifdef LOCAL
 	//assert(open_branch->local_variables);
-	UpdateLocalVariables(open_branch);
+	//UpdateLocalVariables(open_branch);
+	UpdateLocalVariables2(open_branch);
 #endif
 
 	// Check against the unit axioms

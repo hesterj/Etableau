@@ -44,6 +44,7 @@ ClauseTableau_p empty_tableau_alloc()
 	handle->tableaucontrol = NULL;
 	//handle->tableau_variables = NULL;
 	handle->tableau_variables_array = NULL;
+	handle->node_variables_array = NULL;
 	handle->depth = 0;
 	handle->position = 0;
 	handle->arity = 0;
@@ -148,6 +149,7 @@ ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
 {
 	ClauseTableau_p handle = empty_tableau_alloc();
 	handle->tableau_variables_array = PDArrayAlloc(4, 4);
+	handle->node_variables_array = PDArrayAlloc(4, 4);
 	handle->tableaucontrol = tableaucontrol;
 	handle->folding_labels = ClauseSetAlloc();
 	handle->info = DStrAlloc();
@@ -174,6 +176,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	ClauseTableau_p handle = empty_tableau_alloc();
 
 	handle->tableau_variables_array = PDArrayCopy(tab->tableau_variables_array);
+	handle->node_variables_array = PDArrayCopy(tab->node_variables_array);
 	handle->properties = tab->properties;
 	handle->maximum_depth = tab->maximum_depth;
 	handle->old_labels = PStackAlloc();
@@ -278,6 +281,8 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	handle->backtracks = BacktrackStackCopy(tab->backtracks, handle->master);
 	handle->failures = BacktrackStackCopy(tab->failures, handle->master);
 
+	ClauseTableauUpdateVariablesArray2(handle);
+
 	return handle;
 }
 
@@ -292,6 +297,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	handle->old_labels = PStackAlloc();
 	handle->old_folding_labels = PStackAlloc();
 
+	handle->node_variables_array = PDArrayCopy(tab->node_variables_array);
 	GCAdmin_p gc = tab->state->gc_terms;
 	ClauseSet_p label_storage = parent->master->tableaucontrol->label_storage;
 	
@@ -396,6 +402,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 
 	handle->old_labels = PStackAlloc();
 	handle->old_folding_labels = PStackAlloc();
+	handle->node_variables_array = PDArrayAlloc(4, 4);
 
 	__attribute__((unused)) GCAdmin_p gc = parent->state->gc_terms;
 	ClauseSet_p label_storage = parent->master->tableaucontrol->label_storage;
@@ -453,6 +460,7 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	{
 		PDArrayFree(trash->tableau_variables_array);
 	}
+	PDArrayFree(trash->node_variables_array);
 	if (trash->label)
 	{
 		assert(trash->label->set);
@@ -2069,6 +2077,16 @@ void ClauseTableauDeleteAllProps(ClauseTableau_p tab)
 	for (int i=0; i<tab->arity; i++)
 	{
 		ClauseTableauDeleteAllProps(tab->children[i]);
+	}
+}
+
+void ClauseTableauDeleteFlag(ClauseTableau_p tab, TableauProperties prop)
+{
+	assert(tab);
+	ClauseTableauDelProp(tab, prop);
+	for (int i=0; i<tab->arity; i++)
+	{
+		ClauseTableauDeleteFlag(tab->children[i], prop);
 	}
 }
 

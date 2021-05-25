@@ -91,8 +91,8 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	int subst_completed = 0;
 
 
-	// Not necessary here, the tableau variables are updated in SplitClauseFresh
-	// ClauseTableauUpdateVariablesArray(open_branch->master);
+	//ClauseTableauUpdateVariablesArray(open_branch->master);
+	ClauseTableauUpdateVariablesArray2(open_branch->master);
 
 	ClauseSet_p new_leaf_clauses = SplitClauseFresh(open_branch->terms, master, selected);
 	assert(new_leaf_clauses->members);
@@ -100,7 +100,8 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	Clause_p open_branch_label = open_branch->label;
 
 #ifdef LOCAL
-	UpdateLocalVariables(open_branch);
+	//UpdateLocalVariables(open_branch);
+	UpdateLocalVariables2(open_branch);
 #else
 	assert(open_branch->local_variables == NULL);
 #endif

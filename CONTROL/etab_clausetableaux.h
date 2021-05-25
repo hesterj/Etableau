@@ -33,7 +33,8 @@ typedef enum
    TUPBacktrackedDueToExtensionFailure = 2*TUPBacktrackedDueToMaxDepth,
    TUPHasBeenExtendedOn = 2*TUPBacktrackedDueToExtensionFailure,
    TUPBacktracked = TUPBacktrackedDueToMaxDepth | TUPBacktrackedDueToExtensionFailure,
-   TUPHasBeenPreviouslySelected = 2*TUPHasBeenExtendedOn
+   TUPHasBeenPreviouslySelected = 2*TUPHasBeenExtendedOn,
+   TUPSpecialFlag = 2*TUPHasBeenPreviouslySelected,
 } TableauProperties;
 
 typedef struct clausetableau 
@@ -63,10 +64,13 @@ typedef struct clausetableau
 	// Only present at root.  Contains variables that are present in the tableau.
 	PDArray_p tableau_variables_array;
 
+	// Generally small array of variables present at the node.
+	PDArray_p node_variables_array;
+
 	// The local variables of the branch.  Use UpdateLocalVariables on the branch to find them.
 	PTree_p local_variables;
 
-	// A stacks of previous steps.
+	// Stacks of previous steps.
 	PositionStack_p master_backtracks; // This is present at the master only.  At the top is the most recent action taken anywhere in the tableau.  This is a PStack_p of PStack_p.
 	BacktrackStack_p backtracks;  // This is present at every node.  This is a stack of Backtrack_p, most recent action is at the top.
 	BacktrackStack_p failures; // This is present at every node.  If a node is unable to be extended on, the most recent substitution is added to this.
@@ -113,6 +117,7 @@ typedef int TableauStepType;
 #define ClauseTableauQueryProp(clause, prop) QueryProp((clause), (prop))
 void clauseprint(Clause_p clause);
 void ClauseTableauDeleteAllProps(ClauseTableau_p tab);
+void ClauseTableauDeleteFlag(ClauseTableau_p tab, TableauProperties prop);
 
 ClauseTableau_p ClauseTableauAlloc(struct tableaucontrol_cell* tableaucontrol);
 void ClauseTableauInitialize(ClauseTableau_p handle, ProofState_p state);
