@@ -221,10 +221,12 @@ int Etableau_n0(TableauControl_p tableaucontrol,
    }
    else if (!proof_found)
    {
+       TableauControlInitializeZMQ(tableaucontrol);
        proof_found = EtableauSelectTableau(tableaucontrol,
                                             distinct_tableaux_stack,
                                             active,
                                             extension_candidates);
+       TableauControlDeleteZMQ(tableaucontrol);
    }
 
    // Proof search is over

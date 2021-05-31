@@ -2,6 +2,7 @@
 #include "etab_backtrack.h"
 #include "etab_etableau.h"
 
+
 int clausesetallocs_counter = 1;  
 
 // Functions for clausetableaux.h
@@ -1525,6 +1526,10 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->successful_saturations = PStackAlloc();
 	handle->number_saturations_blocked = 0;
 	handle->number_of_free_saturations = 0;
+
+	handle->zmq_context = NULL;
+	handle->zmq_connection = NULL;
+
 	return handle;
 }
 
@@ -2098,4 +2103,34 @@ void PositionStackFreePositions(PositionStack_p positions)
 		PStack_p trash_position = PStackPopP(positions);
 		PStackFree(trash_position);
 	}
+}
+
+void TableauControlInitializeZMQ(TableauControl_p control)
+{
+#ifdef ZMQ_FLAG
+	assert(!control->zmq_context);
+	assert(!control->zmq_connection);
+	control->zmq_context = zctx_new();
+	control->zmq_connection = zsocket_new(control->zmq_context, ZMQ_REQ);
+	zmq_connect(control->zmq_connection, "tcp://localhost:5555");
+#endif
+}
+
+void TableauControlDeleteZMQ(TableauControl_p control)
+{
+#ifdef ZMQ_FLAG
+	if (control->zmq_connection)
+	{
+		zmq_close(control->zmq_connection);
+		control->zmq_connection = NULL;
+	}
+	if (control->zmq_context)
+	{
+		zmq_ctx_destroy(control->zmq_context);
+		control->zmq_context = NULL;
+	}
+#else
+	assert(!control->zmq_context);
+	assert(!control->zmq_connection);
+#endif
 }

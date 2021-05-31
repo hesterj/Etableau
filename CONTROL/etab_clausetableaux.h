@@ -3,6 +3,10 @@
 
 #include "etab_hash.h"
 
+#ifdef ZMQ_FLAG
+#include <czmq.h>
+#endif
+
 typedef PStack_p ClauseStack_p; // Stack of Clause_p
 typedef PStack_p ClauseSetStack_p; // Stack of ClauseSet_p
 typedef PStack_p TableauStack_p; // Stack of ClauseTableau_p
@@ -259,6 +263,9 @@ typedef struct tableaucontrol_cell
 	PStack_p successful_saturations; // Simple stack of hashes of successful branch saturations... a very dumb hash table
 	long number_saturations_blocked;
 	long number_of_free_saturations;
+
+	void* zmq_context;
+	void* zmq_connection;
 }TableauControlCell, *TableauControl_p;
 
 #define TableauControlCellAlloc()    (TableauControlCell*)SizeMalloc(sizeof(TableauControlCell))
@@ -278,6 +285,10 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 									 long quicksat,
 									 long tableauequality,
 									 long tableaubigbacktrack);
+
+void TableauControlInitializeZMQ(TableauControl_p control);
+void TableauControlDeleteZMQ(TableauControl_p control);
+
 void TableauControlFree(TableauControl_p trash);
 void EqnRepFree(void *eqn_p);
 

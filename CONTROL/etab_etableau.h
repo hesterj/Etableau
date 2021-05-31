@@ -13,8 +13,8 @@ ErrorCodes EproverCloseBranchWrapper(ProofState_p proofstate,
                                      TableauControl_p tableau_control,
                                      long max_proc);
 int CloseBranchesWithEprover(TableauControl_p tableau_control,
-                                             ClauseTableau_p tableau,
-                                             long max_proc);
+                             ClauseTableau_p tableau,
+                             long max_proc);
 
 ErrorCodes ProcessSpecificClauseWrapper(ProofState_p state,
                                        ProofControl_p control,

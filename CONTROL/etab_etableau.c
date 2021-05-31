@@ -1,6 +1,5 @@
 #include "etab_etableau.h"
 #include "etab_backtrack.h"
-#include <omp.h>
 
 // Forward declaration
 
@@ -767,6 +766,7 @@ long clauseset_insert_copy(TB_p bank,
 
 bool branch_saturation_allowed(ClauseTableau_p branch)
 {
+    printf("sending message to zmq server\n");
     if (!ClauseTableauQueryProp(branch, TUPSaturationBlocked))
     {
         if (branch->open_branches->members == 1) return true;
