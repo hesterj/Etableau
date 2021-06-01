@@ -5,6 +5,7 @@
 
 #ifdef ZMQ_FLAG
 #include <czmq.h>
+//#include </home/hesterj/Projects/czmq/include/czmq.h>
 #endif
 
 typedef PStack_p ClauseStack_p; // Stack of Clause_p
@@ -253,6 +254,10 @@ typedef struct tableaucontrol_cell
 	PStack_p new_tableaux;
 	ClauseTableau_p closed_tableau;
 	ClauseSet_p unprocessed;
+
+	// There are currently a ton of clauses that get put in to label storage.
+	// This could slow down the GC.
+	// There should be a way to make the clauses currently in the tableaux and extract+free any that aren't.
 	ClauseSet_p label_storage; // This is to ensure that terms occurring in the tableau are not free'd by the gc
 	TableauStack_p tableaux_trash;
 	TableauStack_p max_depth_tableaux;
@@ -300,8 +305,8 @@ ClauseRep_p ClauseGetRepresentation(Clause_p clause);
 
 void ClauseStackFree(ClauseStack_p trash);
 void EtableauStatusReport(TableauControl_p tableaucontrol,
-                          ClauseSet_p active,
-                          ClauseTableau_p resulting_tab);
+						  ClauseSet_p active,
+						  ClauseTableau_p resulting_tab);
 int ClauseCmpByIdent(const void* clause1, const void* clause2);
 void ClauseStackPrint(FILE* out, PStack_p stack);
 
@@ -322,6 +327,7 @@ void ClauseTableauPrintBranchSimpleToFile(char* file,
 										  const char* postfix,
 										  const char* separator,
 										  ClauseTableau_p branch);
+DStr_p ClauseTableauBranchToDStr(ClauseTableau_p branch);
 long ClauseTableauAddDepths(ClauseTableau_p tab);
 double ClauseTableauGetAverageDepth(ClauseTableau_p tableau);
 void TermTreePrintCodes(FILE* out, PTree_p tree);

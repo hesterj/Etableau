@@ -2025,6 +2025,45 @@ long ClauseTableauHashBranch(ClauseTableau_p branch)
 	return hash_value;
 }
 
+DStr_p ClauseTableauBranchToDStr(ClauseTableau_p branch)
+{
+	char* buf;
+	size_t len;
+	DStr_p str = DStrAlloc();
+	FILE* branch_in_memory = open_memstream(&buf, &len);
+	if (!branch_in_memory)
+	{
+		Error("Could not open FILE* in memory (ClauseTableauBranchToDStr)", 100);
+	}
+	ClauseTableauPrintBranchSimple(branch_in_memory, ",",branch);
+	fflush(branch_in_memory);
+	fclose(branch_in_memory);
+
+	DStrAppendStr(str, buf);
+	free(buf);
+	return str;
+}
+
+//zmsg_t* ClauseTableauBranchToZMsg(ClauseTableau_p branch)
+//{
+	//char* buf;
+	//size_t len;
+	//zmsg_t *zstr = zstr_new();
+	//FILE* branch_in_memory = open_memstream(&buf, &len);
+	//if (!branch_in_memory)
+	//{
+		//Error("Could not open FILE* in memory (ClauseTableauBranchToDStr)", 100);
+	//}
+	//ClauseTableauPrintBranchSimple(branch_in_memory, ",",branch);
+	//fflush(branch_in_memory);
+	//fclose(branch_in_memory);
+//
+	////DStrAppendStr(str, buf);
+	//zmsg_addstr(zstr, buf);
+	//free(buf);
+	//return zstr;
+//}
+
 void ClauseTableauCreateID(ClauseTableau_p tableau, DStr_p str)
 {
 	DStrAppendInt(str, tableau->id);
@@ -2108,27 +2147,57 @@ void PositionStackFreePositions(PositionStack_p positions)
 void TableauControlInitializeZMQ(TableauControl_p control)
 {
 #ifdef ZMQ_FLAG
-	assert(!control->zmq_context);
-	assert(!control->zmq_connection);
-	control->zmq_context = zctx_new();
-	control->zmq_connection = zsocket_new(control->zmq_context, ZMQ_REQ);
-	zmq_connect(control->zmq_connection, "tcp://localhost:5555");
+	zsys_handler_set(NULL);
+	printf ("Connecting to hello world server…\n");
+	zsock_t *requester = zsock_new (ZMQ_REQ);
+	zsock_connect (requester, "tcp://127.0.0.1:60793");
+
+	int request_nbr;
+	for (request_nbr = 0; request_nbr != 10; request_nbr++) {
+		printf ("Sending Hello %d\n", request_nbr);
+		zstr_send (requester, "Hello Etableau");
+		char *str = zstr_recv (requester);
+		printf ("%s\n", str);
+		zstr_free (&str);
+	}
+	printf ("Destroying sock\n");
+	zsock_destroy (&requester);
+	printf ("Sock destroyed\n");
+	//zsock_t *push = zsock_new_push ("tcp://127.0.0.1:60793");
+	//zsock_t *pull = zsock_new_pull ("tcp://127.0.0.1:60794");
+	//assert(push);
+	//assert(pull);
+	//zstr_send (push, "Hello, World from Etableau");
+	//printf("waiting for response\n");
+	//char *string = zstr_recv (pull);
+	//printf("done waiting for response\n");
+	//puts (string);
+	//zstr_free (&string);
+	//zsock_destroy (&pull);
+	//zsock_destroy (&push);
+
+	//assert(!control->zmq_context);
+	//assert(!control->zmq_connection);
+	//control->zmq_context = zctx_new();
+	//control->zmq_connection = zsocket_new(control->zmq_context, ZMQ_REQ);
+	//zsocket_connect(control->zmq_connection, "tcp://localhost:5555");
 #endif
 }
 
 void TableauControlDeleteZMQ(TableauControl_p control)
 {
 #ifdef ZMQ_FLAG
-	if (control->zmq_connection)
-	{
-		zmq_close(control->zmq_connection);
-		control->zmq_connection = NULL;
-	}
-	if (control->zmq_context)
-	{
-		zmq_ctx_destroy(control->zmq_context);
-		control->zmq_context = NULL;
-	}
+	//if (control->zmq_connection)
+	//{
+		////zmq_close(control->zmq_connection);
+		////control->zmq_connection = NULL;
+	//}
+	//if (control->zmq_context)
+	//{
+		////zmq_ctx_destroy(control->zmq_context);
+		////control->zmq_context = NULL;
+		//zctx_destroy(control->zmq_context);
+	//}
 #else
 	assert(!control->zmq_context);
 	assert(!control->zmq_connection);

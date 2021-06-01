@@ -24,6 +24,10 @@
 #define _GNU_SOURCE
 #include <search.h>
 
+//#ifdef ZMQ_FLAG
+//#include <czmq.h>
+//#endif
+
 typedef enum
 {
     ETCIgnoreProps = 0,

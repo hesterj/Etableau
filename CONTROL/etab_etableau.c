@@ -22,6 +22,7 @@ long collect_set_for_saturation(ClauseSet_p from,
                                 ProofControl_p proofcontrol,
                                 PStack_p branch_labels);
 bool branch_saturation_allowed(ClauseTableau_p branch);
+bool classify_branch_python(ClauseTableau_p branch);
 
 // Function definitions 
 
@@ -308,7 +309,6 @@ int CloseBranchesWithEprover(TableauControl_p tableaucontrol,
         assert(handle);
         assert(handle != master->open_branches->anchor);
         assert(handle->info);
-        //if ((!ClauseTableauQueryProp(handle, TUPSaturationBlocked)) && ((open_branches->members == 1) || BranchIsLocal(handle)))
         if (branch_saturation_allowed(handle))
         {
             num_local_branches++;
@@ -766,16 +766,27 @@ long clauseset_insert_copy(TB_p bank,
 
 bool branch_saturation_allowed(ClauseTableau_p branch)
 {
-    printf("sending message to zmq server\n");
     if (!ClauseTableauQueryProp(branch, TUPSaturationBlocked))
     {
         if (branch->open_branches->members == 1) return true;
-        if (BranchIsLocal(branch)) return true;
+        else if (BranchIsLocal(branch))
+        {
+            return true;
+        }
     }
     return false;
 }
 
+bool classify_branch_python(ClauseTableau_p branch)
+{
+    printf("sending message to zmq server\n");
+    assert(branch);
+    assert(branch->tableaucontrol);
+    TableauControl_p tableaucontrol = branch->tableaucontrol;
+    DStr_p branch_string = ClauseTableauBranchToDStr(branch);
 
+    return false;
+}
 
 
 
