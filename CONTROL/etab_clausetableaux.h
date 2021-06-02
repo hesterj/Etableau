@@ -269,8 +269,8 @@ typedef struct tableaucontrol_cell
 	long number_saturations_blocked;
 	long number_of_free_saturations;
 
-	void* zmq_context;
-	void* zmq_connection;
+	//void* zmq_context;
+	zsock_t* zmq_connection;
 }TableauControlCell, *TableauControl_p;
 
 #define TableauControlCellAlloc()    (TableauControlCell*)SizeMalloc(sizeof(TableauControlCell))
@@ -328,6 +328,7 @@ void ClauseTableauPrintBranchSimpleToFile(char* file,
 										  const char* separator,
 										  ClauseTableau_p branch);
 DStr_p ClauseTableauBranchToDStr(ClauseTableau_p branch);
+zmsg_t* ClauseTableauBranchToZMsg(ClauseTableau_p branch);
 long ClauseTableauAddDepths(ClauseTableau_p tab);
 double ClauseTableauGetAverageDepth(ClauseTableau_p tableau);
 void TermTreePrintCodes(FILE* out, PTree_p tree);

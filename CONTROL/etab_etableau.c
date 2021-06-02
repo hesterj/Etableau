@@ -766,6 +766,7 @@ long clauseset_insert_copy(TB_p bank,
 
 bool branch_saturation_allowed(ClauseTableau_p branch)
 {
+    bool result = classify_branch_python(branch);
     if (!ClauseTableauQueryProp(branch, TUPSaturationBlocked))
     {
         if (branch->open_branches->members == 1) return true;
@@ -779,11 +780,28 @@ bool branch_saturation_allowed(ClauseTableau_p branch)
 
 bool classify_branch_python(ClauseTableau_p branch)
 {
-    printf("sending message to zmq server\n");
+    printf("# Sending message to classification server\n");
     assert(branch);
-    assert(branch->tableaucontrol);
-    TableauControl_p tableaucontrol = branch->tableaucontrol;
-    DStr_p branch_string = ClauseTableauBranchToDStr(branch);
+    TableauControl_p tableaucontrol = branch->master->tableaucontrol;
+    assert(tableaucontrol);
+    printf("# Creating message\n");
+    zmsg_t* branch_message = zmsg_new();
+    //zmsg_t* branch_message = ClauseTableauBranchToZMsg(branch);
+    DStr_p branch_str_dstr = ClauseTableauBranchToDStr(branch);
+    zmsg_addstr(branch_message, DStrView(branch_str_dstr));
+    printf("# Done creating message\n");
+
+    assert(branch_message);
+    zsock_t* socket = tableaucontrol->zmq_connection;
+    assert(socket);
+    printf("# Sending message\n");
+    zmsg_send(&branch_message, socket);
+    printf("# Message sent to classification server\n");
+    char *str = zstr_recv (socket);
+    printf ("#Received: %s\n", str);
+    zstr_free (&str);
+    printf("# Returning from branch classification\n");
+    DStrFree(branch_str_dstr);
 
     return false;
 }
