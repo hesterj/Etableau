@@ -766,12 +766,11 @@ long clauseset_insert_copy(TB_p bank,
 
 bool branch_saturation_allowed(ClauseTableau_p branch)
 {
-    bool result = classify_branch_python(branch);
     if (!ClauseTableauQueryProp(branch, TUPSaturationBlocked))
     {
-        if (branch->open_branches->members == 1) return true;
-        else if (BranchIsLocal(branch))
+        if (branch->open_branches->members == 1 || BranchIsLocal(branch))
         {
+            bool result = classify_branch_python(branch);
             return true;
         }
     }
