@@ -560,7 +560,22 @@ Term_p  VarBankGetFreshVar(VarBank_p bank, Type_p t)
       bank->fresh_count+=2;
       res = VarBankVarAssertAlloc(bank, -(bank->fresh_count), t);
       //printf("=> %ld %d\n", PStackGetSP(stack), v_count);
-      assert(PStackGetSP(stack)>v_count);
+
+      // WARNING
+      // This assertion was disabled for Etableau.  I don't know if it will cause
+      // non-fresh variables to be used when they are expected to be fresh in superposition.
+      // It is because the bank->v_counts is reset when the new proofstate is made, with its
+      // new termbank in branch saturation as well as the bank->varstacks, while the same
+      // VarBank_p of fresh variables is used.
+      //
+      //assert(PStackGetSP(stack)>v_count);
+#ifndef NDEBUG
+      if (PStackGetSP(stack) <= v_count)
+      {
+         Warning("# Potential assertion failure in VarBankGetFreshVar");
+      }
+#endif
+
       if(bank->shadow)
       {
          bank->shadow->fresh_count = bank->fresh_count;

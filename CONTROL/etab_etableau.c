@@ -770,40 +770,49 @@ bool branch_saturation_allowed(ClauseTableau_p branch)
     {
         if (branch->open_branches->members == 1 || BranchIsLocal(branch))
         {
-            bool result = classify_branch_python(branch);
+#ifdef ZMQ_FLAG
+            return classify_branch_python(branch);
+#else
             return true;
+#endif
         }
     }
     return false;
 }
 
+#ifdef ZMQ_FLAG
 bool classify_branch_python(ClauseTableau_p branch)
 {
-    printf("# Sending message to classification server\n");
     assert(branch);
     TableauControl_p tableaucontrol = branch->master->tableaucontrol;
+    if (!(tableaucontrol->zmq_connection)) return true;
     assert(tableaucontrol);
-    printf("# Creating message\n");
     zmsg_t* branch_message = zmsg_new();
-    //zmsg_t* branch_message = ClauseTableauBranchToZMsg(branch);
     DStr_p branch_str_dstr = ClauseTableauBranchToDStr(branch);
     zmsg_addstr(branch_message, DStrView(branch_str_dstr));
-    printf("# Done creating message\n");
-
     assert(branch_message);
     zsock_t* socket = tableaucontrol->zmq_connection;
     assert(socket);
-    printf("# Sending message\n");
     zmsg_send(&branch_message, socket);
-    printf("# Message sent to classification server\n");
     char *str = zstr_recv (socket);
-    printf ("#Received: %s\n", str);
+    int result = atoi(str);
     zstr_free (&str);
-    printf("# Returning from branch classification\n");
     DStrFree(branch_str_dstr);
 
-    return false;
+    //printf ("# Received: %d\n", result);
+    if (result != 0 && result != 1)
+    {
+        Error("Unknown result from classification server\n", 120);
+    }
+    if (result == 0)
+    {
+        tableaucontrol->number_of_saturation_attempts_deferred++;
+        return false;
+    }
+
+    return true;
 }
+#endif
 
 
 

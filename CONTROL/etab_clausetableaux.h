@@ -5,7 +5,9 @@
 
 #ifdef ZMQ_FLAG
 #include <czmq.h>
-//#include </home/hesterj/Projects/czmq/include/czmq.h>
+typedef zsock_t* ZSOCK_P;
+#else
+typedef void* ZSOCK_P;
 #endif
 
 typedef PStack_p ClauseStack_p; // Stack of Clause_p
@@ -240,6 +242,7 @@ typedef struct tableaucontrol_cell
 	long quicksat; // Maximum number of processed clauess in saturation attempts
 	long number_of_extensions;
 	long number_of_saturation_attempts;
+	long number_of_saturation_attempts_deferred;
 	long number_of_successful_saturation_attempts;
 	long number_of_saturations_closed_in_interreduction;
 	long number_of_saturations_closed_on_branch;
@@ -270,7 +273,7 @@ typedef struct tableaucontrol_cell
 	long number_of_free_saturations;
 
 	//void* zmq_context;
-	zsock_t* zmq_connection;
+	ZSOCK_P zmq_connection;
 }TableauControlCell, *TableauControl_p;
 
 #define TableauControlCellAlloc()    (TableauControlCell*)SizeMalloc(sizeof(TableauControlCell))
@@ -328,7 +331,9 @@ void ClauseTableauPrintBranchSimpleToFile(char* file,
 										  const char* separator,
 										  ClauseTableau_p branch);
 DStr_p ClauseTableauBranchToDStr(ClauseTableau_p branch);
+#ifdef ZMQ_FLAG
 zmsg_t* ClauseTableauBranchToZMsg(ClauseTableau_p branch);
+#endif
 long ClauseTableauAddDepths(ClauseTableau_p tab);
 double ClauseTableauGetAverageDepth(ClauseTableau_p tableau);
 void TermTreePrintCodes(FILE* out, PTree_p tree);

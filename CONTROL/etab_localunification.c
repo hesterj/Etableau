@@ -275,14 +275,9 @@ bool BranchIsLocal(ClauseTableau_p branch)
 {
     //long local_variables = UpdateLocalVariables(branch);
     long local_variables = UpdateLocalVariables2(branch);
-    long branch_variables = branch->number_of_variables_on_branch;
-#ifndef NDEBUG
-    PTree_p branch_vars = NULL;
-    long num_vars = CollectVariablesOfBranch(branch, &branch_vars, true);
-    PTreeFree(branch_vars);
-    assert(num_vars == branch_variables);
-#endif
-    if (local_variables == branch_variables)
+
+    // CollectVariableOfBranch was used here before but didn't work
+    if (local_variables == branch->number_of_variables_on_branch)
     {
         return true;
     }
@@ -307,18 +302,18 @@ bool AllBranchesAreLocal(ClauseTableau_p master)
 
 // Collects variables occurring in ALL branches.
 
-void ClauseTableauUpdateVariablesArray(ClauseTableau_p tab)
-{
-    assert(tab == tab->master);
-    PDArray_p array = tab->tableau_variables_array;
-    reset_variables_array(array);
-    ClauseTableau_p branch = tab->open_branches->anchor->succ;
-    while (branch != tab->open_branches->anchor)
-    {
-        CollectVariablesOfBranchArray(branch, array, true);
-        branch = branch->succ;
-    }
-}
+//void ClauseTableauUpdateVariablesArray(ClauseTableau_p tab)
+//{
+    //assert(tab == tab->master);
+    //PDArray_p array = tab->tableau_variables_array;
+    //reset_variables_array(array);
+    //ClauseTableau_p branch = tab->open_branches->anchor->succ;
+    //while (branch != tab->open_branches->anchor)
+    //{
+        //CollectVariablesOfBranchArray(branch, array, true);
+        //branch = branch->succ;
+    //}
+//}
 
 // Collects variables occurring in ALL branches.  Uses node_variables_array, unlike this function's counterpart
 

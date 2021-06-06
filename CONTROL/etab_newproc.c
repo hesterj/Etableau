@@ -173,10 +173,10 @@ int Etableau_n0(TableauControl_p tableaucontrol,
         EtableauStatusReport(tableaucontrol, active, tableaucontrol->closed_tableau);
         proof_found = true;
     }
-   if (PStackEmpty(distinct_tableaux_stack))
-   {
-       Error("There are no tableaux!", 10);
-   }
+    if (PStackEmpty(distinct_tableaux_stack))
+    {
+        Error("There are no tableaux!", 10);
+    }
    ClauseTableau_p initial_example = PStackElementP(distinct_tableaux_stack, 0);
    if (!initial_example)
    {
@@ -209,6 +209,7 @@ int Etableau_n0(TableauControl_p tableaucontrol,
 
    assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
    // Now do proof search...
+   //TableauControlInitializeZMQ(tableaucontrol);
 
    if (!proof_found && tableaucontrol->multiprocessing_active != 0)
    {
@@ -221,13 +222,12 @@ int Etableau_n0(TableauControl_p tableaucontrol,
    }
    else if (!proof_found)
    {
-       TableauControlInitializeZMQ(tableaucontrol);
        proof_found = EtableauSelectTableau(tableaucontrol,
                                             distinct_tableaux_stack,
                                             active,
                                             extension_candidates);
-       TableauControlDeleteZMQ(tableaucontrol);
    }
+   //TableauControlDeleteZMQ(tableaucontrol);
 
    // Proof search is over
    fprintf(GlobalOut, "# Proof search is over...\n");
@@ -519,6 +519,7 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
         if (worker == 0) // child process
         {
             SilentTimeOut = true;
+            TableauControlInitializeZMQ(tableaucontrol);
             TableauStack_p new_tableaux = PStackElementP(buckets, i);
             assert(problemType == PROBLEM_FO);
 
@@ -534,6 +535,7 @@ bool EtableauMultiprocess(TableauControl_p tableaucontrol,
                                                  active,
                                                  extension_candidates);
             TableauStackFree(new_tableaux);
+            TableauControlDeleteZMQ(tableaucontrol);
             if (proof_found) exit(PROOF_FOUND);
             else exit(RESOURCE_OUT);
         }

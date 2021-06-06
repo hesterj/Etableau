@@ -1492,6 +1492,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->equality_axioms_added = false;
 	handle->number_of_extensions = 0;  // Total number of extensions done
 	handle->number_of_saturation_attempts = 0;
+	handle->number_of_saturation_attempts_deferred = 0;
 	handle->number_of_successful_saturation_attempts = 0;
 	handle->number_of_saturations_closed_after_branch = 0;
 	handle->number_of_saturations_closed_on_branch = 0;
@@ -1776,10 +1777,16 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 {
 	assert(tableaucontrol->proofstate->status_reported == false);
 
-	fprintf(GlobalOut, "# There were %ld total branch saturation attempts.\n", tableaucontrol->number_of_saturation_attempts);
-	fprintf(GlobalOut, "# There were %ld of these attempts blocked.\n", tableaucontrol->number_saturations_blocked);
-	fprintf(GlobalOut, "# There were %ld free duplicated saturations.\n", tableaucontrol->number_of_free_saturations);
-	fprintf(GlobalOut, "# There were %ld total successful branch saturations.\n", tableaucontrol->number_of_successful_saturation_attempts);
+	fprintf(GlobalOut, "# There were %ld total branch saturation attempts.\n",
+			tableaucontrol->number_of_saturation_attempts);
+	fprintf(GlobalOut, "# There were %ld of these attempts blocked.\n",
+			tableaucontrol->number_saturations_blocked);
+	fprintf(GlobalOut, "# There were %ld deferred branch saturation attempts.\n",
+			tableaucontrol->number_of_saturation_attempts_deferred);
+	fprintf(GlobalOut, "# There were %ld free duplicated saturations.\n",
+			tableaucontrol->number_of_free_saturations);
+	fprintf(GlobalOut, "# There were %ld total successful branch saturations.\n",
+			tableaucontrol->number_of_successful_saturation_attempts);
 	fprintf(GlobalOut, "# There were %ld successful branch saturations in interreduction.\n",
 			tableaucontrol->number_of_saturations_closed_in_interreduction);
 	fprintf(GlobalOut, "# There were %ld successful branch saturations on the branch.\n",
@@ -2035,7 +2042,7 @@ DStr_p ClauseTableauBranchToDStr(ClauseTableau_p branch)
 	{
 		Error("Could not open FILE* in memory (ClauseTableauBranchToDStr)", 100);
 	}
-	ClauseTableauPrintBranchSimple(branch_in_memory, ",",branch);
+	ClauseTableauPrintBranchSimple(branch_in_memory, ". ",branch);
 	fflush(branch_in_memory);
 	fclose(branch_in_memory);
 
@@ -2044,6 +2051,7 @@ DStr_p ClauseTableauBranchToDStr(ClauseTableau_p branch)
 	return str;
 }
 
+#ifdef ZMQ_FLAG
 zmsg_t* ClauseTableauBranchToZMsg(ClauseTableau_p branch)
 {
 	assert(branch);
@@ -2055,7 +2063,7 @@ zmsg_t* ClauseTableauBranchToZMsg(ClauseTableau_p branch)
 	{
 		Error("Could not open FILE* in memory (ClauseTableauBranchToDStr)", 100);
 	}
-	ClauseTableauPrintBranchSimple(branch_in_memory, ",",branch);
+	ClauseTableauPrintBranchSimple(branch_in_memory, ".",branch);
 	fflush(branch_in_memory);
 	printf("# zmsg load\n");
 	zmsg = zmsg_load(branch_in_memory);
@@ -2073,6 +2081,7 @@ zmsg_t* ClauseTableauBranchToZMsg(ClauseTableau_p branch)
 	fflush(stdout);
 	return zmsg;
 }
+#endif
 
 void ClauseTableauCreateID(ClauseTableau_p tableau, DStr_p str)
 {
