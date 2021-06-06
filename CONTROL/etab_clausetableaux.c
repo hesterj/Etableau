@@ -1156,7 +1156,14 @@ void ClauseTableauBindFreshVar(ClauseTableau_p master, Subst_p subst, Term_p old
 	Term_p fresh_var = ClauseTableauGetFreshVar(master, old_var); // new
 	assert(fresh_var);
 	assert(fresh_var != old_var);
-	SubstAddBinding(subst, old_var, fresh_var);
+	if (subst)
+	{
+		SubstAddBinding(subst, old_var, fresh_var);
+	}
+	else
+	{
+		old_var->binding = fresh_var;
+	}
 }
 
 ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
@@ -1653,7 +1660,8 @@ void ClauseTableauTPTPPrint(ClauseTableau_p tab)
 
 /*  Return the smallest variable that does not occur in the tableau,
  *  according to the tableau_variables tree.  Adds the variable to the
- *  tree when it is found.
+ *  tree when it is found.  If a normal variable (even f_code) is passed
+ *  as the old_var, it is marked as used in the tableau variable array.
 */
 
 Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var)
@@ -1666,25 +1674,33 @@ Term_p ClauseTableauGetFreshVar(ClauseTableau_p tab, Term_p old_var)
 	PDArray_p tableau_variables_array = tab->tableau_variables_array;
 	Term_p potential_fresh = NULL;
 
+	if (!VarIsAltVar(old_var))
+	{
+		assert(TermIsVar(old_var));
+		FunCode old_var_funcode = old_var->f_code; // The variable we are replacing
+		assert(old_var_funcode %2 == 0);
+		long old_var_index = (-old_var_funcode)/2; // The index of the variable we are replacing
+		// Store the old variable so that it doesn't get bound to later. (it is probably already stored)
+		PDArrayAssignP(tableau_variables_array, old_var_index, old_var);
+	}
 
-	 FunCode old_var_funcode = old_var->f_code; // The variable we are replacing
-	 assert(old_var_funcode %2 == 0);
-	 long old_var_index = (-old_var_funcode)/2; // The index of the variable we are replacing
+	// Get the first nonzero even index of NULL in the array
+	long first_unused_index = PDArrayFirstUnused2(tableau_variables_array);
+	// Get the FunCode of the fresh variable
+	FunCode fresh_var_funcode = -(2*first_unused_index);
+	// Get the Term_p of this fresh variable
+	potential_fresh = VarBankVarAssertAlloc(varbank, fresh_var_funcode, old_var->type);
+	// Store the new variable in the array so that it isn't bound to again
+	PDArrayAssignP(tableau_variables_array, first_unused_index, potential_fresh);
 
-	 PDArrayAssignP(tableau_variables_array, old_var_index, old_var); // Store the old variable so that it doesn't get bound to later. (it is probably already stored)
-	 long first_unused_index = PDArrayFirstUnused2(tableau_variables_array); // Get the first nonzero even index of NULL in the array
-	 FunCode fresh_var_funcode = -(2*first_unused_index);  // Get the FunCode of the fresh variable
-	 potential_fresh = VarBankVarAssertAlloc(varbank, fresh_var_funcode, old_var->type); // Get the Term_p of this fresh variable
-	 PDArrayAssignP(tableau_variables_array, first_unused_index, potential_fresh); // Store the new variable in the array so that it isn't bound to again
+	assert(potential_fresh && "NULL variable being returned in ClauseTableauGetFreshVar");
+	assert(TermIsVar(potential_fresh));
+	assert(PDArrayFirstUnused2(tableau_variables_array) != first_unused_index);
+	assert(potential_fresh != old_var);
+	assert(potential_fresh->f_code < 0);
+	assert(potential_fresh->f_code % 2 == 0);
 
-	 assert(TermIsVar(potential_fresh));
-	 assert(PDArrayFirstUnused2(tableau_variables_array) != first_unused_index);
-	 assert(potential_fresh != old_var);
-	 assert(potential_fresh && "NULL variable being returned in ClauseTableauGetFreshVar");
-	 assert(potential_fresh->f_code < 0);
-	 assert(potential_fresh->f_code % 2 == 0);
-
-	 return potential_fresh;
+	return potential_fresh;
 }
 
 long ClauseGetIdent(Clause_p clause)
@@ -2218,17 +2234,48 @@ void TableauControlDeleteZMQ(TableauControl_p control)
 #endif
 }
 
-long BindAllDisjointVariablesToNormal(TB_p bank, Subst_p subst)
+long BindAllDisjointVariablesToFresh(ClauseTableau_p tab, TB_p bank, Subst_p subst)
 {
 	VarBank_p vars = bank->vars;
 	long num_bound = 0;
 	for (long i=1 ; i< PDArraySize(vars->variables); i += 2)
 	{
 		Term_p alt_variable = PDArrayElementP(vars->variables, i);
-		Term_p regular_variable = VarBankVarAssertAlloc(vars, alt_variable->f_code+1, alt_variable->type);
-		SubstAddBinding(subst, alt_variable, regular_variable);
-		num_bound++;
-
+		if (alt_variable)
+		{
+			assert(VarIsAltVar(alt_variable));
+			ClauseTableauBindFreshVar(tab->master, subst, alt_variable);
+			assert(alt_variable->binding);
+			num_bound++;
+		}
+		else
+		{
+			break;
+		}
 	}
+	//printf("# num bound: %ld\n", num_bound);
 	return num_bound;
+}
+
+long UnbindAllDisjointVariablesFromFresh(ClauseTableau_p tab, TB_p bank, Subst_p subst)
+{
+	VarBank_p vars = bank->vars;
+	long num_unbound = 0;
+	for (long i=1 ; i< PDArraySize(vars->variables); i += 2)
+	{
+		Term_p alt_variable = PDArrayElementP(vars->variables, i);
+		if (alt_variable)
+		{
+			assert(VarIsAltVar(alt_variable));
+			assert(alt_variable->binding);
+			alt_variable->binding = NULL;
+			num_unbound++;
+		}
+		else
+		{
+			break;
+		}
+	}
+	//printf("# num unbound: %ld\n", num_unbound);
+	return num_unbound;
 }

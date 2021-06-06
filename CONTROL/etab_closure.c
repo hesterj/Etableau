@@ -11,6 +11,9 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 	assert(tab);
 	assert(tab->label);
 	assert(tab->label->set);
+	bool success = false;
+
+	BindAllDisjointVariablesToFresh(tab->master, tab->terms, NULL);
 
 	if ((subst = ClauseContradictsBranchSimple(tab, tab->label)))
 	{
@@ -19,7 +22,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 			tab->id = 0; // ClauseContradictsBranch sets tab->id, if we block the closure rule attempt that needs to be reset to 0.
 			tab->mark_int = 0; // Similarly, the mark_int is set.  This needs to be undone...
 			SubstDelete(subst);
-			return false;
+			goto return_point;
 		}
 
 		Backtrack_p backtrack = BacktrackAlloc(tab, subst, 0, CLOSURE_RULE);
@@ -42,7 +45,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 			assert(tab->mark_int == 0);
 			assert(tab->id == 0);
 			SubstDelete(subst);
-			return false;
+			goto return_point;
 		}
 		assert(tab->info);
 		backtrack->completed = true;
@@ -54,9 +57,14 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 		ClauseTableauRegisterStep(tab);
 		assert(tab->label->set);
 		backtrack->completed = true;
-		return true;
+		success = true;
+		goto return_point;
 	}
-	return false;
+	return_point:
+
+	UnbindAllDisjointVariablesFromFresh(tab->master, tab->master->terms, NULL);
+
+	return success;
 }
 
 /*
@@ -129,9 +137,7 @@ Subst_p ClauseContradictsBranchSimple(ClauseTableau_p open_branch, Clause_p orig
 	ClauseSet_p unit_axioms = open_branch->master->unit_axioms;
 	assert(unit_axioms);
 	Clause_p unit_handle = unit_axioms->anchor->succ;
-	Subst_p unit_axioms_disj_substitution = SubstAlloc();
-	long num_alts_bound = BindAllDisjointVariablesToNormal(open_branch->terms, unit_axioms_disj_substitution);
-	printf("# num alts bound: %ld\n", num_alts_bound);
+	//Subst_p unit_axioms_disj_substitution = SubstAlloc();
 	while (unit_handle != unit_axioms->anchor)
 	{
 		assert(unit_handle);
@@ -142,14 +148,15 @@ Subst_p ClauseContradictsBranchSimple(ClauseTableau_p open_branch, Clause_p orig
 			open_branch->mark_int = open_branch->depth;
 			open_branch->id = ClauseGetIdent(unit_handle);
 			// Marking the root would case some leaves to be folded up too high in one step, unsound.
-			ClauseFree(tmp_unit_handle);
-			SubstDelete(unit_axioms_disj_substitution);
+			// ClauseFree(tmp_unit_handle);
+			//SubstPrint(stdout, subst, open_branch->master->terms->sig, DEREF_NEVER);
+			//SubstDelete(unit_axioms_disj_substitution);
 			goto return_point;
 		}
-		ClauseFree(tmp_unit_handle);
+		// ClauseFree(tmp_unit_handle);
 		unit_handle = unit_handle->succ;
 	}
-	SubstDelete(unit_axioms_disj_substitution);
+	//SubstDelete(unit_axioms_disj_substitution);
 
 	// Check against the tableau AND its edges
 	ClauseTableau_p temporary_tab = open_branch->parent;

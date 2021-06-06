@@ -156,6 +156,7 @@ int Etableau_n0(TableauControl_p tableaucontrol,
     ClauseSet_p disjoint_unit_axioms = ClauseSetCopyDisjoint(bank, unit_axioms);
     ClauseSetFree(unit_axioms);
     unit_axioms = disjoint_unit_axioms;
+    //ClauseSetPrint(stdout, unit_axioms, true);
 
     printf("# Found %ld unit axioms.\n", ClauseSetCardinality(unit_axioms));
 
