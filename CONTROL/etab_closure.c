@@ -129,21 +129,27 @@ Subst_p ClauseContradictsBranchSimple(ClauseTableau_p open_branch, Clause_p orig
 	ClauseSet_p unit_axioms = open_branch->master->unit_axioms;
 	assert(unit_axioms);
 	Clause_p unit_handle = unit_axioms->anchor->succ;
+	Subst_p unit_axioms_disj_substitution = SubstAlloc();
+	long num_alts_bound = BindAllDisjointVariablesToNormal(open_branch->terms, unit_axioms_disj_substitution);
+	printf("# num alts bound: %ld\n", num_alts_bound);
 	while (unit_handle != unit_axioms->anchor)
 	{
 		assert(unit_handle);
-		Clause_p tmp_unit_handle = ClauseCopyFresh(unit_handle, open_branch->master);
+		//Clause_p tmp_unit_handle = ClauseCopyFresh(unit_handle, open_branch->master);
+		Clause_p tmp_unit_handle = unit_handle;
 		if ((subst = ClauseContradictsClause(open_branch, original_clause, tmp_unit_handle)))
 		{
 			open_branch->mark_int = open_branch->depth;
 			open_branch->id = ClauseGetIdent(unit_handle);
 			// Marking the root would case some leaves to be folded up too high in one step, unsound.
 			ClauseFree(tmp_unit_handle);
+			SubstDelete(unit_axioms_disj_substitution);
 			goto return_point;
 		}
 		ClauseFree(tmp_unit_handle);
 		unit_handle = unit_handle->succ;
 	}
+	SubstDelete(unit_axioms_disj_substitution);
 
 	// Check against the tableau AND its edges
 	ClauseTableau_p temporary_tab = open_branch->parent;

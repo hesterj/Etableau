@@ -142,8 +142,10 @@ void ClauseTableauCollectSteps(ClauseTableau_p tab, PStack_p steps);
 void HCBClauseSetEvaluate(HCB_p hcb, ClauseSet_p clauses);
 
 ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set);
+ClauseSet_p ClauseSetCopyDisjoint(TB_p bank, ClauseSet_p set);
 ClauseSet_p ClauseSetFlatCopy(ClauseSet_p set);
 bool ClausesAreDisjoint(Clause_p a, Clause_p b);
+long BindAllDisjointVariablesToNormal(TB_p bank, Subst_p subst);
 
 Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau);  // Major memory hog
 void ClauseBindFresh(Clause_p clause, Subst_p subst, ClauseTableau_p tableau);

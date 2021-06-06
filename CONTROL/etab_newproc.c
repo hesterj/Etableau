@@ -153,6 +153,10 @@ int Etableau_n0(TableauControl_p tableaucontrol,
     ClauseSetCopyUnits(bank, proofstate->processed_pos_eqns, unit_axioms);
     ClauseSetCopyUnits(bank, proofstate->processed_pos_rules, unit_axioms);
 
+    ClauseSet_p disjoint_unit_axioms = ClauseSetCopyDisjoint(bank, unit_axioms);
+    ClauseSetFree(unit_axioms);
+    unit_axioms = disjoint_unit_axioms;
+
     printf("# Found %ld unit axioms.\n", ClauseSetCardinality(unit_axioms));
 
     GCRegisterClauseSet(gc, unit_axioms);

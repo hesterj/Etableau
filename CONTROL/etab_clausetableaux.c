@@ -753,6 +753,27 @@ ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set)
 	return new;
 }
 
+ClauseSet_p ClauseSetCopyDisjoint(TB_p bank, ClauseSet_p set)
+{
+	Clause_p handle, temp;
+	assert(set);
+	ClauseSet_p new = ClauseSetAlloc();
+	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
+	{
+		assert(handle);
+		//temp = ClauseCopy(handle,bank);
+		temp = ClauseCopyDisjoint(handle);
+#ifdef DEBUG
+		ClauseRecomputeLitCounts(temp);
+		assert(ClauseLiteralNumber(temp));
+#endif
+		ClauseDelProp(temp, CPIsDIndexed);
+		ClauseDelProp(temp, CPIsSIndexed);
+		ClauseSetInsert(new, temp);
+	}
+	return new;
+}
+
 ClauseSet_p ClauseSetFlatCopy(ClauseSet_p set)
 {
 	Clause_p handle, temp;
@@ -2195,4 +2216,19 @@ void TableauControlDeleteZMQ(TableauControl_p control)
 #else
 	assert(!control->zmq_connection);
 #endif
+}
+
+long BindAllDisjointVariablesToNormal(TB_p bank, Subst_p subst)
+{
+	VarBank_p vars = bank->vars;
+	long num_bound = 0;
+	for (long i=1 ; i< PDArraySize(vars->variables); i += 2)
+	{
+		Term_p alt_variable = PDArrayElementP(vars->variables, i);
+		Term_p regular_variable = VarBankVarAssertAlloc(vars, alt_variable->f_code+1, alt_variable->type);
+		SubstAddBinding(subst, alt_variable, regular_variable);
+		num_bound++;
+
+	}
+	return num_bound;
 }
