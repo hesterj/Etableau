@@ -667,7 +667,7 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 		a_fresh_variables = PStackAlloc();
 
 		ReplaceLocalVariablesWithFreshSubst(tab->master, a, tab->local_variables, subst);
-		a_eqn = EqnCopyOpt(a_eqn);
+		//a_eqn = EqnCopyOpt(a_eqn);
 
 		// This backtracks the substitution in order to store the local binding so it can be reinstated later
 		while (!PStackEmpty(subst))
@@ -684,7 +684,7 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 		//SubstBacktrack(subst);
 
 		ReplaceLocalVariablesWithFreshSubst(tab->master, b, tab->local_variables, subst);
-		b_eqn = EqnCopyOpt(b_eqn);
+		//b_eqn = EqnCopyOpt(b_eqn);
 	}
 #endif
 
@@ -724,8 +724,8 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 		}
 		PStackFree(a_local_variables);
 		PStackFree(a_fresh_variables);
-		EqnListFree(a_eqn);
-		EqnListFree(b_eqn);
+		//EqnListFree(a_eqn);
+		//EqnListFree(b_eqn);
 	}
 #endif
 	return subst;

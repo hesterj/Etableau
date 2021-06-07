@@ -338,6 +338,7 @@ int CloseBranchesWithEprover(TableauControl_p tableaucontrol,
                 // No substitutions are applied to the tableau in Etableau closure rule applications
                 Subst_p empty_subst = SubstAlloc();
                 Backtrack_p backtrack = BacktrackAlloc(handle, empty_subst, 0, ETABLEAU_RULE);
+                SubstDelete(empty_subst);
                 backtrack->completed = true;
                 assert(BacktrackIsEtableauStep(backtrack));
                 assert(handle->arity == 0);
