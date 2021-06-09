@@ -13,6 +13,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 	assert(tab->label->set);
 	bool success = false;
 
+	ClauseTableauUpdateVariablesArray2(tab->master);
 	BindAllDisjointVariablesToFresh(tab->master, tab->terms, NULL);
 
 	if ((subst = ClauseContradictsBranchSimple(tab, tab->label)))
@@ -40,7 +41,7 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 		// Check for regularity?
 		if (!ClauseTableauIsLeafRegular(tab->master))
 		{
-			__attribute__((unused)) bool backtracked = BacktrackWrapper(tab->master);
+			__attribute__((unused)) bool backtracked = BacktrackWrapper(tab->master, BacktrackReasonIrregularClosure);
 			assert(backtracked);
 			assert(tab->mark_int == 0);
 			assert(tab->id == 0);
@@ -123,13 +124,7 @@ Subst_p ClauseContradictsBranchSimple(ClauseTableau_p open_branch, Clause_p orig
 	Subst_p subst = NULL;
 	Clause_p temporary_label = NULL;
 
-	//ClauseTableauUpdateVariables(open_branch->master);
-	//ClauseTableauUpdateVariablesArray(open_branch->master);
-	ClauseTableauUpdateVariablesArray2(open_branch->master);
-
 #ifdef LOCAL
-	//assert(open_branch->local_variables);
-	//UpdateLocalVariables(open_branch);
 	UpdateLocalVariables2(open_branch);
 #endif
 
@@ -137,26 +132,19 @@ Subst_p ClauseContradictsBranchSimple(ClauseTableau_p open_branch, Clause_p orig
 	ClauseSet_p unit_axioms = open_branch->master->unit_axioms;
 	assert(unit_axioms);
 	Clause_p unit_handle = unit_axioms->anchor->succ;
-	//Subst_p unit_axioms_disj_substitution = SubstAlloc();
 	while (unit_handle != unit_axioms->anchor)
 	{
 		assert(unit_handle);
-		//Clause_p tmp_unit_handle = ClauseCopyFresh(unit_handle, open_branch->master);
 		Clause_p tmp_unit_handle = unit_handle;
 		if ((subst = ClauseContradictsClause(open_branch, original_clause, tmp_unit_handle)))
 		{
 			open_branch->mark_int = open_branch->depth;
 			open_branch->id = ClauseGetIdent(unit_handle);
-			// Marking the root would case some leaves to be folded up too high in one step, unsound.
-			// ClauseFree(tmp_unit_handle);
 			//SubstPrint(stdout, subst, open_branch->master->terms->sig, DEREF_NEVER);
-			//SubstDelete(unit_axioms_disj_substitution);
 			goto return_point;
 		}
-		// ClauseFree(tmp_unit_handle);
 		unit_handle = unit_handle->succ;
 	}
-	//SubstDelete(unit_axioms_disj_substitution);
 
 	// Check against the tableau AND its edges
 	ClauseTableau_p temporary_tab = open_branch->parent;
@@ -192,6 +180,7 @@ Subst_p ClauseContradictsBranchSimple(ClauseTableau_p open_branch, Clause_p orig
 
 /*
 ** As ClauseContradictsSet, but does not deal with local variables at all.
+** The local variables are handled within ClauseContradictsClause
 */
 
 Subst_p ClauseContradictsSetSimple(ClauseTableau_p tab, Clause_p leaf, ClauseSet_p set, ClauseTableau_p open_branch)

@@ -5,6 +5,17 @@
 //#include<etab_tableauproc.h>
 #include <etab_etableau.h>
 
+typedef enum
+{
+    BacktrackReasonNotBacktracked = 0,
+    BacktrackReasonIrregularClosure = 1,
+    BacktrackReasonIrregularExtension = 2*BacktrackReasonIrregularClosure,
+    BacktrackReasonIrregular = BacktrackReasonIrregularClosure | BacktrackReasonIrregularExtension,
+    BacktrackReasonMaxDepth = 2*BacktrackReasonIrregularExtension,
+    BacktrackReasonExtensionFailure = 2*BacktrackReasonMaxDepth,
+
+} BacktrackReason;
+
 // These can be used to store the actions done on the tableau
 // They also can be used to record failure substitutions-
 // i/e if a particular step forced backtracking, new steps can be checked against this to
@@ -14,7 +25,8 @@
 typedef struct backtrackcell
 {
     ClauseTableau_p master;
-    TableauStepType type;
+    TableauStepType type; // This is the type of step that was made when this was recorded
+    BacktrackReason reason; // If this step was backtracked, this is the reason why
     long id; // This is the ident of the clause split in the extension step, or the clause used in the closure rule
     long head_lit_position; // This is the position in the literals array of the selected clause of the head literal.  0 if it was a closure rule step
     PStack_p bindings; // This is a stack of the Binding_p that were used in this step
@@ -45,7 +57,10 @@ typedef int* BacktrackStatus_p;
 #define BacktrackCellAlloc() (BackTrackCell*)SizeMalloc(sizeof(BackTrackCell))
 #define BacktrackCellCellFree(junk) SizeFree(junk, sizeof(BackTrackCell))
 PStack_p SubstRecordBindings(Subst_p subst);
-Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, long head_lit_position, TableauStepType type);
+Backtrack_p BacktrackAlloc(ClauseTableau_p position,
+                           Subst_p subst,
+                           long head_lit_position,
+                           TableauStepType type);
 Backtrack_p BacktrackCopy(Backtrack_p original, ClauseTableau_p new_master);
 BacktrackStack_p BacktrackStackCopy(BacktrackStack_p stack, ClauseTableau_p new_master);
 #define BacktrackIsExtensionStep(bt) (bt->type == EXTENSION_RULE)
@@ -59,9 +74,9 @@ bool SubstIsFailure(ClauseTableau_p tab, Subst_p subst);
 bool ExtensionIsFailure(ClauseTableau_p tab, Subst_p subst, long extension_id, long head_lit_position);
 bool BindingOccursInSubst(Binding_p binding, Subst_p subst);
 bool BacktrackContainsSubst(Backtrack_p backtrack, Subst_p subst);
-bool BacktrackWrapper(ClauseTableau_p master);
-bool BacktrackMultiple(ClauseTableau_p master, long denominator);
-void Backtrack(Backtrack_p bt);
+bool BacktrackWrapper(ClauseTableau_p master, BacktrackReason reason);
+bool BacktrackMultiple(ClauseTableau_p master, BacktrackReason reason, long denominator);
+void Backtrack(Backtrack_p bt, BacktrackReason reason);
 void RollBackEveryNode(ClauseTableau_p master);
 void DeleteAllBacktrackInformation(ClauseTableau_p tableau);
 void BacktrackStackDeleteInformation(BacktrackStack_p trash);

@@ -602,14 +602,14 @@ void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 	ClauseSet_p label_storage = tab->master->tableaucontrol->label_storage;
 
 	// Only make a copy of the clause if we have to.
-	if (!ClauseIsGround(tab->label) || !clause_variables_are_disjoint_with_subst(tab->label, subst))
+
+	PStackPushP(tab->old_labels, tab->label);  // Store old folding labels in case we need to backtrack
+	if (!ClauseIsGround(tab->label) && !clause_variables_are_disjoint_with_subst(tab->label, subst))
 	{
 		Clause_p new_label = ClauseCopy(tab->label, tab->terms);
 		ClauseSetInsert(label_storage, new_label);
 		tab->label = new_label;
 	}
-
-	PStackPushP(tab->old_labels, tab->label);  // Store old folding labels in case we need to backtrack
 
 	//Clause_p new_label = ClauseCopy(tab->label, tab->terms);
 	//PStackPushP(tab->old_labels, tab->label);  // Store old folding labels in case we need to backtrack
@@ -640,17 +640,34 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 	assert(b);
 	assert(a->literals);
 	assert(b->literals);
-	if (a==b) return NULL;  // Easy case...
-	if (!ClauseIsUnit(a) || !ClauseIsUnit(b)) return NULL;
+
 	Eqn_p a_eqn = a->literals;
 	Eqn_p b_eqn = b->literals;
-	
+	//FunCode a_left_funcode = a_eqn->lterm->f_code;
+	//FunCode a_right_funcode = a_eqn->rterm->f_code;
+	//FunCode b_left_funcode = b_eqn->lterm->f_code;
+	//FunCode b_right_funcode = b_eqn->rterm->f_code;
+
+	// These are early return checks to determine if the equations are not unifiable
+	if (a==b) return NULL;  // Easy case...
+	if (!ClauseIsUnit(a) || !ClauseIsUnit(b)) return NULL;
 	if (EqnIsPositive(a_eqn) && EqnIsPositive(b_eqn)) return NULL;
 	if (EqnIsNegative(a_eqn) && EqnIsNegative(b_eqn)) return NULL;
+	//if ((a_left_funcode  > 0) && // If any of these terms are variables, we cannot return early
+		//(b_left_funcode  > 0) &&
+		//(b_right_funcode > 0) &&
+		//(a_left_funcode != b_left_funcode) &&
+		//(a_left_funcode != b_right_funcode)) return NULL;
+	//if ((a_right_funcode > 0) &&
+		//(b_left_funcode  > 0) &&
+		//(b_right_funcode > 0) &&
+		//(a_right_funcode != b_left_funcode) &&
+		//(a_right_funcode != b_left_funcode)) return NULL;
 
 	Subst_p subst = SubstAlloc();
 	PStack_p a_local_variables = NULL;
 	PStack_p a_fresh_variables = NULL;
+
 	//if (true)
 	//{
 		//fprintf(stdout, "A before ");
@@ -667,7 +684,7 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 		a_fresh_variables = PStackAlloc();
 
 		ReplaceLocalVariablesWithFreshSubst(tab->master, a, tab->local_variables, subst);
-		//a_eqn = EqnCopyOpt(a_eqn);
+		a_eqn = EqnCopyOpt(a_eqn);
 
 		// This backtracks the substitution in order to store the local binding so it can be reinstated later
 		while (!PStackEmpty(subst))
@@ -681,10 +698,9 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 			PStackPushP(a_fresh_variables, fresh_variable);
 		}
 		assert(PStackGetSP(a_local_variables) == PStackGetSP(a_fresh_variables));
-		//SubstBacktrack(subst);
 
 		ReplaceLocalVariablesWithFreshSubst(tab->master, b, tab->local_variables, subst);
-		//b_eqn = EqnCopyOpt(b_eqn);
+		b_eqn = EqnCopyOpt(b_eqn);
 	}
 #endif
 
@@ -724,8 +740,8 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 		}
 		PStackFree(a_local_variables);
 		PStackFree(a_fresh_variables);
-		//EqnListFree(a_eqn);
-		//EqnListFree(b_eqn);
+		EqnListFree(a_eqn);
+		EqnListFree(b_eqn);
 	}
 #endif
 	return subst;
@@ -1532,6 +1548,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->tableauequality = tableauequality;
 	handle->tableaubigbacktrack = tableaubigbacktrack;
 	handle->closed_tableau = NULL;
+	handle->bigjump = NULL;
 	handle->branch_saturation_enabled = branch_saturation_enabled;
 	handle->satisfiable = false;
 	handle->multiprocessing_active = num_cores_to_use;

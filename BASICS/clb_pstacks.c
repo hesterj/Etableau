@@ -99,7 +99,35 @@ void PStackDiscardElement(PStack_p stack, PStackPointer i)
    }
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: PStackDiscardElementNext()
+//
+//   Remove element number i from the stack. If it is not the top
+//   element, the next element gets swapped in, and so for all of the
+//   succeeding elements.
+//0
+// Global Variables:
+//
+// Side Effects    :
+//
+/----------------------------------------------------------------------*/
 
+void PStackDiscardElementNext(PStack_p stack, PStackPointer i)
+{
+   assert(stack);
+   assert(i < PStackGetSP(stack));
+   assert(i >= 0);
+
+   stack->current--;
+   if(stack->current != i)
+   {
+      for (PStackPointer j = i; i<stack->current; j++)
+      {
+         stack->stack[j] = stack->stack[j+1];
+      }
+   }
+}
 
 /*-----------------------------------------------------------------------
 //

@@ -28,6 +28,7 @@ Backtrack_p BacktrackAlloc(ClauseTableau_p position, Subst_p subst, long head_li
 {
     Backtrack_p backtrack = BacktrackCellAlloc();
     backtrack->type = type;
+    backtrack->reason = BacktrackReasonNotBacktracked;
     backtrack->master = position->master;
     backtrack->position = PStackAlloc();
     backtrack->id = position->id;
@@ -139,7 +140,7 @@ BacktrackStack_p BacktrackStackCopy(BacktrackStack_p stack, ClauseTableau_p new_
     return new_stack;
 }
 
-void Backtrack(Backtrack_p bt)
+void Backtrack(Backtrack_p bt, BacktrackReason reason)
 {
     assert(bt);
     ClauseTableau_p master = bt->master;
@@ -201,7 +202,8 @@ void Backtrack(Backtrack_p bt)
     {
         assert(false && "Unknown backtrack");
     }
-    //bt->id = position->id;
+
+    bt->reason = reason;
     position->id = 0;
     position->open = true;
     position->mark_int = 0;
@@ -234,7 +236,7 @@ void RollBackEveryNode(ClauseTableau_p tab)
         assert(new_label->set);
         tab->label = new_label;
         // The old tab->label now only has a reference to it in the label_storage.
-        // The automatic garbage collection for label storage (will) works with a a mark & sweep
+        // The automatic garbage collection for label storage (will) work with a a mark & sweep
     }
 
     assert(p_folding);
@@ -396,7 +398,7 @@ bool BacktrackContainsSubst(Backtrack_p backtrack, Subst_p subst)
 ** Otherwise, return false.  This can happen if there are no more possible backtracks (failure tableau)
 */
 
-bool BacktrackWrapper(ClauseTableau_p master)
+bool BacktrackWrapper(ClauseTableau_p master, BacktrackReason reason)
 {
     //TableauControl_p tableaucontrol = master->tableaucontrol;
     bool success = true;
@@ -416,7 +418,7 @@ bool BacktrackWrapper(ClauseTableau_p master)
     assert(GetNodeFromPosition(master, bt->position) == backtrack_location);
     assert(bt->master);
 
-    Backtrack(bt);
+    Backtrack(bt, reason);
     PStackFree(bt_position);
 
     // IF we just backtracked an Etableau closure rule, it was only possible because of an application of another
@@ -425,7 +427,7 @@ bool BacktrackWrapper(ClauseTableau_p master)
 
     if (BacktrackIsEtableauStep(bt))
     {
-        success = BacktrackWrapper(master);
+        success = BacktrackWrapper(master, reason);
     }
 
     return_point:
@@ -477,7 +479,7 @@ void BacktrackStackDeleteInformation(BacktrackStack_p trash)
 ** If we ran out of backtracks return false, else return true.
 */
 
-bool BacktrackMultiple(ClauseTableau_p master, long denominator)
+bool BacktrackMultiple(ClauseTableau_p master, BacktrackReason reason, long denominator)
 {
     assert(denominator);
     long number_of_backtracks = PStackGetSP(master->master_backtracks);
@@ -490,7 +492,7 @@ bool BacktrackMultiple(ClauseTableau_p master, long denominator)
 
     while (counter)
     {
-        success = BacktrackWrapper(master);
+        success = BacktrackWrapper(master, reason);
         if (!success) break;
         counter--;
     }

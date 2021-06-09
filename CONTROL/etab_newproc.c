@@ -293,11 +293,11 @@ ClauseTableau_p EtableauSelectBranchAndExtend(TableauControl_p tableaucontrol,
             bool backtrack_successful = true;
             if ((big_backtracks = tableaucontrol->tableaubigbacktrack))
             {
-                backtrack_successful = BacktrackMultiple(master, big_backtracks);
+                backtrack_successful = BacktrackMultiple(master, BacktrackReasonMaxDepth, big_backtracks);
             }
             else
             {
-                backtrack_successful = BacktrackWrapper(master);
+                backtrack_successful = BacktrackWrapper(master, BacktrackReasonMaxDepth);
             }
             if (!backtrack_successful)
             {
@@ -339,15 +339,7 @@ ClauseTableau_p EtableauSelectBranchAndExtend(TableauControl_p tableaucontrol,
             assert(!extended);
             ClauseTableauSetProp(master, TUPBacktrackedDueToExtensionFailure);
             bool backtrack_successful = true;
-            //if ((big_backtracks = tableaucontrol->tableaubigbacktrack))
-            //{
-                //backtrack_successful = BacktrackMultiple(master, big_backtracks);
-            //}
-            //else
-            //{
-                //backtrack_successful = BacktrackWrapper(master);
-            //}
-            backtrack_successful = BacktrackWrapper(master);
+            backtrack_successful = BacktrackWrapper(master, BacktrackReasonExtensionFailure);
             if (!backtrack_successful)
             {
                 ETAB_VERBOSE(printf("# Backtrack failed (couldn't extend branch)\n");)
@@ -585,6 +577,7 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
     bool proof_found = false;
     PStackPointer current_tableau_index = -1;
     ClauseTableau_p current_tableau = NULL;
+    BacktrackStatus tableau_status = BACKTRACK_OK;
     while ((current_tableau = get_next_tableau(distinct_tableaux_stack,
                                                &current_tableau_index,
                                                tableaucontrol,
@@ -605,7 +598,7 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
         assert(MaximumDepth(current_tableau) && "Maximum depth must be a positive integer");
         assert(current_tableau && "We must have a tableau for proof search...");
         assert(current_tableau->master == current_tableau && "The current tableau must be the root node of the tableau");
-        BacktrackStatus tableau_status = BACKTRACK_OK;
+        tableau_status = BACKTRACK_OK;
         ClauseTableau_p closed_tableau = EtableauSelectBranchAndExtend(tableaucontrol,
                                                                        current_tableau,
                                                                        extension_candidates,
@@ -621,7 +614,7 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
         else
         {
             assert(current_tableau->master == current_tableau);
-            GCCollect(terms->gc);
+            //GCCollect(terms->gc);
             switch (tableau_status)
             {
                 case BACKTRACK_OK: // This should only happen during population, when all possible extension up to a depth have been made on a tableau
@@ -642,20 +635,26 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
                     DeleteAllBacktrackInformation(current_tableau);
                     if (!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToMaxDepth))
                     {
+                        // If the backtrack failed and not due to maximum depth, this is a failure tableau
+                        // and is discarded.
                         PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
                         ClauseTableauFree(current_tableau);
                         current_tableau_index = 0;
-
                         ETAB_VERBOSE(printf("# %p deleted at maximum depth %lu (backtrack failed for a reason other than depth)\n", current_tableau, MaximumDepth(current_tableau));)
-                        break;
                     }
-                    MaximumDepth(current_tableau) = MaximumDepth(current_tableau) << (unsigned long) 1;
-                    ETAB_VERBOSE(printf("# %p increased maximum depth to %lu (backtrack failed because of depth)\n", current_tableau, MaximumDepth(current_tableau));)
-                    assert(ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToMaxDepth));
-                    ClauseTableauDelProp(current_tableau, TUPBacktracked);
-                    assert(!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToMaxDepth));
-                    assert(!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToExtensionFailure));
-                    assert(!ClauseTableauQueryProp(current_tableau, TUPBacktracked));
+                    else
+                    {
+                        // Otherwise, we need to increase the maximum depth.
+                        // In this case, there will be a bigjump tableau and we can choose
+                        // it to be the next tableau.
+                        MaximumDepth(current_tableau) = MaximumDepth(current_tableau) << (unsigned long) 1;
+                            assert(ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToMaxDepth));
+                        ClauseTableauDelProp(current_tableau, TUPBacktracked);
+                        assert(!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToMaxDepth));
+                        assert(!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToExtensionFailure));
+                        assert(!ClauseTableauQueryProp(current_tableau, TUPBacktracked));
+                        ETAB_VERBOSE(printf("# %p increased maximum depth to %lu (backtrack failed because of depth)\n", current_tableau, MaximumDepth(current_tableau));)
+                    }
                     break;
                 }
                 case NEXT_TABLEAU:
@@ -695,7 +694,7 @@ bool EtableauPopulation(TableauControl_p tableaucontrol,
     assert(distinct_tableaux_stack);
     assert(active);
     assert(extension_candidates);
-    assert(!ClauseSetEmpty(extension_candidates));
+    //assert(!ClauseSetEmpty(extension_candidates));
     bool proof_found = false;
     PStackPointer current_tableau_index = -1;
     ClauseTableau_p current_tableau = NULL;

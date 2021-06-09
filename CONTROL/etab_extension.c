@@ -155,19 +155,19 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 															 extension_candidate,
 															 new_tableaux);
 				TableauExtensionFree(extension_candidate);
-			}
 
-			if (extended) // extension may not happen due to regularity
-			{
-				extensions_done++;
-				tableau_control->number_of_extensions++;
-				if (tableau_control->branch_saturation_enabled)
+				if (extended) // extension may not happen due to regularity
 				{
-					CloseBranchesWithEprover(tableau_control, extended->master, 10000);
-				}
-				if (LIKELY(!new_tableaux)) // If the tableau has been extended on, we must go back and select another branch
-				{
-					break;
+					extensions_done++;
+					tableau_control->number_of_extensions++;
+					if (tableau_control->branch_saturation_enabled)
+					{
+						CloseBranchesWithEprover(tableau_control, extended->master, 10000);
+					}
+					if (LIKELY(!new_tableaux)) // If the tableau has been extended on, we must go back and select another branch
+					{
+						break;
+					}
 				}
 			}
 		}
@@ -252,7 +252,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 			ETAB_VERBOSE(printf("# Irregular extension stopped at parent\n");)
 			ClauseSetFree(new_leaf_clauses_set);
 			SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
-			__attribute__((unused)) bool backtracked = BacktrackWrapper(master);
+			__attribute__((unused)) bool backtracked = BacktrackWrapper(master, BacktrackReasonIrregularExtension);
 			assert(backtracked);
 			return NULL;  // REGULARITY CHECKING!
 		}
@@ -269,7 +269,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 		ETAB_VERBOSE(fprintf(GlobalOut, "# Irregular extension stopped at non-parent\n");)
 		ClauseSetFree(new_leaf_clauses_set);
 		SubstDelete(subst); // If the extension is irregular, delete the substitution and return NULL.
-		__attribute__((unused)) bool backtracked = BacktrackWrapper(master);
+		__attribute__((unused)) bool backtracked = BacktrackWrapper(master, BacktrackReasonIrregularExtension);
 		assert(backtracked);
 		return NULL;  // REGULARITY CHECKING!
 

@@ -259,6 +259,7 @@ typedef struct tableaucontrol_cell
 	long multiprocessing_active;  // Have we reached enough tableaux to break the problem in to forks?
 	PStack_p new_tableaux;
 	ClauseTableau_p closed_tableau;
+	ClauseTableau_p bigjump; // A maximum depth tableau with a preferably small number of branches
 	ClauseSet_p unprocessed;
 
 	// There are currently a ton of clauses that get put in to label storage.
