@@ -73,6 +73,7 @@ ClauseTableau_p empty_tableau_alloc()
 	handle->master = NULL;
 	handle->parent = NULL;
 	handle->open = false;
+	handle->bigjump = NULL;
 
 	//handle->local_variables = PStackAlloc();
 	handle->local_variables = NULL;
@@ -451,6 +452,10 @@ void ClauseTableauFree(ClauseTableau_p trash)
 		assert(trash->depth != 0);
 		TableauSetExtractEntry(trash);
 		//assert(false);
+	}
+	if (trash->bigjump)
+	{
+		ClauseTableauFree(trash->bigjump);
 	}
 	//if (trash->depth == 0 && trash->tableau_variables)
 	//{
@@ -1548,7 +1553,6 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 	handle->tableauequality = tableauequality;
 	handle->tableaubigbacktrack = tableaubigbacktrack;
 	handle->closed_tableau = NULL;
-	handle->bigjump = NULL;
 	handle->branch_saturation_enabled = branch_saturation_enabled;
 	handle->satisfiable = false;
 	handle->multiprocessing_active = num_cores_to_use;

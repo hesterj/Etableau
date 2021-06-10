@@ -289,6 +289,24 @@ ClauseTableau_p EtableauSelectBranchAndExtend(TableauControl_p tableaucontrol,
         selected_branch = branch_select(open_branches, MaximumDepth(master));
         if (!selected_branch)
         {
+#ifdef BIGJUMP
+            long number_of_open_branches = master->open_branches->members;
+            long previous_bigjump_open_branches = LONG_MAX;
+            if (master->bigjump)
+            {
+                previous_bigjump_open_branches = master->bigjump->open_branches->members;
+            }
+            if (number_of_open_branches < ceil(previous_bigjump_open_branches/2))
+            {
+                if (master->bigjump)
+                {
+                    ClauseTableauFree(master->bigjump);
+                }
+                printf("# Copying a better bigjump, %ld < %ld\n", number_of_open_branches, previous_bigjump_open_branches);
+                master->bigjump = ClauseTableauMasterCopy(master);
+                master->bigjump->unit_axioms = ClauseSetCopy(master->terms, master->unit_axioms);
+            }
+#endif
             ClauseTableauSetProp(master, TUPBacktrackedDueToMaxDepth);
             bool backtrack_successful = true;
             if ((big_backtracks = tableaucontrol->tableaubigbacktrack))
@@ -647,13 +665,29 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
                         // Otherwise, we need to increase the maximum depth.
                         // In this case, there will be a bigjump tableau and we can choose
                         // it to be the next tableau.
-                        MaximumDepth(current_tableau) = MaximumDepth(current_tableau) << (unsigned long) 1;
+                        if (current_tableau->bigjump)
+                        {
+                            ClauseTableau_p new_tableau = current_tableau->bigjump;
+                            PStackDiscardElement(distinct_tableaux_stack, current_tableau_index);
+                            current_tableau->bigjump = NULL;
+                            MaximumDepth(new_tableau) = MaximumDepth(current_tableau) << (unsigned long) 1;
+                            ClauseTableauFree(current_tableau);
+                            PStackPushP(distinct_tableaux_stack, new_tableau);
+                            current_tableau_index = 0;
+                            printf("Removed the current tableau and replaced it with its bigjump\n");
+                            fflush(stdout);
+                            assert(new_tableau->bigjump == NULL);
+                        }
+                        else
+                        {
+                            MaximumDepth(current_tableau) = MaximumDepth(current_tableau) << (unsigned long) 1;
                             assert(ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToMaxDepth));
-                        ClauseTableauDelProp(current_tableau, TUPBacktracked);
-                        assert(!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToMaxDepth));
-                        assert(!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToExtensionFailure));
-                        assert(!ClauseTableauQueryProp(current_tableau, TUPBacktracked));
-                        ETAB_VERBOSE(printf("# %p increased maximum depth to %lu (backtrack failed because of depth)\n", current_tableau, MaximumDepth(current_tableau));)
+                            ClauseTableauDelProp(current_tableau, TUPBacktracked);
+                            assert(!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToMaxDepth));
+                            assert(!ClauseTableauQueryProp(current_tableau, TUPBacktrackedDueToExtensionFailure));
+                            assert(!ClauseTableauQueryProp(current_tableau, TUPBacktracked));
+                            ETAB_VERBOSE(printf("# %p increased maximum depth to %lu (backtrack failed because of depth)\n", current_tableau, MaximumDepth(current_tableau));)
+                        }
                     }
                     break;
                 }
@@ -720,7 +754,7 @@ bool EtableauPopulation(TableauControl_p tableaucontrol,
                                                                                  &tableau_status,
                                                                                  new_tableaux);
         // If we have not been able to find enough tableaux after 500 iterations, just return soon.
-        if (UNLIKELY(current_tableau_index >= 500)) tableau_status = RETURN_NOW;
+        if (UNLIKELY(current_tableau_index >= 250)) tableau_status = RETURN_NOW;
         if (closed_tableau || current_tableau->open_branches->members == 0 || tableaucontrol->closed_tableau)
         {
             closed_tableau = tableaucontrol->closed_tableau;

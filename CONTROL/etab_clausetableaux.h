@@ -93,7 +93,9 @@ typedef struct clausetableau
 	// Tableau set cell stuff...
 	struct tableau_set_cell* set; // if this node is in a set, it is the set of open branches
 	struct tableau_set_cell* open_branches; // the open branches that should be operated on
-	
+
+	// Bigjump for quickly getting back to a maximum depth tableau after depth failure
+	struct clausetableau* bigjump;
 	// Pointers for navigating tableaux/sets of tableaux
 	struct clausetableau* active_branch; // active branch for keeping track of what branch is being extended
 	struct clausetableau* pred; // For navigating the set- used for open branches
@@ -259,7 +261,6 @@ typedef struct tableaucontrol_cell
 	long multiprocessing_active;  // Have we reached enough tableaux to break the problem in to forks?
 	PStack_p new_tableaux;
 	ClauseTableau_p closed_tableau;
-	ClauseTableau_p bigjump; // A maximum depth tableau with a preferably small number of branches
 	ClauseSet_p unprocessed;
 
 	// There are currently a ton of clauses that get put in to label storage.
@@ -320,7 +321,8 @@ void ClauseStackPrint(FILE* out, PStack_p stack);
 inline int GetDesiredNumberOfTableaux(TableauControl_p control);
 inline int GetDesiredNumberOfTableaux(TableauControl_p control)
 {
-	return 2*(control->multiprocessing_active);
+	//return 1*(control->multiprocessing_active);
+	return (control->multiprocessing_active);
 }
 
 long ClauseTableauHash(ClauseTableau_p tableau);
