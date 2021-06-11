@@ -832,8 +832,7 @@ bool classify_branch_python(ClauseTableau_p branch)
 
 // Collect the ground units of the saturation proofstate and insert them as folding
 // labels at the appropriate node.  If the saturation attempt was unsuccessful,
-// insert them at the node where the attempt happened.  If it was successful, all of the
-// labels can be "folded up" to the parent of the node where the saturation occurred.
+// insert them at the node where the attempt happened.
 
 long collect_ground_units(ProofState_p saturation_proofstate,
                           TB_p tableau_bank,
@@ -846,21 +845,10 @@ long collect_ground_units(ProofState_p saturation_proofstate,
     Clause_p handle = NULL;
     Clause_p copied = NULL;
     long number_copied = 0;
-    ClauseSet_p to;
     if (where->open_branches->members == 0) return 0;
-    if (status == PROOF_FOUND)
-    {
-        // to = where->parent->folding_labels;
-        return 0;
-    }
-    else if (status == RESOURCE_OUT)
-    {
-        to = where->folding_labels;
-    }
-    else
-    {
-        return 0;
-    }
+    if (status != RESOURCE_OUT) return 0;
+
+    ClauseSet_p to = where->folding_labels;
     assert(to);
     ClauseSet_p pos_eqns = saturation_proofstate->processed_pos_eqns;
     ClauseSet_p pos_rules = saturation_proofstate->processed_pos_rules;

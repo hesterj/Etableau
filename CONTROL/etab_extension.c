@@ -89,6 +89,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	ClauseTableau_p master = open_branch->master;
 	int extensions_done = 0;
 	int subst_completed = 0;
+	bool folding_extension = false;
 
 
 	//ClauseTableauUpdateVariablesArray(open_branch->master);
@@ -97,7 +98,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	ClauseSet_p new_leaf_clauses = SplitClauseFresh(open_branch->terms, master, selected);
 	assert(new_leaf_clauses->members);
 	assert(new_leaf_clauses->members > 1);
-	Clause_p open_branch_label = open_branch->label;
+	assert(open_branch->folding_labels);
 
 #ifdef LOCAL
 	//UpdateLocalVariables(open_branch);
@@ -106,10 +107,11 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	assert(open_branch->local_variables == NULL);
 #endif
 
-
+	Clause_p folding_iterator = open_branch->folding_labels->anchor->succ;
+	Clause_p open_branch_label = open_branch->label;
 	Clause_p leaf_clause = new_leaf_clauses->anchor->succ;
 	long position = 0; // This is the position of the current leaf clause in the split clause
-	while (leaf_clause != new_leaf_clauses->anchor)
+	restart: while (leaf_clause != new_leaf_clauses->anchor)
 	{
 		assert(open_branch);
 		assert(open_branch != open_branch->open_branches->anchor);
@@ -158,6 +160,11 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 
 				if (extended) // extension may not happen due to regularity
 				{
+					if (folding_extension)
+					{
+						printf("Folding extension!\n");
+						fflush(stdout);
+					}
 					extensions_done++;
 					tableau_control->number_of_extensions++;
 					if (tableau_control->branch_saturation_enabled)
@@ -166,7 +173,7 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 					}
 					if (LIKELY(!new_tableaux)) // If the tableau has been extended on, we must go back and select another branch
 					{
-						break;
+						goto return_point;
 					}
 				}
 			}
@@ -174,10 +181,22 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 		position++;
 		leaf_clause = leaf_clause->succ;
 	}
+#ifdef EXTEND_WITH_FOLDING_LABELS
+	if (folding_iterator != open_branch->folding_labels->anchor->succ)
+	{
+		folding_extension = true;
+		open_branch_label = folding_iterator;
+		leaf_clause = new_leaf_clauses->anchor->succ;
+		position = 0; // This is the position of the current leaf clause in the split clause
+		folding_iterator = folding_iterator->succ;
+		goto restart;
+	}
+#endif
 
-   //  OK We're done
-   ClauseSetFree(new_leaf_clauses);
-   return extensions_done;
+	//  OK We're done
+	return_point:
+	ClauseSetFree(new_leaf_clauses);
+	return extensions_done;
 }
 
 /*  Do an extension rule attempt, only way it can fail is through regularity.
