@@ -470,6 +470,7 @@ void ClauseSetInsert(ClauseSet_p set, Clause_p newclause)
 #endif
    Eval_p *root;
 
+   assert(newclause);
    assert(!newclause->set);
 
    newclause->succ = set->anchor;

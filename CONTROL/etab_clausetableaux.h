@@ -344,4 +344,10 @@ long ClauseTableauAddDepths(ClauseTableau_p tab);
 double ClauseTableauGetAverageDepth(ClauseTableau_p tableau);
 void TermTreePrintCodes(FILE* out, PTree_p tree);
 
+long ClauseTableauSetClauseFlags(ClauseTableau_p tableau, FormulaProperties properties);
+long ClauseTableauDelClauseFlags(ClauseTableau_p tableau, FormulaProperties properties);
+long TableauStackSetClauseFlags(TableauStack_p stack, FormulaProperties properties);
+long TableauStackDelClauseFlags(TableauStack_p stack, FormulaProperties properties);
+long EtableauClauseGC(TableauStack_p stack, ClauseSet_p clause_storage, TB_p terms);
+
 #endif

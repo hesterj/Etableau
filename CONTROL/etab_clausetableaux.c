@@ -2300,3 +2300,114 @@ long UnbindAllDisjointVariablesFromFresh(ClauseTableau_p tab, TB_p bank, Subst_p
 	//printf("# num unbound: %ld\n", num_unbound);
 	return num_unbound;
 }
+
+// Set the flag properties of all the clauses of the tableau
+
+long ClauseTableauSetClauseFlags(ClauseTableau_p tableau, FormulaProperties properties)
+{
+	long number_marked = 0;
+	if (tableau->bigjump)
+	{
+		number_marked += ClauseTableauSetClauseFlags(tableau->bigjump, properties);
+	}
+	ClauseSetProp(tableau->label, properties);
+	for (PStackPointer p=0; p<PStackGetSP(tableau->old_labels); p++)
+	{
+		Clause_p old_label = (Clause_p) PStackElementP(tableau->old_labels, p);
+		ClauseSetProp(old_label, properties);
+	}
+	ClauseSetSetProp(tableau->folding_labels, properties);
+	for (PStackPointer p=0; p<PStackGetSP(tableau->old_folding_labels); p++)
+	{
+		ClauseSet_p old_folding_labels = (ClauseSet_p) PStackElementP(tableau->old_folding_labels, p);
+		ClauseSetSetProp(old_folding_labels, properties);
+	}
+	for (long i=0; i<tableau->arity; i++)
+	{
+		number_marked += ClauseTableauSetClauseFlags(tableau->children[i], properties);
+	}
+	number_marked++;
+	return number_marked;
+}
+
+// Delete the flag properties of all the clauses of the tableau
+
+long ClauseTableauDelClauseFlags(ClauseTableau_p tableau, FormulaProperties properties)
+{
+	long number_marked = 0;
+	if (tableau->bigjump)
+	{
+		number_marked += ClauseTableauDelClauseFlags(tableau->bigjump, properties);
+	}
+	ClauseDelProp(tableau->label, properties);
+	for (PStackPointer p=0; p<PStackGetSP(tableau->old_labels); p++)
+	{
+		Clause_p old_label = (Clause_p) PStackElementP(tableau->old_labels, p);
+		ClauseDelProp(old_label, properties);
+	}
+	ClauseSetDelProp(tableau->folding_labels, properties);
+	for (PStackPointer p=0; p<PStackGetSP(tableau->old_folding_labels); p++)
+	{
+		ClauseSet_p old_folding_labels = (ClauseSet_p) PStackElementP(tableau->old_folding_labels, p);
+		ClauseSetDelProp(old_folding_labels, properties);
+	}
+	for (long i=0; i<tableau->arity; i++)
+	{
+		number_marked += ClauseTableauDelClauseFlags(tableau->children[i], properties);
+	}
+	number_marked++;
+	return number_marked;
+}
+
+// Set FormulaProperties properties of all clauses in tableaux from the stack
+
+long TableauStackSetClauseFlags(TableauStack_p stack, FormulaProperties properties)
+{
+	long number_marked = 0;
+	for (PStackPointer p=0; p<PStackGetSP(stack); p++)
+	{
+		number_marked += ClauseTableauSetClauseFlags(PStackElementP(stack, p), properties);
+	}
+	return number_marked;
+}
+
+// Delete FormulaProperties properties of all clauses in tableaux from the stack
+
+long TableauStackDelClauseFlags(TableauStack_p stack, FormulaProperties properties)
+{
+	long number_marked = 0;
+	for (PStackPointer p=0; p<PStackGetSP(stack); p++)
+	{
+		number_marked += ClauseTableauDelClauseFlags(PStackElementP(stack, p), properties);
+	}
+	return number_marked;
+}
+
+// Mark all of the clauses of current tableaux.  Free the ones that are no longer used.
+
+long EtableauClauseGC(TableauStack_p stack, ClauseSet_p clause_storage, TB_p terms)
+{
+	TableauStackSetClauseFlags(stack, CPOpFlag);
+	long number_freed = 0;
+	Clause_p handle = clause_storage->anchor->succ;
+	while (handle != clause_storage->anchor)
+	{
+		assert(handle);
+		if (!ClauseQueryProp(handle, CPOpFlag))
+		{
+			Clause_p trash = handle;
+			handle = trash->succ;
+			ClauseSetExtractEntry(trash);
+			ClauseFree(trash);
+			number_freed++;
+		}
+		else
+		{
+			handle = handle->succ;
+		}
+	}
+	TableauStackDelClauseFlags(stack, CPOpFlag);
+//	printf("freed %ld unused clauses\n", number_freed);
+	GCCollect(terms->gc);
+	return number_freed;
+}

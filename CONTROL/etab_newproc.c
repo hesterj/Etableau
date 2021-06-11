@@ -632,7 +632,6 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
         else
         {
             assert(current_tableau->master == current_tableau);
-            //GCCollect(terms->gc);
             switch (tableau_status)
             {
                 case BACKTRACK_OK: // This should only happen during population, when all possible extension up to a depth have been made on a tableau
@@ -694,6 +693,7 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
                 case NEXT_TABLEAU:
                 {
                     assert(all_tableaux_in_stack_are_root(distinct_tableaux_stack));
+                    EtableauClauseGC(distinct_tableaux_stack, tableaucontrol->label_storage, terms);
                     break;
                 }
                 case RETURN_NOW: // Give up
