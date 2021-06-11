@@ -23,6 +23,10 @@ long collect_set_for_saturation(ClauseSet_p from,
                                 PStack_p branch_labels);
 bool branch_saturation_allowed(ClauseTableau_p branch);
 bool classify_branch_python(ClauseTableau_p branch);
+long collect_ground_units(ProofState_p etableau_proofstate,
+                          TB_p tableau_bank,
+                          ClauseTableau_p where,
+                          ErrorCodes status);
 
 // Function definitions 
 
@@ -117,7 +121,12 @@ ErrorCodes EproverCloseBranchWrapper(ProofState_p proofstate,
     else if (branch_status == PROOF_FOUND) PStackPushInt(tableau_control->successful_saturations, branch_hash);
 
     branch->previously_saturated = selected_number_of_clauses_to_process;
-    etableau_proofstate_free(new_proofstate);
+
+#ifdef ETAB_SAVE_GROUND_UNITS
+long
+    __attribute__((unused)) long number_of_units_saved =
+         collect_ground_units(new_proofstate, proofstate->terms, branch, branch_status);
+#endif
 
     // Record the branch in the appropriate file with the saturation status
 #ifdef XGBOOST_FLAG
@@ -137,6 +146,8 @@ ErrorCodes EproverCloseBranchWrapper(ProofState_p proofstate,
                                          branch);
     DStrFree(branch_data_file);
 #endif
+
+    etableau_proofstate_free(new_proofstate);
 
     return branch_status;
 }
@@ -773,6 +784,10 @@ bool branch_saturation_allowed(ClauseTableau_p branch)
         {
 #ifdef ZMQ_FLAG
             return classify_branch_python(branch);
+#elif ETAB_RANDOM_SAT
+            double rand = JKISSRandDouble(NULL);
+            if (rand < 0.5) return false;
+            return true;
 #else
             return true;
 #endif
@@ -815,7 +830,90 @@ bool classify_branch_python(ClauseTableau_p branch)
 }
 #endif
 
+// Collect the ground units of the saturation proofstate and insert them as folding
+// labels at the appropriate node.  If the saturation attempt was unsuccessful,
+// insert them at the node where the attempt happened.  If it was successful, all of the
+// labels can be "folded up" to the parent of the node where the saturation occurred.
 
+long collect_ground_units(ProofState_p saturation_proofstate,
+                          TB_p tableau_bank,
+                          ClauseTableau_p where,
+                          ErrorCodes status)
+{
+    assert(saturation_proofstate);
+    assert(tableau_bank);
+    assert(where);
+    Clause_p handle = NULL;
+    Clause_p copied = NULL;
+    long number_copied = 0;
+    ClauseSet_p to;
+    if (where->open_branches->members == 0) return 0;
+    if (status == PROOF_FOUND)
+    {
+        // to = where->parent->folding_labels;
+        return 0;
+    }
+    else if (status == RESOURCE_OUT)
+    {
+        to = where->folding_labels;
+    }
+    else
+    {
+        return 0;
+    }
+    assert(to);
+    ClauseSet_p pos_eqns = saturation_proofstate->processed_pos_eqns;
+    ClauseSet_p pos_rules = saturation_proofstate->processed_pos_rules;
+    ClauseSet_p neg_units = saturation_proofstate->processed_neg_units;
+
+    assert(pos_eqns);
+    assert(pos_rules);
+    assert(neg_units);
+
+    handle = pos_eqns->anchor->succ;
+    while (handle != pos_eqns->anchor)
+    {
+        if (ClauseIsGround(handle))
+        {
+            copied = ClauseCopy(handle, tableau_bank);
+            ClauseSetInsert(to, copied);
+            number_copied++;
+        }
+        handle = handle->succ;
+    }
+    handle = pos_rules->anchor->succ;
+    while (handle != pos_rules->anchor)
+    {
+        if (ClauseIsGround(handle))
+        {
+            copied = ClauseCopy(handle, tableau_bank);
+            ClauseSetInsert(to, copied);
+            number_copied++;
+        }
+        handle = handle->succ;
+    }
+    handle = neg_units->anchor->succ;
+    while (handle != neg_units->anchor)
+    {
+        if (ClauseIsGround(handle))
+        {
+            copied = ClauseCopy(handle, tableau_bank);
+            ClauseSetInsert(to, copied);
+            number_copied++;
+        }
+        handle = handle->succ;
+    }
+    ClauseSetDelProp(to, CPIsDIndexed | CPIsSIndexed | CPIsGlobalIndexed);
+    //if (status == PROOF_FOUND)
+    //{
+        //printf("copied %ld clauses from the proofstate up\n", number_copied);
+    //}
+    //else
+    //{
+        //printf("copied %ld clauses from the proofstate in place\n", number_copied);
+    //}
+    return number_copied;
+}
 
 
 // End of file

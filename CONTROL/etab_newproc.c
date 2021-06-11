@@ -302,7 +302,7 @@ ClauseTableau_p EtableauSelectBranchAndExtend(TableauControl_p tableaucontrol,
                 {
                     ClauseTableauFree(master->bigjump);
                 }
-                printf("# Copying a better bigjump, %ld < %ld\n", number_of_open_branches, previous_bigjump_open_branches);
+                //printf("# Copying a better bigjump, %ld < %ld\n", number_of_open_branches, previous_bigjump_open_branches);
                 master->bigjump = ClauseTableauMasterCopy(master);
                 master->bigjump->unit_axioms = ClauseSetCopy(master->terms, master->unit_axioms);
             }
