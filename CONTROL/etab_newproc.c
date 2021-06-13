@@ -673,8 +673,7 @@ bool EtableauSelectTableau(TableauControl_p tableaucontrol,
                             ClauseTableauFree(current_tableau);
                             PStackPushP(distinct_tableaux_stack, new_tableau);
                             current_tableau_index = 0;
-                            printf("Removed the current tableau and replaced it with its bigjump\n");
-                            fflush(stdout);
+                            ETAB_VERBOSE(printf("# Removed the current tableau and replaced it with its bigjump\n");)
                             assert(new_tableau->bigjump == NULL);
                         }
                         else

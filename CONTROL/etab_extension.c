@@ -100,13 +100,6 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	assert(new_leaf_clauses->members > 1);
 	assert(open_branch->folding_labels);
 
-#ifdef LOCAL
-	//UpdateLocalVariables(open_branch);
-	UpdateLocalVariables2(open_branch);
-#else
-	assert(open_branch->local_variables == NULL);
-#endif
-
 	Clause_p folding_iterator = open_branch->folding_labels->anchor->succ;
 	Clause_p open_branch_label = open_branch->label;
 	Clause_p leaf_clause = new_leaf_clauses->anchor->succ;
@@ -568,6 +561,13 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
 	ClauseTableau_p closed_tableau = NULL;
 	int number_of_extensions = 0;
 	assert(ClauseSetCardinality(extension_candidates));
+
+#ifdef LOCAL
+	//UpdateLocalVariables(open_branch);
+	UpdateLocalVariables2(open_branch);
+#else
+	assert(open_branch->local_variables == NULL);
+#endif
 
 	//while ((selected = select_extension_candidate(extension_candidates)))
 	while (selected != extension_candidates->anchor) // iterate over the clauses we can split on the branch
