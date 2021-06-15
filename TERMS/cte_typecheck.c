@@ -144,6 +144,7 @@ bool TypeCheckConsistent(Sig_p sig, Term_p term)
    while (!PStackEmpty(stack))
    {
       term = PStackPopP(stack);
+      assert(term->f_code <= sig->f_count);
 
       if (!TermIsVar(term))
       {

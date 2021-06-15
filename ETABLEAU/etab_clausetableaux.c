@@ -74,8 +74,6 @@ ClauseTableau_p empty_tableau_alloc()
 	handle->parent = NULL;
 	handle->open = false;
 	handle->bigjump = NULL;
-
-	//handle->local_variables = PStackAlloc();
 	handle->local_variables = NULL;
 	handle->old_labels = NULL;
 	handle->old_folding_labels = NULL;
@@ -149,11 +147,15 @@ bool term_variables_are_disjoint_with_subst(const Term_p term, const Subst_p sub
 
 ClauseTableau_p ClauseTableauAlloc(TableauControl_p tableaucontrol)
 {
+	assert(tableaucontrol);
+	assert(tableaucontrol->terms);
 	ClauseTableau_p handle = empty_tableau_alloc();
+	GCAdmin_p gc = tableaucontrol->terms->gc;
 	handle->tableau_variables_array = PDArrayAlloc(4, 4);
 	handle->node_variables_array = PDArrayAlloc(4, 4);
 	handle->tableaucontrol = tableaucontrol;
 	handle->folding_labels = ClauseSetAlloc();
+	GCRegisterClauseSet(gc, handle->folding_labels);
 	handle->info = DStrAlloc();
 	handle->master = handle;
 	handle->open = true;
@@ -207,11 +209,13 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	handle->folded_up = tab->folded_up;
 	if (tab->folding_labels)
 	{
+		assert(PTreeFindBinary(gc->clause_sets, tab->folding_labels));
 		handle->folding_labels = ClauseSetCopy(bank, tab->folding_labels);
 		GCRegisterClauseSet(gc, handle->folding_labels);
 		for (PStackPointer p=0; p<PStackGetSP(tab->old_folding_labels); p++)
 		{
 			ClauseSet_p old_folding_edge = PStackElementP(tab->old_folding_labels, p);
+			assert(PTreeFindBinary(gc->clause_sets, old_folding_edge));
 			ClauseSet_p new_copy = ClauseSetFlatCopy(old_folding_edge);
 			GCRegisterClauseSet(gc, new_copy);
 			PStackPushP(handle->old_folding_labels, new_copy);
@@ -232,7 +236,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	//assert(tab->label);
 	if (tab->label)
 	{
-		handle->label = ClauseCopy(tab->label, bank);
+		handle->label = EtableauClauseCopy(tab->label, bank, NULL);
 		assert(handle->label);
 		ClauseSetInsert(label_storage, handle->label);
 		assert(handle->old_labels);
@@ -331,12 +335,15 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	handle->arity = tab->arity;
 	if (tab->folding_labels)
 	{
+		assert(PTreeFindBinary(gc->clause_sets, tab->folding_labels));
 		handle->folding_labels = ClauseSetCopy(bank, tab->folding_labels);
 		GCRegisterClauseSet(gc, handle->folding_labels);
 		for (PStackPointer p=0; p<PStackGetSP(tab->old_folding_labels); p++)
 		{
 			ClauseSet_p old_folding_edge = PStackElementP(tab->old_folding_labels, p);
+			assert(PTreeFindBinary(gc->clause_sets, old_folding_edge));
 			ClauseSet_p new_copy = ClauseSetFlatCopy(old_folding_edge);
+			GCRegisterClauseSet(gc, new_copy);
 			PStackPushP(handle->old_folding_labels, new_copy);
 		}
 		//PStackPushP(handle->old_folding_labels, ClauseSetFlatCopy(bank, tab->folding_labels));
@@ -353,9 +360,8 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	
 	if (tab->label)
 	{
-		//handle->label = ClauseCopy(tab->label, handle->terms);
 		assert(tab->label);
-		handle->label = ClauseCopy(tab->label, bank);
+		handle->label = EtableauClauseCopy(tab->label, bank, NULL);
 		assert(handle->label);
 		ClauseSetInsert(label_storage, handle->label);
 		assert(handle->old_labels);
@@ -406,7 +412,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->old_folding_labels = PStackAlloc();
 	handle->node_variables_array = PDArrayAlloc(4, 4);
 
-	__attribute__((unused)) GCAdmin_p gc = parent->state->gc_terms;
+	GCAdmin_p gc = parent->state->gc_terms;
 	ClauseSet_p label_storage = parent->master->tableaucontrol->label_storage;
 	ClauseSetInsert(label_storage, label); // For gc
 	assert(parent);
@@ -419,6 +425,7 @@ ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p la
 	handle->label = label;
 	handle->control = parent->control;
 	handle->folding_labels = ClauseSetAlloc();
+	GCRegisterClauseSet(gc, handle->folding_labels);
 	handle->info = DStrAlloc();
 	handle->signature = parent->signature;
 	handle->terms = parent->terms;
@@ -611,18 +618,18 @@ void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 	PStackPushP(tab->old_labels, tab->label);  // Store old folding labels in case we need to backtrack
 	if (!ClauseIsGround(tab->label) && !clause_variables_are_disjoint_with_subst(tab->label, subst))
 	{
-		Clause_p new_label = ClauseCopy(tab->label, tab->terms);
+		Clause_p new_label = EtableauClauseCopy(tab->label, tab->terms, NULL);
 		ClauseSetInsert(label_storage, new_label);
 		tab->label = new_label;
 	}
 
-	//Clause_p new_label = ClauseCopy(tab->label, tab->terms);
 	//PStackPushP(tab->old_labels, tab->label);  // Store old folding labels in case we need to backtrack
 	//ClauseSetInsert(label_storage, new_label);
 	//tab->label = new_label;
 
 	if (tab->folding_labels)  // The edge labels that have been folded up if the pointer is non-NULL
 	{
+		assert(PTreeFindBinary(gc->clause_sets, tab->folding_labels));
 		ClauseSet_p new_edge = ClauseSetCopy(tab->terms, tab->folding_labels);
 		PStackPushP(tab->old_folding_labels, tab->folding_labels); // Store old folding labels in case we need to backtrack
 		GCRegisterClauseSet(gc, new_edge);
@@ -761,7 +768,6 @@ ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set)
 	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
 	{
 		assert(handle);
-		//temp = ClauseCopy(handle,bank);
 		temp = ClauseCopy(handle, bank);
 #ifdef DEBUG
 		ClauseRecomputeLitCounts(temp);
@@ -782,7 +788,6 @@ ClauseSet_p ClauseSetCopyDisjoint(TB_p bank, ClauseSet_p set)
 	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
 	{
 		assert(handle);
-		//temp = ClauseCopy(handle,bank);
 		temp = ClauseCopyDisjoint(handle);
 #ifdef DEBUG
 		ClauseRecomputeLitCounts(temp);
@@ -819,7 +824,6 @@ ClauseSet_p ClauseSetCopyOpt(ClauseSet_p set)
 	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
 	{
 		assert(handle);
-		//temp = ClauseCopy(handle,bank);
 		temp = ClauseCopyOpt(handle);
 #ifdef DEBUG
 		ClauseRecomputeLitCounts(temp);
@@ -835,18 +839,18 @@ ClauseSet_p ClauseSetCopyOpt(ClauseSet_p set)
 /*
 */
 
-ClauseSet_p ClauseSetApplySubstitution(TB_p bank, ClauseSet_p set, Subst_p subst)
-{
-	Clause_p handle, temp;
-	ClauseSet_p new = ClauseSetAlloc();
-	
-	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
-	{
-		temp = ClauseCopy(handle, bank);
-		ClauseSetInsert(new, temp);
-	}
-	return new;
-}
+//ClauseSet_p ClauseSetApplySubstitution(TB_p bank, ClauseSet_p set, Subst_p subst)
+//{
+	//Clause_p handle, temp;
+	//ClauseSet_p new = ClauseSetAlloc();
+//
+	//for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
+	//{
+		//temp = ClauseCopy(handle, bank);
+		//ClauseSetInsert(new, temp);
+	//}
+	//return new;
+//}
 
 /* Should only be called on closed tableau, as in order to collect the leaves, open branches
  *  must be removed from their tableau set.
@@ -1118,7 +1122,7 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
 	//SubstPrint(GlobalOut, subst, tableau->terms->sig, DEREF_NEVER);
 	//printf("\n");
 
-	handle = ClauseCopy(clause, tableau->terms);
+	handle = EtableauClauseCopy(clause, tableau->terms, NULL);
 
 	PTreeTraverseExit(iter);
 	PTreeFree(variable_tree);
@@ -1205,7 +1209,7 @@ ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 	//TableauSetExtractEntry(tab); // no longer open
 	assert(!(tab->set));
 	assert(tab->open_branches->members == 0);
-	tab->label = ClauseCopy(start, tab->terms);
+	tab->label = EtableauClauseCopy(start, tab->terms, NULL);
 	ClauseRecomputeLitCounts(tab->label);
 	ClauseSetInsert(tableau_label_storage, tab->label);
 	assert(tab->label);
@@ -1536,7 +1540,7 @@ TableauControl_p TableauControlAlloc(long neg_conjectures,
 {
 	TableauControl_p handle = TableauControlCellAlloc();
 	//handle->backup = BackupProofstateAlloc(proofstate);
-	handle->terms = NULL; // The termbank for this tableau control..
+	handle->terms = proofstate->terms; // The termbank for this tableau control..
 	handle->all_start_rule_created = false;
 	handle->equality_axioms_added = false;
 	handle->number_of_extensions = 0;  // Total number of extensions done

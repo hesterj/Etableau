@@ -136,7 +136,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 ClauseTableau_p ClauseTableauChildLabelAlloc(ClauseTableau_p parent, Clause_p label, int position);
 void ClauseTableauApplySubstitution(ClauseTableau_p tab, Subst_p subst);
 void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst);
-ClauseSet_p ClauseSetApplySubstitution(TB_p bank, ClauseSet_p set, Subst_p subst);
+//ClauseSet_p ClauseSetApplySubstitution(TB_p bank, ClauseSet_p set, Subst_p subst);
 int ClauseTableauDifference(ClauseTableau_p higher, ClauseTableau_p lower);
 void ClauseTableauScoreActive(ClauseTableau_p tab);
 void ClauseTableauCollectSteps(ClauseTableau_p tab, PStack_p steps);

@@ -241,9 +241,15 @@ ErrorCodes EproverCloseBranch(ProofState_p proofstate,
         else if (full_saturation) // Now do the full branch saturation
         {
             // max_proc is passed as the step limit to Saturate
+#ifndef NDEBUG
+    printf("# (%ld) Beginning full saturation\n", (long) getpid());
+#endif
             success = Saturate(proofstate, proofcontrol, max_proc,
                                LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX,
                                LLONG_MAX, LONG_MAX);
+#ifndef NDEBUG
+    printf("# (%ld) Ended full saturation\n", (long) getpid());
+#endif
             if (success)
             {
                 ClauseTableauSetProp(branch, TUPSaturationClosedAfterBranch);
@@ -524,7 +530,13 @@ ProofState_p backtrack_proofstate(ProofState_p proofstate,
     assert(tableaucontrol);
 
     ProofState_p new_state = etableau_proofstate_alloc(proofstate);
+#ifndef NDEBUG
+    printf("# (%ld) Collecting axioms for branch saturation\n", (long) getpid());
+#endif
     clauseset_insert_copy(new_state->terms, new_state->axioms, tableaucontrol->unprocessed);
+#ifndef NDEBUG
+    printf("# (%ld) Done collecting axioms\n", (long) getpid());
+#endif
 
     return new_state;
 }
@@ -767,6 +779,7 @@ long clauseset_insert_copy(TB_p bank,
         assert(handle);
         res++;
         temp   = ClauseCopy(handle, bank);
+        assert(!ClauseQueryProp(temp, CPIsDIndexed | CPIsSIndexed | CPIsGlobalIndexed));
         temp->properties = CPIgnoreProps;
         //temp->weight = ClauseStandardWeight(temp);
         //ClauseCanonize(temp);

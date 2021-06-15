@@ -5,14 +5,8 @@
 /*  Global Variables
 */
 
-int branch_number = 0;
-long num_axioms = 0;
-long dive_depth = 10;
-
 /*  Forward Declarations
 */
-
-extern void c_smoketest();
 
 /*  Function Definitions
 */
@@ -47,16 +41,16 @@ long ClauseSetMoveUnits(ClauseSet_p set, ClauseSet_p units)
    {
 	   ClauseRecomputeLitCounts(handle);
 		assert(handle);
-      if(ClauseLiteralNumber(handle) == 1)
-      {
+	  if(ClauseLiteralNumber(handle) == 1)
+	  {
 			count++;
 			handle = handle->succ;
 			assert(handle->pred);
 			Clause_p unit = ClauseSetExtractEntry(handle->pred);
 			ClauseSetInsert(units, unit);
-      }
-      else
-      {
+	  }
+	  else
+	  {
 			handle = handle->succ;
 	  }
    }
@@ -90,13 +84,13 @@ long ClauseSetCopyUnits(TB_p bank, ClauseSet_p set, ClauseSet_p units)
    {
 		assert(handle);
 		ClauseRecomputeLitCounts(handle);
-      if(ClauseLiteralNumber(handle) == 1)
-      {
+	  if(ClauseLiteralNumber(handle) == 1)
+	  {
 			count++;
-			Clause_p unit = ClauseCopy(handle, bank);
+			Clause_p unit = EtableauClauseCopy(handle, bank, NULL);
 			assert(unit != handle);
 			ClauseSetInsert(units, unit);
-      }
+	  }
 		handle = handle->succ;
    }
    return count;
@@ -127,16 +121,16 @@ long ClauseSetFreeUnits(ClauseSet_p set)
    while(handle != set->anchor)
    {
 		assert(handle);
-      if(ClauseLiteralNumber(handle) == 1)
-      {
+	  if(ClauseLiteralNumber(handle) == 1)
+	  {
 			count++;
 			handle = handle->succ;
 			assert(handle->pred);
 			Clause_p unit = ClauseSetExtractEntry(handle->pred);
 			ClauseFree(unit);
-      }
-      else
-      {
+	  }
+	  else
+	  {
 			handle = handle->succ;
 		}
    }

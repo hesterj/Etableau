@@ -415,6 +415,13 @@ void SigFixType(Sig_p sig, FunCode f_code)
 bool SigIsPolymorphic(Sig_p sig, FunCode f_code)
 {
    assert(f_code > 0);
+#ifndef NDEBUG
+   if (f_code > sig->f_count)
+   {
+      Warning("Bad f_code: ");
+      printf("%ld\n", f_code);
+   }
+#endif
    assert(f_code <= sig->f_count);
 
    return FuncQueryProp(&(sig->f_info[f_code]), FPTypePoly);
@@ -1383,6 +1390,7 @@ void SigDeclareFinalType(Sig_p sig, FunCode f_code, Type_p type)
 void SigDeclareIsFunction(Sig_p sig, FunCode f_code)
 {
    Type_p type, new_type;
+   assert(f_code <= sig->f_count);
 
    if(SigIsPolymorphic(sig, f_code))
    {
@@ -1422,6 +1430,7 @@ void SigDeclareIsPredicate(Sig_p sig, FunCode f_code)
 {
    Type_p type, new_type;
 
+   assert(f_code <= sig->f_count);
    if(SigIsPolymorphic(sig, f_code))
    {
       return;

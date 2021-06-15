@@ -256,7 +256,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 		 handle != extension->other_clauses->anchor;
 		 handle = handle->succ)
 	{
-		Clause_p subst_applied = ClauseCopy(handle, bank);
+		Clause_p subst_applied = EtableauClauseCopy(handle, bank, NULL);
 		ClauseSetInsert(new_leaf_clauses_set, subst_applied);
 		//if (ClauseTableauBranchContainsLiteral(parent, handle->literals))
 		if (ClauseTableauBranchContainsLiteral(parent, subst_applied->literals))
@@ -430,7 +430,7 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 		 handle != extension->other_clauses->anchor;
 		 handle = handle->succ)
 	{
-		Clause_p subst_applied = ClauseCopy(handle, bank);
+		Clause_p subst_applied = EtableauClauseCopy(handle, bank, NULL);
 		ClauseSetInsert(new_leaf_clauses_set, subst_applied);
 		if (ClauseTableauBranchContainsLiteral(parent, subst_applied->literals))
 		{

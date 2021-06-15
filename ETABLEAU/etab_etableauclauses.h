@@ -24,9 +24,11 @@
 #define _GNU_SOURCE
 #include <search.h>
 
-//#ifdef ZMQ_FLAG
-//#include <czmq.h>
-//#endif
+#ifdef ETAB_IMPROVEDCOPY
+#define EtableauClauseCopy(clause, bank, array) EtableauClauseCopy(clause, array)
+#else
+#define EtableauClauseCopy(clause, bank, array) ClauseCopyOpt(clause)
+#endif
 
 typedef enum
 {

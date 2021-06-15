@@ -584,6 +584,9 @@ Eqn_p EqnAlloc(Term_p lterm, Term_p rterm, TB_p bank,  bool positive)
 {
    Eqn_p handle = EqnCellAlloc();
 
+   assert(lterm->f_code <= bank->sig->f_count);
+   assert(rterm->f_code <= bank->sig->f_count);
+
    /* printf("Handle = %p\n", handle); */
 
    handle->properties = EPNoProps;
@@ -1286,8 +1289,14 @@ Eqn_p EqnCopy(Eqn_p eq, TB_p bank)
    Eqn_p  handle;
    Term_p lterm, rterm;
 
+   assert(eq->lterm->f_code <= bank->sig->f_count);
+   assert(eq->rterm->f_code <= bank->sig->f_count);
+
    lterm = TBInsertNoProps(bank, eq->lterm, DEREF_ALWAYS);
    rterm = TBInsertNoProps(bank, eq->rterm, DEREF_ALWAYS);
+
+   assert(lterm->f_code <= bank->sig->f_count);
+   assert(rterm->f_code <= bank->sig->f_count);
 
    handle = EqnAlloc(lterm, rterm, bank, false); /* Properties will be
                                                     taken care of

@@ -1,8 +1,8 @@
 #------------------------------------------------------------------------
 #
-# File  : Makefile for CONTROL part of thew CLIB library/E Prover
+# File  : Makefile for ETABLEAU part of thew CLIB library/E Prover
 #
-# Author: Stephan Schulz
+# John Hester added this
 #
 # Changes
 #
@@ -15,7 +15,7 @@ include ../Makefile.vars
 
 # Project specific variables
 
-PROJECT = CONTROL
+PROJECT = ETABLEAU
 LIB     = $(PROJECT).a
 
 all: $(LIB)
@@ -32,15 +32,16 @@ clean:
 
 include ../Makefile.services
 
-CONTROL_LIB = cco_simplification.o cco_factoring.o\
-	      cco_eqnresolving.o cco_paramodulation.o\
-	      cco_forward_contraction.o  cco_clausesplitting.o\
-              cco_interpreted.o\
-              cco_proofproc.o cco_proc_ctrl.o cco_batch_spec.o cco_einteractive_mode.o\
-	      cco_sine.o cco_esession.o cco_eserver.o cco_scheduling.o
+ETABLEAU_LIB =  etab_extension.o etab_clausetableaux.o\
+				etab_tableauproc.o etab_foldingup.o \
+				etab_localunification.o etab_closure.o \
+				etab_etableau.o	etab_apr.o \
+				etab_xgboost_interaction.o etab_backtrack.o \
+				etab_newproc.o etab_hash.o\
+				etab_etableauclauses.o\
 
-$(LIB): $(CONTROL_LIB)
-	$(AR) $(LIB) $(CONTROL_LIB)
+$(LIB): $(ETABLEAU_LIB)
+	$(AR) $(LIB) $(ETABLEAU_LIB)
 
 include Makefile.dependencies
 

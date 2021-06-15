@@ -243,6 +243,7 @@ void RollBackEveryNode(ClauseTableau_p tab)
     if (p_folding)
     {
         assert(tab->old_folding_labels->current);
+        assert(PTreeFindBinary(gc->clause_sets, tab->folding_labels));
         ClauseSet_p new_folding_labels = (ClauseSet_p) PStackPopP(tab->old_folding_labels);
         GCDeregisterClauseSet(gc, tab->folding_labels);
         ClauseSetFree(tab->folding_labels);

@@ -893,6 +893,10 @@ EqnSide ClauseIsEqDefinition(Clause_p clause, int min_arity)
 
 Clause_p ClauseCopy(Clause_p clause, TB_p bank)
 {
+   assert(bank);
+   assert(clause);
+   assert(clause->literals->lterm->f_code <= bank->sig->f_count);
+   assert(clause->literals->rterm->f_code <= bank->sig->f_count);
    Clause_p handle = clause_copy_meta(clause);
 
    handle->literals = EqnListCopy(clause->literals, bank);
