@@ -273,7 +273,7 @@ bool VarIsLocal(ClauseTableau_p open_branch, Term_p variable)
 
 bool BranchIsLocal(ClauseTableau_p branch)
 {
-    //long local_variables = UpdateLocalVariables(branch);
+#ifdef ETAB_OLD_LOCAL
     long local_variables = UpdateLocalVariables2(branch);
 
     // CollectVariableOfBranch was used here before but didn't work
@@ -282,23 +282,27 @@ bool BranchIsLocal(ClauseTableau_p branch)
         return true;
     }
     return false;
+#else
+    return false;
+#endif
 }
 
-bool AllBranchesAreLocal(ClauseTableau_p master)
-{
-    ClauseTableau_p branch_handle = master->open_branches->anchor->succ;
-    while (branch_handle != master->open_branches->anchor)
-    {
-        bool local = BranchIsLocal(branch_handle);
-        if (!local)
-        {
-            return false;
-        }
-        branch_handle = branch_handle->succ;
-    }
-    printf("# All branches are local!\n");
-    return true;
-}
+
+//bool AllBranchesAreLocal(ClauseTableau_p master)
+//{
+    //ClauseTableau_p branch_handle = master->open_branches->anchor->succ;
+    //while (branch_handle != master->open_branches->anchor)
+    //{
+        //bool local = BranchIsLocal(branch_handle);
+        //if (!local)
+        //{
+            //return false;
+        //}
+        //branch_handle = branch_handle->succ;
+    //}
+    //printf("# All branches are local!\n");
+    //return true;
+//}
 
 // Collects variables occurring in ALL branches.
 
@@ -434,4 +438,33 @@ long PTreeComplement(PTree_p *tree1, PTree_p tree2)
    *tree1 = tmp;
 
    return res;
+}
+
+bool ClauseTableauMarkClosedNodesResetArrays(ClauseTableau_p tableau)
+{
+    reset_variables_array(tableau->node_variables_array);
+    assert(tableau);
+    if (tableau->set)
+    {
+        return false;
+    }
+    int arity = tableau->arity;
+    bool all_children_closed = true;
+    for (int i = 0; i < arity; i++)
+    {
+            assert(tableau->children[i]);
+            ClauseTableau_p child = tableau->children[i];
+            bool child_is_superclosed = ClauseTableauMarkClosedNodesResetArrays(child);
+            if (!child_is_superclosed) // there is a child that is open or whose children are open
+            {
+                all_children_closed = false;
+            }
+    }
+    if (!all_children_closed)
+    {
+        tableau->open = true;
+        return false;
+    }
+    tableau->open = false;
+    return true;
 }

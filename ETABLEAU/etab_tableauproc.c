@@ -87,7 +87,7 @@ long ClauseSetCopyUnits(TB_p bank, ClauseSet_p set, ClauseSet_p units)
 	  if(ClauseLiteralNumber(handle) == 1)
 	  {
 			count++;
-			Clause_p unit = EtableauClauseCopy(handle, bank, NULL);
+			Clause_p unit = EtableauClauseCopy(handle, NULL, NULL);
 			assert(unit != handle);
 			ClauseSetInsert(units, unit);
 	  }
@@ -241,7 +241,8 @@ TableauSet_p EtableauCreateStartRules(TB_p bank,
 	while (start_label != start_rule_candidates->anchor)
 	{
 		beginning_tableau = ClauseTableauMasterCopy(initial_tab);
-		beginning_tableau->unit_axioms = ClauseSetCopy(initial_tab->terms, unit_axioms);
+		//beginning_tableau->unit_axioms = ClauseSetCopy(initial_tab->terms, unit_axioms);
+		beginning_tableau->unit_axioms = EtableauClauseSetCopy(unit_axioms, NULL, NULL);
 		beginning_tableau = TableauStartRule(beginning_tableau, start_label);
 		TableauSetInsert(distinct_tableaux_set, beginning_tableau->master);
 		//ClauseTableauUpdateVariables(beginning_tableau->master); //unnecessary, is done before any uni attempts

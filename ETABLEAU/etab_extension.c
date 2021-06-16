@@ -92,8 +92,9 @@ int ClauseTableauExtensionRuleAttemptOnBranch(TableauControl_p tableau_control,
 	bool folding_extension = false;
 
 
-	//ClauseTableauUpdateVariablesArray(open_branch->master);
+#ifdef ETAB_OLD_VARIABLES
 	ClauseTableauUpdateVariablesArray2(open_branch->master);
+#endif
 
 	ClauseSet_p new_leaf_clauses = SplitClauseFresh(open_branch->terms, master, selected);
 	assert(new_leaf_clauses->members);
@@ -256,7 +257,7 @@ ClauseTableau_p ClauseTableauExtensionRuleNoCopy(TableauControl_p tableaucontrol
 		 handle != extension->other_clauses->anchor;
 		 handle = handle->succ)
 	{
-		Clause_p subst_applied = EtableauClauseCopy(handle, bank, NULL);
+		Clause_p subst_applied = EtableauClauseCopy(handle, NULL, NULL);
 		ClauseSetInsert(new_leaf_clauses_set, subst_applied);
 		//if (ClauseTableauBranchContainsLiteral(parent, handle->literals))
 		if (ClauseTableauBranchContainsLiteral(parent, subst_applied->literals))
@@ -430,7 +431,7 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 		 handle != extension->other_clauses->anchor;
 		 handle = handle->succ)
 	{
-		Clause_p subst_applied = EtableauClauseCopy(handle, bank, NULL);
+		Clause_p subst_applied = EtableauClauseCopy(handle, NULL, NULL);
 		ClauseSetInsert(new_leaf_clauses_set, subst_applied);
 		if (ClauseTableauBranchContainsLiteral(parent, subst_applied->literals))
 		{
@@ -503,7 +504,7 @@ ClauseTableau_p ClauseTableauExtensionRuleCopy(TableauControl_p tableaucontrol,
 
 	SubstDelete(subst); // Extremely important.  The backtracks require information from the substitution.
 
-	parent->master->unit_axioms = ClauseSetCopy(bank, old_master->unit_axioms);
+	parent->master->unit_axioms = EtableauClauseSetCopy(old_master->unit_axioms, NULL, NULL);
 	// The work is done- try to close the remaining branches
 
 	FoldUpCloseCycle(parent->master);
@@ -562,8 +563,7 @@ ClauseTableau_p ClauseTableauSearchForPossibleExtension(TableauControl_p tableau
 	int number_of_extensions = 0;
 	assert(ClauseSetCardinality(extension_candidates));
 
-#ifdef LOCAL
-	//UpdateLocalVariables(open_branch);
+#ifdef ETAB_OLD_LOCAL
 	UpdateLocalVariables2(open_branch);
 #else
 	assert(open_branch->local_variables == NULL);

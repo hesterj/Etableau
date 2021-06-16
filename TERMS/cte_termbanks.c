@@ -1111,6 +1111,60 @@ Term_p TBInsertOpt(TB_p bank, Term_p term, DerefType deref)
    return t;
 }
 
+/*-----------------------------------------------------------------------
+//
+// Function: TBInsertOptArrays()
+//
+//   As TBInsertOpt, but also sets variables of the new term in the
+//   array parameters.
+//
+// Global Variables: -
+//
+// Side Effects    : Changes term bank.
+//
+/----------------------------------------------------------------------*/
+
+Term_p TBInsertOptArray(TB_p bank, Term_p term, DerefType deref, PDArray_p arr1, PDArray_p arr2)
+{
+   int    i;
+   Term_p t;
+
+   assert(term);
+   assert(arr1);
+   assert(arr2);
+
+   const int limit = DEREF_LIMIT(term, deref);
+   term = TermDeref(term, &deref);
+
+   if(TermIsGround(term))
+   {
+      assert(TermIsShared(term));
+      return term;
+   }
+
+   if(TermIsVar(term))
+   {
+      t = VarBankVarAssertAlloc(bank->vars, term->f_code, term->type);
+      assert((term->f_code)%2 == 0);
+      PDArrayAssignP(arr1, -(term->f_code/2), term);
+      PDArrayAssignP(arr2, -(term->f_code/2), term);
+      TermSetBank(t, bank);
+   }
+   else
+   {
+      t = TermTopCopyWithoutArgs(term); /* This is an unshared term cell at the moment */
+
+      assert(SysDateIsCreationDate(t->rw_data.nf_date[0]));
+      assert(SysDateIsCreationDate(t->rw_data.nf_date[1]));
+
+      for(i=0; i<t->arity; i++)
+      {
+         t->args[i] = TBInsertOptArray(bank, term->args[i], CONVERT_DEREF(i, limit, deref), arr1, arr2);
+      }
+      t = tb_termtop_insert(bank, t);
+   }
+   return t;
+}
 
 /*-----------------------------------------------------------------------
 //

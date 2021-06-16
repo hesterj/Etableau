@@ -13,7 +13,9 @@ bool ClauseTableauBranchClosureRuleWrapper(ClauseTableau_p tab)
 	assert(tab->label->set);
 	bool success = false;
 
+#ifdef ETAB_OLD_VARIABLES
 	ClauseTableauUpdateVariablesArray2(tab->master);
+#endif
 	BindAllDisjointVariablesToFresh(tab->master, tab->terms, NULL);
 
 	if ((subst = ClauseContradictsBranchSimple(tab, tab->label)))
@@ -124,7 +126,7 @@ Subst_p ClauseContradictsBranchSimple(ClauseTableau_p open_branch, Clause_p orig
 	Subst_p subst = NULL;
 	Clause_p temporary_label = NULL;
 
-#ifdef LOCAL
+#ifdef ETAB_OLD_LOCAL
 	UpdateLocalVariables2(open_branch);
 #endif
 

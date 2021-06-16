@@ -144,6 +144,7 @@ Term_p  TBInsertInstantiated(TB_p bank, Term_p term);
 Term_p  TBTermParseRealHO(Scanner_p in, TB_p bank, bool check_symb_prop);
 
 Term_p  TBInsertOpt(TB_p bank, Term_p term, DerefType deref);
+Term_p TBInsertOptArray(TB_p bank, Term_p term, DerefType deref, PDArray_p arr1, PDArray_p arr2);
 Term_p  TBInsertDisjoint(TB_p bank, Term_p term);
 
 Term_p  TBTermTopInsert(TB_p bank, Term_p t);

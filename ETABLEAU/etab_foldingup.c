@@ -51,17 +51,12 @@ bool ClauseTableauMarkClosedNodes(ClauseTableau_p tableau, int *subtree_saturati
 				all_children_closed = false;
 			}
 	}
-	if (all_children_closed)
-	{
-		//printf("all children closed, arity %d\n", tableau->arity);
-		tableau->open = false;
-		return true;
-	}
-	else
+	if (!all_children_closed)
 	{
 		tableau->open = true;
 		return false;
 	}
+	tableau->open = false;
 	return true;
 }
 
@@ -262,7 +257,7 @@ int FoldUpAtNode(ClauseTableau_p node)
 		// Case 1: Add the negation of the label of node to the literals at the root (node->master)
 		if (node->folded_up != node->depth) // Make sure we have not already folded to the root
 		{
-			flipped_label = EtableauClauseCopy(node->label, node->terms, NULL);
+			flipped_label = EtableauClauseCopy(node->label, node->node_variables_array, master_node->tableau_variables_array);
 			ClauseFlipLiteralSign(flipped_label, flipped_label->literals);
 			node->folded_up = node->depth;
 			ClauseTableauEdgeInsert(master_node, flipped_label);
@@ -284,7 +279,7 @@ int FoldUpAtNode(ClauseTableau_p node)
 		else if (!(deepest->parent))
 		{
 			//  We are at the master node, probably because of unit axioms... fold up to it
-			flipped_label = EtableauClauseCopy(node->label, node->terms, NULL);
+			flipped_label = EtableauClauseCopy(node->label, node->node_variables_array, master_node->tableau_variables_array);
 			ClauseFlipLiteralSign(flipped_label, flipped_label->literals);
 			node->folded_up = node->depth;
 			ClauseTableauEdgeInsert(master_node, flipped_label);
@@ -296,7 +291,7 @@ int FoldUpAtNode(ClauseTableau_p node)
 			assert(deepest->depth > 0);
 			node->folded_up = ClauseTableauDifference(deepest, node)+1;
 			assert(node->folded_up);
-			flipped_label = EtableauClauseCopy(node->label, node->terms, NULL);
+			flipped_label = EtableauClauseCopy(node->label, node->node_variables_array, master_node->tableau_variables_array);
 			ClauseFlipLiteralSign(flipped_label, flipped_label->literals);
 			ClauseTableauEdgeInsert(deepest->parent, flipped_label);
 			ClauseSetDeleteCopies(deepest->parent->folding_labels);

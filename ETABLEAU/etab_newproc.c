@@ -108,7 +108,7 @@ int Etableau_n0(TableauControl_p tableaucontrol,
 #else
     fprintf(GlobalOut, "# The folding up rule is disabled...\n");
 #endif
-#ifdef LOCAL
+#ifdef ETAB_OLD_LOCAL
     fprintf(GlobalOut, "# Local unification is enabled...\n");
 #else
     fprintf(GlobalOut, "# Local unification is disabled...\n");
@@ -134,10 +134,10 @@ int Etableau_n0(TableauControl_p tableaucontrol,
         ClauseSetFree(equality_axioms);
         tableaucontrol->equality_axioms_added = true;
     }
-    tableaucontrol->unprocessed = ClauseSetCopy(bank, proofstate->unprocessed);
+    tableaucontrol->unprocessed = EtableauClauseSetCopy(proofstate->unprocessed, NULL, NULL);
     GCAdmin_p gc = proofstate->gc_terms;
     fprintf(GlobalOut, "# %ld beginning clauses after preprocessing and clausification\n", active->members);
-    ClauseSet_p extension_candidates = ClauseSetCopy(bank, active);
+    ClauseSet_p extension_candidates = EtableauClauseSetCopy(active, NULL, NULL);
 
     //long unbound = TermBankUnbindAll(bank);
     //fprintf(GlobalOut, "# Unound %ld terms before tableau proof search...\n", unbound);
@@ -304,7 +304,7 @@ ClauseTableau_p EtableauSelectBranchAndExtend(TableauControl_p tableaucontrol,
                 }
                 //printf("# Copying a better bigjump, %ld < %ld\n", number_of_open_branches, previous_bigjump_open_branches);
                 master->bigjump = ClauseTableauMasterCopy(master);
-                master->bigjump->unit_axioms = ClauseSetCopy(master->terms, master->unit_axioms);
+                master->bigjump->unit_axioms = EtableauClauseSetCopy(master->unit_axioms, NULL, NULL);
             }
 #endif
             ClauseTableauSetProp(master, TUPBacktrackedDueToMaxDepth);

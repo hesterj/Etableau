@@ -210,7 +210,7 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	if (tab->folding_labels)
 	{
 		assert(PTreeFindBinary(gc->clause_sets, tab->folding_labels));
-		handle->folding_labels = ClauseSetCopy(bank, tab->folding_labels);
+		handle->folding_labels = EtableauClauseSetCopy(tab->folding_labels, NULL, NULL);
 		GCRegisterClauseSet(gc, handle->folding_labels);
 		for (PStackPointer p=0; p<PStackGetSP(tab->old_folding_labels); p++)
 		{
@@ -233,10 +233,10 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	handle->control = tab->control;
 	handle->state = tab->state;
 
-	//assert(tab->label);
+	assert(tab->label);
 	if (tab->label)
 	{
-		handle->label = EtableauClauseCopy(tab->label, bank, NULL);
+		handle->label = EtableauClauseCopy(tab->label, NULL, NULL);
 		assert(handle->label);
 		ClauseSetInsert(label_storage, handle->label);
 		assert(handle->old_labels);
@@ -287,7 +287,9 @@ ClauseTableau_p ClauseTableauMasterCopy(ClauseTableau_p tab)
 	handle->backtracks = BacktrackStackCopy(tab->backtracks, handle->master);
 	handle->failures = BacktrackStackCopy(tab->failures, handle->master);
 
+#ifdef ETAB_OLD_VARIABLES
 	ClauseTableauUpdateVariablesArray2(handle);
+#endif
 
 	return handle;
 }
@@ -336,7 +338,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	if (tab->folding_labels)
 	{
 		assert(PTreeFindBinary(gc->clause_sets, tab->folding_labels));
-		handle->folding_labels = ClauseSetCopy(bank, tab->folding_labels);
+		handle->folding_labels = EtableauClauseSetCopy(tab->folding_labels, NULL, NULL);
 		GCRegisterClauseSet(gc, handle->folding_labels);
 		for (PStackPointer p=0; p<PStackGetSP(tab->old_folding_labels); p++)
 		{
@@ -361,7 +363,7 @@ ClauseTableau_p ClauseTableauChildCopy(ClauseTableau_p tab, ClauseTableau_p pare
 	if (tab->label)
 	{
 		assert(tab->label);
-		handle->label = EtableauClauseCopy(tab->label, bank, NULL);
+		handle->label = EtableauClauseCopy(tab->label, NULL, NULL);
 		assert(handle->label);
 		ClauseSetInsert(label_storage, handle->label);
 		assert(handle->old_labels);
@@ -618,7 +620,8 @@ void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 	PStackPushP(tab->old_labels, tab->label);  // Store old folding labels in case we need to backtrack
 	if (!ClauseIsGround(tab->label) && !clause_variables_are_disjoint_with_subst(tab->label, subst))
 	{
-		Clause_p new_label = EtableauClauseCopy(tab->label, tab->terms, NULL);
+		Clause_p new_label =					\
+			EtableauClauseCopy(tab->label, tab->node_variables_array, tab->master->tableau_variables_array);
 		ClauseSetInsert(label_storage, new_label);
 		tab->label = new_label;
 	}
@@ -630,7 +633,9 @@ void ClauseTableauApplySubstitutionToNode(ClauseTableau_p tab, Subst_p subst)
 	if (tab->folding_labels)  // The edge labels that have been folded up if the pointer is non-NULL
 	{
 		assert(PTreeFindBinary(gc->clause_sets, tab->folding_labels));
-		ClauseSet_p new_edge = ClauseSetCopy(tab->terms, tab->folding_labels);
+		ClauseSet_p new_edge = EtableauClauseSetCopy(tab->folding_labels,
+													 tab->node_variables_array,
+													 tab->master->tableau_variables_array);
 		PStackPushP(tab->old_folding_labels, tab->folding_labels); // Store old folding labels in case we need to backtrack
 		GCRegisterClauseSet(gc, new_edge);
 		assert(new_edge);
@@ -689,7 +694,7 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 		//fprintf(stdout, "\n...\n");
 	//}
 
-#ifdef LOCAL
+#ifdef ETAB_OLD_LOCAL
 	if (tab->local_variables)
 	{
 		a_local_variables = PStackAlloc();
@@ -726,7 +731,7 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 	SubstDelete(subst);
 	subst = NULL;
 	return_point:
-#ifdef LOCAL
+#ifdef ETAB_OLD_LOCAL
 	//if (true)
 	//{
 		//fprintf(stdout, "A: ");
@@ -760,81 +765,6 @@ Subst_p ClauseContradictsClause(ClauseTableau_p tab, Clause_p a, Clause_p b)
 }
 
 
-ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set)
-{
-	Clause_p handle, temp;
-	assert(set);
-	ClauseSet_p new = ClauseSetAlloc();
-	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
-	{
-		assert(handle);
-		temp = ClauseCopy(handle, bank);
-#ifdef DEBUG
-		ClauseRecomputeLitCounts(temp);
-		assert(ClauseLiteralNumber(temp));
-#endif
-		ClauseDelProp(temp, CPIsDIndexed);
-		ClauseDelProp(temp, CPIsSIndexed);
-		ClauseSetInsert(new, temp);
-	}
-	return new;
-}
-
-ClauseSet_p ClauseSetCopyDisjoint(TB_p bank, ClauseSet_p set)
-{
-	Clause_p handle, temp;
-	assert(set);
-	ClauseSet_p new = ClauseSetAlloc();
-	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
-	{
-		assert(handle);
-		temp = ClauseCopyDisjoint(handle);
-#ifdef DEBUG
-		ClauseRecomputeLitCounts(temp);
-		assert(ClauseLiteralNumber(temp));
-#endif
-		ClauseDelProp(temp, CPIsDIndexed);
-		ClauseDelProp(temp, CPIsSIndexed);
-		ClauseSetInsert(new, temp);
-	}
-	return new;
-}
-
-ClauseSet_p ClauseSetFlatCopy(ClauseSet_p set)
-{
-	Clause_p handle, temp;
-	assert(set);
-	ClauseSet_p new = ClauseSetAlloc();
-	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
-	{
-		assert(handle);
-		temp = ClauseFlatCopy(handle);
-		ClauseDelProp(temp, CPIsDIndexed);
-		ClauseDelProp(temp, CPIsSIndexed);
-		ClauseSetInsert(new, temp);
-	}
-	return new;
-}
-
-ClauseSet_p ClauseSetCopyOpt(ClauseSet_p set)
-{
-	Clause_p handle, temp;
-	assert(set);
-	ClauseSet_p new = ClauseSetAlloc();
-	for (handle = set->anchor->succ; handle != set->anchor; handle = handle->succ)
-	{
-		assert(handle);
-		temp = ClauseCopyOpt(handle);
-#ifdef DEBUG
-		ClauseRecomputeLitCounts(temp);
-		assert(ClauseLiteralNumber(temp));
-#endif
-		ClauseDelProp(temp, CPIsDIndexed);
-		ClauseDelProp(temp, CPIsSIndexed);
-		ClauseSetInsert(new, temp);
-	}
-	return new;
-}
 
 /*
 */
@@ -1122,7 +1052,7 @@ Clause_p ClauseCopyFresh(Clause_p clause, ClauseTableau_p tableau)
 	//SubstPrint(GlobalOut, subst, tableau->terms->sig, DEREF_NEVER);
 	//printf("\n");
 
-	handle = EtableauClauseCopy(clause, tableau->terms, NULL);
+	handle = EtableauClauseCopy(clause, NULL, NULL);
 
 	PTreeTraverseExit(iter);
 	PTreeFree(variable_tree);
@@ -1209,7 +1139,7 @@ ClauseTableau_p TableauStartRule(ClauseTableau_p tab, Clause_p start)
 	//TableauSetExtractEntry(tab); // no longer open
 	assert(!(tab->set));
 	assert(tab->open_branches->members == 0);
-	tab->label = EtableauClauseCopy(start, tab->terms, NULL);
+	tab->label = EtableauClauseCopy(start, NULL, NULL);
 	ClauseRecomputeLitCounts(tab->label);
 	ClauseSetInsert(tableau_label_storage, tab->label);
 	assert(tab->label);

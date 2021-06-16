@@ -42,6 +42,7 @@ typedef enum
    TUPBacktracked = TUPBacktrackedDueToMaxDepth | TUPBacktrackedDueToExtensionFailure,
    TUPHasBeenPreviouslySelected = 2*TUPHasBeenExtendedOn,
    TUPSpecialFlag = 2*TUPHasBeenPreviouslySelected,
+   TUPVariablesUpToDate = 2*TUPSpecialFlag,
 } TableauProperties;
 
 typedef struct clausetableau 
@@ -74,7 +75,7 @@ typedef struct clausetableau
 	// Generally small array of variables present at the node.
 	PDArray_p node_variables_array;
 
-	// The local variables of the branch.  Use UpdateLocalVariables on the branch to find them.
+	// The local variables of the branch.  Use UpdateLocalVariables2 on the branch to find them.
 	PTree_p local_variables;
 
 	// Stacks of previous steps.
@@ -143,9 +144,6 @@ void ClauseTableauCollectSteps(ClauseTableau_p tab, PStack_p steps);
 
 void HCBClauseSetEvaluate(HCB_p hcb, ClauseSet_p clauses);
 
-ClauseSet_p ClauseSetCopy(TB_p bank, ClauseSet_p set);
-ClauseSet_p ClauseSetCopyDisjoint(TB_p bank, ClauseSet_p set);
-ClauseSet_p ClauseSetFlatCopy(ClauseSet_p set);
 bool ClausesAreDisjoint(Clause_p a, Clause_p b);
 long BindAllDisjointVariablesToFresh(ClauseTableau_p tab, TB_p bank, Subst_p subst);
 long UnbindAllDisjointVariablesFromFresh(ClauseTableau_p tab, TB_p bank, Subst_p subst);
