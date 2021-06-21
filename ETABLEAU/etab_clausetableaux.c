@@ -1893,7 +1893,7 @@ void EtableauStatusReport(TableauControl_p tableaucontrol, ClauseSet_p active, C
 
 	//fprintf(GlobalOut, "# SZS output start CNFRefutation for %s\n", tableaucontrol->problem_name);
 	fprintf(GlobalOut, "# SZS output start for %s\n", tableaucontrol->problem_name);
-	if (false && tableaucontrol->clausification_buffer) // Disabled for sanity
+	if (tableaucontrol->clausification_buffer) // Disabled for sanity
 	{
 		fprintf(GlobalOut, "# Begin clausification derivation\n");
 		fprintf(GlobalOut, "%s\n", tableaucontrol->clausification_buffer);
@@ -2452,9 +2452,8 @@ void EtableauPrintClauseInfo(FILE* out, ClauseTableau_p node)
 	}
 	else if (node->saturation_closed)
 	{
-		fprintf(out, "etableau_closure_rule, [");
-		PrintIdentsOfBranch(out, node);
-		fprintf(out, "]");
+		fprintf(out, "etableau_closure_rule, [i_0_%ld, ...]", ClauseGetIdent(node->label));
+		//PrintIdentsOfBranch(out, node);
 	}
 	else
 	{

@@ -60,14 +60,15 @@ void document_processing(Clause_p clause)
 {
    if(OutputLevel)
    {
-      if(OutputLevel == 1)
-      {
-         putc('\n', GlobalOut);
-         putc('#', GlobalOut);
-         ClausePrint(GlobalOut, clause, true);
-         putc('\n', GlobalOut);
-      }
-      DocClauseQuoteDefault(6, clause, "new_given");
+      // Disabled for Etableau
+      /* if(OutputLevel == 1) */
+      /* { */
+      /*    putc('\n', GlobalOut); */
+      /*    putc('#', GlobalOut); */
+      /*    ClausePrint(GlobalOut, clause, true); */
+      /*    putc('\n', GlobalOut); */
+      /* } */
+      /* DocClauseQuoteDefault(6, clause, "new_given"); */
    }
 }
 
@@ -1452,10 +1453,10 @@ Clause_p ProcessClause(ProofState_p state, ProofControl_p control,
       return NULL;
    }
    //EvalListPrintComment(GlobalOut, clause->evaluations); printf("\n");
-   if(OutputLevel==1)
-   {
-      putc('#', GlobalOut);
-   }
+   //if(OutputLevel==1)
+   //{
+      //putc('#', GlobalOut);
+   //}
    assert(clause);
 
    ClauseSetExtractEntry(clause);
@@ -1707,10 +1708,10 @@ Clause_p ProcessSpecificClause(ProofState_p state, ProofControl_p control,
       return NULL;
    }
    //EvalListPrintComment(GlobalOut, clause->evaluations); printf("\n");
-   if(OutputLevel==1)
-   {
-      putc('#', GlobalOut);
-   }
+   /* if(OutputLevel==1) */
+   /* { */
+   /*    putc('#', GlobalOut); */
+   /* } */
    assert(clause);
 
    ClauseSetExtractEntry(clause);
