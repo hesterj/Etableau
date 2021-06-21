@@ -166,6 +166,8 @@ bool ClauseTableauBranchContainsLiteral(ClauseTableau_p parent, Eqn_p literal);
 bool ClauseTableauIsLeafRegular(ClauseTableau_p tab);
 
 
+void EtableauPrintClauseInfo(FILE* out, ClauseTableau_p node);
+void PrintIdentsOfBranch(FILE* out, ClauseTableau_p node);
 void ClauseTableauTPTPPrint(ClauseTableau_p tab);
 void ClauseTableauPrint(ClauseTableau_p tab);
 void ClauseTableauPrintBranch(ClauseTableau_p branch);

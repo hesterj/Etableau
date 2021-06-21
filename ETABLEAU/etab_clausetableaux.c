@@ -1676,9 +1676,10 @@ void ClauseTableauTPTPPrint(ClauseTableau_p tab)
 	for (long i=0; i< PStackGetSP(steps); i++)
 	{
 		ClauseTableau_p node = PStackElementP(steps, i);
-		fprintf(GlobalOut, "# %d ", (int) node->step);
-		ClausePrint(GlobalOut, node->label, true);
-		fprintf(GlobalOut, " %s\n", DStrView(node->info));
+		ClauseTSTPPrint(GlobalOut, node->label, true, false);
+		fprintf(GlobalOut, ", ");
+		EtableauPrintClauseInfo(GlobalOut, node);
+		fprintf(GlobalOut, ").\n");
 	}
 	PStackFree(steps);
 }
@@ -2414,4 +2415,59 @@ long EtableauClauseGC(TableauStack_p stack, ClauseSet_p clause_storage, TB_p ter
 //	printf("freed %ld unused clauses\n", number_freed);
 	GCCollect(terms->gc);
 	return number_freed;
+}
+
+void PrintIdentsOfBranch(FILE* out, ClauseTableau_p node)
+{
+	if (node)
+	{
+		fprintf(out, "i_0_%ld", ClauseGetIdent(node->label));
+		assert(node->folding_labels);
+		if (node->folding_labels->members)
+		{
+			Clause_p handle = node->folding_labels->anchor->succ;
+			while (handle != node->folding_labels->anchor)
+			{
+				fprintf(out, ", ");
+				fprintf(out, "f_0_%ld", ClauseGetIdent(node->label));
+				handle = handle->succ;
+			}
+		}
+		if (node->parent)
+		{
+			fprintf(out, ", ");
+			PrintIdentsOfBranch(out, node->parent);
+		}
+	}
+	return;
+}
+
+void EtableauPrintClauseInfo(FILE* out, ClauseTableau_p node)
+{
+	assert(node);
+	fprintf(out, "inference(");
+	if (node->depth == 0)
+	{
+		fprintf(out, "start_rule");
+	}
+	else if (node->saturation_closed)
+	{
+		fprintf(out, "etableau_closure_rule, [");
+		PrintIdentsOfBranch(out, node);
+		fprintf(out, "]");
+	}
+	else
+	{
+		if (node->arity) // extension rule
+		{
+			fprintf(out, "extension_rule, [i_0_%ld]", node->id);
+		}
+		else // regular closure rule
+		{
+			fprintf(out, "closure_rule, [i_0_%ld]", node->id);
+		}
+	}
+	fprintf(out, ")");
+	return;
+
 }
