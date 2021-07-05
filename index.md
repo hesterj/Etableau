@@ -1,37 +1,83 @@
-## Welcome to GitHub Pages
+# Etableau
 
-You can use the [editor on GitHub](https://github.com/hesterj/Etableau/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+Etableau is a first order theorem prover for first order logic based
+on Eprover, using it as a library.  Etableau combines the superposition
+calculus and the clausal tableaux connection calculus in a novel way, using the
+tableaux calculus to generate lemmas and new assumptions that can be 
+used to find contradictions in certain situations.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+This means that branches of a tableau that are difficult to close using
+the clausal tableau calculus can be closed with Eprover's saturation.
+The saturation procedure benefits from the extra assumptions that are 
+present on the branch of the tableau.  It seems that saturation procedures
+often find a proof quickly or not at all, so by doing many short proof
+searches with differing assumptions it is possible for proofs to be found
+that may not have been otherwise.
 
-### Markdown
+Etableau is licensed and installed in the same way as Eprover.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+To install Etableau, clone this repository, execute the following commands,
+or follow the instructions for Eprover.</p>
 
-```markdown
-Syntax highlighted code block
+`./configure`
+`make rebuild`
 
-# Header 1
-## Header 2
-### Header 3
+The executable "eprover" is generated in the PROVER directory.  To check that it worked,
+try running ./eprover --tableau=1 --tableau-saturation=1 --auto $1, where $1 is some TPTP problem file.
 
-- Bulleted
-- List
+# tableau
 
-1. Numbered
-2. List
+--tableau=1 enables clausal tableaux proof search.  If this option is not passed, normal
+Eprover will happen.
 
-**Bold** and _Italic_ and `Code` text
+# tableau-saturation
 
-[Link](url) and ![Image](src)
-```
+--tableau-saturation=1 enables the combination of the superposition calculus and tableaux
+calculus.
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+# tableau-dot-print
 
-### Jekyll Themes
+--tableau-dot-print=dir prints DOT graphs of the closed tableau found in a successful proof
+search to the directory dir.
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/hesterj/Etableau/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+# tsmdo
 
-### Support or Contact
+--tsmdo restricts branch saturation attmepts on a tableau to the case where there is a branch
+at the current maximum tableau search depth.  If this is not passed, Etableau will attempt
+to saturate every local branch found.  Passing this option potentially increases the amount
+of branching during proof search, but also prevents time being wasted on attempts to saturate
+shallow branches that may not have an easily found contradiction.
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+# apr
+
+--apr=3 filters the axiom specification to only include clauses within an alternating
+path relevance distance of 3 from the conjectures of the specification.  This number can 
+be changed.  This option is not recommended for general purpose proving.
+
+# quicksat
+
+--quicksat=100 ensures that no more than 100 clauses are processed during saturation of
+tableau branches.  This number can be changed.  The default value is 100 if the option
+--quicksat is passed without an integer option.  If quicksat is passed, then there will
+be a loss of completeness for branch saturations, but not the entire proof search.  This
+is becuase of the fact that if only a small number of clauses are going to be processed
+on a branch saturation, there is no need to copy the entire unprocessed clause set and
+only a small number or none are copied.
+
+# tableau-equality
+
+--tableau-equality=1 introduces equality axioms for the symbols found in the specification
+as well as axioms of symmetry, reflection, and transitivity.  This is helpful on some
+problems.  This is not normally necessary because if equality is detected in the signature
+of a problem, equality axioms are automatically added.
+
+# Eprover options
+
+Options controlling the saturation procedure of Eprover also work, allowing the user 
+to use different strategies.  It is recommended to at least use the --auto
+option of Eprover.
+
+# Help
+
+If you have a problem or suggestion, feel free to email me at hesterj@etableau.com.
+
