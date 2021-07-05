@@ -20,6 +20,7 @@ To install Etableau, clone this repository, execute the following commands,
 or follow the instructions for Eprover.</p>
 
 `./configure`
+
 `make rebuild`
 
 The executable "eprover" is generated in the PROVER directory.  To check that it worked,
