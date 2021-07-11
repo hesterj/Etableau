@@ -17,7 +17,7 @@ that may not have been otherwise.
 Etableau is licensed and installed in the same way as Eprover.
 
 To install Etableau, clone this repository, execute the following commands,
-or follow the instructions for Eprover.</p>
+or follow the instructions for Eprover.
 
 `./configure`
 
