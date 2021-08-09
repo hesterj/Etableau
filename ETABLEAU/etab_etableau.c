@@ -9,8 +9,9 @@ void etableau_proofstate_free(ProofState_p junk);
 ProofState_p etableau_proofstate_alloc(ProofState_p main_proof_state);
 long clauseset_insert_copy(TB_p bank, ClauseSet_p to, ClauseSet_p from);
 ProofState_p backtrack_proofstate(ProofState_p proofstate,
-                                   ProofControl_p proofcontrol,
-                                   TableauControl_p tableaucontrol);
+                                  ProofControl_p proofcontrol,
+                                  TableauControl_p tableaucontrol,
+                                  ClauseTableau_p leaf);
 long collect_branch_labels_for_saturation(TB_p terms,
                                           ClauseTableau_p branch,
                                           ClauseSet_p set,
@@ -28,7 +29,7 @@ long collect_ground_units(ProofState_p etableau_proofstate,
                           ClauseTableau_p where,
                           ErrorCodes status);
 
-// Function definitions 
+// Function definitions
 
 ErrorCodes EproverCloseBranchWrapper(ProofState_p proofstate,
                                      ProofControl_p proofcontrol,
@@ -464,6 +465,10 @@ bool EtableauSaturateAllTableauxInStack(TableauControl_p tableaucontrol, Tableau
     return false;
 }
 
+/*
+** Insert copies of the clauses on the branch in to "set"
+*/
+
 long collect_branch_labels_for_saturation(TB_p terms,
                                           ClauseTableau_p branch,
                                           ClauseSet_p set,
@@ -523,13 +528,17 @@ long collect_set_for_saturation(ClauseSet_p from,
 
 ProofState_p backtrack_proofstate(ProofState_p proofstate,
                                   ProofControl_p proofcontrol,
-                                  TableauControl_p tableaucontrol)
+                                  TableauControl_p tableaucontrol,
+                                  ClauseTableau_p leaf)
 {
     assert(proofstate);
     assert(proofcontrol);
     assert(tableaucontrol);
 
-    ProofState_p new_state = etableau_proofstate_alloc(proofstate);
+    /* ProofState_p new_state = etableau_proofstate_alloc(proofstate); */
+    // Get the most recent saturation state available, or allocate a new one
+    ProofState_p new_state = EtableauUpdateSaturationState(leaf);
+
 #ifndef NDEBUG
     printf("# (%ld) Collecting axioms for branch saturation\n", (long) getpid());
 #endif
@@ -914,6 +923,37 @@ long collect_ground_units(ProofState_p saturation_proofstate,
         //printf("copied %ld clauses from the proofstate in place\n", number_copied);
     //}
     return number_copied;
+}
+
+/*
+** TODO
+** Thoughts about how we can maintain multiple proofstates at once:
+** Whenever we do a branch saturation, look for an available saturation proofstate above the saturation node
+** If one is found, move the found proofstate to the saturation node
+** This function always assigns a saturation proofstate to the leaf node it is called on.
+*/
+
+ProofState_p EtableauUpdateSaturationState(ClauseTableau_p leaf)
+{
+    assert(leaf != leaf->master);
+    int height = 0;
+    ClauseTableau_p climber = leaf;
+    while (climber)
+    {
+        if (climber->saturation_state)
+        {
+            Warning("Reusing existing saturation proofstate %d", height);
+            leaf->saturation_state = climber->saturation_state;
+            climber->saturation_state = NULL;
+            return leaf->saturation_state;
+        }
+        height++;
+        climber = climber->parent;
+    }
+    assert(!(leaf->saturation_state));
+    Warning("Creating new saturation proofstate");
+    leaf->saturation_state = etableau_proofstate_alloc(leaf->state);
+    return leaf->saturation_state;
 }
 
 

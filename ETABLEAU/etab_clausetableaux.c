@@ -66,6 +66,7 @@ ClauseTableau_p empty_tableau_alloc()
 	handle->pred = NULL;
 	handle->control = NULL;
 	handle->state = NULL;
+	handle->saturation_state = NULL;
 	handle->succ = NULL;
 	handle->open_branches = NULL;
 	handle->children = NULL;
@@ -449,26 +450,20 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	GCAdmin_p gc = trash->state->gc_terms;
 	//fprintf(GlobalOut, "! Freeing a node\n");
 	trash->master->tableaucontrol->number_of_nodes_freed++;
-	//if (trash->master->tableaucontrol->number_of_nodes_freed == 17)
-	//{
-		//Error("Early exit in ClauseTableauFree", 10);
-	//}
 	if (trash->set)
 	{
 		//Warning("!!! Freeing open branch at depth %d", trash->depth);
 		assert(trash->depth != 0);
 		TableauSetExtractEntry(trash);
-		//assert(false);
+	}
+	if (trash->saturation_state)
+	{
+		Warning("Freeing a saturation state at depth %d", trash->depth);
 	}
 	if (trash->bigjump)
 	{
 		ClauseTableauFree(trash->bigjump);
 	}
-	//if (trash->depth == 0 && trash->tableau_variables)
-	//{
-		////PStackFree(trash->derivation);
-		//PTreeFree(trash->tableau_variables);
-	//}
 	if (trash->depth == 0)
 	{
 		PDArrayFree(trash->tableau_variables_array);

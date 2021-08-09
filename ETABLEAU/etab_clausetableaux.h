@@ -47,6 +47,7 @@ typedef enum
 typedef struct clausetableau 
 {
 	ProofState_p state;
+	ProofState_p saturation_state;
 	ProofControl_p control;
 	struct tableaucontrol_cell* tableaucontrol;
 	TableauProperties properties;
