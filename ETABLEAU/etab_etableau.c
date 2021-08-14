@@ -110,7 +110,8 @@ ErrorCodes EproverCloseBranchWrapper(ProofState_p proofstate,
     // Create a backtracked proofstate for the branch saturation.
     ProofState_p new_proofstate = backtrack_proofstate(proofstate,
                                                        proofcontrol,
-                                                       tableau_control);
+                                                       tableau_control,
+                                                       branch);
 
     // Actually do the branch saturation
     ErrorCodes branch_status = EproverCloseBranch(new_proofstate,
@@ -148,7 +149,8 @@ long
     DStrFree(branch_data_file);
 #endif
 
-    etableau_proofstate_free(new_proofstate);
+    /* etableau_proofstate_free(new_proofstate); */
+    branch->saturation_state = new_proofstate;
 
     return branch_status;
 }
