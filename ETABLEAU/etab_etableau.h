@@ -31,7 +31,8 @@ bool EtableauSaturateAllTableauxInStack(TableauControl_p tableaucontrol,
                                         ClauseSet_p active,
                                         long maximum);
 
-ProofState_p EtableauUpdateSaturationState(ClauseTableau_p leaf);
+ProofState_p EtableauUpdateSaturationState(ClauseTableau_p leaf,
+                                           bool* created_new_proofstate);
 
 void EtableauProofstateFree(ProofState_p junk);
 #endif

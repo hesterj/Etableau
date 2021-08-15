@@ -537,14 +537,23 @@ ProofState_p backtrack_proofstate(ProofState_p proofstate,
     assert(proofcontrol);
     assert(tableaucontrol);
 
+    bool created_new_proofstate = false;
+
     /* ProofState_p new_state = etableau_proofstate_alloc(proofstate); */
     // Get the most recent saturation state available, or allocate a new one
-    ProofState_p new_state = EtableauUpdateSaturationState(leaf);
+    ProofState_p new_state = EtableauUpdateSaturationState(leaf,
+                                                           &created_new_proofstate);
 
 #ifndef NDEBUG
     printf("# (%ld) Collecting axioms for branch saturation\n", (long) getpid());
 #endif
-    clauseset_insert_copy(new_state->terms, new_state->axioms, tableaucontrol->unprocessed);
+    if (created_new_proofstate)
+    {
+        // If we created a new proofstate, we need to add all of the unprocessed to it.
+        // Otherwise, we should be OK by just continuing where it left off, because
+        // whenever the proof procedure backtracks, the saturation states are destroyed.
+        clauseset_insert_copy(new_state->terms, new_state->axioms, tableaucontrol->unprocessed);
+    }
 #ifndef NDEBUG
     printf("# (%ld) Done collecting axioms\n", (long) getpid());
 #endif
@@ -935,8 +944,10 @@ long collect_ground_units(ProofState_p saturation_proofstate,
 ** This function always assigns a saturation proofstate to the leaf node it is called on.
 */
 
-ProofState_p EtableauUpdateSaturationState(ClauseTableau_p leaf)
+ProofState_p EtableauUpdateSaturationState(ClauseTableau_p leaf,
+                                           bool* created_new_proofstate)
 {
+    assert(*created_new_proofstate == false);
     assert(leaf != leaf->master);
     int height = 0;
     ClauseTableau_p climber = leaf;
@@ -945,8 +956,10 @@ ProofState_p EtableauUpdateSaturationState(ClauseTableau_p leaf)
         if (climber->saturation_state)
         {
             Warning("Reusing existing saturation proofstate %d", height);
-            leaf->saturation_state = climber->saturation_state;
+            ProofState_p discovered_proofstate = climber->saturation_state;
+            assert(discovered_proofstate->unprocessed);
             climber->saturation_state = NULL;
+            leaf->saturation_state = discovered_proofstate;
             return leaf->saturation_state;
         }
         height++;
@@ -955,6 +968,7 @@ ProofState_p EtableauUpdateSaturationState(ClauseTableau_p leaf)
     assert(!(leaf->saturation_state));
     Warning("Creating new saturation proofstate");
     leaf->saturation_state = etableau_proofstate_alloc(leaf->state);
+    *created_new_proofstate = true;
     return leaf->saturation_state;
 }
 
