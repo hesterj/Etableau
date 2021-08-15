@@ -456,10 +456,6 @@ void ClauseTableauFree(ClauseTableau_p trash)
 		assert(trash->depth != 0);
 		TableauSetExtractEntry(trash);
 	}
-	if (trash->saturation_state)
-	{
-		Warning("Freeing a saturation state at depth %d", trash->depth);
-	}
 	if (trash->bigjump)
 	{
 		ClauseTableauFree(trash->bigjump);
@@ -537,6 +533,13 @@ void ClauseTableauFree(ClauseTableau_p trash)
 	}
 	assert(PStackEmpty(trash->old_folding_labels));
 	PStackFree(trash->old_folding_labels);
+
+	if (trash->saturation_state)
+	{
+		// Free the saturation state if it is left over
+		Warning("Freeing a saturation state at depth %d", trash->depth);
+		EtableauProofstateFree(trash->saturation_state);
+	}
 
 	// Everything that can be free'd has been done, so free the children...
 

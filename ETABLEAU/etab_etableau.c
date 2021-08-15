@@ -715,7 +715,7 @@ ProofState_p etableau_proofstate_alloc(ProofState_p main_proof_state)
 
 /*-----------------------------------------------------------------------
 //
-// Function: etableau_proof_state_free()
+// Function: EtableauProofstateFree()
 //
 //   Free a ProofStateCell, but not the type bank and signature.
 //
@@ -725,7 +725,7 @@ ProofState_p etableau_proofstate_alloc(ProofState_p main_proof_state)
 //
 /----------------------------------------------------------------------*/
 
-void etableau_proofstate_free(ProofState_p junk)
+void EtableauProofstateFree(ProofState_p junk)
 {
    assert(junk);
    ClauseSetFree(junk->axioms);

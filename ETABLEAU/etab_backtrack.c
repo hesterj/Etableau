@@ -254,6 +254,11 @@ void RollBackEveryNode(ClauseTableau_p tab)
     tab->local_variables = NULL;
 
     assert(tab->label);
+    if (tab->saturation_state)
+    {
+        EtableauProofstateFree(tab->saturation_state);
+        tab->saturation_state = NULL;
+    }
     for (int i=0; i<tab->arity; i++)
     {
         RollBackEveryNode(tab->children[i]);

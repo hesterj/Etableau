@@ -33,4 +33,5 @@ bool EtableauSaturateAllTableauxInStack(TableauControl_p tableaucontrol,
 
 ProofState_p EtableauUpdateSaturationState(ClauseTableau_p leaf);
 
+void EtableauProofstateFree(ProofState_p junk);
 #endif
